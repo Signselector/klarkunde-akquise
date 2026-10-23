@@ -1,7 +1,9 @@
 import { createFileRoute, redirect, Outlet, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { CalendarClock, CalendarDays, ChartNoAxesColumn, CircleCheck, ClipboardList, Crown, FilePen, FileText, LayoutDashboard, Settings, Upload, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -35,34 +37,65 @@ function Layout() {
     nav({ to: "/auth", replace: true });
   }
 
-  const link = "rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent";
-  const active = { className: "rounded-md px-3 py-1.5 text-sm bg-accent text-foreground font-medium" };
+  const items = [
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/leads", label: "Offene Leads", icon: Users },
+    { to: "/completed", label: "Abgeschlossen", icon: CircleCheck },
+    { to: "/customers", label: "Meine Kunden", icon: FileText },
+    { to: "/appointments", label: "Termine", icon: CalendarClock },
+    { to: "/offers", label: "Angebote", icon: FilePen },
+    { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
+    { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
+    { to: "/evaluation", label: "Auswertung", icon: ClipboardList },
+    { to: "/import", label: "Upload", icon: Upload },
+    ...(me?.admin
+      ? [
+          { to: "/accounts", label: "Accounts", icon: Crown },
+          { to: "/settings", label: "Einstellungen", icon: Settings },
+        ]
+      : []),
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 border-b bg-card/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2">
-          <span className="font-display mr-2 font-bold text-primary">Cold Call</span>
-          <nav className="flex flex-1 flex-wrap gap-1">
-            <Link to="/dashboard" className={link} activeProps={active}>Übersicht</Link>
-            <Link to="/call" className={link} activeProps={active}>Anrufen</Link>
-            <Link to="/leads" className={link} activeProps={active}>Leads</Link>
-            <Link to="/callbacks" className={link} activeProps={active}>Callbacks</Link>
-            <Link to="/appointments" className={link} activeProps={active}>Termine</Link>
-            <Link to="/completed" className={link} activeProps={active}>Kunden</Link>
-            <Link to="/offers" className={link} activeProps={active}>Angebote</Link>
-            <Link to="/stats" className={link} activeProps={active}>Statistik</Link>
-            <Link to="/import" className={link} activeProps={active}>Import</Link>
-            {me?.admin && <Link to="/settings" className={link} activeProps={active}>Einstellungen</Link>}
-          </nav>
-          <span className="text-xs text-muted-foreground">
-            {me?.name} · {me?.admin ? "Admin" : "Caller"}
-          </span>
-          <Button size="sm" variant="ghost" onClick={signOut}>Abmelden</Button>
-        </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">
-        <Outlet />
-      </main>
-    </div>
+    <SidebarProvider>
+      <Sidebar className="dark">
+        <SidebarHeader className="border-b border-sidebar-border p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500 text-white"><FileText className="size-5" /></div>
+            <div className="leading-tight">
+              <p className="font-display font-semibold">Cold Call Tool</p>
+              <p className="text-xs text-sidebar-foreground/60">→ Pipedrive</p>
+            </div>
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="p-2">
+          <SidebarMenu>
+            {items.map((i) => (
+              <SidebarMenuItem key={i.to}>
+                <SidebarMenuButton asChild size="lg" className="data-[active=true]:bg-blue-500 data-[active=true]:text-white">
+                  <Link to={i.to} activeProps={{ "data-active": true } as object}>
+                    <i.icon />
+                    <span>{i.label}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter className="border-t border-sidebar-border p-3">
+          <p className="truncate text-xs text-sidebar-foreground/70">{me?.name} · {me?.admin ? "Admin" : "Caller"}</p>
+          <Button size="sm" variant="ghost" className="justify-start" onClick={signOut}>Abmelden</Button>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset>
+        <header className="flex items-center gap-2 border-b px-4 py-2 md:hidden">
+          <SidebarTrigger />
+          <span className="font-display font-bold text-primary">Cold Call Tool</span>
+        </header>
+        <main className="mx-auto w-full max-w-6xl px-4 py-6">
+          <Outlet />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

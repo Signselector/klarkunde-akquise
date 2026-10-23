@@ -23,7 +23,7 @@ function LeadsPage() {
   const admin = useIsAdmin(user.id);
   const qc = useQueryClient();
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState("all");
+  const [status, setStatus] = useState("open");
   const [openId, setOpenId] = useState<string | null>(null);
 
   const { data: leads, isLoading } = useQuery({
@@ -47,7 +47,7 @@ function LeadsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-2xl font-bold">Leads</h1>
+        <h1 className="font-display text-2xl font-bold">Offene Leads</h1>
         {admin && (
           <AlertDialog>
             <AlertDialogTrigger asChild><Button variant="destructive" size="sm">Alle offenen Leads löschen</Button></AlertDialogTrigger>

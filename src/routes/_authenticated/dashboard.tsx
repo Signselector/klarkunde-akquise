@@ -30,8 +30,9 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-2xl font-bold">Lead Batches</h1>
+        <h1 className="font-display text-2xl font-bold">Dashboard</h1>
         <div className="flex gap-2">
+          <Button asChild variant="outline"><Link to="/callbacks">Callbacks</Link></Button>
           <Button asChild variant="outline"><Link to="/import">CSV importieren</Link></Button>
           <Button asChild><Link to="/call">Anrufen starten</Link></Button>
         </div>
