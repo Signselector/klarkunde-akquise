@@ -60,7 +60,7 @@ function ImportPage() {
     setProgress(0);
     for (let i = 0; i < leads.length; i += 500) {
       const { error: e } = await supabase.from("leads").insert(leads.slice(i, i + 500));
-      if (e) { setProgress(null); toast.error("Import abgebrochen: " + e.message); return; } }
+      if (e) { setProgress(null); toast.error("Import abgebrochen: " + e.message); return; }
       setProgress(Math.round(((i + 500 > leads.length ? leads.length : i + 500) / leads.length) * 100));
     }
     toast.success(`${leads.length} Leads importiert.`);
