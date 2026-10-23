@@ -45,7 +45,7 @@ function CallPage() {
     setBusy(true);
     const newStatus = outcome === "not_reached" ? "open" : outcome;
     const now = new Date().toISOString();
-    const ops = [
+    const ops: PromiseLike<{ error: { message: string } | null }>[] = [
       supabase.from("leads").update({ status: newStatus, attempts: lead.attempts + 1, last_called_at: now, last_called_by: user.id }).eq("id", lead.id),
       supabase.from("status_changes").insert({ lead_id: lead.id, user_id: user.id, old_status: lead.status, new_status: outcome }),
     ];
