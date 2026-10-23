@@ -32,7 +32,7 @@ function AuthPage() {
     if (mode === "in") {
       const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
       setBusy(false);
-      if (error) return toast.error("Anmeldung fehlgeschlagen: " + error.message);
+      if (error) { toast.error("Anmeldung fehlgeschlagen: " + error.message); return; }
       nav({ to: "/dashboard" });
     } else {
       const { error } = await supabase.auth.signUp({
@@ -41,7 +41,7 @@ function AuthPage() {
         options: { emailRedirectTo: window.location.origin, data: { display_name: name } },
       });
       setBusy(false);
-      if (error) return toast.error(error.message);
+      if (error) { toast.error(error.message); return; }
       toast.success("Bitte bestätige deine E-Mail über den Link im Postfach.");
       setMode("in");
     }

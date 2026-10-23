@@ -40,7 +40,7 @@ function CallPage() {
     if (!lead) return;
     if ((outcome === "callback" || outcome === "appointment") && !when) {
       setPending(outcome);
-      return toast.message("Bitte Datum und Uhrzeit wählen.");
+      { toast.message("Bitte Datum und Uhrzeit wählen."); return; }
     }
     setBusy(true);
     const newStatus = outcome === "not_reached" ? "open" : outcome;
@@ -55,7 +55,7 @@ function CallPage() {
     const res = await Promise.all(ops);
     setBusy(false);
     const err = res.find((r) => r.error)?.error;
-    if (err) return toast.error("Speichern fehlgeschlagen: " + err.message);
+    if (err) { toast.error("Speichern fehlgeschlagen: " + err.message); return; }
     toast.success("Gespeichert – nächster Lead.");
     setNote(""); setWhen(""); setPending(null);
     qc.invalidateQueries({ queryKey: ["next-lead"] });

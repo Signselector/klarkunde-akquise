@@ -32,8 +32,8 @@ function ImportPage() {
 
   async function onFile(f: File) {
     const parsed = parseCsv(await f.text());
-    if (parsed.length < 2) return toast.error("Die Datei enthält keine Datenzeilen.");
-    const h = parsed[0].map((x) => x.toLowerCase());
+    if (parsed.length < 2) { toast.error("Die Datei enthält keine Datenzeilen."); return; }
+    const h = (parsed[0] ?? []).map((x) => x.toLowerCase());
     const m: Record<string, number> = {};
     FIELDS.forEach((fl) => {
       const i = h.findIndex((x) => fl.hints.some((hint) => x.includes(hint)));
@@ -45,11 +45,11 @@ function ImportPage() {
   }
 
   async function confirm() {
-    if (map.phone === undefined) return toast.error("Bitte die Spalte Telefon zuordnen.");
+    if (map['phone'] === undefined) { toast.error("Bitte die Spalte Telefon zuordnen."); return; }
     const { data: u } = await supabase.auth.getUser();
     const { data: batch, error } = await supabase
       .from("lead_batches").insert({ name, created_by: u.user!.id }).select("id").single();
-    if (error || !batch) return toast.error("Batch konnte nicht angelegt werden.");
+    if (error || !batch) { toast.error("Batch konnte nicht angelegt werden."); return; }
     const used = new Set(Object.values(map));
     const leads = data.map((r) => {
       const extra: Record<string, string> = {};
@@ -60,7 +60,7 @@ function ImportPage() {
     setProgress(0);
     for (let i = 0; i < leads.length; i += 500) {
       const { error: e } = await supabase.from("leads").insert(leads.slice(i, i + 500));
-      if (e) { setProgress(null); return toast.error("Import abgebrochen: " + e.message); }
+      if (e) { setProgress(null); toast.error("Import abgebrochen: " + e.message); return; } }
       setProgress(Math.round(((i + 500 > leads.length ? leads.length : i + 500) / leads.length) * 100));
     }
     toast.success(`${leads.length} Leads importiert.`);
@@ -98,7 +98,7 @@ function ImportPage() {
           </div>
           <p className="text-sm text-muted-foreground">
             Nicht zugeordnete Spalten werden als Zusatzinfo gespeichert. Vorschau erste Zeile:{" "}
-            {FIELDS.map((fl) => (map[fl.key] !== undefined ? data[0]?.[map[fl.key]] : null)).filter(Boolean).join(" · ")}
+            {FIELDS.map((fl) => (map[fl.key] !== undefined ? data[0]?.[map[fl.key]!] : null)).filter(Boolean).join(" · ")}
           </p>
           {progress !== null && <Progress value={progress} />}
           <Button onClick={confirm} disabled={progress !== null || !name}>
