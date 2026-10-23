@@ -103,11 +103,6 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="de" suppressHydrationWarning>
       <head>
         <HeadContent />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: "if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.classList.add('dark')",
-          }}
-        />
       </head>
       <body className="font-sans">
         {children}

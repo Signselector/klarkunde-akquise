@@ -58,7 +58,7 @@ function Layout() {
   ] as const;
 
   return (
-    <SidebarProvider style={{ "--sidebar-width": "14.25rem" } as CSSProperties}>
+    <SidebarProvider className="bg-sidebar" style={{ "--sidebar-width": "14.25rem" } as CSSProperties}>
       <Sidebar>
         <SidebarHeader className="border-b border-sidebar-border p-4">
           <div className="flex items-center gap-3">
