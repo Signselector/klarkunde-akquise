@@ -29,16 +29,16 @@ function CallbacksPage() {
   const sameDay = (d: Date) => d.toDateString() === now.toDateString();
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-2xl font-bold">Callbacks</h1>
+      <h1 className="text-[22px] font-semibold">Callbacks</h1>
       {isLoading && <p className="text-muted-foreground">Lädt …</p>}
-      {data?.length === 0 && <p className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">Keine offenen Callbacks.</p>}
+      {data?.length === 0 && <p className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">Keine offenen Callbacks.</p>}
       <div className="space-y-2">
         {data?.map((c) => {
           const due = new Date(c.due_at);
           const overdue = due < now;
           const today = sameDay(due);
           return (
-            <div key={c.id} className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border p-3 ${overdue ? "border-destructive/50 bg-destructive/5" : today ? "border-primary/50 bg-primary/5" : "bg-card"}`}>
+            <div key={c.id} className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 ${overdue ? "border-destructive/50 bg-destructive/5" : today ? "border-primary/50 bg-primary/5" : "bg-card"}`}>
               <div>
                 <p className="font-medium">{c.lead?.company || "Ohne Firmenname"}</p>
                 <p className="text-sm text-muted-foreground">{[c.lead?.contact_name, c.lead?.phone].filter(Boolean).join(" · ")}</p>

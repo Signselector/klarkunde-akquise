@@ -77,7 +77,7 @@ function CallPage() {
   }
 
   if (isLoading) return <p className="text-muted-foreground">Lädt …</p>;
-  if (!lead) return <p className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">Keine offenen Leads. Importiere neue Leads.</p>;
+  if (!lead) return <p className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">Keine offenen Leads. Importiere neue Leads.</p>;
 
   const script = fillScript(savedScript ?? DEFAULT_SCRIPT, {
     firma: lead.company, ansprechpartner: lead.contact_name, stadt: lead.city, caller: me?.display_name,
@@ -87,9 +87,9 @@ function CallPage() {
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
       <section className="space-y-4">
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">{dueCb?.lead ? "Fälliger Callback" : "Nächster Lead"} · Versuch {lead.attempts + 1}</p>
-          <h1 className="font-display text-2xl font-bold">{lead.company || "Ohne Firmenname"}</h1>
+        <div className="rounded-lg border bg-card p-4">
+          <p className="text-sm text-muted-foreground">{dueCb?.lead ? "Fälliger Callback" : "Nächster Lead"} · Versuch {lead.attempts + 1}</p>
+          <h1 className="text-[22px] font-semibold">{lead.company || "Ohne Firmenname"}</h1>
           <p className="text-muted-foreground">{[lead.contact_name, lead.city].filter(Boolean).join(" · ")}</p>
           {lead.phone && (
             <a href={`tel:${lead.phone}`} className="mt-3 inline-block text-2xl font-semibold text-primary">{lead.phone}</a>
@@ -101,12 +101,12 @@ function CallPage() {
             </dl>
           )}
         </div>
-        <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 text-sm">
+        <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm">
           <span className="font-semibold">Vorschlag: </span>{suggestNextStep(lead, { callbackDueAt: dueCb?.due_at ?? null })}
         </div>
         <Textarea placeholder="Notiz zum Gespräch …" value={note} onChange={(e) => setNote(e.target.value)} />
         {pending && (
-          <div className="space-y-2 rounded-xl border bg-card p-3">
+          <div className="space-y-2 rounded-lg border bg-card p-3">
             <p className="text-sm font-medium">{pending === "callback" ? "Callback am" : "Termin am"}</p>
             <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
             <Button disabled={busy || !when} onClick={() => record(pending)}>Speichern</Button>
@@ -120,7 +120,7 @@ function CallPage() {
           <Button className="col-span-2" variant="outline" disabled={busy} onClick={() => record("production")}>Deal in Produktion</Button>
         </div>
       </section>
-      <section className="rounded-xl border bg-card p-4">
+      <section className="rounded-lg border bg-card p-4">
         <h2 className="mb-2 font-semibold">Gesprächsleitfaden</h2>
         <p className="whitespace-pre-wrap leading-relaxed">{script}</p>
       </section>

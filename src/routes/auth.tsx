@@ -49,7 +49,7 @@ function AuthPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6 shadow-sm">
+      <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6">
         <div>
           <h1 className="font-display text-2xl font-bold">Cold Call Tool</h1>
           <p className="text-sm text-muted-foreground">

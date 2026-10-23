@@ -86,13 +86,13 @@ function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Leads importieren</h1>
+      <h1 className="text-[22px] font-semibold">Leads importieren</h1>
       <div className="space-y-1">
         <Label htmlFor="f">CSV- oder Excel-Datei (.csv, .xlsx; erstes Tabellenblatt, erste Zeile = Spaltennamen)</Label>
         <Input id="f" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
       </div>
       {headers.length > 0 && (
-        <div className="space-y-4 rounded-xl border bg-card p-4">
+        <div className="space-y-4 rounded-lg border bg-card p-4">
           <div className="space-y-1">
             <Label htmlFor="bn">Name des Lead Batches</Label>
             <Input id="bn" value={name} onChange={(e) => setName(e.target.value)} />
