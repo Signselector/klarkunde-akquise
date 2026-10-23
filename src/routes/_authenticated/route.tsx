@@ -58,13 +58,13 @@ function Layout() {
 
   return (
     <SidebarProvider>
-      <Sidebar className="dark">
+      <Sidebar>
         <SidebarHeader className="border-b border-sidebar-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500 text-white"><FileText className="size-5" /></div>
             <div className="leading-tight">
               <p className="font-display font-semibold">Cold Call Tool</p>
-              <p className="text-xs text-sidebar-foreground/60">→ Pipedrive</p>
+              <p className="text-xs text-muted-foreground">→ Pipedrive</p>
             </div>
           </div>
         </SidebarHeader>
@@ -83,7 +83,7 @@ function Layout() {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border p-3">
-          <p className="truncate text-xs text-sidebar-foreground/70">{me?.name} · {me?.admin ? "Admin" : "Caller"}</p>
+          <p className="truncate text-xs text-muted-foreground">{me?.name} · {me?.admin ? "Admin" : "Caller"}</p>
           <Button size="sm" variant="ghost" className="justify-start" onClick={signOut}>Abmelden</Button>
         </SidebarFooter>
       </Sidebar>
