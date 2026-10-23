@@ -7,7 +7,7 @@
 - [x] Anruf-Ablauf (nächster Lead, Script, Ergebnis-Buttons, Vorschlag)
 
 ## Danach
-- [ ] Excel-Import (.xlsx)
+- [x] Excel-Import (.xlsx)
 - [x] Leads-Liste, Suche/Filter, Detail, Löschen/Verschieben/Wieder öffnen, Alle offenen löschen
 - [x] Callbacks-Liste (heute fällig hervorgehoben), fällige Callbacks im Anruf-Ablauf
 - [x] Termine (Liste/Kalender, Nur meine, eigenen Termin eintragen)

@@ -31,7 +31,24 @@ function ImportPage() {
   const data = rows.slice(1);
 
   async function onFile(f: File) {
-    const parsed = parseCsv(await f.text());
+    let parsed: string[][];
+    if (/\.xlsx$/i.test(f.name)) {
+      try {
+        const { readSheet } = await import("read-excel-file/browser");
+        const sheet = await readSheet(f);
+        parsed = sheet
+          .map((r) => r.map((c: unknown) => (c instanceof Date ? c.toISOString().slice(0, 10) : c == null ? "" : String(c))))
+          .filter((r: string[]) => r.some((x) => x.trim()));
+      } catch {
+        toast.error("Die Excel-Datei konnte nicht gelesen werden (nur .xlsx wird unterstützt).");
+        return;
+      }
+    } else if (/\.xls$/i.test(f.name)) {
+      toast.error("Altes .xls-Format wird nicht unterstützt – bitte als .xlsx oder CSV speichern.");
+      return;
+    } else {
+      parsed = parseCsv(await f.text());
+    }
     if (parsed.length < 2) { toast.error("Die Datei enthält keine Datenzeilen."); return; }
     const h = (parsed[0] ?? []).map((x) => x.toLowerCase());
     const m: Record<string, number> = {};
@@ -71,8 +88,8 @@ function ImportPage() {
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold">Leads importieren</h1>
       <div className="space-y-1">
-        <Label htmlFor="f">CSV-Datei (Komma oder Semikolon getrennt)</Label>
-        <Input id="f" type="file" accept=".csv,text/csv" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
+        <Label htmlFor="f">CSV- oder Excel-Datei (.csv, .xlsx; erstes Tabellenblatt, erste Zeile = Spaltennamen)</Label>
+        <Input id="f" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
       </div>
       {headers.length > 0 && (
         <div className="space-y-4 rounded-xl border bg-card p-4">
