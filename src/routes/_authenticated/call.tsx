@@ -27,7 +27,18 @@ function CallPage() {
     queryKey: ["profile", user.id],
     queryFn: async () => (await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle()).data,
   });
-  const { data: lead, isLoading } = useQuery({
+  const { data: savedScript } = useQuery({
+    queryKey: ["script"],
+    queryFn: async () => (await supabase.from("app_settings").select("value").eq("key", "call_script").maybeSingle()).data?.value,
+  });
+  const { data: dueCb } = useQuery({
+    queryKey: ["next-lead", "due-callback"],
+    queryFn: async () => {
+      const { data } = await supabase.from("callbacks").select("id,due_at,lead:leads(*)").eq("done", false).lte("due_at", new Date().toISOString()).order("due_at").limit(1).maybeSingle();
+      return data;
+    },
+  });
+  const { data: openLead, isLoading } = useQuery({
     queryKey: ["next-lead"],
     queryFn: async () => {
       const { data } = await supabase.from("leads").select("*").eq("status", "open")
@@ -36,6 +47,7 @@ function CallPage() {
     },
   });
 
+  const lead = dueCb?.lead ?? openLead;
   async function record(outcome: Outcome) {
     if (!lead) return;
     if ((outcome === "callback" || outcome === "appointment") && !when) {
@@ -44,6 +56,7 @@ function CallPage() {
     }
     setBusy(true);
     const newStatus = outcome === "not_reached" ? "open" : outcome;
+    if (dueCb?.lead) await supabase.from("callbacks").update({ done: true }).eq("id", dueCb.id);
     const now = new Date().toISOString();
     const ops: PromiseLike<{ error: { message: string } | null }>[] = [
       supabase.from("leads").update({ status: newStatus, attempts: lead.attempts + 1, last_called_at: now, last_called_by: user.id }).eq("id", lead.id),
@@ -60,12 +73,13 @@ function CallPage() {
     setNote(""); setWhen(""); setPending(null);
     qc.invalidateQueries({ queryKey: ["next-lead"] });
     qc.invalidateQueries({ queryKey: ["batches"] });
+    qc.invalidateQueries({ queryKey: ["callbacks"] });
   }
 
   if (isLoading) return <p className="text-muted-foreground">Lädt …</p>;
   if (!lead) return <p className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">Keine offenen Leads. Importiere neue Leads.</p>;
 
-  const script = fillScript(DEFAULT_SCRIPT, {
+  const script = fillScript(savedScript ?? DEFAULT_SCRIPT, {
     firma: lead.company, ansprechpartner: lead.contact_name, stadt: lead.city, caller: me?.display_name,
   });
   const extra = Object.entries((lead.extra ?? {}) as Record<string, string>);
@@ -74,7 +88,7 @@ function CallPage() {
     <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
       <section className="space-y-4">
         <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Nächster Lead · Versuch {lead.attempts + 1}</p>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">{dueCb?.lead ? "Fälliger Callback" : "Nächster Lead"} · Versuch {lead.attempts + 1}</p>
           <h1 className="font-display text-2xl font-bold">{lead.company || "Ohne Firmenname"}</h1>
           <p className="text-muted-foreground">{[lead.contact_name, lead.city].filter(Boolean).join(" · ")}</p>
           {lead.phone && (
@@ -88,7 +102,7 @@ function CallPage() {
           )}
         </div>
         <div className="rounded-xl border border-primary/30 bg-primary/10 p-3 text-sm">
-          <span className="font-semibold">Vorschlag: </span>{suggestNextStep(lead)}
+          <span className="font-semibold">Vorschlag: </span>{suggestNextStep(lead, { callbackDueAt: dueCb?.due_at ?? null })}
         </div>
         <Textarea placeholder="Notiz zum Gespräch …" value={note} onChange={(e) => setNote(e.target.value)} />
         {pending && (

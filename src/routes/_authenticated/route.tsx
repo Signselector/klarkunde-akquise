@@ -40,12 +40,19 @@ function Layout() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-card/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-2">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-2">
           <span className="font-display mr-2 font-bold text-primary">Cold Call</span>
           <nav className="flex flex-1 flex-wrap gap-1">
             <Link to="/dashboard" className={link} activeProps={active}>Übersicht</Link>
             <Link to="/call" className={link} activeProps={active}>Anrufen</Link>
+            <Link to="/leads" className={link} activeProps={active}>Leads</Link>
+            <Link to="/callbacks" className={link} activeProps={active}>Callbacks</Link>
+            <Link to="/appointments" className={link} activeProps={active}>Termine</Link>
+            <Link to="/completed" className={link} activeProps={active}>Kunden</Link>
+            <Link to="/offers" className={link} activeProps={active}>Angebote</Link>
+            <Link to="/stats" className={link} activeProps={active}>Statistik</Link>
             <Link to="/import" className={link} activeProps={active}>Import</Link>
+            {me?.admin && <Link to="/settings" className={link} activeProps={active}>Einstellungen</Link>}
           </nav>
           <span className="text-xs text-muted-foreground">
             {me?.name} · {me?.admin ? "Admin" : "Caller"}
@@ -53,7 +60,7 @@ function Layout() {
           <Button size="sm" variant="ghost" onClick={signOut}>Abmelden</Button>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-6">
         <Outlet />
       </main>
     </div>

@@ -7,12 +7,12 @@
 - [x] Anruf-Ablauf (nächster Lead, Script, Ergebnis-Buttons, Vorschlag)
 
 ## Danach
-- [ ] Excel-Import (.xlsx)
-- [ ] Leads-Liste, Suche/Filter, Detail, Löschen/Verschieben/Wieder öffnen, Alle offenen löschen
-- [ ] Callbacks-Liste (heute fällig hervorgehoben), fällige Callbacks im Anruf-Ablauf
-- [ ] Termine (Liste/Kalender, Nur meine, eigenen Termin eintragen)
-- [ ] Meine Kunden, Erledigte Leads
-- [ ] Angebote (Kunden, Produkte, Angebote, Vorlagen)
-- [ ] Statistiken mit Charts
+- [x] Excel-Import (.xlsx)
+- [x] Leads-Liste, Suche/Filter, Detail, Löschen/Verschieben/Wieder öffnen, Alle offenen löschen
+- [x] Callbacks-Liste (heute fällig hervorgehoben), fällige Callbacks im Anruf-Ablauf
+- [x] Termine (Liste/Kalender, Nur meine, eigenen Termin eintragen)
+- [x] Meine Kunden, Erledigte Leads
+- [x] Angebote (Kunden, Produkte, Angebote, Vorlagen)
+- [x] Statistiken mit Charts
 - [ ] Pipedrive-Sync mit Retry (über Pipedrive-Connector statt Token in der Datenbank)
-- [ ] Einstellungen (Script bearbeiten) + Account-Verwaltung (Admin)
+- [x] Einstellungen (Script bearbeiten) + Account-Verwaltung (Admin)
