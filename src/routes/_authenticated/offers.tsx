@@ -22,7 +22,7 @@ const STATUS = { draft: "Entwurf", sent: "Gesendet", accepted: "Angenommen", rej
 function OffersPage() {
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-2xl font-bold">Angebote</h1>
+      <h1 className="text-[22px] font-semibold">Angebote</h1>
       <Tabs defaultValue="offers">
         <TabsList><TabsTrigger value="offers">Angebote</TabsTrigger><TabsTrigger value="customers">Kunden</TabsTrigger><TabsTrigger value="products">Produkte</TabsTrigger></TabsList>
         <TabsContent value="offers"><OfferList /></TabsContent>
@@ -74,7 +74,7 @@ function OfferList() {
     <div className="space-y-3 pt-3">
       <Button onClick={() => setCreating((c) => !c)}>{creating ? "Abbrechen" : "Neues Angebot"}</Button>
       {creating && (
-        <div className="space-y-3 rounded-xl border bg-card p-4">
+        <div className="space-y-3 rounded-lg border bg-card p-4">
           <Select value={customerId} onValueChange={setCustomerId}>
             <SelectTrigger><SelectValue placeholder="Kunde wählen …" /></SelectTrigger>
             <SelectContent>{customers?.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
@@ -100,9 +100,9 @@ function OfferList() {
         </div>
       )}
       <div className="space-y-2">
-        {offers?.length === 0 && <p className="rounded-xl border border-dashed p-6 text-center text-muted-foreground">Noch keine Angebote.</p>}
+        {offers?.length === 0 && <p className="rounded-lg border border-dashed p-6 text-center text-muted-foreground">Noch keine Angebote.</p>}
         {offers?.map((o) => (
-          <div key={o.id} className="space-y-1 rounded-xl border bg-card p-3">
+          <div key={o.id} className="space-y-1 rounded-lg border bg-card p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-medium">{o.offer_number} · {o.customer?.name ?? "Ohne Kunde"}</span>
               <span className="flex items-center gap-2"><Badge variant="secondary">{STATUS[o.status] ?? o.status}</Badge><b>{eur(total(o.items as Item[]))}</b></span>
@@ -136,14 +136,14 @@ function Customers() {
   }
   return (
     <div className="space-y-3 pt-3">
-      <div className="grid gap-2 rounded-xl border bg-card p-3 sm:grid-cols-2">
+      <div className="grid gap-2 rounded-lg border bg-card p-3 sm:grid-cols-2">
         {(["name", "email", "phone", "address"] as const).map((k) => (
           <Input key={k} placeholder={{ name: "Kundenname", email: "E-Mail", phone: "Telefon", address: "Adresse" }[k]} value={f[k]} onChange={(e) => setF({ ...f, [k]: e.target.value })} />
         ))}
         <Button onClick={add} disabled={!f.name.trim()}>Neuer Kunde</Button>
       </div>
       {data?.length === 0 && <p className="text-sm text-muted-foreground">Keine Kunden.</p>}
-      <div className="divide-y rounded-xl border bg-card">
+      <div className="divide-y rounded-lg border bg-card">
         {data?.map((c) => (
           <div key={c.id} className="flex items-center justify-between gap-2 p-3">
             <span><span className="block font-medium">{c.name}</span><span className="text-sm text-muted-foreground">{[c.email, c.phone, c.address].filter(Boolean).join(" · ")}</span></span>
@@ -176,14 +176,14 @@ function Products() {
   return (
     <div className="space-y-3 pt-3">
       {admin ? (
-        <div className="grid gap-2 rounded-xl border bg-card p-3 sm:grid-cols-[1fr_1fr_8rem_auto]">
+        <div className="grid gap-2 rounded-lg border bg-card p-3 sm:grid-cols-[1fr_1fr_8rem_auto]">
           <Input placeholder="Produktname" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
           <Input placeholder="Beschreibung" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} />
           <Input type="number" min="0" step="0.01" value={f.unit_price} onChange={(e) => setF({ ...f, unit_price: Number(e.target.value) })} />
           <Button onClick={add} disabled={!f.name.trim()}>Neues Produkt</Button>
         </div>
       ) : <p className="text-sm text-muted-foreground">Der Produktkatalog wird von Admins gepflegt.</p>}
-      <div className="divide-y rounded-xl border bg-card">
+      <div className="divide-y rounded-lg border bg-card">
         {data?.length === 0 && <p className="p-3 text-sm text-muted-foreground">Keine Produkte.</p>}
         {data?.map((p) => (
           <div key={p.id} className="flex items-center justify-between gap-2 p-3">

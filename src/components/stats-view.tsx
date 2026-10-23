@@ -63,7 +63,7 @@ export function StatsView({ userId, mode, title }: { userId: string; mode: Stats
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-2xl font-bold">{title}</h1>
+        <h1 className="text-[22px] font-semibold">{title}</h1>
         <div className="flex gap-2">
           {mode !== "evaluation" && <Tabs value={scope} onValueChange={(v) => setScope(v as "mine" | "all")}><TabsList><TabsTrigger value="mine">Meine</TabsTrigger><TabsTrigger value="all">Team</TabsTrigger></TabsList></Tabs>}
           {mode === "overview" && <Tabs value={range} onValueChange={(v) => setRange(v as "today" | "30")}><TabsList><TabsTrigger value="today">Heute</TabsTrigger><TabsTrigger value="30">30 Tage</TabsTrigger></TabsList></Tabs>}
@@ -71,12 +71,12 @@ export function StatsView({ userId, mode, title }: { userId: string; mode: Stats
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {tiles.map(([l, v]) => (
-          <div key={l as string} className="rounded-xl border bg-card p-4"><p className="text-sm text-muted-foreground">{l}</p><p className="font-display text-3xl font-bold">{v}</p></div>
+          <div key={l as string} className="py-2"><p className="text-sm text-muted-foreground">{l}</p><p className="text-[28px] font-normal tabular-nums">{v}</p></div>
         ))}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        {mode !== "evaluation" && <section className="space-y-2 rounded-xl border bg-card p-4"><h2 className="font-semibold">Ergebnisse</h2><Bars items={byStatus} /></section>}
-        {mode !== "daily" && <section className="space-y-2 rounded-xl border bg-card p-4"><h2 className="font-semibold">Anrufe pro Wochentag</h2><Bars items={byDay} /></section>}
+        {mode !== "evaluation" && <section className="space-y-2 rounded-lg border bg-card p-4"><h2 className="font-semibold">Ergebnisse</h2><Bars items={byStatus} /></section>}
+        {mode !== "daily" && <section className="space-y-2 rounded-lg border bg-card p-4"><h2 className="font-semibold">Anrufe pro Wochentag</h2><Bars items={byDay} /></section>}
       </div>
     </div>
   );

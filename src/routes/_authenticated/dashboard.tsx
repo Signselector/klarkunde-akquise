@@ -30,7 +30,7 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-[22px] font-semibold">Dashboard</h1>
         <div className="flex gap-2">
           <Button asChild variant="outline"><Link to="/callbacks">Callbacks</Link></Button>
           <Button asChild variant="outline"><Link to="/import">CSV importieren</Link></Button>
@@ -39,7 +39,7 @@ function Dashboard() {
       </div>
       {isLoading && <p className="text-muted-foreground">Lädt …</p>}
       {batches?.length === 0 && (
-        <p className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">
+        <p className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
           Noch keine Leads. Importiere eine CSV-Datei, um loszulegen.
         </p>
       )}
@@ -47,7 +47,7 @@ function Dashboard() {
         {batches?.map((b) => {
           const pct = b.total ? Math.round((b.done / b.total) * 100) : 0;
           return (
-            <div key={b.id} className="space-y-2 rounded-xl border bg-card p-4">
+            <div key={b.id} className="space-y-2 rounded-lg border bg-card p-4">
               <div className="flex justify-between gap-2">
                 <span className="font-medium">{b.name}</span>
                 <span className="text-sm text-muted-foreground">{new Date(b.created_at).toLocaleDateString("de-DE")}</span>

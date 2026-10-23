@@ -47,7 +47,7 @@ function LeadsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-2xl font-bold">Offene Leads</h1>
+        <h1 className="text-[22px] font-semibold">Offene Leads</h1>
         {admin && (
           <AlertDialog>
             <AlertDialogTrigger asChild><Button variant="destructive" size="sm">Alle offenen Leads löschen</Button></AlertDialogTrigger>
@@ -75,8 +75,8 @@ function LeadsPage() {
         </Select>
       </div>
       {isLoading && <p className="text-muted-foreground">Lädt …</p>}
-      {leads?.length === 0 && <p className="rounded-xl border border-dashed p-8 text-center text-muted-foreground">Keine Leads gefunden.</p>}
-      <div className="divide-y rounded-xl border bg-card">
+      {leads?.length === 0 && <p className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">Keine Leads gefunden.</p>}
+      <div className="divide-y rounded-lg border bg-card">
         {leads?.map((l) => (
           <button key={l.id} onClick={() => setOpenId(l.id)} className="flex w-full items-center justify-between gap-3 p-3 text-left hover:bg-accent/50">
             <span>

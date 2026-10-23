@@ -36,8 +36,8 @@ function AccountsPage() {
   if (!admin) return <p className="text-muted-foreground">Accounts sind nur für Admins.</p>;
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Accounts</h1>
-      <section className="space-y-2 rounded-xl border bg-card p-4">
+      <h1 className="text-[22px] font-semibold">Accounts</h1>
+      <section className="space-y-2 rounded-lg border bg-card p-4">
         <p className="text-sm text-muted-foreground">Neue Nutzer registrieren sich selbst und sind zuerst Caller.</p>
         <div className="divide-y">
           {users?.map((u) => (

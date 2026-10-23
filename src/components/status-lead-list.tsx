@@ -20,11 +20,11 @@ export function StatusLeadList({ userId, title, statuses }: { userId: string; ti
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-2xl font-bold">{title} ({items.length})</h1>
+        <h1 className="text-[22px] font-semibold">{title} ({items.length})</h1>
         <div className="flex items-center gap-2"><Switch id="m" checked={mine} onCheckedChange={setMine} /><Label htmlFor="m">Nur von mir</Label></div>
       </div>
       {isLoading && <p className="text-muted-foreground">Lädt …</p>}
-      <div className="divide-y rounded-xl border bg-card">
+      <div className="divide-y rounded-lg border bg-card">
         {!isLoading && items.length === 0 && <p className="p-3 text-sm text-muted-foreground">Keine Einträge.</p>}
         {items.map((l) => (
           <div key={l.id} className="flex items-center justify-between gap-2 p-3">

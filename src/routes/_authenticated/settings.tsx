@@ -31,14 +31,14 @@ function SettingsPage() {
   if (!admin) return <p className="text-muted-foreground">Einstellungen sind nur für Admins.</p>;
   return (
     <div className="space-y-6">
-      <h1 className="font-display text-2xl font-bold">Einstellungen</h1>
-      <section className="space-y-2 rounded-xl border bg-card p-4">
+      <h1 className="text-[22px] font-semibold">Einstellungen</h1>
+      <section className="space-y-2 rounded-lg border bg-card p-4">
         <h2 className="font-semibold">Gesprächsleitfaden</h2>
         <p className="text-sm text-muted-foreground">Platzhalter: {"{{firma}} {{ansprechpartner}} {{stadt}} {{caller}}"}</p>
         <Textarea rows={12} value={script} onChange={(e) => setScript(e.target.value)} />
         <Button onClick={saveScript}>Speichern</Button>
       </section>
-      <section className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
+      <section className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
         <h2 className="mb-1 font-semibold text-foreground">Pipedrive</h2>
         Der Pipedrive-Sync wird über die Pipedrive-Verbindung eingerichtet, nicht über einen Token in dieser App.
       </section>

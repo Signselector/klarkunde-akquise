@@ -45,10 +45,10 @@ function AppointmentsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="font-display text-2xl font-bold">Termine</h1>
+        <h1 className="text-[22px] font-semibold">Termine</h1>
         <div className="flex items-center gap-2"><Switch id="mine" checked={mine} onCheckedChange={setMine} /><Label htmlFor="mine">Nur meine Termine</Label></div>
       </div>
-      <div className="flex flex-wrap gap-2 rounded-xl border bg-card p-3">
+      <div className="flex flex-wrap gap-2 rounded-lg border bg-card p-3">
         <Input className="max-w-xs" placeholder="Eigener Termin (Titel)" value={title} onChange={(e) => setTitle(e.target.value)} />
         <Input className="w-auto" type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
         <Button onClick={add} disabled={!when}>Eintragen</Button>
@@ -57,7 +57,7 @@ function AppointmentsPage() {
         <section key={label} className="space-y-2">
           <h2 className="font-semibold">{label} ({items.length})</h2>
           {items.map((a) => (
-            <div key={a.id} className="flex items-center justify-between gap-2 rounded-xl border bg-card p-3">
+            <div key={a.id} className="flex items-center justify-between gap-2 rounded-lg border bg-card p-3">
               <div>
                 <p className="font-medium">{a.lead?.company ?? a.notes ?? "Termin"}</p>
                 <p className="text-sm text-muted-foreground">{new Date(a.starts_at).toLocaleString("de-DE")}{a.lead?.phone ? ` · ${a.lead.phone}` : ""}{a.lead && a.notes ? ` · ${a.notes}` : ""}</p>

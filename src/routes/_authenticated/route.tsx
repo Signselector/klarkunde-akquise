@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { createFileRoute, redirect, Outlet, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,14 +58,14 @@ function Layout() {
   ] as const;
 
   return (
-    <SidebarProvider>
+    <SidebarProvider style={{ "--sidebar-width": "14.25rem" } as CSSProperties}>
       <Sidebar>
         <SidebarHeader className="border-b border-sidebar-border p-4">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-blue-500 text-white"><FileText className="size-5" /></div>
+            <div className="flex size-9 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">CC</div>
             <div className="leading-tight">
               <p className="font-display font-semibold">Cold Call Tool</p>
-              <p className="text-xs text-muted-foreground">→ Pipedrive</p>
+              <p className="text-xs text-muted-foreground">Team-Akquise</p>
             </div>
           </div>
         </SidebarHeader>
@@ -72,7 +73,7 @@ function Layout() {
           <SidebarMenu>
             {items.map((i) => (
               <SidebarMenuItem key={i.to}>
-                <SidebarMenuButton asChild size="lg" className="data-[active=true]:bg-blue-500 data-[active=true]:text-white">
+                <SidebarMenuButton asChild>
                   <Link to={i.to} activeProps={{ "data-active": true } as object}>
                     <i.icon />
                     <span>{i.label}</span>
@@ -87,10 +88,10 @@ function Layout() {
           <Button size="sm" variant="ghost" className="justify-start" onClick={signOut}>Abmelden</Button>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset>
-        <header className="flex items-center gap-2 border-b px-4 py-2 md:hidden">
+      <SidebarInset className="md:my-2 md:mr-2 md:min-h-[calc(100svh-1rem)] md:rounded-2xl md:border">
+        <header className="flex h-12 items-center gap-2 bg-sidebar px-4 md:hidden">
           <SidebarTrigger />
-          <span className="font-display font-bold text-primary">Cold Call Tool</span>
+          <span className="font-semibold">Cold Call Tool</span>
         </header>
         <main className="mx-auto w-full max-w-6xl px-4 py-6">
           <Outlet />
