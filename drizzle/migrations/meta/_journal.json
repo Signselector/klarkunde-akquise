@@ -8,6 +8,13 @@
       "when": 1792754757634,
       "tag": "0000_phase1_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792854768538,
+      "tag": "0001_atomic_call_and_role_management",
+      "breakpoints": true
     }
   ]
 }
