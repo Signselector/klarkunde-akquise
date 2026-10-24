@@ -19,8 +19,8 @@ beim Nutzer. Weder ein Git-Merge noch die lokalen Tests führen diese Schritte a
 
 ## Nach dem Merge in Lovable
 
-`docs/LOVABLE-BACKEND-SETUP.md` ausführen: Datenbank bereitstellen, Erstadmin und
-Testaccounts einrichten, Cloud-Worker und Secrets verbinden, reale Pipedrive-IDs
+`docs/LOVABLE-BACKEND-SETUP.md` ausführen: Datenbank bereitstellen, bestehenden Admin `office@signselector.com` erhalten
+und prüfen, Caller-Testaccounts einrichten, Cloud-Worker und Secrets verbinden, reale Pipedrive-IDs
 setzen, Scheduler aktivieren, App-Flag setzen und Live-Abnahme durchführen.
 
 Der Merge ist ein Code-Release. Produktionsfreigabe erst nach dieser Abnahme.

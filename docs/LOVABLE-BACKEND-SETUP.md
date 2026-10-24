@@ -34,21 +34,28 @@ Migrationen abgleichen und die nötigen Upgrades gezielt anwenden. Nicht blind
 Paket daraus. Die alte unvollständige Drizzle-Journaldatei ist nicht der Ausführungsweg.
 Nicht parallel `drizzle-kit migrate` für dieselben Migrationen starten.
 
-## 2. Auth und ersten Admin einrichten
+## 2. Bestehenden Admin erhalten und Anmeldung prüfen
 
-In Lovable Cloud die tatsächlichen App-/Preview-Redirect-URLs konfigurieren.
-Öffentliche Registrierungen nach Bedarf deaktivieren und Accounts über die
-verwaltete Einladung anlegen. Jeder neue Account erhält im Backend zunächst
-`caller`; niemand wird allein durch die erste Registrierung Admin.
+Laut Nutzer ist `office@signselector.com` bereits angemeldet und Admin.
+Diesen Account erhalten; keinen zweiten Erstadmin anlegen und das Auth-System
+nicht zurücksetzen. Die Angabe wurde hier nicht live gegen Lovable geprüft.
 
-Den ersten Admin anhand seiner verifizierten Auth-Benutzer-ID über die
-vertrauenswürdige Datenbankverwaltung in `public.user_roles` auf `admin` setzen.
-Es gibt absichtlich keinen öffentlichen Bootstrap-Endpunkt. Danach verwaltet
-die App Rollen mit `set_user_role`; sie schützt den letzten Admin.
+Lovable soll anhand der tatsächlichen Auth-Benutzer-ID prüfen, dass der bestehende
+Account in `public.user_roles` die Rolle `admin` besitzt. Eine E-Mail-Adresse allein
+ist kein Berechtigungsnachweis und wird nicht als automatische Admin-Sonderregel
+in den Code eingebaut. Falls nach Aufbau einer leeren Geschäftsdatenbank das
+Rollenprofil fehlt, muss Lovable genau den verifizierten bestehenden Auth-Account
+über seine vertrauenswürdige Datenbankverwaltung zuordnen.
+
+Die tatsächlichen App-/Preview-Redirect-URLs prüfen. Für die Rechte-Abnahme zwei
+separate Caller-Testkonten verwenden. Weitere Accounts erhalten im Backend
+zunächst `caller`; niemand wird allein durch die erste Registrierung Admin.
+Die App verwaltet spätere Rollenwechsel über `set_user_role` und schützt den
+letzten Admin.
 
 ## 3. App aktivieren
 
-Nach erfolgreichem Datenbankaufbau und Einrichtung eines Test-Admins sowie
+Nach erfolgreichem Datenbankaufbau und Prüfung des bestehenden Admins sowie
 zweier Test-Caller `VITE_ATOMIC_BACKEND_ENABLED=true` in Lovable setzen und
 neu bauen. Der Schalter aktiviert Reservierungen und alle neuen RPC-Anbindungen.
 Die Migrationen entziehen alte direkte Schreibrechte: nach ihrer Anwendung
