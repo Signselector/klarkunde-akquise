@@ -10,7 +10,7 @@ Den Backend-Branch über GitHub in den mit Lovable verbundenen Branch übernehme
 Währenddessen `VITE_ATOMIC_BACKEND_ENABLED` noch nicht auf `true` setzen.
 
 Für die vereinbarte neue, leere Geschäftsdatenbank enthält
-`backend/bootstrap.sql` alle sieben Migrationen in einer Transaktion samt
+`backend/bootstrap.sql` alle Migrationen in einer Transaktion samt
 Prüfsummen-Historie. Das verwaltete Auth-Schema wird vorausgesetzt und bleibt
 bestehen. Das Paket bricht bei bereits vorhandener `public.profiles` ab;
 es löscht oder ersetzt keine vorhandene Datenbank.

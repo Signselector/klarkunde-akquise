@@ -1,14 +1,19 @@
+@import "./fonts.css";
+
 .cc-theme,
 .cc-dialog,
 .cc-help {
-  --cc-ink: oklch(0.25 0.035 255);
-  --cc-muted: oklch(0.47 0.03 255);
-  --cc-blue: oklch(0.48 0.17 255);
-  --cc-border: oklch(0.89 0.015 255);
-  --cc-ground: oklch(0.97 0.008 255);
+  --cc-ink: oklch(0.19689 0.0016 17.293);
+  --cc-muted: oklch(0.44442 0.0096 73.639);
+  --cc-accent: oklch(0.35566 0.14239 28.694);
+  --cc-border: oklch(0.8714 0.01342 82.401);
+  --cc-ground: oklch(0.96158 0.00574 84.566);
   color: var(--cc-ink);
   font:
-    400 15px/1.5 "IBM Plex Sans",
+    400 15px/1.5 "Instrument Sans Variable",
+    "Helvetica Neue",
+    Helvetica,
+    Arial,
     system-ui,
     sans-serif;
 }
@@ -30,7 +35,7 @@
 .cc-theme :is(button, a, input, textarea, select):focus-visible,
 .cc-dialog :is(button, a):focus-visible,
 .cc-help:focus-visible {
-  outline: 3px solid oklch(0.66 0.14 250);
+  outline: 3px solid oklch(0.35566 0.14239 28.694);
   outline-offset: 3px;
 }
 .cc-theme h1,
@@ -59,8 +64,8 @@
   justify-content: center;
   align-items: center;
   gap: 9px;
-  border-radius: 9px;
-  padding: 10px 16px;
+  border-radius: 999px;
+  padding: 10px 18px;
   font-weight: 600 !important;
   border: 1px solid transparent;
   transition:
@@ -72,11 +77,11 @@
   transform: translateY(1px);
 }
 .cc-button--primary {
-  background: var(--cc-blue);
+  background: var(--cc-ink);
   color: white;
 }
 .cc-button--primary:hover:not(:disabled) {
-  background: oklch(0.41 0.15 255);
+  background: oklch(0.44442 0.0096 73.639);
 }
 .cc-button--secondary {
   color: var(--cc-ink);
@@ -107,7 +112,7 @@
 }
 .cc-info:hover,
 .cc-icon-button:hover {
-  background: oklch(0.9 0.02 255 / 40%);
+  background: oklch(0.9 0.01 80 / 40%);
 }
 .cc-help {
   z-index: 100;
@@ -116,7 +121,7 @@
   padding: 16px;
   border-radius: 10px;
   max-width: min(310px, calc(100vw - 32px));
-  box-shadow: 0 8px 30px oklch(0.2 0.03 255 / 14%);
+  box-shadow: 0 8px 30px oklch(0.2 0 0 / 14%);
 }
 .cc-help strong {
   display: block;
@@ -144,12 +149,12 @@
   flex-shrink: 0;
 }
 .cc-badge--neutral {
-  background: oklch(0.94 0.01 255);
-  color: oklch(0.43 0.03 255);
+  background: oklch(0.92914 0.01034 81.795);
+  color: oklch(0.44442 0.0096 73.639);
 }
 .cc-badge--info {
-  background: oklch(0.94 0.03 250);
-  color: oklch(0.42 0.14 255);
+  background: oklch(0.93523 0.01418 17.41);
+  color: oklch(0.35566 0.14239 28.694);
 }
 .cc-badge--success {
   background: oklch(0.94 0.04 160);
@@ -212,7 +217,7 @@
   letter-spacing: -0.04em;
 }
 .cc-metric-icon {
-  color: var(--cc-blue);
+  color: var(--cc-accent);
   display: flex;
 }
 .cc-sync {
@@ -262,7 +267,7 @@
 .cc-overlay {
   position: fixed;
   inset: 0;
-  background: oklch(0.18 0.03 255 / 55%);
+  background: oklch(0.18 0 0 / 55%);
   z-index: 80;
 }
 .cc-dialog {
@@ -277,7 +282,7 @@
   background: white;
   border-radius: 18px;
   padding: 24px;
-  box-shadow: 0 20px 80px oklch(0.15 0.03 255 / 25%);
+  box-shadow: 0 20px 80px oklch(0.15 0 0 / 25%);
 }
 .cc-dialog-heading {
   display: flex;
@@ -307,7 +312,7 @@
   margin: 20px 0;
   padding: 16px;
   background: var(--cc-ground);
-  border-left: 3px solid var(--cc-blue);
+  border-left: 3px solid var(--cc-accent);
   border-radius: 5px;
 }
 .cc-dialog-actions {

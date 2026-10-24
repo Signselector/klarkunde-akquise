@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/_authenticated/appointments")({
-  head: () => ({ meta: [{ title: "Termine – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Termine – Sign Selector Cold Caller" }] }),
   component: AppointmentsPage,
 });
 
@@ -41,13 +41,11 @@ function AppointmentsPage() {
           p_starts_at: new Date(when).toISOString(),
           p_notes: title || "Eigener Termin",
         })
-      : supabase
-          .from("appointments")
-          .insert({
-            user_id: user.id,
-            starts_at: new Date(when).toISOString(),
-            notes: title || "Eigener Termin",
-          }));
+      : supabase.from("appointments").insert({
+          user_id: user.id,
+          starts_at: new Date(when).toISOString(),
+          notes: title || "Eigener Termin",
+        }));
     if (error) {
       toast.error(error.message);
       return;

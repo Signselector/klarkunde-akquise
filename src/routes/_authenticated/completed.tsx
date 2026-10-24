@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { StatusLeadList } from "@/components/status-lead-list";
 
 export const Route = createFileRoute("/_authenticated/completed")({
-  head: () => ({ meta: [{ title: "Abgeschlossen – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Abgeschlossen – Sign Selector Cold Caller" }] }),
   component: CompletedPage,
 });
 

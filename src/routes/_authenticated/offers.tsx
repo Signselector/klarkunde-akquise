@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/offers")({
-  head: () => ({ meta: [{ title: "Angebote – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Angebote – Sign Selector Cold Caller" }] }),
   component: OffersPage,
 });
 

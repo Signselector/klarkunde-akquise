@@ -72,3 +72,5 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT EXISTS(SELECT 1 FROM public.user_roles WHERE user_id=_user_id AND role=_role)
 $$;
 REVOKE CREATE ON SCHEMA public FROM PUBLIC,anon,authenticated;
+-- Phase-2 SQL predates the consolidated role migration on main; enforce final grants.
+REVOKE INSERT,UPDATE,DELETE ON public.user_roles FROM authenticated;

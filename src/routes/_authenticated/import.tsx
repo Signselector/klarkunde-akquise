@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 
 export const Route = createFileRoute("/_authenticated/import")({
-  head: () => ({ meta: [{ title: "Lead-Import – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Lead-Import – Sign Selector Cold Caller" }] }),
   component: ImportPage,
 });
 

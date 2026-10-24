@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/callbacks")({
-  head: () => ({ meta: [{ title: "Callbacks – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Callbacks – Sign Selector Cold Caller" }] }),
   component: CallbacksPage,
 });
 

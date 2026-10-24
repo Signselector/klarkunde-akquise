@@ -1,4 +1,4 @@
--- Lovable Cloud backend. Apply transactionally after 0000..0003.
+-- Lovable Cloud backend. Apply after phase1, consolidated atomic/roles, and phase2.
 CREATE SCHEMA app_private;
 REVOKE ALL ON SCHEMA app_private FROM PUBLIC, anon, authenticated;
 CREATE TABLE app_private.requests (
