@@ -1,10 +1,45 @@
 import type { CSSProperties } from "react";
-import { createFileRoute, redirect, Outlet, Link, useNavigate } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  redirect,
+  Outlet,
+  Link,
+  useNavigate,
+  useLocation,
+} from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { CalendarClock, CalendarDays, ChartNoAxesColumn, CircleCheck, ClipboardList, Crown, FilePen, FileText, LayoutDashboard, Settings, Upload, Users } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarDays,
+  ChartNoAxesColumn,
+  CircleCheck,
+  ClipboardList,
+  Crown,
+  Phone,
+  LogOut,
+  Zap,
+  FilePen,
+  FileText,
+  LayoutDashboard,
+  Settings,
+  Upload,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -20,6 +55,7 @@ function Layout() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const nav = useNavigate();
+  const location = useLocation();
   const { data: me } = useQuery({
     queryKey: ["me", user.id],
     queryFn: async () => {
@@ -27,7 +63,10 @@ function Layout() {
         supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user.id),
       ]);
-      return { name: p.data?.display_name ?? user.email, admin: !!r.data?.some((x) => x.role === "admin") };
+      return {
+        name: p.data?.display_name ?? user.email,
+        admin: !!r.data?.some((x) => x.role === "admin"),
+      };
     },
   });
 
@@ -40,7 +79,9 @@ function Layout() {
 
   const items = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/leads", label: "Offene Leads", icon: Users },
+    { to: "/call", label: "Anrufen", icon: Phone },
+    { to: "/leads", label: "Leads", icon: Users },
+    { to: "/callbacks", label: "Rückrufe", icon: CalendarClock },
     { to: "/completed", label: "Abgeschlossen", icon: CircleCheck },
     { to: "/customers", label: "Meine Kunden", icon: FileText },
     { to: "/appointments", label: "Termine", icon: CalendarClock },
@@ -57,46 +98,100 @@ function Layout() {
       : []),
   ] as const;
 
+  const pageTitle = items.find((item) => item.to === location.pathname)?.label ?? "Arbeitsplatz";
+
   return (
-    <SidebarProvider className="bg-sidebar" style={{ "--sidebar-width": "14.25rem" } as CSSProperties}>
+    <SidebarProvider
+      className="cc-theme cc-app"
+      style={{ "--sidebar-width": "15.5rem" } as CSSProperties}
+    >
+      <a href="#arbeitsbereich" className="cc-skip-link">
+        Zum Arbeitsbereich
+      </a>
       <Sidebar>
-        <SidebarHeader className="border-b border-sidebar-border p-4">
-          <div className="flex items-center gap-3">
-            <div className="flex size-9 items-center justify-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">CC</div>
-            <div className="leading-tight">
-              <p className="font-display font-semibold">Cold Call Tool</p>
-              <p className="text-xs text-muted-foreground">Team-Akquise</p>
-            </div>
-          </div>
+        <SidebarHeader className="cc-sidebar-header">
+          <Link to="/dashboard" className="cc-brand" aria-label="KlarKunde Dashboard">
+            <Zap size={30} fill="currentColor" aria-hidden="true" />
+            <span>
+              KlarKunde<small>Dein nächster Abschluss.</small>
+            </span>
+          </Link>
         </SidebarHeader>
-        <SidebarContent className="p-2">
-          <SidebarMenu>
+        <SidebarContent className="px-3 pb-4">
+          <p className="cc-nav-caption">Dein Arbeitsplatz</p>
+          <SidebarMenu aria-label="Hauptnavigation">
             {items.map((i) => (
               <SidebarMenuItem key={i.to}>
-                <SidebarMenuButton asChild>
-                  <Link to={i.to} activeProps={{ "data-active": true } as object}>
-                    <i.icon />
-                    <span>{i.label}</span>
-                  </Link>
-                </SidebarMenuButton>
+                <NavigationItem
+                  to={i.to}
+                  label={i.label}
+                  icon={i.icon}
+                  active={location.pathname === i.to}
+                />
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter className="border-t border-sidebar-border p-3">
-          <p className="truncate text-xs text-muted-foreground">{me?.name} · {me?.admin ? "Admin" : "Caller"}</p>
-          <Button size="sm" variant="ghost" className="justify-start" onClick={signOut}>Abmelden</Button>
+        <SidebarFooter className="cc-sidebar-footer">
+          <div className="cc-user">
+            <span className="cc-avatar">
+              {(me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase()}
+            </span>
+            <div>
+              <strong>{me?.name ?? user.email}</strong>
+              <small>{me ? (me.admin ? "Admin" : "Caller") : "Profil wird geladen …"}</small>
+            </div>
+          </div>
+          <Button variant="ghost" className="cc-signout" onClick={signOut}>
+            <LogOut size={18} />
+            Abmelden
+          </Button>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="md:my-2 md:mr-2 md:min-h-[calc(100svh-1rem)] md:rounded-2xl md:border">
-        <header className="flex h-12 items-center gap-2 bg-sidebar px-4 md:hidden">
-          <SidebarTrigger />
-          <span className="font-semibold">Cold Call Tool</span>
+      <SidebarInset className="min-w-0">
+        <header className="cc-topbar">
+          <div className="flex min-w-0 items-center gap-3">
+            <SidebarTrigger
+              className="cc-menu-trigger"
+              aria-label="Navigation öffnen oder schließen"
+            />
+            <span className="cc-breadcrumb">
+              KlarKunde <span aria-hidden="true">/</span> <strong>{pageTitle}</strong>
+            </span>
+          </div>
+          <span className="cc-topbar-label">Team-Akquise</span>
         </header>
-        <main className="mx-auto w-full max-w-6xl px-4 py-6">
+        <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
           <Outlet />
-        </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
+  );
+}
+
+function NavigationItem({
+  to,
+  label,
+  icon: Icon,
+  active,
+}: {
+  to: string;
+  label: string;
+  icon: typeof Users;
+  active: boolean;
+}) {
+  const { isMobile, setOpenMobile } = useSidebar();
+  return (
+    <SidebarMenuButton asChild isActive={active} size="lg" className="cc-nav-link">
+      <Link
+        to={to}
+        onClick={() => {
+          if (isMobile) setOpenMobile(false);
+        }}
+      >
+        <Icon aria-hidden="true" />
+        <span>{label}</span>
+      </Link>
+    </SidebarMenuButton>
   );
 }

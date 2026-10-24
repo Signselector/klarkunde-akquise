@@ -17,11 +17,13 @@ export function CallbackDialog({
   onOpenChange,
   callback,
   onCall,
+  actionLabel = "Jetzt anrufen",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   callback: CallbackPreview;
   onCall: () => void;
+  actionLabel?: string;
 }) {
   const returnFocus = useRef<HTMLElement | null>(null);
   return (
@@ -64,7 +66,7 @@ export function CallbackDialog({
             </Dialog.Close>
             <ActionButton onClick={onCall}>
               <Phone size={18} />
-              Jetzt anrufen
+              {actionLabel}
             </ActionButton>
           </div>
         </Dialog.Content>
