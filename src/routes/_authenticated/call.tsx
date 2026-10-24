@@ -4,6 +4,25 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_SCRIPT, fillScript, suggestNextStep } from "@/lib/leads";
+import {
+  Building2,
+  CalendarClock,
+  Check,
+  Lightbulb,
+  Phone,
+  PhoneMissed,
+  Send,
+  X,
+} from "lucide-react";
+import {
+  FeedbackState,
+  InfoButton,
+  StatusBadge,
+  Surface,
+} from "@/components/coldcaller/primitives";
+import { PageHeading, LeadContact } from "@/components/coldcaller/workspace-parts";
+import { CallbackDialog } from "@/components/coldcaller/callback-dialog";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,61 +37,144 @@ type Outcome = "not_reached" | "no_interest" | "callback" | "appointment" | "pro
 function CallPage() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
-  const [note, setNote] = useState("");
-  const [when, setWhen] = useState("");
-  const [pending, setPending] = useState<Outcome | null>(null);
+  const [drafts, setDrafts] = useState<
+    Record<string, { note: string; when: string; pending: Outcome | null }>
+  >({});
+  const [callbackOpen, setCallbackOpen] = useState(false);
+  const [useCallback, setUseCallback] = useState(false);
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
   const lastRequest = useRef<{ payload: string; id: string } | null>(null);
 
   const { data: me } = useQuery({
     queryKey: ["profile", user.id],
-    queryFn: async () => (await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle()).data,
+    queryFn: async () =>
+      (await supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle()).data,
   });
   const { data: savedScript } = useQuery({
     queryKey: ["script"],
-    queryFn: async () => (await supabase.from("app_settings").select("value").eq("key", "call_script").maybeSingle()).data?.value,
+    queryFn: async () =>
+      (await supabase.from("app_settings").select("value").eq("key", "call_script").maybeSingle())
+        .data?.value ?? null,
   });
-  const { data: dueCb } = useQuery({
+  const {
+    data: dueCb,
+    isLoading: callbackLoading,
+    isError: callbackError,
+    refetch: refetchCallback,
+  } = useQuery({
     queryKey: ["next-lead", "due-callback"],
     queryFn: async () => {
-      const { data } = await supabase.from("callbacks").select("id,due_at,lead:leads(*)").eq("done", false).eq("user_id", user.id).lte("due_at", new Date().toISOString()).order("due_at").limit(1).maybeSingle();
+      const { data, error } = await supabase
+        .from("callbacks")
+        .select("id,due_at,lead:leads(*)")
+        .eq("done", false)
+        .eq("user_id", user.id)
+        .lte("due_at", new Date().toISOString())
+        .order("due_at")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
       return data;
     },
   });
-  const { data: openLead, isLoading } = useQuery({
+  const {
+    data: openLead,
+    isLoading,
+    isError: leadError,
+    refetch: refetchLead,
+  } = useQuery({
     queryKey: ["next-lead"],
     queryFn: async () => {
-      const { data } = await supabase.from("leads").select("*").eq("status", "open")
-        .order("last_called_at", { ascending: true, nullsFirst: true }).order("created_at").limit(1).maybeSingle();
+      const { data, error } = await supabase
+        .from("leads")
+        .select("*")
+        .eq("status", "open")
+        .order("last_called_at", { ascending: true, nullsFirst: true })
+        .order("created_at")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
       return data;
     },
   });
 
-  const lead = dueCb?.lead ?? openLead;
+  const lead = useCallback ? (dueCb?.lead ?? openLead) : (openLead ?? dueCb?.lead);
+  const selectedCallback = dueCb?.lead?.id === lead?.id ? dueCb : null;
+  const draftKey = lead?.id ?? "";
+  const { note = "", when = "", pending = null } = drafts[draftKey] ?? {};
+  function updateDraft(patch: Partial<{ note: string; when: string; pending: Outcome | null }>) {
+    setDrafts((current) => ({
+      ...current,
+      [draftKey]: { note: "", when: "", pending: null, ...current[draftKey], ...patch },
+    }));
+  }
+  const setNote = (value: string) => updateDraft({ note: value });
+  const setWhen = (value: string) => updateDraft({ when: value });
+  const setPending = (value: Outcome | null) => updateDraft({ pending: value });
   async function recordLegacy(outcome: Outcome) {
     if (!lead) return;
     if ((outcome === "callback" || outcome === "appointment") && !when) {
       setPending(outcome);
-      { toast.message("Bitte Datum und Uhrzeit wählen."); return; }
+      {
+        toast.message("Bitte Datum und Uhrzeit wählen.");
+        return;
+      }
     }
     setBusy(true);
     const newStatus = outcome === "not_reached" ? "open" : outcome;
-    if (dueCb?.lead) await supabase.from("callbacks").update({ done: true }).eq("id", dueCb.id);
+    if (selectedCallback?.lead)
+      await supabase.from("callbacks").update({ done: true }).eq("id", selectedCallback.id);
     const now = new Date().toISOString();
     const ops: PromiseLike<{ error: { message: string } | null }>[] = [
-      supabase.from("leads").update({ status: newStatus, attempts: lead.attempts + 1, last_called_at: now, last_called_by: user.id }).eq("id", lead.id),
-      supabase.from("status_changes").insert({ lead_id: lead.id, user_id: user.id, old_status: lead.status, new_status: outcome }),
+      supabase
+        .from("leads")
+        .update({
+          status: newStatus,
+          attempts: lead.attempts + 1,
+          last_called_at: now,
+          last_called_by: user.id,
+        })
+        .eq("id", lead.id),
+      supabase.from("status_changes").insert({
+        lead_id: lead.id,
+        user_id: user.id,
+        old_status: lead.status,
+        new_status: outcome,
+      }),
     ];
-    if (note.trim()) ops.push(supabase.from("lead_notes").insert({ lead_id: lead.id, user_id: user.id, body: note.trim() }));
-    if (outcome === "callback") ops.push(supabase.from("callbacks").insert({ lead_id: lead.id, user_id: user.id, due_at: new Date(when).toISOString() }));
-    if (outcome === "appointment") ops.push(supabase.from("appointments").insert({ lead_id: lead.id, user_id: user.id, starts_at: new Date(when).toISOString(), notes: note || null }));
+    if (note.trim())
+      ops.push(
+        supabase
+          .from("lead_notes")
+          .insert({ lead_id: lead.id, user_id: user.id, body: note.trim() }),
+      );
+    if (outcome === "callback")
+      ops.push(
+        supabase
+          .from("callbacks")
+          .insert({ lead_id: lead.id, user_id: user.id, due_at: new Date(when).toISOString() }),
+      );
+    if (outcome === "appointment")
+      ops.push(
+        supabase.from("appointments").insert({
+          lead_id: lead.id,
+          user_id: user.id,
+          starts_at: new Date(when).toISOString(),
+          notes: note || null,
+        }),
+      );
     const res = await Promise.all(ops);
     setBusy(false);
     const err = res.find((r) => r.error)?.error;
-    if (err) { toast.error("Speichern fehlgeschlagen: " + err.message); return; }
+    if (err) {
+      toast.error("Speichern fehlgeschlagen. Deine Notiz bleibt erhalten. Bitte erneut versuchen.");
+      return;
+    }
     toast.success("Gespeichert – nächster Lead.");
-    setNote(""); setWhen(""); setPending(null);
+    setNote("");
+    setWhen("");
+    setPending(null);
     qc.invalidateQueries({ queryKey: ["next-lead"] });
     qc.invalidateQueries({ queryKey: ["batches"] });
     qc.invalidateQueries({ queryKey: ["callbacks"] });
@@ -83,12 +185,19 @@ function CallPage() {
     if (!lead) return;
     if ((outcome === "callback" || outcome === "appointment") && !when) {
       setPending(outcome);
-      { toast.message("Bitte Datum und Uhrzeit wählen."); return; }
+      {
+        toast.message("Bitte Datum und Uhrzeit wählen.");
+        return;
+      }
     }
     if (inFlight.current) return;
     const scheduledAt = when ? new Date(when) : null;
-    if ((outcome === "callback" || outcome === "appointment") &&
-        (!scheduledAt || !Number.isFinite(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now())) {
+    if (
+      (outcome === "callback" || outcome === "appointment") &&
+      (!scheduledAt ||
+        !Number.isFinite(scheduledAt.getTime()) ||
+        scheduledAt.getTime() <= Date.now())
+    ) {
       toast.error("Bitte einen gültigen zukünftigen Zeitpunkt wählen.");
       return;
     }
@@ -98,8 +207,9 @@ function CallPage() {
       p_outcome: outcome,
       ...(note.trim() ? { p_note: note.trim() } : {}),
       ...((outcome === "callback" || outcome === "appointment") && scheduledAt
-        ? { p_scheduled_at: scheduledAt.toISOString() } : {}),
-      ...(dueCb?.lead ? { p_callback_id: dueCb.id } : {}),
+        ? { p_scheduled_at: scheduledAt.toISOString() }
+        : {}),
+      ...(selectedCallback?.lead ? { p_callback_id: selectedCallback.id } : {}),
     };
     const payload = JSON.stringify(args);
     if (lastRequest.current?.payload !== payload) {
@@ -109,11 +219,14 @@ function CallPage() {
     setBusy(true);
     try {
       const { error } = await supabase.rpc("record_call_outcome", {
-        ...args, p_request_id: lastRequest.current.id,
+        ...args,
+        p_request_id: lastRequest.current.id,
       });
       if (error) {
         if (error.message.includes("stale_lead") || error.message.includes("callback_conflict")) {
-          toast.error("Der Lead oder Rückruf wurde inzwischen geändert. Bitte den aktuellen Stand prüfen.");
+          toast.error(
+            "Der Lead oder Rückruf wurde inzwischen geändert. Bitte den aktuellen Stand prüfen.",
+          );
           await qc.invalidateQueries({ queryKey: ["next-lead"] });
         } else {
           toast.error("Speichern fehlgeschlagen. Bitte erneut versuchen.");
@@ -129,60 +242,231 @@ function CallPage() {
     }
     lastRequest.current = null;
     toast.success("Gespeichert – nächster Lead.");
-    setNote(""); setWhen(""); setPending(null);
+    setNote("");
+    setWhen("");
+    setPending(null);
     qc.invalidateQueries({ queryKey: ["next-lead"] });
     qc.invalidateQueries({ queryKey: ["batches"] });
     qc.invalidateQueries({ queryKey: ["callbacks"] });
   }
 
-  if (isLoading) return <p className="text-muted-foreground">Lädt …</p>;
-  if (!lead) return <p className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">Keine offenen Leads. Importiere neue Leads.</p>;
+  if (isLoading || callbackLoading)
+    return <FeedbackState kind="loading" title="Dein nächstes Gespräch wird vorbereitet" />;
+  if (leadError || callbackError)
+    return (
+      <FeedbackState
+        kind="error"
+        title="Arbeitsliste gerade nicht verfügbar"
+        action={
+          <Button
+            variant="outline"
+            onClick={() => {
+              refetchLead();
+              refetchCallback();
+            }}
+          >
+            Erneut versuchen
+          </Button>
+        }
+      >
+        Deine Entwürfe bleiben erhalten. Bitte lade die Arbeitsliste erneut.
+      </FeedbackState>
+    );
+  if (!lead)
+    return (
+      <div className="cc-page">
+        <PageHeading title="Anrufen" description="Dein Arbeitsplatz für gute Gespräche." />
+        <Surface title="Alles bearbeitet">
+          <FeedbackState
+            kind="empty"
+            title="Keine offenen Leads oder fälligen Rückrufe"
+            action={
+              <Button asChild>
+                <Link to="/import">Leads importieren</Link>
+              </Button>
+            }
+          >
+            Neue Kontakte erscheinen hier nach dem Import.
+          </FeedbackState>
+        </Surface>
+      </div>
+    );
 
   const script = fillScript(savedScript ?? DEFAULT_SCRIPT, {
-    firma: lead.company, ansprechpartner: lead.contact_name, stadt: lead.city, caller: me?.display_name,
+    firma: lead.company,
+    ansprechpartner: lead.contact_name,
+    stadt: lead.city,
+    caller: me?.display_name,
   });
-  const extra = Object.entries((lead.extra ?? {}) as Record<string, string>);
+  const extra = (lead.extra ?? {}) as Record<string, unknown>;
+  const extraEntries = Object.entries(extra);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_1.2fr]">
-      <section className="space-y-4">
-        <div className="rounded-lg border bg-card p-4">
-          <p className="text-sm text-muted-foreground">{dueCb?.lead ? "Fälliger Callback" : "Nächster Lead"} · Versuch {lead.attempts + 1}</p>
-          <h1 className="text-[22px] font-semibold">{lead.company || "Ohne Firmenname"}</h1>
-          <p className="text-muted-foreground">{[lead.contact_name, lead.city].filter(Boolean).join(" · ")}</p>
-          {lead.phone && (
-            <a href={`tel:${lead.phone}`} className="mt-3 inline-block text-2xl font-semibold text-primary">{lead.phone}</a>
-          )}
-          {lead.email && <p className="text-sm">{lead.email}</p>}
-          {extra.length > 0 && (
-            <dl className="mt-3 grid grid-cols-2 gap-x-3 text-sm">
-              {extra.map(([k, v]) => (<div key={k} className="contents"><dt className="text-muted-foreground">{k}</dt><dd>{v}</dd></div>))}
-            </dl>
-          )}
-        </div>
-        <div className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm">
-          <span className="font-semibold">Vorschlag: </span>{suggestNextStep(lead, { callbackDueAt: dueCb?.due_at ?? null })}
-        </div>
-        <Textarea placeholder="Notiz zum Gespräch …" value={note} onChange={(e) => setNote(e.target.value)} />
-        {pending && (
-          <div className="space-y-2 rounded-lg border bg-card p-3">
-            <p className="text-sm font-medium">{pending === "callback" ? "Callback am" : "Termin am"}</p>
-            <Input type="datetime-local" value={when} onChange={(e) => setWhen(e.target.value)} />
-            <Button disabled={busy || !when} onClick={() => record(pending)}>Speichern</Button>
+    <div className="cc-page">
+      <PageHeading
+        title="Dein nächstes Gespräch."
+        description="Kontaktdaten, Leitfaden und Notizen. Alles direkt griffbereit."
+        action={
+          dueCb?.lead ? (
+            <Button variant="outline" onClick={() => setCallbackOpen(true)} disabled={busy}>
+              <CalendarClock />
+              Fälligen Rückruf ansehen
+            </Button>
+          ) : (
+            <Button asChild variant="outline">
+              <Link to="/callbacks">
+                <CalendarClock />
+                Rückrufe öffnen
+              </Link>
+            </Button>
+          )
+        }
+      />
+      <div className="cc-work-grid">
+        <Surface
+          title={selectedCallback ? "Vereinbarter Rückruf" : "Anruf-Arbeitsplatz"}
+          action={
+            <StatusBadge tone={selectedCallback ? "warning" : "info"}>
+              {selectedCallback ? "Rückruf fällig" : `Versuch ${lead.attempts + 1}`}
+            </StatusBadge>
+          }
+        >
+          <div className="cc-call-body">
+            <div className="cc-company">
+              <span className="cc-company-icon">
+                <Building2 size={27} aria-hidden="true" />
+              </span>
+              <div>
+                <h2>{lead.company || "Ohne Firmenname"}</h2>
+                <p>{lead.contact_name || "Kein Ansprechpartner hinterlegt"}</p>
+              </div>
+            </div>
+            <LeadContact phone={lead.phone} email={lead.email} city={lead.city} extra={extra} />
+            <div className="cc-suggestion">
+              <Lightbulb size={20} aria-hidden="true" />
+              <div>
+                <strong>Nächster Schritt</strong>
+                {suggestNextStep(lead, { callbackDueAt: selectedCallback?.due_at ?? null })}
+              </div>
+            </div>
+            <div>
+              <div className="cc-field-label">
+                <label htmlFor="call-note">Gesprächsnotiz</label>
+                <InfoButton label="Gesprächsnotiz">
+                  Dein Entwurf bleibt beim Öffnen des Rückrufdialogs und beim Wechsel zwischen den
+                  angezeigten Leads erhalten. Erst nach erfolgreichem Speichern wird er geleert.
+                  Beim Verlassen der Seite ist er noch nicht dauerhaft gesichert.
+                </InfoButton>
+              </div>
+              <Textarea
+                id="call-note"
+                className="cc-call-note"
+                placeholder="Was ist für das nächste Gespräch wichtig?"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                disabled={busy}
+              />
+              <p className="cc-field-help">Entwurf für diesen Lead · noch nicht gespeichert</p>
+            </div>
+            {pending && (
+              <div className="cc-callback-form">
+                <label htmlFor="call-time">
+                  {pending === "callback" ? "Wann sollen wir zurückrufen?" : "Zeitpunkt"}
+                </label>
+                <Input
+                  id="call-time"
+                  type="datetime-local"
+                  value={when}
+                  disabled={busy}
+                  onChange={(e) => setWhen(e.target.value)}
+                />
+                <div>
+                  <Button disabled={busy || !when} onClick={() => record(pending)}>
+                    <Check />
+                    {busy ? "Wird gespeichert …" : "Rückruf speichern"}
+                  </Button>
+                  <Button variant="outline" disabled={busy} onClick={() => setPending(null)}>
+                    Abbrechen
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="cc-call-actions">
+              <Button variant="outline" disabled={busy} onClick={() => record("not_reached")}>
+                <PhoneMissed />
+                Nicht erreicht
+              </Button>
+              <Button variant="outline" disabled={busy} onClick={() => setPending("callback")}>
+                <CalendarClock />
+                Rückruf planen
+              </Button>
+              <Button variant="destructive" disabled={busy} onClick={() => record("no_interest")}>
+                <X />
+                Kein Interesse
+              </Button>
+              <Button variant="secondary" disabled={busy} onClick={() => record("production")}>
+                <Send />
+                Deal in Produktion
+              </Button>
+              {useCallback && openLead && openLead.id !== lead.id && (
+                <Button variant="outline" disabled={busy} onClick={() => setUseCallback(false)}>
+                  Zurück zum offenen Lead
+                </Button>
+              )}
+            </div>
+            <p className="cc-field-help">
+              „Nicht erreicht“ bleibt ein internes Anrufergebnis und ist keine CRM-Stage.
+            </p>
+            {extraEntries.length > 0 && (
+              <details>
+                <summary className="text-sm font-medium cursor-pointer">
+                  Weitere importierte Angaben
+                </summary>
+                <dl className="cc-imported mt-3">
+                  {extraEntries.map(([key, value]) => (
+                    <div key={key}>
+                      <dt>{key}</dt>
+                      <dd>{typeof value === "string" ? value : JSON.stringify(value)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
+            )}
           </div>
-        )}
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" disabled={busy} onClick={() => record("not_reached")}>Nicht erreicht</Button>
-          <Button variant="destructive" disabled={busy} onClick={() => record("no_interest")}>Kein Interesse</Button>
-          <Button variant="secondary" disabled={busy} onClick={() => setPending("callback")}>Callback</Button>
-          <Button disabled={busy} onClick={() => setPending("appointment")}>Termin buchen</Button>
-          <Button className="col-span-2" variant="outline" disabled={busy} onClick={() => record("production")}>Deal in Produktion</Button>
-        </div>
-      </section>
-      <section className="rounded-lg border bg-card p-4">
-        <h2 className="mb-2 font-semibold">Gesprächsleitfaden</h2>
-        <p className="whitespace-pre-wrap leading-relaxed">{script}</p>
-      </section>
+        </Surface>
+        <Surface
+          title="Dein Gesprächsleitfaden"
+          description="Orientierung für einen klaren Erstkontakt"
+          action={
+            <InfoButton label="Gesprächsleitfaden">
+              Firma, Ansprechpartner, Ort und dein Name werden aus den vorhandenen Daten eingesetzt.
+              Admins können den Leitfaden in den Einstellungen bearbeiten.
+            </InfoButton>
+          }
+        >
+          <p className="cc-script">{script}</p>
+        </Surface>
+      </div>
+      {dueCb?.lead && (
+        <CallbackDialog
+          actionLabel="Rückruf im Arbeitsplatz öffnen"
+          open={callbackOpen}
+          onOpenChange={setCallbackOpen}
+          callback={{
+            company: dueCb.lead.company || "Ohne Firmenname",
+            contact: dueCb.lead.contact_name || "Ansprechpartner nicht hinterlegt",
+            phone: dueCb.lead.phone || "Telefon nicht hinterlegt",
+            dueLabel: new Date(dueCb.due_at).toLocaleString("de-DE"),
+            note: "Öffnet diesen Rückruf im Arbeitsplatz. Dein bisheriger Notizentwurf bleibt für den vorherigen Lead erhalten.",
+          }}
+          onCall={() => {
+            if (!busy) {
+              setUseCallback(true);
+              setCallbackOpen(false);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

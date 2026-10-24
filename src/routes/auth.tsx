@@ -4,12 +4,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ArrowRight, LoaderCircle, Target, Zap } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Anmelden – Cold Call Tool" },
+      { title: "Anmelden – KlarKunde" },
       { name: "description", content: "Anmeldung für Caller und Admins." },
       { property: "og:title", content: "Anmelden – Cold Call Tool" },
       { property: "og:description", content: "Anmeldung für Caller und Admins." },
@@ -32,7 +33,10 @@ function AuthPage() {
     if (mode === "in") {
       const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
       setBusy(false);
-      if (error) { toast.error("Anmeldung fehlgeschlagen: " + error.message); return; }
+      if (error) {
+        toast.error("Anmeldung fehlgeschlagen: " + error.message);
+        return;
+      }
       nav({ to: "/dashboard" });
     } else {
       const { error } = await supabase.auth.signUp({
@@ -41,42 +45,113 @@ function AuthPage() {
         options: { emailRedirectTo: window.location.origin, data: { display_name: name } },
       });
       setBusy(false);
-      if (error) { toast.error(error.message); return; }
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
       toast.success("Bitte bestätige deine E-Mail über den Link im Postfach.");
       setMode("in");
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <form onSubmit={submit} className="w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6">
+    <div className="cc-theme cc-auth">
+      <aside className="cc-auth-story">
+        <div className="cc-brand">
+          <Zap size={32} fill="currentColor" />
+          <span>
+            KlarKunde<small>Dein nächster Abschluss.</small>
+          </span>
+        </div>
         <div>
-          <h1 className="font-display text-2xl font-bold">Cold Call Tool</h1>
-          <p className="text-sm text-muted-foreground">
-            {mode === "in" ? "Melde dich an." : "Neuen Caller-Account anlegen."}
+          <span className="cc-auth-mark">
+            <Target size={56} strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <h2>Gute Gespräche. Klare Chancen.</h2>
+          <p>
+            Leads, Rückrufe und Kunden an einem Ort. Damit du dich auf dein nächstes Gespräch
+            konzentrieren kannst.
           </p>
         </div>
-        {mode === "up" && (
-          <div className="space-y-1">
-            <Label htmlFor="n">Name</Label>
-            <Input id="n" value={name} onChange={(e) => setName(e.target.value)} required />
+        <small>Dein Arbeitsplatz für die Team-Akquise.</small>
+      </aside>
+      <div className="cc-auth-form-wrap">
+        <form onSubmit={submit} className="cc-auth-form">
+          <div className="cc-brand cc-auth-mobile-brand">
+            <Zap size={30} fill="currentColor" />
+            <span>
+              KlarKunde<small>Dein nächster Abschluss.</small>
+            </span>
           </div>
-        )}
-        <div className="space-y-1">
-          <Label htmlFor="e">E-Mail</Label>
-          <Input id="e" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="p">Passwort</Label>
-          <Input id="p" type="password" minLength={6} value={pw} onChange={(e) => setPw(e.target.value)} required />
-        </div>
-        <Button className="w-full" disabled={busy}>
-          {mode === "in" ? "Anmelden" : "Registrieren"}
-        </Button>
-        <button type="button" className="w-full text-sm text-muted-foreground underline" onClick={() => setMode(mode === "in" ? "up" : "in")}>
-          {mode === "in" ? "Noch kein Account? Registrieren" : "Schon registriert? Anmelden"}
-        </button>
-      </form>
+          <header>
+            <h1>{mode === "in" ? "Willkommen zurück." : "Dein Start im Team."}</h1>
+            <p>
+              {mode === "in"
+                ? "Melde dich an und starte dein nächstes Gespräch."
+                : "Lege deinen Caller-Account an."}
+            </p>
+          </header>
+          {mode === "up" && (
+            <div>
+              <Label htmlFor="n">Dein Name</Label>
+              <Input
+                id="n"
+                autoComplete="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                disabled={busy}
+              />
+            </div>
+          )}
+          <div>
+            <Label htmlFor="e">E-Mail</Label>
+            <Input
+              id="e"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={busy}
+            />
+          </div>
+          <div>
+            <Label htmlFor="p">Passwort</Label>
+            <Input
+              id="p"
+              type="password"
+              autoComplete={mode === "in" ? "current-password" : "new-password"}
+              minLength={6}
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              required
+              disabled={busy}
+            />
+          </div>
+          <Button type="submit" disabled={busy}>
+            {busy ? (
+              <>
+                <LoaderCircle className="cc-spin" aria-hidden="true" />
+                Bitte warten …
+              </>
+            ) : (
+              <>
+                {mode === "in" ? "Anmelden" : "Registrieren"}
+                <ArrowRight aria-hidden="true" />
+              </>
+            )}
+          </Button>
+          <button
+            type="button"
+            disabled={busy}
+            className="cc-auth-mode"
+            onClick={() => setMode(mode === "in" ? "up" : "in")}
+          >
+            {mode === "in" ? "Neu im Team? Account erstellen" : "Schon registriert? Anmelden"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
