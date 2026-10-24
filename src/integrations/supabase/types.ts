@@ -67,6 +67,27 @@ export type Database = {
           },
         ]
       }
+      call_requests: {
+        Row: {
+          payload: Json
+          request_id: string
+          result: Json
+          user_id: string
+        }
+        Insert: {
+          payload: Json
+          request_id: string
+          result: Json
+          user_id: string
+        }
+        Update: {
+          payload?: Json
+          request_id?: string
+          result?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       callbacks: {
         Row: {
           created_at: string
@@ -430,6 +451,25 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      record_call_outcome: {
+        Args: {
+          p_callback_id?: string
+          p_expected_attempts: number
+          p_lead_id: string
+          p_note?: string
+          p_outcome: string
+          p_request_id: string
+          p_scheduled_at?: string
+        }
+        Returns: Json
+      }
+      set_user_role: {
+        Args: {
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_user_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
