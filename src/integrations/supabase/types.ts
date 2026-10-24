@@ -417,6 +417,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      set_user_role: {
+        Args: { p_user_id: string; p_role: "admin" | "caller" }
+        Returns: undefined
+      }
+
+      record_call_outcome: {
+        Args: {
+          p_request_id: string
+          p_lead_id: string
+          p_expected_attempts: number
+          p_outcome: string
+          p_note?: string
+          p_scheduled_at?: string
+          p_callback_id?: string
+        }
+        Returns: Json
+      }
+
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

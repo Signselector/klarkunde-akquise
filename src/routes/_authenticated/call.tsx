@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_SCRIPT, fillScript, suggestNextStep } from "@/lib/leads";
@@ -22,6 +22,8 @@ function CallPage() {
   const [when, setWhen] = useState("");
   const [pending, setPending] = useState<Outcome | null>(null);
   const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
+  const lastRequest = useRef<{ payload: string; id: string } | null>(null);
 
   const { data: me } = useQuery({
     queryKey: ["profile", user.id],
@@ -34,7 +36,7 @@ function CallPage() {
   const { data: dueCb } = useQuery({
     queryKey: ["next-lead", "due-callback"],
     queryFn: async () => {
-      const { data } = await supabase.from("callbacks").select("id,due_at,lead:leads(*)").eq("done", false).lte("due_at", new Date().toISOString()).order("due_at").limit(1).maybeSingle();
+      const { data } = await supabase.from("callbacks").select("id,due_at,lead:leads(*)").eq("done", false).eq("user_id", user.id).lte("due_at", new Date().toISOString()).order("due_at").limit(1).maybeSingle();
       return data;
     },
   });
@@ -48,7 +50,7 @@ function CallPage() {
   });
 
   const lead = dueCb?.lead ?? openLead;
-  async function record(outcome: Outcome) {
+  async function recordLegacy(outcome: Outcome) {
     if (!lead) return;
     if ((outcome === "callback" || outcome === "appointment") && !when) {
       setPending(outcome);
@@ -69,6 +71,63 @@ function CallPage() {
     setBusy(false);
     const err = res.find((r) => r.error)?.error;
     if (err) { toast.error("Speichern fehlgeschlagen: " + err.message); return; }
+    toast.success("Gespeichert – nächster Lead.");
+    setNote(""); setWhen(""); setPending(null);
+    qc.invalidateQueries({ queryKey: ["next-lead"] });
+    qc.invalidateQueries({ queryKey: ["batches"] });
+    qc.invalidateQueries({ queryKey: ["callbacks"] });
+  }
+
+  async function record(outcome: Outcome) {
+    if (import.meta.env["VITE_ATOMIC_BACKEND_ENABLED"] !== "true") return recordLegacy(outcome);
+    if (!lead) return;
+    if ((outcome === "callback" || outcome === "appointment") && !when) {
+      setPending(outcome);
+      { toast.message("Bitte Datum und Uhrzeit wählen."); return; }
+    }
+    if (inFlight.current) return;
+    const scheduledAt = when ? new Date(when) : null;
+    if ((outcome === "callback" || outcome === "appointment") &&
+        (!scheduledAt || !Number.isFinite(scheduledAt.getTime()) || scheduledAt.getTime() <= Date.now())) {
+      toast.error("Bitte einen gültigen zukünftigen Zeitpunkt wählen.");
+      return;
+    }
+    const args = {
+      p_lead_id: lead.id,
+      p_expected_attempts: lead.attempts,
+      p_outcome: outcome,
+      ...(note.trim() ? { p_note: note.trim() } : {}),
+      ...((outcome === "callback" || outcome === "appointment") && scheduledAt
+        ? { p_scheduled_at: scheduledAt.toISOString() } : {}),
+      ...(dueCb?.lead ? { p_callback_id: dueCb.id } : {}),
+    };
+    const payload = JSON.stringify(args);
+    if (lastRequest.current?.payload !== payload) {
+      lastRequest.current = { payload, id: crypto.randomUUID() };
+    }
+    inFlight.current = true;
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc("record_call_outcome", {
+        ...args, p_request_id: lastRequest.current.id,
+      });
+      if (error) {
+        if (error.message.includes("stale_lead") || error.message.includes("callback_conflict")) {
+          toast.error("Der Lead oder Rückruf wurde inzwischen geändert. Bitte den aktuellen Stand prüfen.");
+          await qc.invalidateQueries({ queryKey: ["next-lead"] });
+        } else {
+          toast.error("Speichern fehlgeschlagen. Bitte erneut versuchen.");
+        }
+        return;
+      }
+    } catch {
+      toast.error("Verbindung unterbrochen. Bitte erneut versuchen.");
+      return;
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+    lastRequest.current = null;
     toast.success("Gespeichert – nächster Lead.");
     setNote(""); setWhen(""); setPending(null);
     qc.invalidateQueries({ queryKey: ["next-lead"] });
