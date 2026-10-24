@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { StatsView } from "@/components/stats-view";
 
 export const Route = createFileRoute("/_authenticated/evaluation")({
-  head: () => ({ meta: [{ title: "Auswertung – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Auswertung – Sign Selector Cold Caller" }] }),
   component: EvaluationPage,
 });
 

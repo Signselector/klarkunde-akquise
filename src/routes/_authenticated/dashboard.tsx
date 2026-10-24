@@ -2,13 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, FolderOpen, Phone, Upload, Zap, CalendarClock } from "lucide-react";
+import { ArrowRight, FolderOpen, Phone, Upload, CalendarClock } from "lucide-react";
 import { FeedbackState, InfoButton, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Übersicht – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Übersicht – Sign Selector Cold Caller" }] }),
   component: Dashboard,
 });
 
@@ -85,7 +85,7 @@ function Dashboard() {
             </Button>
           </div>
         </div>
-        <Zap className="cc-start-mark" size={90} strokeWidth={1.5} aria-hidden="true" />
+        <Phone className="cc-start-mark" size={90} strokeWidth={1.5} aria-hidden="true" />
       </section>
       <Surface
         title="Deine Lead-Batches"

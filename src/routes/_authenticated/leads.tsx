@@ -44,7 +44,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/leads")({
-  head: () => ({ meta: [{ title: "Leads – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Leads – Sign Selector Cold Caller" }] }),
   component: LeadsPage,
 });
 

@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/_authenticated/call")({
-  head: () => ({ meta: [{ title: "Anrufen – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Anrufen – Sign Selector Cold Caller" }] }),
   component: CallPage,
 });
 

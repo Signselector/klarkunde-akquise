@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/offers")({
-  head: () => ({ meta: [{ title: "Angebote – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Angebote – Sign Selector Cold Caller" }] }),
   component: OffersPage,
 });
 

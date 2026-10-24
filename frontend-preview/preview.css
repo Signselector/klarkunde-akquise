@@ -12,8 +12,8 @@ html {
 }
 .preview-sidebar {
   min-width: 0;
-  background: oklch(0.23 0.043 255);
-  color: oklch(0.91 0.012 255);
+  background: oklch(0.16029 0.00169 17.333);
+  color: oklch(0.96158 0.00574 84.566);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -28,7 +28,7 @@ html {
   padding: 0 10px 28px;
 }
 .preview-brand > span {
-  color: oklch(0.82 0.16 130);
+  color: oklch(0.80952 0.06685 18.633);
 }
 .preview-brand strong {
   font-size: 23px;
@@ -40,20 +40,20 @@ html {
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0;
-  color: oklch(0.72 0.02 255);
+  color: oklch(0.8714 0.01342 82.401);
   margin-top: 6px;
 }
 .preview-workspace {
   padding: 12px 10px 26px;
   font-size: 12px;
-  color: oklch(0.76 0.02 255);
+  color: oklch(0.8714 0.01342 82.401);
   display: grid;
   gap: 8px;
 }
 .preview-workspace .cc-badge {
   width: fit-content;
-  background: oklch(0.32 0.035 255);
-  color: oklch(0.85 0.02 255);
+  background: oklch(0.44442 0.0096 73.639);
+  color: oklch(0.96158 0.00574 84.566);
   font-size: 11px;
 }
 .preview-sidebar nav {
@@ -76,7 +76,7 @@ html {
 }
 .preview-sidebar nav a[aria-current],
 .preview-sidebar nav a:hover {
-  background: oklch(0.34 0.06 255);
+  background: oklch(0.35566 0.14239 28.694);
   color: white;
 }
 .preview-sidebar-bottom {
@@ -87,7 +87,7 @@ html {
   display: flex;
   gap: 10px;
   padding: 16px 10px;
-  border-top: 1px solid oklch(0.37 0.03 255);
+  border-top: 1px solid oklch(0.44442 0.0096 73.639);
 }
 .preview-coins > svg {
   color: oklch(0.83 0.12 85);
@@ -100,7 +100,7 @@ html {
 .preview-coins small,
 .preview-profile small {
   font-size: 11px;
-  color: oklch(0.74 0.02 255);
+  color: oklch(0.8714 0.01342 82.401);
   display: block;
   margin-top: 3px;
 }
@@ -114,7 +114,7 @@ html {
 .preview-profile > span {
   border-radius: 8px;
   padding: 9px;
-  background: oklch(0.36 0.04 255);
+  background: oklch(0.44442 0.0096 73.639);
   font-size: 12px;
 }
 .preview-body {
@@ -154,7 +154,7 @@ html {
 }
 .preview-notice svg {
   flex-shrink: 0;
-  color: var(--cc-blue);
+  color: var(--cc-accent);
 }
 .preview-heading {
   display: flex;
@@ -193,8 +193,8 @@ html {
   height: 49px;
   width: 49px;
   border-radius: 10px;
-  background: oklch(0.94 0.02 250);
-  color: var(--cc-blue);
+  background: oklch(0.93523 0.01418 17.41);
+  color: var(--cc-accent);
   font-weight: 700;
 }
 .preview-company h2 {
@@ -236,7 +236,7 @@ html {
   padding-bottom: 16px;
 }
 .preview-website span {
-  color: var(--cc-blue);
+  color: var(--cc-accent);
   margin-left: 10px;
 }
 .preview-label {
@@ -312,7 +312,7 @@ html {
   margin-top: 3px;
 }
 .preview-mission {
-  background: oklch(0.28 0.055 255);
+  background: oklch(0.19689 0.0016 17.293);
   color: white;
   border-radius: 14px;
   padding: 24px;
@@ -327,7 +327,7 @@ html {
   line-height: 1.15;
 }
 .preview-mission p {
-  color: oklch(0.81 0.02 255);
+  color: oklch(0.8714 0.01342 82.401);
   font-size: 13px;
   margin-top: 12px;
   max-width: 36ch;
@@ -456,7 +456,7 @@ html {
 .preview-toggle input {
   width: 20px;
   height: 20px;
-  accent-color: var(--cc-blue);
+  accent-color: var(--cc-accent);
 }
 .preview-demo-tag {
   font-size: 12px;
@@ -597,4 +597,13 @@ html {
   html {
     scroll-behavior: auto;
   }
+}
+
+.preview-brand.cc-brand .cc-brand-content img {
+  width: 174px;
+  height: auto;
+}
+.preview-brand.cc-brand small {
+  color: var(--sidebar-foreground, #d9d4cb);
+  font-size: 11px;
 }

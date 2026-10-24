@@ -1,3 +1,4 @@
+import { Brand } from "../src/components/coldcaller/brand";
 import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -23,7 +24,6 @@ import {
   Upload,
   Users,
   Volume2,
-  Zap,
 } from "lucide-react";
 import {
   ActionButton,
@@ -68,13 +68,8 @@ export function Preview() {
   return (
     <div className="cc-theme cc-preview">
       <aside className="preview-sidebar">
-        <a className="preview-brand" href="#arbeitsplatz">
-          <span>
-            <Zap size={27} fill="currentColor" />
-          </span>
-          <strong>
-            KlarKunde<small>Dein nächster Abschluss.</small>
-          </strong>
+        <a className="preview-brand cc-brand" href="#arbeitsplatz">
+          <Brand inverse />
         </a>
         <div className="preview-workspace">
           Akquise-Zentrale <StatusBadge>UI-Vorschau</StatusBadge>
@@ -123,7 +118,7 @@ export function Preview() {
       <div className="preview-body">
         <div className="preview-topbar">
           <span>
-            KlarKunde <ChevronRight size={15} /> Frontend-Werkstatt
+            Sign Selector <ChevronRight size={15} /> Frontend-Werkstatt
           </span>
           <span>
             <ShieldCheck size={16} /> Isolierte Vorschau
