@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/_authenticated/appointments")({
-  head: () => ({ meta: [{ title: "Termine – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Termine – Sign Selector Cold Caller" }] }),
   component: AppointmentsPage,
 });
 

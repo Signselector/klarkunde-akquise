@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Einstellungen – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Einstellungen – Sign Selector Cold Caller" }] }),
   component: SettingsPage,
 });
 

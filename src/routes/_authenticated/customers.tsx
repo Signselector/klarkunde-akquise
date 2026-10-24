@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { StatusLeadList } from "@/components/status-lead-list";
 
 export const Route = createFileRoute("/_authenticated/customers")({
-  head: () => ({ meta: [{ title: "Meine Kunden – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Meine Kunden – Sign Selector Cold Caller" }] }),
   component: CustomersPage,
 });
 

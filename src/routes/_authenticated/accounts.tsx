@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/accounts")({
-  head: () => ({ meta: [{ title: "Accounts – Cold Call Tool" }] }),
+  head: () => ({ meta: [{ title: "Accounts – Sign Selector Cold Caller" }] }),
   component: AccountsPage,
 });
 

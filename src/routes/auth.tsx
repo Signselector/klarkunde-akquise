@@ -1,18 +1,19 @@
+import { Brand } from "@/components/coldcaller/brand";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, LoaderCircle, Target, Zap } from "lucide-react";
+import { ArrowRight, LoaderCircle, Target } from "lucide-react";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Anmelden – KlarKunde" },
+      { title: "Anmelden – Sign Selector Cold Caller" },
       { name: "description", content: "Anmeldung für Caller und Admins." },
-      { property: "og:title", content: "Anmelden – Cold Call Tool" },
+      { property: "og:title", content: "Anmelden – Sign Selector Cold Caller" },
       { property: "og:description", content: "Anmeldung für Caller und Admins." },
     ],
   }),
@@ -58,10 +59,7 @@ function AuthPage() {
     <div className="cc-theme cc-auth">
       <aside className="cc-auth-story">
         <div className="cc-brand">
-          <Zap size={32} fill="currentColor" />
-          <span>
-            KlarKunde<small>Dein nächster Abschluss.</small>
-          </span>
+          <Brand inverse />
         </div>
         <div>
           <span className="cc-auth-mark">
@@ -78,10 +76,7 @@ function AuthPage() {
       <div className="cc-auth-form-wrap">
         <form onSubmit={submit} className="cc-auth-form">
           <div className="cc-brand cc-auth-mobile-brand">
-            <Zap size={30} fill="currentColor" />
-            <span>
-              KlarKunde<small>Dein nächster Abschluss.</small>
-            </span>
+            <Brand />
           </div>
           <header>
             <h1>{mode === "in" ? "Willkommen zurück." : "Dein Start im Team."}</h1>

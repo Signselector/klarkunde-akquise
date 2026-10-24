@@ -1,3 +1,4 @@
+import { Brand } from "@/components/coldcaller/brand";
 import type { CSSProperties } from "react";
 import {
   createFileRoute,
@@ -18,7 +19,6 @@ import {
   Crown,
   Phone,
   LogOut,
-  Zap,
   FilePen,
   FileText,
   LayoutDashboard,
@@ -110,11 +110,12 @@ function Layout() {
       </a>
       <Sidebar>
         <SidebarHeader className="cc-sidebar-header">
-          <Link to="/dashboard" className="cc-brand" aria-label="KlarKunde Dashboard">
-            <Zap size={30} fill="currentColor" aria-hidden="true" />
-            <span>
-              KlarKunde<small>Dein nächster Abschluss.</small>
-            </span>
+          <Link
+            to="/dashboard"
+            className="cc-brand"
+            aria-label="Sign Selector Cold Caller – Dashboard"
+          >
+            <Brand inverse />
           </Link>
         </SidebarHeader>
         <SidebarContent className="px-3 pb-4">
@@ -156,7 +157,7 @@ function Layout() {
               aria-label="Navigation öffnen oder schließen"
             />
             <span className="cc-breadcrumb">
-              KlarKunde <span aria-hidden="true">/</span> <strong>{pageTitle}</strong>
+              Sign Selector <span aria-hidden="true">/</span> <strong>{pageTitle}</strong>
             </span>
           </div>
           <span className="cc-topbar-label">Team-Akquise</span>
