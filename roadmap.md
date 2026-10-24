@@ -14,5 +14,13 @@
 - [x] Meine Kunden, Erledigte Leads
 - [x] Angebote (Kunden, Produkte, Angebote, Vorlagen)
 - [x] Statistiken mit Charts
-- [ ] Pipedrive-Sync mit Retry (über Pipedrive-Connector statt Token in der Datenbank)
+- [x] Pipedrive-Backend mit Outbox, Retry und serverseitiger Verbindung (keine Tokens in der Datenbank)
+- [ ] Lovable-/Pipedrive-Verbindungen konfigurieren und Live-Abnahme durchführen (siehe docs/LOVABLE-BACKEND-SETUP.md)
 - [x] Einstellungen (Script bearbeiten) + Account-Verwaltung (Admin)
+
+## Backend-Abschluss Person A
+- [x] Reservierungen und atomare Anrufergebnisse mit Idempotenz
+- [x] Staging-Import, Dublettenprüfung und Datenqualität
+- [x] Atomare Angebote und Rollenverwaltung
+- [x] Cloud-Worker, Lease-Bereinigung und Scheduler-Vorlage
+- [x] Datenbank-/Parallelitätstests und CI

@@ -35,3 +35,27 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Lovable-Cloud-Backend
+
+Die vollständige Backend-Bereitstellung und Verbindung ist in
+[LOVABLE-BACKEND-SETUP.md](docs/LOVABLE-BACKEND-SETUP.md) beschrieben.
+Die vorhandene Lovable Cloud bleibt zuständig; kein zusätzliches Projekt anlegen.
+Die neue Anbindung ist bis zur Bereitstellung über `VITE_ATOMIC_BACKEND_ENABLED`
+ausgeschaltet. Die RPC-Verträge stehen in
+[person-a-backend-handoff.md](docs/person-a-backend-handoff.md).
+
+```sh
+npm test
+npm run test:backend
+npm run types:backend:check
+npm run typecheck
+npm run typecheck:worker
+npm run build
+```
+
+`npm run test:backend` führt PostgreSQL-WASM-Tests ohne Cloudzugang aus.
+Für echte Parallelitätstests eine **leere lokale Testdatenbank** starten und
+`BACKEND_TEST_DATABASE_URL=postgres://postgres@127.0.0.1:55432/postgres npm run test:backend:concurrency`
+ausführen. Der Test lehnt nicht lokale Hosts und vorhandene Geschäftstabellen ab.
+Die GitHub-Workflowdatei `backend.yml` enthält dieselben Prüfungen mit PostgreSQL 16.

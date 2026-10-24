@@ -1,0 +1,42 @@
+name: Backend checks
+on:
+  pull_request:
+  push:
+    branches: [main, codex/person-a-backend]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.14"
+      - run: bun install --frozen-lockfile
+      - run: npm run types:backend:check
+      - run: node scripts/backend-migrate.mjs --bundle --check
+      - run: npm test
+      - run: npm run test:backend
+      - run: npm run test:backend:concurrency
+        env:
+          BACKEND_TEST_DATABASE_URL: postgres://postgres@127.0.0.1:5432/postgres
+      - run: npm run typecheck
+      - run: npm run typecheck:worker
+      - run: npm run build
+        env:
+          VITE_ATOMIC_BACKEND_ENABLED: "true"

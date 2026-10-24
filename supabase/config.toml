@@ -1,1 +1,5 @@
 project_id = "yaljvxeecdrjpmlerpef"
+# Scheduler authenticates with a dedicated secret in the function itself.
+# It is not a user JWT; never deploy without COLD_CALLER_SCHEDULER_SECRET.
+[functions.coldcaller-worker]
+verify_jwt = false

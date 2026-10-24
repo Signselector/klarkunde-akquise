@@ -1,3 +1,5 @@
+import { BackendStatus } from "@/components/backend-status";
+import { backendEnabled, backendRpc } from "@/lib/backend";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,12 +15,35 @@ function Dashboard() {
   const { data: batches, isLoading } = useQuery({
     queryKey: ["batches"],
     queryFn: async () => {
-      const { data } = await supabase.from("lead_batches").select("id,name,created_at").order("created_at", { ascending: false });
+      if (backendEnabled) {
+        const progress = (await backendRpc("get_batch_progress", {})) as {
+          id: string;
+          name: string;
+          created_at: string;
+          import_state: string;
+          total: number;
+          completed: number;
+        }[];
+        return progress
+          .filter((b) => b.import_state === "confirmed")
+          .map((b) => ({ ...b, done: b.completed }));
+      }
+      const { data } = await supabase
+        .from("lead_batches")
+        .select("id,name,created_at")
+        .order("created_at", { ascending: false });
       return Promise.all(
         (data ?? []).map(async (b) => {
           const [t, o] = await Promise.all([
-            supabase.from("leads").select("id", { count: "exact", head: true }).eq("batch_id", b.id),
-            supabase.from("leads").select("id", { count: "exact", head: true }).eq("batch_id", b.id).eq("status", "open"),
+            supabase
+              .from("leads")
+              .select("id", { count: "exact", head: true })
+              .eq("batch_id", b.id),
+            supabase
+              .from("leads")
+              .select("id", { count: "exact", head: true })
+              .eq("batch_id", b.id)
+              .eq("status", "open"),
           ]);
           const total = t.count ?? 0;
           return { ...b, total, done: total - (o.count ?? 0) };
@@ -32,9 +57,15 @@ function Dashboard() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-[22px] font-semibold">Dashboard</h1>
         <div className="flex gap-2">
-          <Button asChild variant="outline"><Link to="/callbacks">Callbacks</Link></Button>
-          <Button asChild variant="outline"><Link to="/import">CSV importieren</Link></Button>
-          <Button asChild><Link to="/call">Anrufen starten</Link></Button>
+          <Button asChild variant="outline">
+            <Link to="/callbacks">Callbacks</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/import">CSV importieren</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/call">Anrufen starten</Link>
+          </Button>
         </div>
       </div>
       {isLoading && <p className="text-muted-foreground">Lädt …</p>}
@@ -43,6 +74,7 @@ function Dashboard() {
           Noch keine Leads. Importiere eine CSV-Datei, um loszulegen.
         </p>
       )}
+      {backendEnabled && <BackendStatus admin={false} />}
       <div className="grid gap-3 sm:grid-cols-2">
         {batches?.map((b) => {
           const pct = b.total ? Math.round((b.done / b.total) * 100) : 0;
@@ -50,7 +82,9 @@ function Dashboard() {
             <div key={b.id} className="space-y-2 rounded-lg border bg-card p-4">
               <div className="flex justify-between gap-2">
                 <span className="font-medium">{b.name}</span>
-                <span className="text-sm text-muted-foreground">{new Date(b.created_at).toLocaleDateString("de-DE")}</span>
+                <span className="text-sm text-muted-foreground">
+                  {new Date(b.created_at).toLocaleDateString("de-DE")}
+                </span>
               </div>
               <Progress value={pct} />
               <p className="text-sm text-muted-foreground">

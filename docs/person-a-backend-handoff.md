@@ -1,106 +1,98 @@
-# Person A: Backend-Bestandsaufnahme und Schnittstellenentwurf
+# Person A – implementierte Backend-Schnittstellen
 
-Historische Bestandsaufnahme. Der aktuelle vollständige Plan steht in
-[lovable-backend-plan.md](lovable-backend-plan.md). Laut neuer Nutzerentscheidung
-wird eine neue Datenbank verwendet; dortige Verträge und Prioritäten haben Vorrang.
+Aktueller Code verwendet die vorhandene Lovable Cloud. Der frühere nicht
+veröffentlichte Branch `codex/coldcaller-rebuild` wurde nicht übernommen.
+Designkomponenten von Person B bleiben erhalten. Bestehende Seiten wurden
+funktional angebunden; größere Designänderungen sind weiterhin Person B zugeordnet.
 
-Stand: 24.10.2026. Arbeitsbranch: `codex/person-a-backend`, Basis `main`
-(`8ac2a63500070bf78569677d24d28f1defae0b00`).
+## Gemeinsamer Vertrag
 
-## Übergabe und Zusammenarbeit
+Typen stehen in `src/integrations/supabase/types.ts`, reproduzierbar generiert
+mit `npm run types:backend`. `src/lib/backend.ts` liefert den typisierten
+RPC-Aufruf. Alle unten genannten Argumentnamen beginnen tatsächlich mit `p_`.
+Optionale Argumente haben SQL-Defaults. Geschäftsfehler werden als PostgREST-
+Fehler mit stabilem `message` ausgeliefert; kein Erfolg wird aus einem leeren
+oder fehlgeschlagenen Resultat abgeleitet.
 
-`AGENTS.md`, README, Roadmap, Migrationen und die Anbindung im Code wurden
-geprüft. `codex/coldcaller-rebuild` ist weder als lokaler Branch noch in den
-Remote-Heads vorhanden. Ein früherer, nicht gepushter Arbeitsstand wurde nicht
-übernommen. Verfügbare Remote-Branches: `main`, `phase-2-features`,
-`claude/amazing-feynman-8whaho`, `claude/serene-pascal-d038gi`.
-Der geprüfte Stand `claude/serene-pascal-d038gi` enthält keine zusätzlichen
-Commits gegenüber `main`; vorhandene Frontend-Arbeit wurde nicht ersetzt.
+`request_id` ist eine clientseitige UUID je beabsichtigter Mutation. Bei einem
+Netzwerkfehler dieselbe ID und dieselbe Nutzlast wiederverwenden. Nach bestätigtem
+Erfolg für eine neue Aktion eine neue ID erzeugen. Abweichende Nutzlast mit
+vorhandener ID ergibt `idempotency_conflict`. Frontend-Retries behalten die ID
+im geöffneten Formular; eine Wiederaufnahme nach vollständigem Browserreload
+benötigt einen separat persistent gespeicherten Entwurf samt Request-ID.
 
-Git-Lesezugriff funktioniert. GitHub GraphQL und REST werden mit 403 blockiert.
-Die Pull-Refs 1 und 2 existieren; daraus lässt sich ihr offener/geschlossener
-Status nicht ableiten. Offene PRs sind deshalb noch nicht abschließend geprüft.
+Die Identität kommt aus `auth.uid()`, nie aus einem frei übergebenen user_id.
+Caller und Admin dürfen gemeinsame Leads lesen. Historie/Statistiken sehen
+Caller für sich, Admins für das Team; Angebote sind Ersteller-/Admin-gebunden.
 
-Person A verantwortet Migrationen, RLS, Supabase-Typen, RPCs und Edge Functions.
-Person B verantwortet Design und Oberflächen. Diese Bestandsaufnahme verändert
-keine bestehenden Laufzeitschnittstellen. Der folgende Vertrag ist ein Entwurf,
-keine implementierte oder ausgerollte API. Vor der Anbindung mit Person B
-abstimmen; keine parallelen Änderungen an `call.tsx`.
-
-## Befunde aus dem Code
-
-- `call.tsx` schreibt Leadstatus, Historie, Notiz, Rückruf und Termin getrennt.
-  Teilfehler hinterlassen widersprüchliche Daten; `attempts` wird aus einem
-  möglicherweise veralteten Browserstand erhöht.
-- Die Erledigung eines Rückrufs wird vorab gespeichert, ohne dessen Fehler
-  auszuwerten. Die Auswahl fälliger Rückrufe filtert nicht nach Besitzer,
-  während RLS die Änderung auf Besitzer oder Admin beschränkt.
-- `accounts.tsx` ersetzt Rollen durch getrenntes Löschen und Einfügen.
-  Fehler können einen Nutzer ohne Rolle hinterlassen. Ein Schutz des letzten
-  Admins ist in den Migrationen nicht vorhanden.
-- `handle_new_user()` bestimmt den ersten Admin mit `NOT EXISTS`, ohne
-  Serialisierung konkurrierender Registrierungen.
-- Caller teilen laut Schema bewusst Leads. RLS erlaubt breite Lead-Updates;
-  Versuche und Bearbeiter sind dadurch direkt vom Client änderbar. Historie
-  kann ebenfalls vom Client mit frei gewähltem Ergebnis angelegt werden.
-- Angebot und Angebotspositionen werden getrennt angelegt. Validierung von
-  Mengen, Preisen, Statuswerten und importierten Qualitätsdaten benötigt eine
-  eigene fachliche Festlegung.
-- Die Roadmap markiert Pipedrive über einen Connector als offen. Im geprüften
-  Code existiert kein Sync-Worker, kein Retry und keine Edge Function dafür.
-  Keine API-Token in `app_settings` oder Browsercode einführen.
-
-## Vorgeschlagener Vertrag: `record_call_outcome`
-
-Nur authentifizierte Caller/Admins. Identität ausschließlich über `auth.uid()`;
-kein frei übergebbarer `user_id` und kein Service-Role-Schlüssel im Frontend.
-
-Argumente:
-
-| Name | Typ | Zweck |
+| RPC | Argumente ohne p_-Präfix | Rückgabe / Besonderheit |
 | --- | --- | --- |
-| `request_id` | UUID | Idempotenzschlüssel für Wiederholungen |
-| `lead_id` | UUID | Bearbeiteter Lead |
-| `expected_attempts` | Integer | Schutz gegen veraltete Bearbeitung |
-| `outcome` | Enum | `not_reached`, `no_interest`, `callback`, `appointment`, `production` |
-| `note` | String/null | Optionale Gesprächsnotiz |
-| `scheduled_at` | Timestamptz/null | Für Callback/Termin erforderlich |
-| `callback_id` | UUID/null | Explizit bearbeiteter Rückruf |
+| get_capabilities | keine | user_id, role und Berechtigungsflags |
+| claim_next_lead | keine | lead, claim_id, expires_at, callback_id oder null; eigene fällige Rückrufe zuerst |
+| renew_lead_claim | claim_id, release? | claim_id, expires_at; zehn Minuten Lease |
+| record_call_outcome | request_id, lead_id, expected_attempts, outcome, note?, scheduled_at?, callback_id? | lead_id, status, attempts, status_change_id, callback_id, appointment_id; aktive eigene Lease erforderlich |
+| reopen_lead | request_id, lead_id, expected_version, reason | lead_id, version; schließt alte Rückrufe |
+| update_lead_contact | lead_id, expected_version, contact | Lead; nur company/contact_name/phone/email/city erlaubt |
+| move_lead | lead_id, expected_version, batch_id | void; bestätigter Zielbatch erforderlich |
+| archive_leads | ids | Anzahl; Admin, höchstens 500 IDs |
+| archive_open_leads | keine | Anzahl; Admin; archiviert offene Leads |
+| complete_callback | request_id, callback_id, expected_version | Callback; Besitzer/Admin |
+| create_appointment | request_id, starts_at, notes?, lead_id? | Termin; Besitzer wird serverseitig gesetzt |
+| delete_appointment | appointment_id | void; Besitzer/Admin |
+| preview_import | request_id, name, rows, batch_id? | batch_id, rows, invalid; max. 500 Zeilen/Chunk, 5.000/Batch |
+| import_duplicates | batch_id | Zeilennummern mit Dublettenkandidaten |
+| confirm_import | request_id, batch_id, skip_rows?, allow_duplicates? | batch_id, inserted, skipped; atomare Bestätigung |
+| save_offer | request_id, customer_id (nullable), items, note?, offer_id?, expected_version? | offer_id, offer_number, total, version |
+| set_offer_status | offer_id, expected_version, status | Angebot; erlaubte Zustandsübergänge geprüft |
+| set_user_role | user_id, role | void; Admin, letzter Admin geschützt |
+| get_dashboard | from, to, scope? | daily, attempts, reached, appointments, production, Ergebniszähler, appointment_rate, timezone |
+| get_batch_progress | keine | bis 500 Batches mit total/completed/import_state |
+| get_quality_issues | limit?, offset? | lead_id, company, kind, acknowledged_reason; paginiert |
+| acknowledge_quality | lead_id, kind, reason | void; Hinweis bleibt mit dokumentierter Ausnahme sichtbar |
+| retry_integration | job_id | Job; nur Admin, nur failed |
+| resolve_integration_review | job_id, organization_id, person_id, deal_id, confirmed_absent? | void; Admin, tatsächlichen CRM-Abgleich vorausgesetzt |
 
-Rückgabe: `lead_id`, `status`, `attempts`, `status_change_id`, optional
-`callback_id`, `appointment_id` und `sync_job_id`.
+`record_call_outcome` akzeptiert not_reached/no_interest/callback/appointment/production.
+not_reached hält den Lead offen. Datum für Rückruf/Termin muss zukünftig sein.
+`expected_attempts` schützt den Anrufzähler; Kontaktänderungen verwenden `version`.
+Eine wiederholte erfolgreiche Call-Mutation benötigt keine neue Lease.
 
-Eine Transaktion sperrt den Lead, validiert erwartete Versuche und Rechte,
-erhöht Versuche serverseitig und schreibt sämtliche abhängigen Datensätze.
-`not_reached` hält den Lead auf `open`, protokolliert aber das Ergebnis als
-`not_reached`, damit vorhandene Statistiken kompatibel bleiben. Ein übergebener
-Rückruf muss zum Lead gehören und dem Caller gehören oder durch einen Admin
-bearbeitet werden. Eine identische Wiederholung liefert dasselbe Ergebnis;
-derselbe Schlüssel mit abweichender Nutzlast wird zurückgewiesen.
+Importdaten werden nach Spaltenzuordnung als JSON-Objekte übergeben, mit optionalem
+`extra` für Original-Zusatzfelder. E-Mail/Whitespace werden normalisiert. Telefon-
+Dublettenvergleich entfernt Formatzeichen, errät aber keine Landesvorwahl.
+Die Oberfläche überspringt erkannte ungültige Zeilen/Dubletten erst nach Bestätigung.
+API-Clients können Dubletten ausdrücklich zulassen. Keine automatische Zusammenführung.
 
-Fehler: `unauthenticated`, `forbidden`, `lead_not_found`, `stale_lead`,
-`invalid_outcome`, `invalid_schedule`, `callback_conflict`,
-`idempotency_conflict`. Validierungs- und Berechtigungsfehler bewirken keine
-Teiländerung. Pipedrive-Netzwerkfehler dürfen das Anrufergebnis nicht verwerfen;
-ein späterer Sync benötigt eine transaktional angelegte Outbox und sichere
-Connector-Anbindung. Retry darf keine doppelten externen Deals erzeugen.
+Fehler: unauthenticated/forbidden, request_id_required, idempotency_conflict,
+claim_expired, stale_lead/offer, callback_conflict, lead_claimed, invalid_schedule,
+invalid_import/rows/item/contact, duplicate_decision_required, invalid_transition,
+last_admin, not_retryable, review_required. Constraints können zusätzlich SQLSTATE
+23514 liefern. Bei Konflikten aktuellen Datensatz laden; bei Verbindungsfehlern
+mit derselben Request-ID wiederholen. Keine ungeprüften Änderungen als Erfolg zeigen.
 
-## Prüfung und offene Voraussetzungen
+## Pipedrive und Worker
 
-Erfolgreich in dieser Instanz: Bun 1.3.14 mit Frozen-Lockfile, vier Tests in zwei
-Dateien, Produktionsbuild, `tsc --noEmit`, Devserver und HTTP-Loginseite mit
-E-Mail-/Passwortfeldern. Keine Anwendungsdateien oder Lockfiles durch Setup
-verändert. Installations- und Startanweisungen sind im Umgebungsentwurf
-gespeichert.
+`integration_jobs` ist lesbar, aber nicht direkt beschreibbar. Zustände:
+pending/running/succeeded/failed/needs_review. Für Person Bs `SyncIndicator`:
+pending/running → queued, succeeded → synced, failed → error, needs_review → review.
 
-Supabase Auth-Settings waren wegen Proxy-403 nicht erreichbar. Der konkrete
-Host wurde zur Netzwerkfreigabe im Entwurf ergänzt. Nach Anwendung der
-Einstellungen erneut prüfen. Keine Migration gegen die gemeinsame Datenbank
-ausgeführt; RLS und angemeldete Workflows sind nicht live validiert. Die vier
-vorhandenen Tests ersetzen keine Rollen-, Transaktions- oder Integrationstests.
+Nur der Worker darf claim_integration_jobs, checkpoint_integration,
+finish_integration_job und backend_maintenance ausführen. Die Endpunkte sind
+für anon/authenticated gesperrt. Ein Auftrag erzeugt höchstens eine aktive Lease;
+weitere Jobs desselben Leads warten auf den älteren Auftrag. Fehlertexte enthalten
+keine Provider-Nutzlasten oder Secrets. Nach acht Versuchen ist manueller Retry nötig.
 
-Der Nutzerauftrag endet unvollständig bei „01 – Technische Basis“. Weitere
-Anforderungen und ein eventuell extern vorhandener Übergabestand stehen noch
-aus. Vor Implementierung insbesondere Connector-Verfügbarkeit, gewünschte
-Pipedrive-Felder und Rollenregeln festlegen. Geheimnisse ausschließlich über
-die sicheren Umgebungseinstellungen bereitstellen.
+Der Portable-Worker in `supabase/functions/_shared` ist unabhängig von der
+Auth-Verbindung testbar. Produktionsadapter: Pipedrive HTTP API v2, API-Token oder
+extern erneuertes OAuth-Access-Token. Die tatsächliche Lovable-Verbindung ist ein
+Deployment-Schritt, kein hier behaupteter vorhandener Connector.
+
+## Aktivierung und Grenzen
+
+`docs/LOVABLE-BACKEND-SETUP.md` beschreibt Datenbankpaket, sichere Bindings,
+Worker, Scheduler, Erstadmin und Live-Abnahme. `VITE_ATOMIC_BACKEND_ENABLED=true`
+erst mit dem vollständig bereitgestellten Backend aktivieren und neu bauen.
+
+Das Rollenmodell ist Admin/Caller. Zusätzliche im Design-Entwurf erwähnte Rollen,
+Rewards und frei konfigurierbare Produktionsstages sind nicht Teil des vereinbarten
+Backend-Plans. Keine UI soll dafür Berechtigungen oder erfolgreiche Aktionen erfinden.

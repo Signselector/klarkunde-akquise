@@ -11,7 +11,16 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:backend": "node --test tests/backend/workflows.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "types:backend": "node scripts/generate-backend-types.mjs",
+    "types:backend:check": "node scripts/generate-backend-types.mjs --check",
+    "backend:bundle": "node scripts/backend-migrate.mjs --bundle",
+    "backend:plan": "node scripts/backend-migrate.mjs",
+    "backend:migrate": "node scripts/backend-migrate.mjs --apply",
+    "typecheck:worker": "tsc --project supabase/functions/tsconfig.json",
+    "test:backend:concurrency": "node tests/backend/concurrency.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
@@ -73,6 +82,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.3.14",
     "@eslint/js": "^9.32.0",
     "@lovable.dev/vite-tanstack-config": "2.26.5",
     "@testing-library/jest-dom": "^6.6.0",
