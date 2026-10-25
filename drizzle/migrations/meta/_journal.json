@@ -57,6 +57,13 @@
       "when": 1792933789545,
       "tag": "0007_fulfilment_toggle",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792935913360,
+      "tag": "0008_pipedrive_stage_mapping",
+      "breakpoints": true
     }
   ]
 }

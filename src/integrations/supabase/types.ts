@@ -595,6 +595,24 @@ export type Database = {
           },
         ]
       }
+      pipedrive_stage_mapping: {
+        Row: {
+          country: string
+          mapping: Json
+          updated_at: string
+        }
+        Insert: {
+          country: string
+          mapping?: Json
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          mapping?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
