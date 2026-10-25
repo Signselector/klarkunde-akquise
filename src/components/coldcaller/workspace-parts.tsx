@@ -21,6 +21,34 @@ export function PageHeading({
   );
 }
 
+/** Pull the safe website and address links out of imported lead data. */
+export function parseLeadLinks(
+  extra: Record<string, unknown> | null | undefined,
+  city: string | null,
+) {
+  const entries = Object.entries(extra ?? {}).filter(
+    (entry): entry is [string, string] => typeof entry[1] === "string" && !!entry[1].trim(),
+  );
+  const find = (keys: string[]) => entries.find(([key]) => keys.includes(key.toLowerCase().trim()));
+  const website = find(["website", "webseite", "web", "url"]);
+  const address = find(["adresse", "address", "anschrift"]);
+  let websiteUrl: string | null = null;
+  if (website) {
+    try {
+      const value = website[1].trim();
+      const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(value) ? value : `https://${value}`);
+      if (["https:", "http:"].includes(url.protocol)) websiteUrl = url.href;
+    } catch {
+      /* Invalid imported values remain plain text. */
+    }
+  }
+  const addressText = address ? [address[1], city].filter(Boolean).join(", ") : null;
+  const mapsUrl = addressText
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressText)}`
+    : null;
+  return { websiteUrl, websiteText: website?.[1] ?? null, addressText, mapsUrl };
+}
+
 /** Render imported contact values without treating arbitrary URLs as executable links. */
 export function LeadContact({
   phone,

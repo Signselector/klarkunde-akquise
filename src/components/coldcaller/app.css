@@ -813,7 +813,7 @@
 .cc-auth-mobile-brand .cc-brand-content img {
   width: 180px;
 }
-.cc-app button:not(.cc-info):not(.cc-icon-button):not(.cc-lead-row):not([data-sidebar]),
+.cc-app button:not(.cc-info):not(.cc-icon-button):not(.cc-lead-row):not(.cc-card-button):not([data-sidebar]),
 .cc-app .cc-page-actions a,
 .cc-app .cc-start-actions a,
 .cc-auth-form > button[type="submit"] {
