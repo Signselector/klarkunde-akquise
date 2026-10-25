@@ -1,3 +1,4 @@
+import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
 import { CountrySwitcher } from "@/lib/country";
@@ -98,17 +99,21 @@ function Layout() {
 
   const items = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/call", label: "Anrufen", icon: Phone },
-    { to: "/leads", label: "Leads", icon: Users },
+    ...(me?.admin && !callerView ? [{ to: "/call", label: "Anrufen", icon: Phone }] : []),
+    { to: "/leads", label: "Offene Leads", icon: Users },
     { to: "/callbacks", label: "Rückrufe", icon: CalendarClock },
-    { to: "/completed", label: "Abgeschlossen", icon: CircleCheck },
+    { to: "/completed", label: "Abgeschlossene Leads", icon: CircleCheck },
     { to: "/customers", label: "Meine Kunden", icon: FileText },
     { to: "/appointments", label: "Termine", icon: CalendarCheck },
-    { to: "/offers", label: "Angebote", icon: FilePen },
-    { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
-    { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
-    { to: "/evaluation", label: "Auswertung", icon: ClipboardList },
-    { to: "/import", label: "Upload", icon: Upload },
+    ...(me?.admin && !callerView
+      ? [
+          { to: "/offers", label: "Angebote", icon: FilePen },
+          { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
+          { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
+          { to: "/evaluation", label: "Auswertung", icon: ClipboardList },
+          { to: "/import", label: "Upload", icon: Upload },
+        ]
+      : []),
     ...(me?.admin && !callerView
       ? [
           { to: "/accounts", label: "Accounts", icon: Crown },
@@ -207,6 +212,7 @@ function Layout() {
         </header>
         <TestModeBanner />
         <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
+          <CallbackReminder userId={user.id} />
           <Outlet />
         </div>
       </SidebarInset>
