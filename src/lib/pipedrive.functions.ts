@@ -14,7 +14,7 @@ export const loadPipedriveStages = createServerFn({ method: "POST" })
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Nur für Admins.");
     const lovable = process.env["LOVABLE_API_KEY"];
-    const conn = process.env[KEY_BY_COUNTRY[data.country]];
+    const conn = process.env[KEY_BY_COUNTRY[data.country] ?? ""];
     if (!lovable || !conn) throw new Error("Pipedrive-Verbindung fehlt.");
     const res = await fetch("https://connector-gateway.lovable.dev/pipedrive/stages", {
       headers: { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": conn },

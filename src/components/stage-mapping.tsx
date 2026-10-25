@@ -82,13 +82,19 @@ export function StageMapping() {
     for (const [k, v] of Object.entries(values)) {
       if (!v.trim()) continue;
       const n = Number(v);
-      if (!Number.isInteger(n) || n <= 0) return toast.error(`Ungültige Stage-ID: ${v}`);
+      if (!Number.isInteger(n) || n <= 0) {
+        toast.error(`Ungültige Stage-ID: ${v}`);
+        return;
+      }
       mapping[k] = n;
     }
     const { error } = await supabase
       .from("pipedrive_stage_mapping")
       .upsert({ country, mapping, updated_at: new Date().toISOString() });
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success(`Stage Mapping für ${country} gespeichert.`);
     qc.invalidateQueries({ queryKey: ["stage-mapping", country] });
   }
