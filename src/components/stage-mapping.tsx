@@ -27,11 +27,24 @@ const GROUPS: { title: string; fields: [string, string][] }[] = [
       ["gerald_waiting", "Gerald Waiting Stage"],
       ["nico_waiting", "Nico Waiting Stage"],
       ["offer", "Angebot erstellen"],
-      ["contract", "Kaufvertrag"],
+      ["contract", "Kaufvertrag erstellen"],
       ["production", "Deal in Produktion"],
       ["contact_saved", "Kontaktdaten hinterlegt"],
       ["future_interest", "Zukünftiges Interesse"],
       ["lost", "Verloren / Kein Interesse"],
+    ],
+  },
+  {
+    title: "Weitere Spalten für Meine Kunden",
+    fields: [
+      ["no_show", "No Show"],
+      ["low_chance", "Geringe Chance"],
+      ["maybe_interested", "Vielleicht interessiert"],
+      ["very_interested", "Sehr interessiert"],
+      ["contract_waiting", "Kaufvertrag waiting"],
+      ["won_other_percent", "Gewonnen: Andere Prozente"],
+      ["won_production_planning", "Gewonnen: Produktionsplanung"],
+      ["won_zero_percent", "Gewonnen: 0% Produktion"],
     ],
   },
   {
@@ -56,8 +69,13 @@ export function StageMapping() {
   const { data } = useQuery({
     queryKey: ["stage-mapping", country],
     queryFn: async () =>
-      (await supabase.from("pipedrive_stage_mapping").select("mapping").eq("country", country).maybeSingle()).data
-        ?.mapping as Record<string, number> | undefined,
+      (
+        await supabase
+          .from("pipedrive_stage_mapping")
+          .select("mapping")
+          .eq("country", country)
+          .maybeSingle()
+      ).data?.mapping as Record<string, number> | undefined,
   });
   useEffect(() => {
     const m = data ?? {};
@@ -107,15 +125,20 @@ export function StageMapping() {
         <h2 className="font-semibold">Pipedrive Stage Mapping</h2>
         <div className="flex gap-1">
           {(["DE", "AT"] as const).map((c) => (
-            <Button key={c} size="sm" variant={country === c ? "default" : "outline"} onClick={() => setCountry(c)}>
+            <Button
+              key={c}
+              size="sm"
+              variant={country === c ? "default" : "outline"}
+              onClick={() => setCountry(c)}
+            >
               {c === "DE" ? "🇩🇪 DE" : "🇦🇹 AT"}
             </Button>
           ))}
         </div>
       </div>
       <p className="text-sm text-muted-foreground">
-        Klicke „Stages laden“, um die Pipedrive Stages abzufragen, oder trage die Stage-IDs manuell ein. NL hat noch kein
-        Pipedrive-Konto.
+        Klicke „Stages laden“, um die Pipedrive Stages abzufragen, oder trage die Stage-IDs manuell
+        ein. NL hat noch kein Pipedrive-Konto.
       </p>
       <Button variant="outline" size="sm" onClick={fetchStages} disabled={loading}>
         {loading ? "Lädt…" : "Stages laden"}

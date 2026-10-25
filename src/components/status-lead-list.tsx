@@ -10,7 +10,6 @@ import { FeedbackState, StatusBadge, Surface } from "@/components/coldcaller/pri
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
 import { LeadsTable } from "@/components/caller/leads-table";
-import { CustomersBoard } from "@/components/caller/customers-board";
 
 /** Order of the categories on "Abgeschlossene Leads". */
 const GROUP_ORDER = [
@@ -35,23 +34,13 @@ const groupRank = (label: string) => {
   return i === -1 ? GROUP_ORDER.length : i;
 };
 
-export function StatusLeadList({
-  userId,
-  title,
-  statuses,
-  customers = false,
-}: {
-  userId: string;
-  title: string;
-  statuses: string[];
-  customers?: boolean;
-}) {
+export function StatusLeadList({ userId, title }: { userId: string; title: string }) {
   const country = useCountry();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [filter, setFilter] = useState("all");
   const query = useQuery({
-    queryKey: ["lead-list", userId, country, statuses],
+    queryKey: ["lead-list", userId, country],
     queryFn: async () => {
       let q = supabase
         .from("leads")
@@ -61,15 +50,14 @@ export function StatusLeadList({
         .order("last_called_at", { ascending: false })
         .limit(300);
       if (backendEnabled) q = q.is("archived_at", null);
-      if (customers) q = q.in("status", statuses);
-      else q = q.in("status", COMPLETED_STATUSES);
+      q = q.in("status", COMPLETED_STATUSES);
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
     },
   });
   const resultLabel = (status: string) =>
-    !customers && status === "open" ? "Nicht erreicht" : (STATUS_LABEL[status] ?? status);
+    status === "open" ? "Nicht erreicht" : (STATUS_LABEL[status] ?? status);
   const rows = (query.data ?? []).filter(
     (l) =>
       (!search ||
@@ -86,39 +74,10 @@ export function StatusLeadList({
     <div className="cc-page">
       <PageHeading
         title={title}
-        description={
-          customers
-            ? "Deine bearbeiteten Kunden mit Kontaktdaten, Notizen und Verlauf."
-            : "Deine bearbeiteten Leads nach Kategorie: Rückruf vereinbart, Logo Render, Realismus Render, Logo ausstehend, Referenzmail."
-        }
+        description="Deine bearbeiteten Leads nach Kategorie: Rückruf vereinbart, Logo Render, Realismus Render, Logo ausstehend, Referenzmail."
       />
-      {customers && (
-        <Surface
-          title="Pipedrive-Stages"
-          description="Anzeigenamen für die kommende CRM-Stage-Anbindung"
-        >
-          <div className="cc-surface-body">
-            <div className="flex flex-wrap gap-2">
-              {[
-                "Logo ausstehend",
-                "Zukunftsprojekt",
-                "Logo Render",
-                "Realismus Render",
-                "Gewonnen",
-              ].map((label) => (
-                <StatusBadge key={label}>{label}</StatusBadge>
-              ))}
-            </div>
-            <p className="mt-3 text-sm text-muted-foreground">
-              Die synchronisierte Stage und berechtigte Wechsel sind noch nicht verfügbar.
-              Anrufergebnisse unten sind keine CRM-Stages. „Gewonnen“ fasst Andere Prozente,
-              Produktionsplanung und 0% Anzahlung zusammen.
-            </p>
-          </div>
-        </Surface>
-      )}
       <Surface
-        title={customers ? "Meine Kunden nach Ergebnis" : "Abgeschlossene Erstkontakte"}
+        title="Abgeschlossene Erstkontakte"
         description="Bis zu 300 aktuelle Kontakte · ausgewähltes Land"
       >
         <div className="cc-surface-body">
@@ -152,12 +111,10 @@ export function StatusLeadList({
               title="Kontakte nicht verfügbar"
               action={<Button onClick={() => query.refetch()}>Erneut versuchen</Button>}
             />
-          ) : !rows.length && !customers ? (
+          ) : !rows.length ? (
             <FeedbackState kind="empty" title="Keine passenden Kontakte">
               Sobald du Kontakte bearbeitet hast, erscheinen sie hier.
             </FeedbackState>
-          ) : customers ? (
-            <CustomersBoard leads={rows} onOpen={setSelected} />
           ) : (
             <div className="space-y-5">
               {groups.map((group) => {

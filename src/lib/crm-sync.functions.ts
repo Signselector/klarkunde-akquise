@@ -14,8 +14,10 @@ const KEY_BY_COUNTRY: Record<string, string> = {
 };
 const GATEWAY = "https://connector-gateway.lovable.dev/pipedrive";
 
-/** Pipedrive through the Lovable connector gateway (same connection the stage loader uses). */
-function gatewayCrm(country: string): Crm {
+type GatewayResult = { data?: unknown };
+
+/** Low-level access to Pipedrive through the Lovable connector gateway (same connection the stage loader uses). */
+export function gatewayClient(country: string) {
   const lovable = process.env["LOVABLE_API_KEY"];
   const keyName = KEY_BY_COUNTRY[country];
   if (!keyName) throw new CrmError("country_not_connected");
@@ -23,7 +25,7 @@ function gatewayCrm(country: string): Crm {
   if (!lovable || !connection) throw new CrmError("not_configured");
   const headers = { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": connection };
 
-  async function call(path: string, init: RequestInit): Promise<{ data?: { id?: number } }> {
+  async function call(path: string, init: RequestInit): Promise<GatewayResult> {
     let response: Response;
     try {
       response = await fetch(`${GATEWAY}${path}`, {
@@ -41,7 +43,7 @@ function gatewayCrm(country: string): Crm {
       console.error(`Pipedrive ${init.method} ${path} failed [${response.status}]`);
       throw new CrmError(response.status >= 500 ? "network_error" : "invalid_payload");
     }
-    return (await response.json().catch(() => ({}))) as { data?: { id?: number } };
+    return (await response.json().catch(() => ({}))) as GatewayResult;
   }
   const json = (method: string, path: string, body: unknown) =>
     call(path, {
@@ -49,9 +51,16 @@ function gatewayCrm(country: string): Crm {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-  const id = (r: { data?: { id?: number } }) => {
-    if (!r.data?.id || !Number.isSafeInteger(r.data.id)) throw new CrmError("invalid_payload");
-    return r.data.id;
+  return { call, json };
+}
+
+/** Pipedrive writes used by the action sync. */
+function gatewayCrm(country: string): Crm {
+  const { call, json } = gatewayClient(country);
+  const id = (r: GatewayResult) => {
+    const value = (r.data as { id?: number } | undefined)?.id;
+    if (!value || !Number.isSafeInteger(value)) throw new CrmError("invalid_payload");
+    return value;
   };
   return {
     createOrganization: async (d) => id(await json("POST", "/organizations", d)),

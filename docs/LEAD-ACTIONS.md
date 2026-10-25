@@ -54,3 +54,19 @@ Batch des Aufrufers (oder wurde von ihm bearbeitet, oder Admin), kein fremder ak
 4. **Rollen Recruit / Veteran / Manager** existieren nicht (nur `admin`, `caller`, `fulfilment`). Die Aktionen stehen
    Callern und Admins offen; Stage-Bearbeitung für Veteranen und Fulfillment-Zuweisungen sind nicht gebaut.
 5. **Coins/Punkte.** Es werden keine vergeben. Eine spätere Vergabe sollte an `lead_actions.id` hängen.
+
+## Meine Kunden (Pipedrive-Stages)
+
+`src/components/caller/customers-pipeline.tsx` zeigt die Deals des Callers in der **aktuellen Pipedrive-Stage**.
+Die Server-Funktion `loadMyCustomers` (`src/lib/customers.functions.ts`) liest nur: Sie nimmt die Leads, für die der
+Caller eine Aktion mit Stage gespeichert hat (`lead_actions` + `lead_crm_links`), und fragt den aktuellen Stand der
+Deals bei Pipedrive ab (gebündelt per `ids`, sonst einzeln). Änderungen in Pipedrive erscheinen nach „Aktualisieren“.
+Ist Pipedrive nicht erreichbar, steht ein Hinweis „Nicht mit Pipedrive synchronisiert“ und es wird die zuletzt hier
+gespeicherte Stage gezeigt.
+
+Die Spalten stehen in `src/lib/customer-stages.ts`; ihre Stage-IDs kommen aus dem Stage Mapping des Landes
+(Einstellungen → Stage Mapping, neue Gruppe „Weitere Spalten für Meine Kunden“). Fehlt eine ID, sagt die Spalte
+„Stage nicht zugeordnet“. Deals in Stages ohne Spalte stehen in „Weitere Stages“. „Gewonnen“ fasst
+`won_other_percent`, `won_production_planning` und `won_zero_percent` zusammen.
+
+Nicht getestet gegen echtes Pipedrive: die Gateway-Pfade `/deals?ids=…`, `/deals/{id}` und `/stages`.
