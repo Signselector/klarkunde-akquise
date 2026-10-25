@@ -22,7 +22,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { FolderOpen } from "@/components/coldcaller/icons";
 import { FeedbackState, InfoButton, Surface } from "@/components/coldcaller/primitives";
-import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -59,6 +58,11 @@ function Dashboard() {
   const { user } = Route.useRouteContext();
   const admin = useIsAdmin(user.id);
   const qc = useQueryClient();
+  const me = useQuery({
+    queryKey: ["me", user.id],
+    enabled: false,
+    queryFn: async () => null as { name?: string | null } | null,
+  });
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
   const people = useQuery({
@@ -180,11 +184,7 @@ function Dashboard() {
 
   return (
     <div className="cc-page">
-      <PageHeading
-        title="Bereit für gute Gespräche."
-        description="Deine Leads im Blick. Der nächste Schritt ganz klar."
-      />
-      <CallerPerformance userId={user.id} />
+      <CallerPerformance userId={user.id} name={me.data?.name} />
       <Surface
         title="Lead Batches"
         description="Alle Leadlisten in deinem Land · aktualisiert sich automatisch"

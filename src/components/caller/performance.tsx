@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import {
   Building2,
@@ -16,7 +17,7 @@ import {
   X,
   ChartNoAxesColumn,
 } from "@/components/coldcaller/icons";
-import { FeedbackState, MetricCard, Surface } from "@/components/coldcaller/primitives";
+import { FeedbackState, InfoButton } from "@/components/coldcaller/primitives";
 import {
   formatNumber,
   formatPer100,
@@ -72,23 +73,87 @@ function useDay(userId: string) {
   });
 }
 
-/** The four figures on top. Every value comes from the server; a missing source is said so, never replaced. */
-export function DashboardKpis({ userId }: { userId: string }) {
+/** Daily call target shown in the goal ring. A working target, not a statistic. */
+export const DAILY_CALL_GOAL = 40;
+
+const initials = (name: string) =>
+  name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("");
+
+function BentoCard({
+  className = "",
+  title,
+  meta,
+  help,
+  children,
+  index = 0,
+}: {
+  className?: string;
+  title?: string;
+  meta?: React.ReactNode;
+  help?: string;
+  children: React.ReactNode;
+  index?: number;
+}) {
+  return (
+    <section
+      className={`cc-bento-card ${className}`}
+      style={{ "--i": index } as React.CSSProperties}
+    >
+      {title && (
+        <h3 className="cc-bento-title">
+          <span>{title}</span>
+          <span className="cc-bento-meta">
+            {meta}
+            {help && <InfoButton label={title}>{help}</InfoButton>}
+          </span>
+        </h3>
+      )}
+      {children}
+    </section>
+  );
+}
+
+const DAY_TILES: { key: keyof Day; label: string; hot?: boolean }[] = [
+  { key: "reached", label: "Erreicht" },
+  { key: "no_interest", label: "Kein Interesse" },
+  { key: "not_reached", label: "Nicht erreicht" },
+  { key: "total_leads", label: "Gesamt Leads" },
+  { key: "low_q", label: "Logo Render", hot: true },
+  { key: "high_q", label: "Realismus Render", hot: true },
+  { key: "waiting_3d", label: "Logo ausstehend" },
+];
+
+/** The whole caller dashboard above the batches: greeting, goal ring, monthly figure, KPIs, day stats, ranking. */
+export function CallerPerformance({
+  userId,
+  name,
+}: {
+  userId: string;
+  name?: string | null | undefined;
+}) {
   const day = useDay(userId);
-  // The last completed month by default, with the month before it for the change.
+  const [shift, setShift] = useState(0);
   const last = shiftMonth(currentMonth(), -1);
-  const quality = useQuery({
-    queryKey: ["monthly-quality", userId, monthStart(last)],
+
+  // The last six completed months, oldest first, for the bars of the monthly figure.
+  const months = Array.from({ length: 6 }, (_, k) => shiftMonth(last, k - 5));
+  const history = useQuery({
+    queryKey: ["monthly-quality-history", userId, monthStart(last)],
     enabled: backendEnabled,
-    queryFn: async () => {
-      const [current, previous] = await Promise.all([
-        backendRpc("get_monthly_quality", { p_month: monthStart(last) }) as Promise<unknown>,
-        backendRpc("get_monthly_quality", {
-          p_month: monthStart(shiftMonth(last, -1)),
-        }) as Promise<unknown>,
-      ]);
-      return { current: current as Quality, previous: previous as Quality };
-    },
+    queryFn: async () =>
+      Promise.all(
+        months.map(
+          async (m) =>
+            (await backendRpc("get_monthly_quality", {
+              p_month: monthStart(m),
+            })) as unknown as Quality,
+        ),
+      ),
   });
   const team = useQuery({
     queryKey: ["team-metrics", userId],
@@ -96,115 +161,6 @@ export function DashboardKpis({ userId }: { userId: string }) {
     queryFn: async () =>
       (await backendRpc("get_team_metrics", {} as never)) as unknown as TeamMetrics,
   });
-
-  const t = team.data;
-  const teamContext = (what: string) =>
-    team.isError
-      ? "Team Management nicht erreichbar"
-      : t
-        ? `${what} · Team Management, ${monthLabel({ year: Number(t.period.slice(0, 4)), month: Number(t.period.slice(5, 7)) })}`
-        : "Team Management noch nicht verbunden";
-  const q = quality.data?.current;
-  const delta = per100Delta(q?.per_100 ?? null, quality.data?.previous.per_100 ?? null);
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <MetricCard
-        label="Leadqualität"
-        value={t?.lead_quality != null ? formatNumber(t.lead_quality) : "–"}
-        context={teamContext("Deine Bewertung")}
-        help="Wird unverändert aus dem Team-Management-Tool übernommen. Das Dashboard berechnet sie nicht selbst."
-        icon={<Crown />}
-      />
-      <MetricCard
-        label="Eingebrachte Leads"
-        value={t?.leads_contributed != null ? formatNumber(t.leads_contributed) : "–"}
-        context={teamContext("Von dir eingebracht")}
-        help="Anzahl der von dir eingebrachten Leads laut Team-Management-Tool. Ein erneuter Abgleich ersetzt den Wert, er wird nie addiert."
-        icon={<Users />}
-      />
-      <MetricCard
-        label="Durchschnitt"
-        value={q?.per_100 != null ? `Ø ${formatPer100(q.per_100)}` : "–"}
-        context={
-          quality.isError
-            ? "Monatswert nicht verfügbar"
-            : q
-              ? q.per_100 === null
-                ? `Keine bearbeiteten Leads im ${monthLabel(last)}`
-                : `Leads / 100 · ${monthLabel(last)}${delta ? ` · ${delta} zum Vormonat` : ""}`
-              : "Wird berechnet …"
-        }
-        help="Qualifizierte Leads (Logo Render und Realismus Render, jeder Lead einmal) pro 100 bearbeiteten Leads des letzten abgeschlossenen Monats. Das Ergebnis wird am Monatsende gespeichert."
-        icon={<ChartNoAxesColumn />}
-      />
-      <MetricCard
-        label="Anrufe heute"
-        value={day.data ? day.data.attempts : "–"}
-        context={
-          day.isError ? "Tageswert nicht verfügbar" : "Dokumentierte Anrufversuche · Wiener Zeit"
-        }
-        help="Jeder dokumentierte Anrufversuch von heute zählt, unabhängig vom Ergebnis. Der Tag wechselt um 0:00 Uhr Wiener Zeit, die Anzeige aktualisiert sich automatisch."
-        icon={<Phone />}
-      />
-    </div>
-  );
-}
-
-const DAY_TILES: { key: keyof Day; label: string; icon: React.ReactNode; key_figure?: boolean }[] =
-  [
-    { key: "reached", label: "Erreicht", icon: <CircleCheck /> },
-    { key: "no_interest", label: "Kein Interesse", icon: <X /> },
-    { key: "not_reached", label: "Nicht erreicht", icon: <PhoneMissed /> },
-    { key: "low_q", label: "Logo Render", icon: <Target />, key_figure: true },
-    { key: "high_q", label: "Realismus Render", icon: <Trophy />, key_figure: true },
-    { key: "waiting_3d", label: "Logo ausstehend", icon: <Mail /> },
-    { key: "total_leads", label: "Gesamt Leads", icon: <Building2 /> },
-  ];
-
-/** Seven small cards for today. The figures need not add up: a lead can have several actions. */
-export function DayStats({ userId }: { userId: string }) {
-  const day = useDay(userId);
-  return (
-    <Surface
-      title="Deine Tagesstatistik"
-      description="Heute · alle Länder · nur deine Ergebnisse · Wiener Zeit"
-    >
-      {day.isLoading ? (
-        <FeedbackState kind="loading" title="Tagesleistung wird geladen" />
-      ) : day.isError || !day.data ? (
-        <FeedbackState
-          kind="error"
-          title="Tagesstatistik nicht verfügbar"
-          action={<Button onClick={() => void day.refetch()}>Erneut versuchen</Button>}
-        />
-      ) : (
-        <div className="cc-daygrid">
-          {DAY_TILES.map((tile) => (
-            <article
-              key={tile.key}
-              className={`cc-daytile${tile.key_figure ? " cc-daytile--key" : ""}`}
-            >
-              <span className="cc-daytile-icon" aria-hidden="true">
-                {tile.icon}
-              </span>
-              <p>{tile.label}</p>
-              <strong>{day.data[tile.key]}</strong>
-            </article>
-          ))}
-          <p className="cc-daygrid-note">
-            Erreicht und Gesamt Leads zählen jeden Lead einmal, Nicht erreicht und Kein Interesse
-            jeden Versuch. Ein Lead kann mehrere Aktionen haben, die Zahlen müssen sich deshalb
-            nicht zur Gesamtzahl addieren.
-          </p>
-        </div>
-      )}
-    </Surface>
-  );
-}
-
-/** Weekly ranking, filled from the points ledger. Stays empty until a points system books points. */
-export function WeeklyRanking({ userId }: { userId: string }) {
-  const [shift, setShift] = useState(0);
   const start = weekStart(new Date(`${VIENNA_TODAY()}T12:00:00Z`), shift);
   const ranking = useQuery({
     queryKey: ["weekly-ranking", userId, start],
@@ -213,82 +169,231 @@ export function WeeklyRanking({ userId }: { userId: string }) {
     queryFn: async () =>
       (await backendRpc("get_weekly_ranking", { p_week: start })) as unknown as Ranking,
   });
-  const data = ranking.data;
-  const empty = !!data && data.rows.length === 0;
-  const mineInList = data?.rows.some((r) => r.is_me);
-  return (
-    <Surface
-      title="Wochenrangliste"
-      description={`${shift === 0 ? "Diese Woche" : "Woche"} ${weekLabel(start)} · Punkte`}
-      action={
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            aria-label="Vorherige Woche"
-            onClick={() => setShift(shift - 1)}
-          >
-            <ChevronLeft size={16} />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            aria-label="Nächste Woche"
-            disabled={shift === 0}
-            onClick={() => setShift(shift + 1)}
-          >
-            <ChevronRight size={16} />
-          </Button>
-        </div>
-      }
-    >
-      {ranking.isLoading ? (
-        <FeedbackState kind="loading" title="Rangliste wird geladen" />
-      ) : ranking.isError || !data ? (
-        <FeedbackState
-          kind="error"
-          title="Rangliste nicht verfügbar"
-          action={<Button onClick={() => void ranking.refetch()}>Erneut versuchen</Button>}
-        />
-      ) : empty ? (
-        <FeedbackState kind="empty" title="Noch keine Punkte in dieser Woche">
-          Die Rangliste füllt sich, sobald das Punktesystem Punkte vergibt. Jede Woche beginnt neu,
-          frühere Wochen bleiben gespeichert.
-        </FeedbackState>
-      ) : (
-        <div className="cc-ranking">
-          <ol>
-            {data.rows.map((row) => (
-              <li
-                key={row.user_id}
-                className={`${row.rank <= 3 ? "cc-ranking-top" : ""}${row.is_me ? " cc-ranking-me" : ""}`}
-              >
-                <span className="cc-ranking-rank">{row.rank}</span>
-                <span className="cc-ranking-name">{row.is_me ? `${row.name} (du)` : row.name}</span>
-                <span className="cc-ranking-points">{formatNumber(row.points)} Punkte</span>
-              </li>
-            ))}
-          </ol>
-          <p className="cc-ranking-me-line">
-            {mineInList || data.me.rank !== null
-              ? `Deine Platzierung: ${data.me.rank} · ${formatNumber(data.me.points)} Punkte`
-              : `Du hast in dieser Woche noch keine Punkte.`}
-          </p>
-        </div>
-      )}
-    </Surface>
-  );
-}
 
-/** Everything between the page title and the batches. */
-export function CallerPerformance({ userId }: { userId: string }) {
+  const t = team.data;
+  const q = history.data?.[5];
+  const delta = per100Delta(q?.per_100 ?? null, history.data?.[4]?.per_100 ?? null);
+  const maxPer100 = Math.max(1, ...(history.data ?? []).map((m) => m.per_100 ?? 0));
+  const calls = day.data?.attempts ?? 0;
+  const remaining = Math.max(0, DAILY_CALL_GOAL - calls);
+  const share = Math.min(1, calls / DAILY_CALL_GOAL);
+  const first = (name ?? "").split(/\s+/)[0];
+  const teamContext = (what: string) =>
+    team.isError
+      ? "Team Management nicht erreichbar"
+      : t
+        ? `${what} · ${monthLabel({ year: Number(t.period.slice(0, 4)), month: Number(t.period.slice(5, 7)) })}`
+        : "Team Management noch nicht verbunden";
+  const data = ranking.data;
+
   return (
-    <div className="space-y-5">
-      <DashboardKpis userId={userId} />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <DayStats userId={userId} />
-        <WeeklyRanking userId={userId} />
+    <>
+      <div className="cc-hello">
+        <div>
+          <h1>
+            {first ? `Hallo ${first}.` : "Hallo."}
+            <br />
+            {day.data
+              ? remaining > 0
+                ? `Noch ${remaining} Anrufe bis zum Tagesziel.`
+                : "Tagesziel erreicht. Stark."
+              : "Bereit für gute Gespräche."}
+          </h1>
+          <p>Deine Leads im Blick. Der nächste Schritt ganz klar.</p>
+        </div>
+        <Link to="/leads" className="cc-cta">
+          Zu den Offenen Leads →
+        </Link>
       </div>
-    </div>
+
+      <div className="cc-bento">
+        <BentoCard className="cc-b-goal" index={0}>
+          <div className="cc-ring" style={{ "--p": share } as React.CSSProperties}>
+            <svg viewBox="0 0 140 140" aria-hidden="true">
+              <circle className="cc-ring-bg" cx="70" cy="70" r="60" />
+              <circle className="cc-ring-fg" cx="70" cy="70" r="60" />
+            </svg>
+            <div className="cc-ring-mid">
+              <b>{day.data ? calls : "–"}</b>
+              <span>von {DAILY_CALL_GOAL} Anrufen</span>
+            </div>
+          </div>
+          <div className="cc-goal-text">
+            <h2>Anrufe heute</h2>
+            <p>
+              {day.isError
+                ? "Tageswert nicht verfügbar"
+                : "Dokumentierte Anrufversuche · Wiener Zeit. Der Tag wechselt um 0:00 Uhr."}
+            </p>
+            <div className="cc-meter" aria-hidden="true">
+              <i style={{ width: `${Math.round(share * 100)}%` }} />
+            </div>
+            <div className="cc-meter-label">
+              <span>0</span>
+              <span>{Math.round(share * 100)} %</span>
+              <span>{DAILY_CALL_GOAL}</span>
+            </div>
+          </div>
+        </BentoCard>
+
+        <BentoCard
+          className="cc-b-avg"
+          title="Ø Leads pro 100"
+          meta={q ? monthLabel(last) : undefined}
+          help="Qualifizierte Leads (Logo Render und Realismus Render, jeder Lead einmal) pro 100 bearbeiteten Leads des letzten abgeschlossenen Monats. Das Ergebnis wird am Monatsende gespeichert."
+          index={1}
+        >
+          <div className="cc-big">
+            {q?.per_100 != null ? formatPer100(q.per_100) : "–"}
+            <small>Leads / 100</small>
+          </div>
+          <p className="cc-big-note">
+            {history.isError
+              ? "Monatswert nicht verfügbar"
+              : q
+                ? q.per_100 === null
+                  ? `Keine bearbeiteten Leads im ${monthLabel(last)}`
+                  : delta
+                    ? `${delta} zum Vormonat`
+                    : "Letzter abgeschlossener Monat"
+                : "Wird berechnet …"}
+          </p>
+          <div className="cc-bars" aria-hidden="true">
+            {(history.data ?? months.map(() => null)).map((m, k) => (
+              <i
+                key={k}
+                className={k === 5 ? "hi" : ""}
+                style={{
+                  height: `${m?.per_100 ? Math.max(6, Math.round((m.per_100 / maxPer100) * 100)) : 6}%`,
+                  animationDelay: `${300 + k * 60}ms`,
+                }}
+              />
+            ))}
+          </div>
+          <div className="cc-bars-label" aria-hidden="true">
+            {months.map((m) => (
+              <span key={`${m.year}-${m.month}`}>{monthLabel(m).slice(0, 3)}</span>
+            ))}
+          </div>
+        </BentoCard>
+
+        <div className="cc-b-kpis">
+          <BentoCard
+            className="cc-mini"
+            title="Leadqualität"
+            help="Wird unverändert aus dem Team-Management-Tool übernommen. Das Dashboard berechnet sie nicht selbst."
+            index={2}
+          >
+            <b>{t?.lead_quality != null ? formatNumber(t.lead_quality) : "–"}</b>
+            <em>{teamContext("Deine Bewertung")}</em>
+          </BentoCard>
+          <BentoCard
+            className="cc-mini"
+            title="Eingebrachte Leads"
+            help="Anzahl der von dir eingebrachten Leads laut Team-Management-Tool. Ein erneuter Abgleich ersetzt den Wert, er wird nie addiert."
+            index={3}
+          >
+            <b>{t?.leads_contributed != null ? formatNumber(t.leads_contributed) : "–"}</b>
+            <em>{teamContext("Von dir eingebracht")}</em>
+          </BentoCard>
+        </div>
+
+        <BentoCard className="cc-b-stats" title="Tagesstatistik" meta="Heute" index={4}>
+          {day.isLoading ? (
+            <FeedbackState kind="loading" title="Tagesleistung wird geladen" />
+          ) : day.isError || !day.data ? (
+            <FeedbackState
+              kind="error"
+              title="Tagesstatistik nicht verfügbar"
+              action={<Button onClick={() => void day.refetch()}>Erneut versuchen</Button>}
+            />
+          ) : (
+            <>
+              <div className="cc-pills">
+                <div className="cc-pill">
+                  <b>{day.data.attempts}</b>
+                  <span>Anrufe</span>
+                </div>
+                {DAY_TILES.map((tile) => (
+                  <div key={tile.key} className={`cc-pill${tile.hot ? " cc-pill--hot" : ""}`}>
+                    <b>{day.data[tile.key]}</b>
+                    <span>{tile.label}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="cc-pills-note">
+                Erreicht und Gesamt Leads zählen jeden Lead einmal, Nicht erreicht und Kein
+                Interesse jeden Versuch. Die Zahlen müssen sich nicht zur Gesamtzahl addieren.
+              </p>
+            </>
+          )}
+        </BentoCard>
+
+        <BentoCard
+          className="cc-b-rank"
+          title="Wochenrangliste"
+          meta={
+            <>
+              <span>{weekLabel(start)}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label="Vorherige Woche"
+                onClick={() => setShift(shift - 1)}
+              >
+                <ChevronLeft size={16} />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                aria-label="Nächste Woche"
+                disabled={shift === 0}
+                onClick={() => setShift(shift + 1)}
+              >
+                <ChevronRight size={16} />
+              </Button>
+            </>
+          }
+          index={5}
+        >
+          {ranking.isLoading ? (
+            <FeedbackState kind="loading" title="Rangliste wird geladen" />
+          ) : ranking.isError || !data ? (
+            <FeedbackState
+              kind="error"
+              title="Rangliste nicht verfügbar"
+              action={<Button onClick={() => void ranking.refetch()}>Erneut versuchen</Button>}
+            />
+          ) : data.rows.length === 0 ? (
+            <FeedbackState kind="empty" title="Noch keine Punkte in dieser Woche">
+              Die Rangliste füllt sich, sobald das Punktesystem Punkte vergibt. Jede Woche beginnt
+              neu, frühere Wochen bleiben gespeichert.
+            </FeedbackState>
+          ) : (
+            <>
+              <ol className="cc-rank">
+                {data.rows.map((row) => (
+                  <li key={row.user_id} className={row.is_me ? "cc-rank-me" : ""}>
+                    <span className={`cc-rank-pos${row.rank === 1 ? " gold" : ""}`}>
+                      {row.rank}
+                    </span>
+                    <span className="cc-rank-avatar">{initials(row.name)}</span>
+                    <span className="cc-rank-name">
+                      {row.is_me ? `${row.name} (du)` : row.name}
+                    </span>
+                    <span className="cc-rank-pts">{formatNumber(row.points)}</span>
+                  </li>
+                ))}
+              </ol>
+              <p className="cc-pills-note">
+                {data.me.rank !== null
+                  ? `Deine Platzierung: ${data.me.rank} · ${formatNumber(data.me.points)} Punkte`
+                  : "Du hast in dieser Woche noch keine Punkte."}
+              </p>
+            </>
+          )}
+        </BentoCard>
+      </div>
+    </>
   );
 }
