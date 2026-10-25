@@ -1,7 +1,7 @@
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
 import { CountrySwitcher } from "@/lib/country";
-import type { CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   createFileRoute,
   redirect,
@@ -79,6 +79,12 @@ function Layout() {
     nav({ to: "/auth", replace: true });
   }
 
+  const isMaster = user.email?.toLowerCase() === "office@signselector.com";
+  const [callerView, setCallerView] = useState(false);
+  useEffect(() => {
+    if (isMaster) setCallerView(localStorage.getItem("cc-caller-view") === "1");
+  }, [isMaster]);
+
   const items = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/call", label: "Anrufen", icon: Phone },
@@ -92,7 +98,7 @@ function Layout() {
     { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
     { to: "/evaluation", label: "Auswertung", icon: ClipboardList },
     { to: "/import", label: "Upload", icon: Upload },
-    ...(me?.admin
+    ...(me?.admin && !callerView
       ? [
           { to: "/accounts", label: "Accounts", icon: Crown },
           { to: "/settings", label: "Einstellungen", icon: Settings },
@@ -101,6 +107,15 @@ function Layout() {
   ] as const;
 
   const pageTitle = items.find((item) => item.to === location.pathname)?.label ?? "Arbeitsplatz";
+
+  function toggleCallerView() {
+    const next = !callerView;
+    setCallerView(next);
+    localStorage.setItem("cc-caller-view", next ? "1" : "0");
+    if (next && (location.pathname === "/accounts" || location.pathname === "/settings")) {
+      nav({ to: "/call" });
+    }
+  }
 
   return (
     <SidebarProvider
@@ -142,7 +157,7 @@ function Layout() {
             </span>
             <div>
               <strong>{me?.name ?? user.email}</strong>
-              <small>{me ? (me.admin ? "Admin" : "Caller") : "Profil wird geladen …"}</small>
+              <small>{me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}</small>
             </div>
           </div>
           <Button variant="ghost" className="cc-signout" onClick={signOut}>
@@ -162,7 +177,20 @@ function Layout() {
               Sign Selector <span aria-hidden="true">/</span> <strong>{pageTitle}</strong>
             </span>
           </div>
-          <CountrySwitcher />
+          <div className="flex items-center gap-2">
+            {isMaster && (
+              <Button
+                size="sm"
+                variant={callerView ? "default" : "outline"}
+                aria-pressed={callerView}
+                onClick={toggleCallerView}
+              >
+                {callerView ? <Crown size={16} /> : <Phone size={16} />}
+                {callerView ? "Zur Admin-Sicht" : "Caller-Sicht"}
+              </Button>
+            )}
+            <CountrySwitcher />
+          </div>
         </header>
         <TestModeBanner />
         <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
