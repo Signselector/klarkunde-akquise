@@ -1,18 +1,11 @@
--- Dashboard: real daily numbers, monthly lead quality (frozen at month end), Team-Management metrics, weekly
--- ranking (prepared for the later points system), batch progress by distinct processed leads, batch release by the
--- owner and reassignment by admins, and a "simulated" CRM state for test mode.
-
--- Results of a call. Reopening a lead (status "open") is not one.
 CREATE FUNCTION app_private.call_outcomes() RETURNS text[] LANGUAGE sql IMMUTABLE SET search_path='' AS $$
  SELECT ARRAY['not_reached','no_interest','callback','appointment','production','low_q','high_q','waiting_3d','on_hold','reference_mail','in_progress']
 $$;
 
--- CRM actions recorded in test mode are never sent.
 ALTER TABLE public.lead_actions DROP CONSTRAINT IF EXISTS lead_actions_crm_sync_state_check;
 ALTER TABLE public.lead_actions ADD CONSTRAINT lead_actions_crm_sync_state_check
   CHECK (crm_sync_state IN ('queued','syncing','synced','error','review','simulated'));
 
--- ---------------------------------------------------------------- today
 CREATE FUNCTION public.get_caller_day(p_day date DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); d date:=coalesce(p_day,(now() AT TIME ZONE 'Europe/Vienna')::date); s timestamptz; e timestamptz; r jsonb;
 BEGIN
@@ -30,7 +23,6 @@ BEGIN
  RETURN r;
 END $$;
 
--- ---------------------------------------------------------------- monthly quality
 CREATE TABLE public.monthly_quality (
   user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   month date NOT NULL CHECK (month = date_trunc('month', month)::date),
@@ -49,8 +41,6 @@ ALTER TABLE public.monthly_quality ENABLE ROW LEVEL SECURITY;
 CREATE POLICY monthly_quality_read ON public.monthly_quality FOR SELECT TO authenticated
   USING (user_id = auth.uid() OR public.has_role(auth.uid(),'admin'));
 
--- Distinct leads with a call result in the month; qualified = leads that reached Logo Render or Realismus Render,
--- each counted once, by their latest qualification in the month (so Low and High never overlap).
 CREATE FUNCTION app_private.month_quality(p_user uuid, p_month date) RETURNS jsonb LANGUAGE sql STABLE SET search_path='' AS $$
  WITH w AS (SELECT p_month::timestamp AT TIME ZONE 'Europe/Vienna' s,(p_month+interval '1 month')::timestamp AT TIME ZONE 'Europe/Vienna' e),
  ev AS (SELECT c.lead_id,c.new_status,c.created_at,c.id FROM public.status_changes c,w
@@ -72,7 +62,6 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION app_private.store_month_quality(uuid,date) FROM PUBLIC, anon, authenticated;
 
--- Defaults to the last completed month. A finished month is stored on first request and never recalculated.
 CREATE FUNCTION public.get_monthly_quality(p_month date DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); today date:=(now() AT TIME ZONE 'Europe/Vienna')::date; mth date; stored public.monthly_quality; m jsonb; q int; p int;
 BEGIN
@@ -88,7 +77,6 @@ BEGIN
   'per_100',CASE WHEN p=0 THEN NULL ELSE round(q*100.0/p,2) END,'final',false,'frozen_at',NULL);
 END $$;
 
--- For the nightly job: stores every employee's result for the last completed month (idempotent).
 CREATE FUNCTION public.freeze_monthly_quality(p_month date DEFAULT NULL) RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE today date:=(now() AT TIME ZONE 'Europe/Vienna')::date; mth date; n int:=0; u uuid;
 BEGIN
@@ -112,7 +100,6 @@ DO $$ BEGIN
  END IF;
 END $$;
 
--- ---------------------------------------------------------------- Team Management
 CREATE TABLE public.team_metrics (
   user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   period date NOT NULL CHECK (period = date_trunc('month', period)::date),
@@ -127,8 +114,6 @@ ALTER TABLE public.team_metrics ENABLE ROW LEVEL SECURITY;
 CREATE POLICY team_metrics_read ON public.team_metrics FOR SELECT TO authenticated
   USING (user_id = auth.uid() OR public.has_role(auth.uid(),'admin'));
 
--- Called by the sync function with the service key. Each row replaces the stored values of that employee and month,
--- so repeating a sync can never count a lead twice. Rows for unknown e-mail addresses are reported, not stored.
 CREATE FUNCTION public.upsert_team_metrics(p_rows jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE r jsonb; uid uuid; n int:=0; unmatched jsonb:='[]'::jsonb; per date; lq numeric; lc int;
 BEGIN
@@ -148,7 +133,6 @@ END $$;
 REVOKE ALL ON FUNCTION public.upsert_team_metrics(jsonb) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.upsert_team_metrics(jsonb) TO service_role;
 
--- The latest values synced for the signed-in employee, or null when nothing was synced yet.
 CREATE FUNCTION public.get_team_metrics() RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); t public.team_metrics;
 BEGIN
@@ -157,7 +141,6 @@ BEGIN
  RETURN jsonb_build_object('period',t.period,'lead_quality',t.lead_quality,'leads_contributed',t.leads_contributed,'synced_at',t.synced_at);
 END $$;
 
--- ---------------------------------------------------------------- points, coins, weekly ranking (empty until the points system exists)
 CREATE TABLE public.points_ledger (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -168,7 +151,6 @@ CREATE TABLE public.points_ledger (
   occurred_at timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now()
 );
--- The same source (for example one lead action) can earn the same points only once.
 CREATE UNIQUE INDEX points_ledger_source_uidx ON public.points_ledger(source_type, source_id, reason) WHERE source_id IS NOT NULL;
 CREATE INDEX points_ledger_week_idx ON public.points_ledger(occurred_at);
 CREATE TABLE public.coins_ledger (
@@ -198,7 +180,6 @@ ALTER TABLE public.weekly_ranking_snapshots ENABLE ROW LEVEL SECURITY;
 CREATE POLICY points_own ON public.points_ledger FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.has_role(auth.uid(),'admin'));
 CREATE POLICY coins_own ON public.coins_ledger FOR SELECT TO authenticated USING (user_id = auth.uid() OR public.has_role(auth.uid(),'admin'));
 
--- Weeks run Monday to Sunday in Vienna. A finished week is stored once and keeps its result.
 CREATE FUNCTION public.get_weekly_ranking(p_week date DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); today date:=(now() AT TIME ZONE 'Europe/Vienna')::date; w date; s timestamptz; e timestamptz; done boolean; rows jsonb; mine jsonb;
 BEGIN
@@ -226,8 +207,6 @@ BEGIN
  RETURN jsonb_build_object('week_start',w,'week_end',w+6,'final',done,'rows',rows,'me',mine);
 END $$;
 
--- ---------------------------------------------------------------- batches
--- Processed = at least one documented call result, counted once per lead. Archived leads do not count.
 CREATE OR REPLACE FUNCTION public.get_batch_progress() RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); r jsonb;
 BEGIN
@@ -243,7 +222,6 @@ BEGIN
  RETURN r;
 END $$;
 
--- The owner can give a batch back; admins can release any batch. Worked leads and their history stay as they are.
 CREATE OR REPLACE FUNCTION public.release_batch(p_batch_id uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); b public.lead_batches%ROWTYPE;
 BEGIN
@@ -257,7 +235,6 @@ BEGIN
  RETURN jsonb_build_object('id',b.id,'assigned_to',b.assigned_to,'assigned_at',b.assigned_at);
 END $$;
 
--- Admins move a batch to another employee in one step.
 CREATE FUNCTION public.reassign_batch(p_batch_id uuid, p_user_id uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); b public.lead_batches%ROWTYPE;
 BEGIN

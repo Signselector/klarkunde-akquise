@@ -37,27 +37,33 @@ export type Database = {
           country: string
           created_at: string
           id: string
+          kind: string
           lead_id: string | null
           notes: string | null
           starts_at: string
+          title: string | null
           user_id: string | null
         }
         Insert: {
           country?: string
           created_at?: string
           id?: string
+          kind?: string
           lead_id?: string | null
           notes?: string | null
           starts_at: string
+          title?: string | null
           user_id?: string | null
         }
         Update: {
           country?: string
           created_at?: string
           id?: string
+          kind?: string
           lead_id?: string | null
           notes?: string | null
           starts_at?: string
+          title?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -183,35 +189,6 @@ export type Database = {
           },
         ]
       }
-      import_rows: {
-        Row: {
-          batch_id: string
-          data: Json
-          errors: string[]
-          row_no: number
-        }
-        Insert: {
-          batch_id: string
-          data: Json
-          errors: string[]
-          row_no: number
-        }
-        Update: {
-          batch_id?: string
-          data?: Json
-          errors?: string[]
-          row_no?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "import_rows_batch_id_fkey"
-            columns: ["batch_id"]
-            isOneToOne: false
-            referencedRelation: "lead_batches"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       coins_ledger: {
         Row: {
           coins: number
@@ -243,7 +220,44 @@ export type Database = {
           source_type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "coins_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_rows: {
+        Row: {
+          batch_id: string
+          data: Json
+          errors: string[]
+          row_no: number
+        }
+        Insert: {
+          batch_id: string
+          data: Json
+          errors: string[]
+          row_no: number
+        }
+        Update: {
+          batch_id?: string
+          data?: Json
+          errors?: string[]
+          row_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_rows_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "lead_batches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       integration_config: {
         Row: {
@@ -627,7 +641,15 @@ export type Database = {
           qualified?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "monthly_quality_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       offer_customers: {
         Row: {
@@ -821,7 +843,15 @@ export type Database = {
           source_type?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "points_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -914,29 +944,6 @@ export type Database = {
           },
         ]
       }
-      user_countries: {
-        Row: {
-          country: string
-          user_id: string
-        }
-        Insert: {
-          country: string
-          user_id: string
-        }
-        Update: {
-          country?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_countries_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       team_metrics: {
         Row: {
           lead_quality: number | null
@@ -959,7 +966,38 @@ export type Database = {
           synced_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "team_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_countries: {
+        Row: {
+          country: string
+          user_id: string
+        }
+        Insert: {
+          country: string
+          user_id: string
+        }
+        Update: {
+          country?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_countries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -1001,7 +1039,15 @@ export type Database = {
           user_id?: string
           week_start?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "weekly_ranking_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -1025,13 +1071,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
-      get_caller_day: { Args: { p_day?: string }; Returns: Json }
-      get_monthly_quality: { Args: { p_month?: string }; Returns: Json }
-      get_team_metrics: { Args: never; Returns: Json }
-      get_weekly_ranking: { Args: { p_week?: string }; Returns: Json }
-      reassign_batch: { Args: { p_batch_id: string; p_user_id: string }; Returns: Json }
-      upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
       claim_batch: { Args: { p_batch_id: string }; Returns: Json }
       claim_integration_jobs: { Args: { p_limit?: number }; Returns: Json }
       claim_next_lead:
@@ -1078,16 +1117,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
       get_batch_progress: { Args: never; Returns: Json }
+      get_caller_day: { Args: { p_day?: string }; Returns: Json }
       get_capabilities: { Args: never; Returns: Json }
       get_dashboard: {
         Args: { p_from: string; p_scope?: string; p_to: string }
         Returns: Json
       }
+      get_monthly_quality: { Args: { p_month?: string }; Returns: Json }
       get_quality_issues: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
       }
+      get_team_metrics: { Args: never; Returns: Json }
+      get_weekly_ranking: { Args: { p_week?: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1113,6 +1157,10 @@ export type Database = {
           p_request_id: string
           p_rows: Json
         }
+        Returns: Json
+      }
+      reassign_batch: {
+        Args: { p_batch_id: string; p_user_id: string }
         Returns: Json
       }
       record_call_outcome: {
@@ -1165,6 +1213,17 @@ export type Database = {
         Returns: undefined
       }
       retry_integration: { Args: { p_job_id: string }; Returns: Json }
+      save_calendar_appointment: {
+        Args: {
+          p_country: string
+          p_kind: string
+          p_lead_id?: string
+          p_notes: string
+          p_starts_at: string
+          p_title: string
+        }
+        Returns: string
+      }
       save_offer: {
         Args: {
           p_customer_id: string
@@ -1203,6 +1262,7 @@ export type Database = {
         Args: { p_contact: Json; p_expected_version: number; p_lead_id: string }
         Returns: Json
       }
+      upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "caller" | "fulfilment"
