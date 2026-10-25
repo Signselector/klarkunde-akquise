@@ -1,3 +1,4 @@
+import { CallerPerformance } from "@/components/caller/performance";
 import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import { BackendStatus } from "@/components/backend-status";
@@ -5,7 +6,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, FolderOpen, Phone, Upload, CalendarClock } from "@/components/coldcaller/icons-3d";
+import {
+  ArrowRight,
+  FolderOpen,
+  Phone,
+  Upload,
+  CalendarClock,
+} from "@/components/coldcaller/icons-3d";
 import { FeedbackState, InfoButton, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
@@ -17,6 +24,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function Dashboard() {
   const country = useCountry();
+  const { user } = Route.useRouteContext();
   const {
     data: batches,
     isLoading,
@@ -34,7 +42,10 @@ function Dashboard() {
           total: number;
           completed: number;
         }[];
-        const { data: own } = await supabase.from("lead_batches").select("id").eq("country", country);
+        const { data: own } = await supabase
+          .from("lead_batches")
+          .select("id")
+          .eq("country", country);
         const ids = new Set((own ?? []).map((b) => b.id));
         return progress
           .filter((b) => b.import_state === "confirmed" && ids.has(b.id))
@@ -82,6 +93,7 @@ function Dashboard() {
           </Button>
         }
       />
+      <CallerPerformance userId={user.id} />
       <section className="cc-start" aria-labelledby="start-title">
         <div>
           <h2 id="start-title">Ein Gespräch kann alles verändern.</h2>

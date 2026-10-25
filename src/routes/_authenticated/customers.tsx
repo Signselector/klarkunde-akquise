@@ -8,5 +8,12 @@ export const Route = createFileRoute("/_authenticated/customers")({
 
 function CustomersPage() {
   const { user } = Route.useRouteContext();
-  return <StatusLeadList userId={user.id} title="Meine Kunden" statuses={["appointment", "production"]} />;
+  return (
+    <StatusLeadList
+      userId={user.id}
+      title="Meine Kunden"
+      customers
+      statuses={["appointment", "production"]}
+    />
+  );
 }

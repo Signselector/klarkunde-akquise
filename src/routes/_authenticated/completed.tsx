@@ -8,5 +8,7 @@ export const Route = createFileRoute("/_authenticated/completed")({
 
 function CompletedPage() {
   const { user } = Route.useRouteContext();
-  return <StatusLeadList userId={user.id} title="Abgeschlossen" statuses={["no_interest"]} />;
+  return (
+    <StatusLeadList userId={user.id} title="Abgeschlossene Leads" statuses={["no_interest"]} />
+  );
 }
