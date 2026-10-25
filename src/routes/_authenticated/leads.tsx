@@ -1,4 +1,5 @@
 import { LeadDialog } from "@/components/caller/lead-dialog";
+import { LeadsTable } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
@@ -50,27 +51,44 @@ function LeadsPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("open");
+  const [batch, setBatch] = useState("all");
   const [openId, setOpenId] = useState<string | null>(null);
+  useEffect(() => {
+    setBatch("all");
+  }, [country]);
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get("lead");
     if (id && /^[0-9a-f-]{36}$/i.test(id)) setOpenId(id);
   }, []);
 
+  const { data: batches } = useQuery({
+    queryKey: ["lead-batches", country],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lead_batches")
+        .select("id,name")
+        .eq("country", country)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
   const {
-    data: leads,
+    data: result,
     isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["leads", q, status, country],
+    queryKey: ["leads", q, status, country, batch],
     queryFn: async () => {
       let query = supabase
         .from("leads")
-        .select("*, lead_batches!inner(country)")
+        .select("*, lead_batches!inner(country)", { count: "exact" })
         .eq("lead_batches.country", country)
         .order("created_at", { ascending: false })
         .limit(300);
       if (backendEnabled) query = query.is("archived_at", null);
+      if (batch !== "all") query = query.eq("batch_id", batch);
       if (status !== "all") query = query.eq("status", status);
       if (status === "open") query = query.eq("attempts", 0);
       const term = q.trim().replace(/[,()%]/g, " ");
@@ -78,11 +96,12 @@ function LeadsPage() {
         query = query.or(
           `company.ilike.%${term}%,contact_name.ilike.%${term}%,phone.ilike.%${term}%,city.ilike.%${term}%`,
         );
-      const { data, error } = await query;
+      const { data, error, count } = await query;
       if (error) throw error;
-      return data ?? [];
+      return { rows: data ?? [], total: count ?? data?.length ?? 0 };
     },
   });
+  const leads = result?.rows;
 
   async function deleteAllOpen() {
     const { error } = await (backendEnabled
@@ -133,6 +152,19 @@ function LeadsPage() {
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
+          <Select value={batch} onValueChange={setBatch}>
+            <SelectTrigger className="cc-filter-select" aria-label="Batch filtern">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Batches</SelectItem>
+              {batches?.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger className="cc-filter-select" aria-label="Leadstatus filtern">
               <SelectValue />
@@ -153,7 +185,7 @@ function LeadsPage() {
               ? "Liste wird geladen …"
               : isError
                 ? "Liste nicht verfügbar"
-                : `${leads?.length ?? 0} ${leads?.length === 1 ? "angezeigter Lead" : "angezeigte Leads"}`}
+                : `${leads?.length ?? 0} ${leads?.length === 1 ? "Lead" : "Leads"} von ${result?.total ?? 0} geladen`}
           </span>
           {admin && (
             <AlertDialog>
@@ -213,41 +245,7 @@ function LeadsPage() {
             Passe deine Suche an oder importiere eine neue Kontaktliste.
           </FeedbackState>
         ) : (
-          <div className="cc-lead-list">
-            {leads?.map((l) => (
-              <button
-                key={l.id}
-                onClick={() => setOpenId(l.id)}
-                className="cc-lead-row"
-                aria-label={`${l.company || "Ohne Firmenname"} öffnen`}
-              >
-                <span className="cc-company-icon">
-                  <Building2 size={23} aria-hidden="true" />
-                </span>
-                <span>
-                  <strong>{l.company || "Ohne Firmenname"}</strong>
-                  <small>
-                    {[l.contact_name, l.city, l.phone].filter(Boolean).join(" · ") ||
-                      "Keine Kontaktdetails hinterlegt"}
-                  </small>
-                </span>
-                <StatusBadge
-                  tone={
-                    l.status === "production"
-                      ? "success"
-                      : l.status === "callback"
-                        ? "warning"
-                        : l.status === "no_interest"
-                          ? "neutral"
-                          : "info"
-                  }
-                >
-                  {STATUS_LABEL[l.status] ?? l.status}
-                </StatusBadge>
-                <ChevronRight size={20} aria-hidden="true" />
-              </button>
-            ))}
-          </div>
+          <LeadsTable leads={leads ?? []} onOpen={setOpenId} />
         )}
         {leads && leads.length === 300 && (
           <p className="cc-list-caption pt-4">

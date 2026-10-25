@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { FeedbackState, StatusBadge, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
+import { LeadsTable } from "@/components/caller/leads-table";
+import { CustomersBoard } from "@/components/caller/customers-board";
 
 export function StatusLeadList({
   userId,
@@ -54,7 +56,6 @@ export function StatusLeadList({
           .includes(search.toLocaleLowerCase())) &&
       (filter === "all" || resultLabel(l.status) === filter),
   );
-  const groups = [...new Set(rows.map((l) => resultLabel(l.status)))].sort();
   return (
     <div className="cc-page">
       <PageHeading
@@ -70,26 +71,28 @@ export function StatusLeadList({
           title="Pipedrive-Stages"
           description="Anzeigenamen für die kommende CRM-Stage-Anbindung"
         >
-          <div className="flex flex-wrap gap-2">
-            {[
-              "Logo ausstehend",
-              "Zukunftsprojekt",
-              "Logo Render",
-              "Realismus Render",
-              "Gewonnen",
-            ].map((label) => (
-              <StatusBadge key={label}>{label}</StatusBadge>
-            ))}
+          <div className="cc-surface-body">
+            <div className="flex flex-wrap gap-2">
+              {[
+                "Logo ausstehend",
+                "Zukunftsprojekt",
+                "Logo Render",
+                "Realismus Render",
+                "Gewonnen",
+              ].map((label) => (
+                <StatusBadge key={label}>{label}</StatusBadge>
+              ))}
+            </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Die synchronisierte Stage und berechtigte Wechsel sind noch nicht verfügbar.
+              Anrufergebnisse unten sind keine CRM-Stages. „Gewonnen“ fasst Andere Prozente,
+              Produktionsplanung und 0% Anzahlung zusammen.
+            </p>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground">
-            Die synchronisierte Stage und berechtigte Wechsel sind noch nicht verfügbar.
-            Anrufergebnisse unten sind keine CRM-Stages. „Gewonnen“ fasst Andere Prozente,
-            Produktionsplanung und 0% Anzahlung zusammen.
-          </p>
         </Surface>
       )}
       <Surface
-        title={customers ? "Meine Kundenakte" : "Abgeschlossene Erstkontakte"}
+        title={customers ? "Meine Kunden nach Ergebnis" : "Abgeschlossene Erstkontakte"}
         description="Bis zu 300 aktuelle Kontakte · ausgewähltes Land"
       >
         <div className="cc-surface-body">
@@ -127,31 +130,17 @@ export function StatusLeadList({
             <FeedbackState kind="empty" title="Keine passenden Kontakte">
               Sobald du Kontakte bearbeitet hast, erscheinen sie hier.
             </FeedbackState>
+          ) : customers ? (
+            <CustomersBoard leads={rows} onOpen={setSelected} />
           ) : (
-            groups.map((group) => (
-              <section key={group} className="mb-5">
-                <h2 className="mb-2 font-semibold">{group}</h2>
-                <div className="divide-y rounded-xl border">
-                  {rows
-                    .filter((l) => resultLabel(l.status) === group)
-                    .map((l) => (
-                      <button
-                        key={l.id}
-                        className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left hover:bg-muted focus-visible:outline-2"
-                        onClick={() => setSelected(l.id)}
-                      >
-                        <span>
-                          <strong className="block">{l.company || "Ohne Firmenname"}</strong>
-                          <span className="text-sm text-muted-foreground">
-                            {[l.contact_name, l.city, l.phone].filter(Boolean).join(" · ")}
-                          </span>
-                        </span>
-                        <StatusBadge>{group}</StatusBadge>
-                      </button>
-                    ))}
-                </div>
-              </section>
-            ))
+            <div className="overflow-hidden rounded-[10px] border">
+              <LeadsTable
+                leads={rows}
+                onOpen={setSelected}
+                resultLabel={(l) => resultLabel(l.status)}
+                processed
+              />
+            </div>
           )}
         </div>
       </Surface>
