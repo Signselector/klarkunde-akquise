@@ -1,4 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const COUNTRIES = [
   { code: "DE", label: "Deutschland", flag: "🇩🇪" },
@@ -25,6 +27,17 @@ export function setCountry(c: Country) {
   listeners.forEach((l) => l());
 }
 
+/** Countries the signed-in user may open (master admin: all). */
+export function useAllowedCountries() {
+  return useQuery({
+    queryKey: ["my-countries"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("my_countries");
+      return ((data as string[] | null) ?? []).filter(isCountry);
+    },
+  });
+}
+
 /** Active country; remembers the last choice per browser. */
 export function useCountry(): Country {
   useEffect(() => {
@@ -40,9 +53,16 @@ export function useCountry(): Country {
 
 export function CountrySwitcher() {
   const country = useCountry();
+  const { data: allowed } = useAllowedCountries();
+  useEffect(() => {
+    if (allowed?.length && !allowed.includes(country)) setCountry(allowed[0]!);
+  }, [allowed, country]);
+  if (!allowed) return null;
+  if (allowed.length === 0)
+    return <span className="text-xs text-muted-foreground">Kein Land freigeschaltet</span>;
   return (
     <div role="radiogroup" aria-label="Land wählen" className="flex rounded-md border bg-background p-0.5">
-      {COUNTRIES.map((c) => (
+      {COUNTRIES.filter((c) => allowed.includes(c.code)).map((c) => (
         <button
           key={c.code}
           type="button"

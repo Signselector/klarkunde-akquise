@@ -1,5 +1,6 @@
 import { useMutationRequest } from "@/hooks/use-mutation-request";
 import { backendEnabled } from "@/lib/backend";
+import { useCountry } from "@/lib/country";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -22,30 +23,27 @@ function AppointmentsPage() {
   const [mine, setMine] = useState(false);
   const [when, setWhen] = useState("");
   const [title, setTitle] = useState("");
+  const country = useCountry();
   const { data } = useQuery({
-    queryKey: ["appointments"],
+    queryKey: ["appointments", country],
     queryFn: async () =>
       (
         await supabase
           .from("appointments")
           .select("id,starts_at,notes,user_id,lead:leads(company,contact_name,phone)")
+          .eq("country", country)
           .order("starts_at")
       ).data ?? [],
   });
 
   async function add() {
     if (!when) return;
-    const { error } = await (backendEnabled
-      ? supabase.rpc("create_appointment", {
-          p_request_id: request.idFor([when, title]),
-          p_starts_at: new Date(when).toISOString(),
-          p_notes: title || "Eigener Termin",
-        })
-      : supabase.from("appointments").insert({
-          user_id: user.id,
-          starts_at: new Date(when).toISOString(),
-          notes: title || "Eigener Termin",
-        }));
+    const { error } = await supabase.from("appointments").insert({
+      user_id: user.id,
+      country,
+      starts_at: new Date(when).toISOString(),
+      notes: title || "Eigener Termin",
+    });
     if (error) {
       toast.error(error.message);
       return;

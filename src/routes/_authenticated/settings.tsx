@@ -1,4 +1,5 @@
 import { BackendStatus } from "@/components/backend-status";
+import { BackupCenter } from "@/components/backup-center";
 import { TestModeCard } from "@/components/TestMode";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
@@ -53,6 +54,7 @@ function SettingsPage() {
         <Textarea rows={12} value={script} onChange={(e) => setScript(e.target.value)} />
         <Button onClick={saveScript}>Speichern</Button>
       </section>
+      {user.email?.toLowerCase() === "office@signselector.com" && <BackupCenter />}
       {backendEnabled && <BackendStatus admin={admin} />}
       <TestModeCard />
       <section className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">

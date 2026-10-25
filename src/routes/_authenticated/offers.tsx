@@ -1,3 +1,4 @@
+import { useCountry } from "@/lib/country";
 import { useMutationRequest } from "@/hooks/use-mutation-request";
 import { jsonObject } from "@/lib/backend";
 import { backendEnabled } from "@/lib/backend";
@@ -68,8 +69,9 @@ function OfferList() {
   const [customerId, setCustomerId] = useState("");
   const [note, setNote] = useState("");
   const [items, setItems] = useState<Item[]>([{ description: "", quantity: 1, unit_price: 0 }]);
+  const country = useCountry();
   const { data: offers } = useQuery({
-    queryKey: ["offers"],
+    queryKey: ["offers", country],
     queryFn: async () =>
       (
         await supabase
@@ -77,13 +79,14 @@ function OfferList() {
           .select(
             "*, customer:offer_customers(name), items:offer_items(quantity,unit_price,description)",
           )
+          .eq("country", country)
           .order("created_at", { ascending: false })
       ).data ?? [],
   });
   const { data: customers } = useQuery({
-    queryKey: ["offer-customers"],
+    queryKey: ["offer-customers", country],
     queryFn: async () =>
-      (await supabase.from("offer_customers").select("id,name").order("name")).data ?? [],
+      (await supabase.from("offer_customers").select("id,name").eq("country", country).order("name")).data ?? [],
   });
   const { data: products } = useQuery({
     queryKey: ["offer-products"],
@@ -313,14 +316,15 @@ function Customers() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const [f, setF] = useState({ name: "", email: "", phone: "", address: "" });
+  const country = useCountry();
   const { data } = useQuery({
-    queryKey: ["offer-customers-full"],
+    queryKey: ["offer-customers-full", country],
     queryFn: async () =>
-      (await supabase.from("offer_customers").select("*").order("name")).data ?? [],
+      (await supabase.from("offer_customers").select("*").eq("country", country).order("name")).data ?? [],
   });
   async function add() {
     if (!f.name.trim()) return;
-    const { error } = await supabase.from("offer_customers").insert({ ...f, created_by: user.id });
+    const { error } = await supabase.from("offer_customers").insert({ ...f, country, created_by: user.id });
     if (error) {
       toast.error(error.message);
       return;

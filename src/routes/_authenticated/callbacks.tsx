@@ -1,4 +1,5 @@
 import { backendEnabled } from "@/lib/backend";
+import { useCountry } from "@/lib/country";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,13 +15,15 @@ export const Route = createFileRoute("/_authenticated/callbacks")({
 function CallbacksPage() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
+  const country = useCountry();
   const { data, isLoading } = useQuery({
-    queryKey: ["callbacks"],
+    queryKey: ["callbacks", country],
     queryFn: async () =>
       (
         await supabase
           .from("callbacks")
           .select("*,lead:leads(id,company,contact_name,phone)")
+          .eq("country", country)
           .eq("done", false)
           .order("due_at")
       ).data ?? [],

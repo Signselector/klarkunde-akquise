@@ -34,6 +34,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          country: string
           created_at: string
           id: string
           lead_id: string | null
@@ -42,6 +43,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          country?: string
           created_at?: string
           id?: string
           lead_id?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          country?: string
           created_at?: string
           id?: string
           lead_id?: string | null
@@ -91,6 +94,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backups: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          kind: string
+          rows_total: number
+          size_bytes: number
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          kind?: string
+          rows_total?: number
+          size_bytes?: number
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          kind?: string
+          rows_total?: number
+          size_bytes?: number
+        }
+        Relationships: []
+      }
       call_requests: {
         Row: {
           payload: Json
@@ -114,6 +144,7 @@ export type Database = {
       }
       callbacks: {
         Row: {
+          country: string
           created_at: string
           done: boolean
           due_at: string
@@ -123,6 +154,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          country?: string
           created_at?: string
           done?: boolean
           due_at: string
@@ -132,6 +164,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          country?: string
           created_at?: string
           done?: boolean
           due_at?: string
@@ -422,6 +455,7 @@ export type Database = {
       offer_customers: {
         Row: {
           address: string | null
+          country: string
           created_at: string
           created_by: string | null
           email: string | null
@@ -431,6 +465,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          country?: string
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -440,6 +475,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          country?: string
           created_at?: string
           created_by?: string | null
           email?: string | null
@@ -517,6 +553,7 @@ export type Database = {
       }
       offers: {
         Row: {
+          country: string
           created_at: string
           created_by: string | null
           customer_id: string | null
@@ -527,6 +564,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          country?: string
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
@@ -537,6 +575,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          country?: string
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
@@ -644,6 +683,29 @@ export type Database = {
           },
         ]
       }
+      user_countries: {
+        Row: {
+          country: string
+          user_id: string
+        }
+        Insert: {
+          country: string
+          user_id: string
+        }
+        Update: {
+          country?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_countries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -674,6 +736,7 @@ export type Database = {
       archive_leads: { Args: { p_ids: string[] }; Returns: number }
       archive_open_leads: { Args: never; Returns: number }
       backend_maintenance: { Args: never; Returns: Json }
+      can_access_country: { Args: { _c: string }; Returns: boolean }
       checkpoint_integration: {
         Args: {
           p_external_id: number
@@ -713,6 +776,7 @@ export type Database = {
         }
         Returns: Json
       }
+      create_backup: { Args: { p_kind?: string }; Returns: string }
       delete_appointment: {
         Args: { p_appointment_id: string }
         Returns: undefined
@@ -745,6 +809,7 @@ export type Database = {
         Returns: boolean
       }
       import_duplicates: { Args: { p_batch_id: string }; Returns: Json }
+      is_master: { Args: { _uid: string }; Returns: boolean }
       move_lead: {
         Args: {
           p_batch_id: string
@@ -753,6 +818,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      my_countries: { Args: never; Returns: string[] }
       preview_import: {
         Args: {
           p_batch_id?: string
