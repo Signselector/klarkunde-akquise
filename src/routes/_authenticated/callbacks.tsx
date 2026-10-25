@@ -1,4 +1,14 @@
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { de } from "date-fns/locale";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
@@ -23,6 +33,8 @@ function CallbacksPage() {
   const qc = useQueryClient();
   const [day, setDay] = useState<Date | undefined>();
   const [leadId, setLeadId] = useState<string | null>(null);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [finishing, setFinishing] = useState(false);
   const country = useCountry();
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["callbacks", user.id, country],
@@ -41,6 +53,8 @@ function CallbacksPage() {
   });
 
   async function done(id: string) {
+    if (finishing) return;
+    setFinishing(true);
     const { error } = await (backendEnabled
       ? supabase.rpc("complete_callback", {
           p_request_id: crypto.randomUUID(),
@@ -48,14 +62,21 @@ function CallbacksPage() {
           p_expected_version: data?.find((c) => c.id === id)?.version ?? -1,
         })
       : supabase.from("callbacks").update({ done: true }).eq("id", id));
+    setFinishing(false);
+    setConfirmId(null);
     if (error) {
       toast.error(error.message);
+      qc.invalidateQueries({ queryKey: ["callbacks"] });
       return;
     }
+    toast.success("Rückruf als erledigt markiert.");
     qc.invalidateQueries({ queryKey: ["callbacks"] });
   }
 
   const now = new Date();
+  const visible = (data ?? []).filter(
+    (c) => !day || new Date(c.due_at).toDateString() === day.toDateString(),
+  );
   const sameDay = (d: Date) => d.toDateString() === now.toDateString();
   return (
     <div className="cc-page">
@@ -85,45 +106,48 @@ function CallbacksPage() {
           title="Geplante Rückrufe"
           description="Datum und Uhrzeit sind beim Vereinbaren verpflichtend"
         >
-          {isError && (
-            <FeedbackState
-              kind="error"
-              title="Rückrufe nicht verfügbar"
-              action={<Button onClick={() => refetch()}>Erneut versuchen</Button>}
-            />
-          )}
-          {isLoading && <p className="text-muted-foreground">Lädt …</p>}
-          {data?.length === 0 && (
-            <p className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-              Keine offenen Callbacks.
-            </p>
-          )}
-          <div className="space-y-2">
-            {data
-              ?.filter((c) => !day || new Date(c.due_at).toDateString() === day.toDateString())
-              .map((c) => {
+          <div className="cc-surface-body">
+            {isError && (
+              <FeedbackState
+                kind="error"
+                title="Rückrufe nicht verfügbar"
+                action={<Button onClick={() => refetch()}>Erneut versuchen</Button>}
+              />
+            )}
+            {isLoading && <FeedbackState kind="loading" title="Rückrufe werden geladen" />}
+            {data && visible.length === 0 && (
+              <FeedbackState
+                kind="empty"
+                title={day ? "Keine Rückrufe an diesem Tag" : "Keine offenen Rückrufe"}
+              >
+                {day
+                  ? "Wähle einen anderen Tag oder zeige alle Rückrufe an."
+                  : "Vereinbarte Rückrufe erscheinen hier."}
+              </FeedbackState>
+            )}
+            <div className="space-y-2">
+              {visible.map((c) => {
                 const due = new Date(c.due_at);
                 const overdue = due < now;
                 const today = sameDay(due);
                 return (
                   <div
                     key={c.id}
-                    className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 ${overdue ? "border-destructive/50 bg-destructive/5" : today ? "border-primary/50 bg-primary/5" : "bg-card"}`}
+                    className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 ${overdue ? "border-destructive/50 bg-destructive/5" : today ? "border-primary/50 bg-primary/5" : "bg-card"}`}
                   >
-                    <div>
+                    <div className="min-w-0 space-y-1">
                       <p className="font-medium">{c.lead?.company || "Ohne Firmenname"}</p>
                       <p className="text-sm text-muted-foreground">
                         {[c.lead?.contact_name, c.lead?.phone].filter(Boolean).join(" · ")}
                       </p>
-                      <p className="text-sm">
-                        {due.toLocaleString("de-DE")}{" "}
+                      <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <span>{due.toLocaleString("de-DE")}</span>
                         {overdue ? (
                           <Badge variant="destructive">Überfällig</Badge>
                         ) : today ? (
                           <Badge>Heute fällig</Badge>
-                        ) : null}{" "}
-                        {c.user_id === user.id && <Badge variant="outline">Meiner</Badge>}
-                      </p>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button
@@ -138,23 +162,47 @@ function CallbacksPage() {
                           <a href={`tel:${c.lead.phone}`}>Anrufen</a>
                         </Button>
                       )}
-                      <Button size="sm" variant="outline" onClick={() => done(c.id)}>
+                      <Button size="sm" variant="outline" onClick={() => setConfirmId(c.id)}>
                         Erledigt
                       </Button>
                     </div>
                   </div>
                 );
               })}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Rückruf vereinbaren oder Ergebnis ändern: Öffne den im{" "}
+              <Link to="/call" className="underline">
+                Anrufablauf
+              </Link>
+              . Der Server reserviert den nächsten fälligen Rückruf automatisch.
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Rückruf vereinbaren oder Ergebnis ändern: Öffne den im{" "}
-            <Link to="/call" className="underline">
-              Anrufablauf
-            </Link>
-            . Der Server reserviert den nächsten fälligen Rückruf automatisch.
-          </p>
         </Surface>
       </div>
+      <AlertDialog open={!!confirmId} onOpenChange={(o) => !o && !finishing && setConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rückruf ohne Ergebnis erledigen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Der Rückruf verschwindet aus der Liste. Das Gesprächsergebnis wird dadurch nicht
+              erfasst. Trage es dafür im Anrufablauf ein.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={finishing}>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={finishing}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmId) void done(confirmId);
+              }}
+            >
+              Nur erledigen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <LeadDialog leadId={leadId} userId={user.id} admin={false} onClose={() => setLeadId(null)} />
     </div>
   );

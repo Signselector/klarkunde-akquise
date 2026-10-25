@@ -92,66 +92,68 @@ export function StatusLeadList({
         title={customers ? "Meine Kundenakte" : "Abgeschlossene Erstkontakte"}
         description="Bis zu 300 aktuelle Kontakte · ausgewähltes Land"
       >
-        <div className="flex flex-wrap gap-3 pb-4">
-          <Input
-            className="max-w-sm"
-            aria-label="Kontakte suchen"
-            placeholder="Firma, Stadt oder Telefon suchen"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <select
-            className="rounded-md border bg-background px-3 py-2 text-sm"
-            aria-label="Ergebnis filtern"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            <option value="all">Alle Ergebnisse</option>
-            {[...new Set((query.data ?? []).map((l) => resultLabel(l.status)))]
-              .sort()
-              .map((label) => (
-                <option key={label}>{label}</option>
-              ))}
-          </select>
-        </div>
-        {query.isLoading ? (
-          <FeedbackState kind="loading" title="Kontakte werden geladen" />
-        ) : query.isError ? (
-          <FeedbackState
-            kind="error"
-            title="Kontakte nicht verfügbar"
-            action={<Button onClick={() => query.refetch()}>Erneut versuchen</Button>}
-          />
-        ) : !rows.length ? (
-          <FeedbackState kind="empty" title="Keine passenden Kontakte">
-            Sobald du Kontakte bearbeitet hast, erscheinen sie hier.
-          </FeedbackState>
-        ) : (
-          groups.map((group) => (
-            <section key={group} className="mb-5">
-              <h2 className="mb-2 font-semibold">{group}</h2>
-              <div className="divide-y rounded-xl border">
-                {rows
-                  .filter((l) => resultLabel(l.status) === group)
-                  .map((l) => (
-                    <button
-                      key={l.id}
-                      className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left hover:bg-muted focus-visible:outline-2"
-                      onClick={() => setSelected(l.id)}
-                    >
-                      <span>
-                        <strong className="block">{l.company || "Ohne Firmenname"}</strong>
-                        <span className="text-sm text-muted-foreground">
-                          {[l.contact_name, l.city, l.phone].filter(Boolean).join(" · ")}
+        <div className="cc-surface-body">
+          <div className="flex flex-wrap gap-3">
+            <Input
+              className="max-w-sm"
+              aria-label="Kontakte suchen"
+              placeholder="Firma, Stadt oder Telefon suchen"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <select
+              className="rounded-md border bg-background px-3 py-2 text-sm"
+              aria-label="Ergebnis filtern"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="all">Alle Ergebnisse</option>
+              {[...new Set((query.data ?? []).map((l) => resultLabel(l.status)))]
+                .sort()
+                .map((label) => (
+                  <option key={label}>{label}</option>
+                ))}
+            </select>
+          </div>
+          {query.isLoading ? (
+            <FeedbackState kind="loading" title="Kontakte werden geladen" />
+          ) : query.isError ? (
+            <FeedbackState
+              kind="error"
+              title="Kontakte nicht verfügbar"
+              action={<Button onClick={() => query.refetch()}>Erneut versuchen</Button>}
+            />
+          ) : !rows.length ? (
+            <FeedbackState kind="empty" title="Keine passenden Kontakte">
+              Sobald du Kontakte bearbeitet hast, erscheinen sie hier.
+            </FeedbackState>
+          ) : (
+            groups.map((group) => (
+              <section key={group} className="mb-5">
+                <h2 className="mb-2 font-semibold">{group}</h2>
+                <div className="divide-y rounded-xl border">
+                  {rows
+                    .filter((l) => resultLabel(l.status) === group)
+                    .map((l) => (
+                      <button
+                        key={l.id}
+                        className="flex w-full flex-wrap items-center justify-between gap-3 p-4 text-left hover:bg-muted focus-visible:outline-2"
+                        onClick={() => setSelected(l.id)}
+                      >
+                        <span>
+                          <strong className="block">{l.company || "Ohne Firmenname"}</strong>
+                          <span className="text-sm text-muted-foreground">
+                            {[l.contact_name, l.city, l.phone].filter(Boolean).join(" · ")}
+                          </span>
                         </span>
-                      </span>
-                      <StatusBadge>{group}</StatusBadge>
-                    </button>
-                  ))}
-              </div>
-            </section>
-          ))
-        )}
+                        <StatusBadge>{group}</StatusBadge>
+                      </button>
+                    ))}
+                </div>
+              </section>
+            ))
+          )}
+        </div>
       </Surface>
       <LeadDialog
         leadId={selected}
