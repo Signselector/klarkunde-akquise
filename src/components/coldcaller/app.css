@@ -902,3 +902,14 @@
   min-height: 44px;
   padding: 8px 12px;
 }
+
+.cc-app .cc-surface-body {
+  padding: 0 24px 24px;
+  display: grid;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  .cc-app .cc-surface-body {
+    padding: 0 16px 20px;
+  }
+}
