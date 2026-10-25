@@ -10,5 +10,5 @@
     "types": [],
     "skipLibCheck": true
   },
-  "include": ["_shared/**/*.ts", "coldcaller-worker/**/*.ts", "runtime.d.ts"]
+  "include": ["_shared/**/*.ts", "coldcaller-worker/**/*.ts", "team-metrics/**/*.ts", "runtime.d.ts"]
 }

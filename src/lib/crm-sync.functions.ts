@@ -197,6 +197,17 @@ export const syncLeadAction = createServerFn({ method: "POST" })
       .eq("id", data.actionId)
       .maybeSingle();
     if (!own) throw new Error("Aktion nicht gefunden.");
+    // Test mode (on by default): nothing is sent to Pipedrive, the action is only recorded as simulated.
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
+    if (config?.test_mode !== false) {
+      await db
+        .from("lead_actions")
+        .update({ crm_sync_state: "simulated", crm_error: null })
+        .eq("id", data.actionId)
+        .in("crm_sync_state", ["queued", "error", "simulated"]);
+      return { state: "simulated" as const };
+    }
     const store = await databaseStore(context.userId, !!isAdmin);
     // The CRM client needs the lead's country, which is only known once the store has loaded the action.
     let crm: Crm | null = null;

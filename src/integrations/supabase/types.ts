@@ -212,6 +212,39 @@ export type Database = {
           },
         ]
       }
+      coins_ledger: {
+        Row: {
+          coins: number
+          created_at: string
+          id: string
+          occurred_at: string
+          reason: string
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          coins: number
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          reason: string
+          source_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          reason?: string
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       integration_config: {
         Row: {
           appointment_stage_id: number | null
@@ -563,6 +596,39 @@ export type Database = {
           },
         ]
       }
+      monthly_quality: {
+        Row: {
+          frozen_at: string
+          high_q: number
+          low_q: number
+          month: string
+          per_100: number | null
+          processed: number
+          qualified: number
+          user_id: string
+        }
+        Insert: {
+          frozen_at?: string
+          high_q: number
+          low_q: number
+          month: string
+          per_100?: number | null
+          processed: number
+          qualified: number
+          user_id: string
+        }
+        Update: {
+          frozen_at?: string
+          high_q?: number
+          low_q?: number
+          month?: string
+          per_100?: number | null
+          processed?: number
+          qualified?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       offer_customers: {
         Row: {
           address: string | null
@@ -724,6 +790,39 @@ export type Database = {
         }
         Relationships: []
       }
+      points_ledger: {
+        Row: {
+          created_at: string
+          id: string
+          occurred_at: string
+          points: number
+          reason: string
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          points: number
+          reason: string
+          source_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          points?: number
+          reason?: string
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
@@ -838,6 +937,30 @@ export type Database = {
           },
         ]
       }
+      team_metrics: {
+        Row: {
+          lead_quality: number | null
+          leads_contributed: number | null
+          period: string
+          synced_at: string
+          user_id: string
+        }
+        Insert: {
+          lead_quality?: number | null
+          leads_contributed?: number | null
+          period: string
+          synced_at?: string
+          user_id: string
+        }
+        Update: {
+          lead_quality?: number | null
+          leads_contributed?: number | null
+          period?: string
+          synced_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -853,6 +976,30 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_ranking_snapshots: {
+        Row: {
+          frozen_at: string
+          points: number
+          rank: number
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          frozen_at?: string
+          points: number
+          rank: number
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          frozen_at?: string
+          points?: number
+          rank?: number
+          user_id?: string
+          week_start?: string
         }
         Relationships: []
       }
@@ -878,6 +1025,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
+      get_caller_day: { Args: { p_day?: string }; Returns: Json }
+      get_monthly_quality: { Args: { p_month?: string }; Returns: Json }
+      get_team_metrics: { Args: never; Returns: Json }
+      get_weekly_ranking: { Args: { p_week?: string }; Returns: Json }
+      reassign_batch: { Args: { p_batch_id: string; p_user_id: string }; Returns: Json }
+      upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
       claim_batch: { Args: { p_batch_id: string }; Returns: Json }
       claim_integration_jobs: { Args: { p_limit?: number }; Returns: Json }
       claim_next_lead:

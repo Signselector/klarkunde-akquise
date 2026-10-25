@@ -223,6 +223,8 @@ export function LeadDialog({
                     {a.crm_sync_state === "queued" && " · für Pipedrive vorgemerkt"}
                     {a.crm_sync_state === "syncing" && " · wird an Pipedrive übertragen"}
                     {a.crm_sync_state === "synced" && " · in Pipedrive angelegt"}
+                    {a.crm_sync_state === "simulated" &&
+                      " · Testmodus, nicht an Pipedrive gesendet"}
                     {a.crm_sync_state === "error" &&
                       ` · Pipedrive-Übertragung fehlgeschlagen: ${crmErrorMessage(a.crm_error) || "Fehler"}`}
                     {(a.crm_sync_state === "error" || a.crm_sync_state === "queued") && (

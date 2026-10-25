@@ -255,6 +255,12 @@ export function LeadActions({
               description: `Deal in Pipedrive angelegt (Stage „${stage}“).`,
               special,
             });
+          else if (synced.state === "simulated")
+            setSuccess({
+              title: `${ACTION_LABEL[action.key]} gespeichert`,
+              description: `Testmodus: Der Deal (Stage „${stage}“) wird nur simuliert und nicht an Pipedrive gesendet.`,
+              special,
+            });
           else if (synced.state === "error") throw new Error(synced.error ?? "unexpected_error");
         } catch (syncError) {
           const code = syncError instanceof Error ? syncError.message : "unexpected_error";

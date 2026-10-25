@@ -120,8 +120,8 @@ test("leads are only handed to the owner of the batch", async () => {
   await rpc("renew_lead_claim", [mine.claim_id, true]);
 });
 
-test("only an admin can release a batch, then another caller may take it", async () => {
-  await as(anna);
+test("only the owner or an admin can release a batch, then another caller may take it", async () => {
+  await as(ben);
   await assert.rejects(() => rpc("release_batch", [open]), /forbidden/);
   await as(admin);
   await assert.rejects(() => rpc("release_batch", [randomUUID()]), /batch_not_found/);

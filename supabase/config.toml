@@ -3,3 +3,7 @@ project_id = "yaljvxeecdrjpmlerpef"
 # It is not a user JWT; never deploy without COLD_CALLER_SCHEDULER_SECRET.
 [functions.coldcaller-worker]
 verify_jwt = false
+
+# Team Management pushes lead quality and contributed leads here. Authenticated by TEAM_MANAGEMENT_SYNC_SECRET.
+[functions.team-metrics]
+verify_jwt = false

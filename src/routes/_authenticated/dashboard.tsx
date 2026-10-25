@@ -35,16 +35,23 @@ type BatchRow = {
   name: string;
   created_at: string;
   total: number;
-  done: number;
-  open?: number;
+  processed: number;
+  unprocessed: number;
   assigned_to?: string | null;
   assigned_name?: string | null;
+};
+type Pending = {
+  batch: BatchRow;
+  action: "claim" | "release" | "reassign";
+  userId?: string;
+  userName?: string;
 };
 
 const BATCH_ERRORS: Record<string, string> = {
   batch_taken: "Dieser Batch wurde gerade von jemand anderem übernommen.",
   batch_not_found: "Dieser Batch ist nicht mehr verfügbar.",
   forbidden: "Für diesen Batch fehlt dir die Berechtigung.",
+  invalid_assignee: "Diese Person darf in diesem Land keinen Batch übernehmen.",
 };
 
 function Dashboard() {
@@ -52,10 +59,20 @@ function Dashboard() {
   const { user } = Route.useRouteContext();
   const admin = useIsAdmin(user.id);
   const qc = useQueryClient();
-  const [pending, setPending] = useState<{ batch: BatchRow; action: "claim" | "release" } | null>(
-    null,
-  );
+  const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
+  const people = useQuery({
+    enabled: admin && backendEnabled,
+    queryKey: ["batch-assignees"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id,display_name")
+        .order("display_name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
   async function confirmPending() {
     if (!pending || busy) return;
@@ -63,11 +80,19 @@ function Dashboard() {
     try {
       if (pending.action === "claim")
         await backendRpc("claim_batch", { p_batch_id: pending.batch.id });
-      else await backendRpc("release_batch", { p_batch_id: pending.batch.id });
+      else if (pending.action === "release")
+        await backendRpc("release_batch", { p_batch_id: pending.batch.id });
+      else
+        await backendRpc("reassign_batch", {
+          p_batch_id: pending.batch.id,
+          p_user_id: pending.userId ?? "",
+        });
       toast.success(
         pending.action === "claim"
           ? `„${pending.batch.name}“ gehört jetzt dir. Die Leads findest du unter Offene Leads.`
-          : `„${pending.batch.name}“ ist wieder frei.`,
+          : pending.action === "release"
+            ? `„${pending.batch.name}“ ist wieder frei.`
+            : `„${pending.batch.name}“ gehört jetzt ${pending.userName ?? "der gewählten Person"}.`,
       );
     } catch (e) {
       const message = e instanceof Error ? e.message : "";
@@ -91,6 +116,7 @@ function Dashboard() {
     refetch,
   } = useQuery({
     queryKey: ["batches", country],
+    refetchInterval: 30_000,
     queryFn: async () => {
       if (backendEnabled) {
         const progress = (await backendRpc("get_batch_progress", {} as never)) as {
@@ -100,6 +126,8 @@ function Dashboard() {
           import_state: string;
           total: number;
           completed: number;
+          processed?: number;
+          unprocessed?: number;
           open: number;
           assigned_to: string | null;
           assigned_name: string | null;
@@ -111,7 +139,15 @@ function Dashboard() {
         const ids = new Set((own ?? []).map((b) => b.id));
         return progress
           .filter((b) => b.import_state === "confirmed" && ids.has(b.id))
-          .map((b) => ({ ...b, done: b.completed }));
+          .map((b) => {
+            // Older databases only know `completed`/`open`; the new function reports distinct processed leads.
+            const processed = b.processed ?? b.completed;
+            return {
+              ...b,
+              processed,
+              unprocessed: b.unprocessed ?? Math.max(0, b.total - processed),
+            };
+          });
       }
       const { data, error } = await supabase
         .from("lead_batches")
@@ -135,7 +171,8 @@ function Dashboard() {
           if (t.error) throw t.error;
           if (o.error) throw o.error;
           const total = t.count ?? 0;
-          return { ...b, total, done: total - (o.count ?? 0) };
+          const processed = total - (o.count ?? 0);
+          return { ...b, total, processed, unprocessed: total - processed };
         }),
       );
     },
@@ -150,11 +187,12 @@ function Dashboard() {
       <CallerPerformance userId={user.id} />
       <Surface
         title="Lead Batches"
-        description="Alle verfügbaren Leadlisten in deinem Land"
+        description="Alle Leadlisten in deinem Land · aktualisiert sich automatisch"
         action={
           <InfoButton label="Batchfortschritt">
-            Der vorhandene Fortschritt zählt Leads, die nicht mehr offen sind. Er ist keine
-            Abschlussquote. Nicht erreichte Leads bleiben offen.
+            Ein Lead zählt als bearbeitet, sobald mindestens ein Gesprächsergebnis dokumentiert ist.
+            Mehrere Anrufversuche erhöhen den Fortschritt nicht mehrfach. Nach einer Freigabe bleibt
+            der Fortschritt erhalten. Ein Batch gehört immer nur einer Person.
           </InfoButton>
         }
       >
@@ -180,57 +218,97 @@ function Dashboard() {
         ) : (
           <div className="cc-batch-grid">
             {batches?.map((b) => {
-              const pct = b.total ? Math.round((b.done / b.total) * 100) : 0;
-              const mine = backendEnabled && "assigned_to" in b && b.assigned_to === user.id;
-              const taken = backendEnabled && "assigned_to" in b && !!b.assigned_to && !mine;
-              const free = backendEnabled && "assigned_to" in b && !b.assigned_to;
+              const pct = b.total ? Math.round((b.processed / b.total) * 100) : 0;
+              const hasOwner = "assigned_to" in b;
+              const mine = backendEnabled && hasOwner && b.assigned_to === user.id;
+              const taken = backendEnabled && hasOwner && !!b.assigned_to && !mine;
+              const free = backendEnabled && hasOwner && !b.assigned_to;
               const row = b as BatchRow;
               return (
                 <article key={b.id} className="cc-batch">
                   <div className="cc-batch-heading">
                     <div>
                       <h3>{b.name}</h3>
-                      <small>{new Date(b.created_at).toLocaleDateString("de-DE")}</small>
+                      <small>Import: {new Date(b.created_at).toLocaleDateString("de-DE")}</small>
                     </div>
-                    <FolderOpen size={24} aria-hidden="true" />
+                    {backendEnabled && hasOwner && (
+                      <StatusBadge tone={free ? "info" : mine ? "success" : "neutral"}>
+                        {free ? "Frei" : "Übernommen"}
+                      </StatusBadge>
+                    )}
                   </div>
+                  <dl className="cc-batch-numbers">
+                    <div>
+                      <dt>Leads</dt>
+                      <dd>{b.total}</dd>
+                    </div>
+                    <div>
+                      <dt>Bearbeitet</dt>
+                      <dd>{b.processed}</dd>
+                    </div>
+                    <div>
+                      <dt>Unbearbeitet</dt>
+                      <dd>{b.unprocessed}</dd>
+                    </div>
+                  </dl>
                   <Progress value={pct} aria-label={`Fortschritt ${b.name}: ${pct} Prozent`} />
                   <p>
-                    {b.done} von {b.total} bearbeitet · {pct} %
+                    {b.processed} von {b.total} bearbeitet · {pct} %
+                    {backendEnabled && hasOwner && (
+                      <>
+                        {" · Besitzer: "}
+                        {free ? "–" : mine ? "du" : row.assigned_name || "unbekannt"}
+                      </>
+                    )}
                   </p>
-                  {backendEnabled && (
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                      {mine && <StatusBadge tone="success">Dein Batch</StatusBadge>}
-                      {taken && (
-                        <StatusBadge tone="neutral">
-                          Vergeben an {row.assigned_name || "einen Caller"}
-                        </StatusBadge>
+                  {backendEnabled && hasOwner && (
+                    <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                      {mine && (
+                        <Button asChild size="sm" variant="outline">
+                          <Link to="/leads">Offene Leads</Link>
+                        </Button>
                       )}
-                      {free && <StatusBadge tone="info">Frei</StatusBadge>}
-                      <div className="flex gap-2">
-                        {mine && (
-                          <Button asChild size="sm" variant="outline">
-                            <Link to="/leads">Offene Leads</Link>
-                          </Button>
-                        )}
-                        {free && (
-                          <Button
-                            size="sm"
-                            onClick={() => setPending({ batch: row, action: "claim" })}
-                          >
-                            Batch übernehmen
-                          </Button>
-                        )}
-                        {admin && (mine || taken) && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setPending({ batch: row, action: "release" })}
-                          >
-                            Freigeben
-                          </Button>
-                        )}
-                      </div>
+                      {free && (
+                        <Button
+                          size="sm"
+                          onClick={() => setPending({ batch: row, action: "claim" })}
+                        >
+                          Batch übernehmen
+                        </Button>
+                      )}
+                      {(mine || (admin && taken)) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setPending({ batch: row, action: "release" })}
+                        >
+                          Freigeben
+                        </Button>
+                      )}
+                      {admin && (
+                        <select
+                          className="rounded-md border bg-background px-2 py-1.5 text-sm"
+                          aria-label={`Batch ${b.name} neu zuweisen`}
+                          value=""
+                          onChange={(e) => {
+                            const person = people.data?.find((p) => p.id === e.target.value);
+                            if (person)
+                              setPending({
+                                batch: row,
+                                action: "reassign",
+                                userId: person.id,
+                                userName: person.display_name ?? "",
+                              });
+                          }}
+                        >
+                          <option value="">Zuweisen an …</option>
+                          {people.data?.map((p) => (
+                            <option key={p.id} value={p.id}>
+                              {p.display_name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                   )}
                 </article>
@@ -243,12 +321,18 @@ function Dashboard() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {pending?.action === "claim" ? "Batch übernehmen?" : "Batch freigeben?"}
+              {pending?.action === "claim"
+                ? "Batch übernehmen?"
+                : pending?.action === "release"
+                  ? "Batch freigeben?"
+                  : "Batch neu zuweisen?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {pending?.action === "claim"
-                ? `„${pending.batch.name}“ mit ${pending.batch.open ?? pending.batch.total} offenen Leads wird dir zugewiesen. Kein anderer Caller kann ihn dann nutzen. Du findest die Leads unter Offene Leads.`
-                : `„${pending?.batch.name}“ wird wieder für alle Caller im Land verfügbar. Bereits bearbeitete Leads bleiben bei ihrem Bearbeiter.`}
+                ? `„${pending.batch.name}“ mit ${pending.batch.unprocessed} unbearbeiteten Leads wird dir zugewiesen. Kein anderer Caller kann ihn dann nutzen. Du findest die Leads unter Offene Leads.`
+                : pending?.action === "release"
+                  ? `„${pending?.batch.name}“ wird wieder für alle Caller im Land verfügbar. Bereits bearbeitete Leads und ihre Historie bleiben erhalten, sie erscheinen nicht wieder als unbearbeitet.`
+                  : `„${pending?.batch.name}“ wird ${pending?.userName ?? "der gewählten Person"} zugewiesen. Bereits bearbeitete Leads bleiben erhalten.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -260,7 +344,11 @@ function Dashboard() {
                 void confirmPending();
               }}
             >
-              {pending?.action === "claim" ? "Übernehmen" : "Freigeben"}
+              {pending?.action === "claim"
+                ? "Übernehmen"
+                : pending?.action === "release"
+                  ? "Freigeben"
+                  : "Zuweisen"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

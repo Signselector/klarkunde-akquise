@@ -813,7 +813,10 @@
 .cc-auth-mobile-brand .cc-brand-content img {
   width: 180px;
 }
-.cc-app button:not(.cc-info):not(.cc-icon-button):not(.cc-lead-row):not(.cc-card-button):not([data-sidebar]),
+.cc-app
+  button:not(.cc-info):not(.cc-icon-button):not(.cc-lead-row):not(.cc-card-button):not(
+    [data-sidebar]
+  ),
 .cc-app .cc-page-actions a,
 .cc-app .cc-start-actions a,
 .cc-auth-form > button[type="submit"] {
@@ -912,4 +915,123 @@
   .cc-app .cc-surface-body {
     padding: 0 16px 20px;
   }
+}
+
+/* Dashboard: today's figures as small cards, ranking list. */
+.cc-app .cc-daygrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 0 24px 24px;
+}
+.cc-app .cc-daytile {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  padding: 14px 16px;
+  border: 1px solid var(--cc-border);
+  border-radius: 12px;
+  background: white;
+  min-width: 0;
+}
+.cc-app .cc-daytile-icon {
+  color: var(--cc-muted);
+  display: flex;
+  margin-bottom: 6px;
+}
+.cc-app .cc-daytile p {
+  color: var(--cc-muted);
+  font-size: 13px;
+}
+.cc-app .cc-daytile strong {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+.cc-app .cc-daytile--key {
+  border-color: var(--cc-accent);
+  background: oklch(0.97 0.012 28);
+}
+.cc-app .cc-daytile--key .cc-daytile-icon,
+.cc-app .cc-daytile--key strong {
+  color: var(--cc-accent);
+}
+.cc-app .cc-daygrid-note {
+  grid-column: 1 / -1;
+  color: var(--cc-muted);
+  font-size: 12px;
+}
+.cc-app .cc-ranking {
+  padding: 0 24px 24px;
+  display: grid;
+  gap: 12px;
+}
+.cc-app .cc-ranking ol {
+  display: grid;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cc-app .cc-ranking li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+.cc-app .cc-ranking-top {
+  background: oklch(0.97 0.012 28);
+  font-weight: 600;
+}
+.cc-app .cc-ranking-top .cc-ranking-rank {
+  color: var(--cc-accent);
+  font-size: 18px;
+}
+.cc-app .cc-ranking-me {
+  outline: 2px solid var(--cc-accent);
+}
+.cc-app .cc-ranking-rank {
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.cc-app .cc-ranking-name {
+  overflow-wrap: anywhere;
+}
+.cc-app .cc-ranking-points {
+  font-variant-numeric: tabular-nums;
+  color: var(--cc-muted);
+  font-size: 13px;
+}
+.cc-app .cc-ranking-me-line {
+  font-size: 13px;
+  color: var(--cc-muted);
+}
+@media (max-width: 640px) {
+  .cc-app .cc-daygrid,
+  .cc-app .cc-ranking {
+    padding: 0 16px 20px;
+  }
+}
+.cc-app .cc-batch-numbers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.cc-app .cc-batch-numbers dt {
+  color: var(--cc-muted);
+  font-size: 12px;
+}
+.cc-app .cc-batch-numbers dd {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.cc-app .cc-batch-heading > .cc-badge {
+  align-self: flex-start;
+  flex-shrink: 0;
 }

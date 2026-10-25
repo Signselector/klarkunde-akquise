@@ -225,7 +225,7 @@ export type WorkerConfig = {
   pipedriveToken: string;
   authMode?: "api_token" | "oauth";
 };
-async function equalSecret(a: string, b: string): Promise<boolean> {
+export async function equalSecret(a: string, b: string): Promise<boolean> {
   const hash = async (s: string) =>
     new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)));
   const [x, y] = await Promise.all([hash(a), hash(b)]);
