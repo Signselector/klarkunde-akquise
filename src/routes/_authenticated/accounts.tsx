@@ -89,7 +89,7 @@ function AccountsPage() {
   function openCallerView() {
     localStorage.setItem("cc-caller-view", "1");
     window.dispatchEvent(new Event("cc-caller-view"));
-    nav({ to: "/call" });
+    nav({ to: "/leads" });
   }
 
   if (!admin) return <p className="text-muted-foreground">Accounts sind nur für Admins.</p>;

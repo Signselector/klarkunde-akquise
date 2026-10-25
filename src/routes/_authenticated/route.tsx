@@ -98,7 +98,6 @@ function Layout() {
 
   const items = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    ...(me?.admin && !callerView ? [{ to: "/call", label: "Anrufen", icon: Phone }] : []),
     { to: "/leads", label: "Offene Leads", icon: Users },
     { to: "/callbacks", label: "Rückrufe", icon: CalendarClock },
     { to: "/completed", label: "Abgeschlossene Leads", icon: CircleCheck },
@@ -127,7 +126,7 @@ function Layout() {
     setCallerView(next);
     localStorage.setItem("cc-caller-view", next ? "1" : "0");
     if (next && (location.pathname === "/accounts" || location.pathname === "/settings")) {
-      nav({ to: "/call" });
+      nav({ to: "/leads" });
     }
   }
 
