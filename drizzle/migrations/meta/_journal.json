@@ -29,6 +29,13 @@
       "when": 1792924972791,
       "tag": "0003_country_separation",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792926239839,
+      "tag": "0004_country_access_and_backups",
+      "breakpoints": true
     }
   ]
 }
