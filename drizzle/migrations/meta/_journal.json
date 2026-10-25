@@ -36,6 +36,13 @@
       "when": 1792926239839,
       "tag": "0004_country_access_and_backups",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792926253430,
+      "tag": "0005_backup_function_and_schedule",
+      "breakpoints": true
     }
   ]
 }
