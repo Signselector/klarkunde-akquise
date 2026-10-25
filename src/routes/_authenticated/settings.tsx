@@ -1,4 +1,5 @@
 import { BackendStatus } from "@/components/backend-status";
+import { TestModeCard } from "@/components/TestMode";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
