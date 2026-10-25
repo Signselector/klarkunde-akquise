@@ -25,3 +25,8 @@ Mit lokalen Browser-Fixtures Desktop und 390px-Mobilnavigation geprüft:
 14 einzigartige Navigationsmotive, keine Page-Exceptions, reduzierte Bewegung
 wirksam. Screenshots unter `docs/frontend/icon-refresh/`. Die Fixtures stellen
 keinen Test der Cloud-Verbindungen oder echter Konten dar.
+
+Die verstärkte Glasversion ergänzt eine deutlich versetzte Rückplatte, eine
+innere Brechungskante, mehrere spiegelnde Facetten und einen einmaligen Lichtlauf
+bei Hover. Die Hover-Neigung nutzt CSS-Perspektive. Bei reduzierter Bewegung
+werden auch die Animationen der inneren SVG-Ebenen deaktiviert.

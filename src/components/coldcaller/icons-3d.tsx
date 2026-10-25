@@ -12,7 +12,10 @@ function sculpt(Shape: LucideIcon, name: string, utility = false) {
     const uid = useId().replace(/:/g, "");
     const face = `${uid}-face`,
       edge = `${uid}-edge`,
-      ink = `${uid}-ink`;
+      ink = `${uid}-ink`,
+      clip = `${uid}-clip`,
+      reflection = `${uid}-reflection`,
+      rim = `${uid}-rim`;
     return (
       <svg
         ref={ref}
@@ -29,25 +32,50 @@ function sculpt(Shape: LucideIcon, name: string, utility = false) {
       >
         <defs>
           <linearGradient id={face} x1="6" y1="3" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#ffffff" stopOpacity=".32" />
-            <stop offset=".46" stopColor="#d8dce0" stopOpacity=".08" />
-            <stop offset="1" stopColor="#7c838b" stopOpacity=".16" />
+            <stop stopColor="#ffffff" stopOpacity=".48" />
+            <stop offset=".46" stopColor="#d8dce0" stopOpacity=".06" />
+            <stop offset="1" stopColor="#7c838b" stopOpacity=".24" />
           </linearGradient>
           <linearGradient id={edge} x1="9" y1="28" x2="33" y2="36" gradientUnits="userSpaceOnUse">
-            <stop stopColor="currentColor" stopOpacity=".18" />
-            <stop offset=".6" stopColor="#ffffff" stopOpacity=".18" />
-            <stop offset="1" stopColor="currentColor" stopOpacity=".12" />
+            <stop stopColor="#090b0f" stopOpacity=".48" />
+            <stop offset=".5" stopColor="#c9cdd2" stopOpacity=".38" />
+            <stop offset="1" stopColor="#363c44" stopOpacity=".48" />
           </linearGradient>
           <linearGradient id={ink} x1="10" y1="8" x2="28" y2="29" gradientUnits="userSpaceOnUse">
             <stop stopColor="currentColor" stopOpacity=".96" />
             <stop offset=".5" stopColor="currentColor" stopOpacity=".72" />
             <stop offset="1" stopColor="currentColor" stopOpacity=".94" />
           </linearGradient>
+          <clipPath id={clip}>
+            <rect x="4" y="3" width="30" height="29" rx="9" />
+          </clipPath>
+          <linearGradient id={reflection} x1="0" y1="0" x2="1" y2="0">
+            <stop stopColor="#fff" stopOpacity="0" />
+            <stop offset=".45" stopColor="#fff" stopOpacity=".08" />
+            <stop offset=".55" stopColor="#fff" stopOpacity=".64" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id={rim} x1="4" y1="3" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#fff" stopOpacity=".92" />
+            <stop offset=".35" stopColor="#fff" stopOpacity=".18" />
+            <stop offset=".72" stopColor="#fff" stopOpacity=".04" />
+            <stop offset="1" stopColor="#fff" stopOpacity=".58" />
+          </linearGradient>
         </defs>
         {!utility && (
           <g className="cc-icon3d__body">
-            <ellipse cx="21" cy="36" rx="13" ry="2" fill="#000" opacity=".09" />
-            <rect x="4.8" y="5" width="30" height="29" rx="9" fill={`url(#${edge})`} />
+            <ellipse cx="22" cy="37" rx="14" ry="2.4" fill="#000" opacity=".2" />
+            <rect x="7" y="8" width="30" height="29" rx="9" fill={`url(#${edge})`} />
+            <rect
+              x="5.5"
+              y="5.5"
+              width="30"
+              height="29"
+              rx="9"
+              stroke="#fff"
+              strokeOpacity=".18"
+              fill="none"
+            />
             <rect x="4" y="3" width="30" height="29" rx="9" fill={`url(#${face})`} />
             <rect
               x="4.6"
@@ -55,10 +83,44 @@ function sculpt(Shape: LucideIcon, name: string, utility = false) {
               width="28.8"
               height="27.8"
               rx="8.4"
-              stroke="#fff"
-              strokeOpacity=".48"
-              strokeWidth="1.2"
+              stroke={`url(#${rim})`}
+              strokeOpacity="1"
+              strokeWidth="1.4"
             />
+            <rect
+              x="6.7"
+              y="5.7"
+              width="24.6"
+              height="23.6"
+              rx="6.5"
+              stroke="#fff"
+              strokeOpacity=".16"
+              strokeWidth=".7"
+            />
+            <path
+              d="M5 15C12 19 24 11 33 16V11C33 6 30 4 25 4H13C8 4 5 7 5 12Z"
+              fill="#fff"
+              opacity=".09"
+            />
+            <path
+              d="M13 31H25Q33 31 33 23"
+              stroke="#fff"
+              strokeOpacity=".34"
+              strokeWidth="1"
+              strokeLinecap="round"
+            />
+            <g clipPath={`url(#${clip})`}>
+              <g transform="rotate(-28 20 20)">
+                <rect
+                  className="cc-icon3d__shine"
+                  x="-35"
+                  y="-15"
+                  width="32"
+                  height="75"
+                  fill={`url(#${reflection})`}
+                />
+              </g>
+            </g>
             <path
               d="M9 12Q9 7 15 7H24"
               stroke="#fff"
@@ -77,7 +139,7 @@ function sculpt(Shape: LucideIcon, name: string, utility = false) {
             height={utility ? "30" : "22"}
             stroke="currentColor"
             strokeWidth="3"
-            opacity=".18"
+            opacity=".32"
           />
           <Shape
             className="cc-size-preserved"
