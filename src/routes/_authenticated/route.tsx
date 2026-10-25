@@ -69,6 +69,8 @@ function Layout() {
 
   const isMaster = isMasterEmail(user.email);
   const [callerView, setCallerView] = useState(false);
+  // The pill shows only the current area; hover or focus opens it, a click closes it again.
+  const [navOpen, setNavOpen] = useState(false);
   useEffect(() => {
     if (!isMaster) return;
     const sync = () => setCallerView(localStorage.getItem("cc-caller-view") === "1");
@@ -131,7 +133,17 @@ function Layout() {
           >
             <Brand />
           </Link>
-          <nav className="cc-topnav-links" aria-label="Hauptnavigation">
+          <nav
+            className="cc-topnav-links"
+            aria-label="Hauptnavigation"
+            data-open={navOpen}
+            onMouseEnter={() => setNavOpen(true)}
+            onMouseLeave={() => setNavOpen(false)}
+            onFocus={() => setNavOpen(true)}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget)) setNavOpen(false);
+            }}
+          >
             {items.map((i) => (
               <NavigationItem
                 key={i.to}
@@ -139,6 +151,7 @@ function Layout() {
                 label={i.label}
                 icon={i.icon}
                 active={location.pathname === i.to}
+                onNavigate={() => setNavOpen(false)}
               />
             ))}
           </nav>
@@ -179,14 +192,17 @@ function NavigationItem({
   label,
   icon: Icon,
   active,
+  onNavigate,
 }: {
   to: string;
   label: string;
   icon: typeof Users;
   active: boolean;
+  onNavigate: () => void;
 }) {
   return (
     <Link
+      onClick={onNavigate}
       to={to}
       className="cc-nav-link"
       data-active={active}
