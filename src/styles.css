@@ -1,5 +1,6 @@
 @import "./components/coldcaller/theme.css";
 @import "./components/coldcaller/app.css";
+@import "./components/coldcaller/saas.css";
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
@@ -21,8 +22,8 @@
  */
 
 @theme inline {
-  --font-sans: "Instrument Sans Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-display: "Instrument Sans Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Instrument Sans Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Instrument Sans Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -66,8 +67,8 @@
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: oklch(0.96158 0.00574 84.566);
+  --radius: 1rem;
+  --background: #f6f3ee;
   --foreground: oklch(0.19689 0.0016 17.293);
   --card: oklch(1 0 89.876);
   --card-foreground: oklch(0.19689 0.0016 17.293);
@@ -83,9 +84,9 @@
   --accent-foreground: oklch(0.19689 0.0016 17.293);
   --destructive: oklch(0.532 0.194 25.5);
   --destructive-foreground: oklch(1 0 89.9);
-  --border: oklch(0.8714 0.01342 82.401);
+  --border: #e8e4dc;
   --input: oklch(0.8714 0.01342 82.401);
-  --ring: oklch(0.35566 0.14239 28.694);
+  --ring: #e5242f;
   --chart-1: oklch(0.35566 0.14239 28.694);
   --chart-2: oklch(0.44442 0.0096 73.639);
   --chart-3: oklch(0.8714 0.01342 82.401);

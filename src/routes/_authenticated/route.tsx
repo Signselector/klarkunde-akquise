@@ -3,7 +3,7 @@ import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
 import { CountrySwitcher } from "@/lib/country";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import {
   createFileRoute,
   redirect,
@@ -29,19 +29,6 @@ import {
   Users,
 } from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -129,87 +116,61 @@ function Layout() {
     }
   }
 
+  const initials = (me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase();
   return (
-    <SidebarProvider
-      className="cc-theme cc-app"
-      style={{ "--sidebar-width": "15.5rem" } as CSSProperties}
-    >
+    <div className="cc-theme cc-app cc-shell">
       <a href="#arbeitsbereich" className="cc-skip-link">
         Zum Arbeitsbereich
       </a>
-      <Sidebar>
-        <SidebarHeader className="cc-sidebar-header">
+      <header className="cc-topnav">
+        <div className="cc-topnav-inner">
           <Link
             to="/dashboard"
             className="cc-brand"
             aria-label="Sign Selector Cold Caller – Dashboard"
           >
-            <Brand inverse />
+            <Brand />
           </Link>
-        </SidebarHeader>
-        <SidebarContent className="px-3 pb-4">
-          <p className="cc-nav-caption">Dein Arbeitsplatz</p>
-          <SidebarMenu aria-label="Hauptnavigation">
+          <nav className="cc-topnav-links" aria-label="Hauptnavigation">
             {items.map((i) => (
-              <SidebarMenuItem key={i.to}>
-                <NavigationItem
-                  to={i.to}
-                  label={i.label}
-                  icon={i.icon}
-                  active={location.pathname === i.to}
-                />
-              </SidebarMenuItem>
+              <NavigationItem
+                key={i.to}
+                to={i.to}
+                label={i.label}
+                icon={i.icon}
+                active={location.pathname === i.to}
+              />
             ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter className="cc-sidebar-footer">
-          <div className="cc-user">
-            <span className="cc-avatar">
-              {(me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase()}
-            </span>
-            <div>
-              <strong>{me?.name ?? user.email}</strong>
-              <small>
-                {me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}
-              </small>
-            </div>
-          </div>
-          <Button variant="ghost" className="cc-signout" onClick={signOut}>
-            <LogOut size={18} />
-            Abmelden
-          </Button>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset className="min-w-0">
-        <header className="cc-topbar">
-          <div className="flex min-w-0 items-center gap-3">
-            <SidebarTrigger
-              className="cc-menu-trigger"
-              aria-label="Navigation öffnen oder schließen"
-            />
-          </div>
-          <div className="flex items-center gap-2">
+          </nav>
+          <div className="cc-topnav-user">
             {isMaster && callerView && (
-              <Button
-                size="sm"
-                variant={callerView ? "default" : "outline"}
-                aria-pressed={callerView}
-                onClick={toggleCallerView}
-              >
+              <Button size="sm" aria-pressed={callerView} onClick={toggleCallerView}>
                 <Crown size={16} />
                 Zur Admin-Sicht
               </Button>
             )}
             <CountrySwitcher />
+            <div className="cc-user">
+              <span className="cc-avatar">{initials}</span>
+              <div>
+                <strong>{me?.name ?? user.email}</strong>
+                <small>
+                  {me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}
+                </small>
+              </div>
+            </div>
+            <Button variant="ghost" className="cc-signout" onClick={signOut} aria-label="Abmelden">
+              <LogOut size={18} />
+            </Button>
           </div>
-        </header>
-        <TestModeBanner />
-        <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
-          <CallbackReminder userId={user.id} />
-          <Outlet />
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </header>
+      <TestModeBanner />
+      <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
+        <CallbackReminder userId={user.id} />
+        <Outlet />
+      </div>
+    </div>
   );
 }
 
@@ -224,18 +185,15 @@ function NavigationItem({
   icon: typeof Users;
   active: boolean;
 }) {
-  const { isMobile, setOpenMobile } = useSidebar();
   return (
-    <SidebarMenuButton asChild isActive={active} size="lg" className="cc-nav-link">
-      <Link
-        to={to}
-        onClick={() => {
-          if (isMobile) setOpenMobile(false);
-        }}
-      >
-        <Icon aria-hidden="true" />
-        <span>{label}</span>
-      </Link>
-    </SidebarMenuButton>
+    <Link
+      to={to}
+      className="cc-nav-link"
+      data-active={active}
+      aria-current={active ? "page" : undefined}
+    >
+      <Icon aria-hidden="true" />
+      <span>{label}</span>
+    </Link>
   );
 }

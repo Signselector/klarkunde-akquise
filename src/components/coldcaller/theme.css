@@ -3,14 +3,15 @@
 .cc-theme,
 .cc-dialog,
 .cc-help {
-  --cc-ink: oklch(0.19689 0.0016 17.293);
-  --cc-muted: oklch(0.44442 0.0096 73.639);
-  --cc-accent: oklch(0.35566 0.14239 28.694);
-  --cc-border: oklch(0.8714 0.01342 82.401);
-  --cc-ground: oklch(0.96158 0.00574 84.566);
+  --cc-ink: #111113;
+  --cc-muted: #6b6a70;
+  --cc-accent: #e5242f;
+  --cc-border: #e8e4dc;
+  --cc-ground: #f6f3ee;
   color: var(--cc-ink);
   font:
-    400 15px/1.5 "Instrument Sans Variable",
+    400 15px/1.5 "Plus Jakarta Sans",
+    "Instrument Sans Variable",
     "Helvetica Neue",
     Helvetica,
     Arial,

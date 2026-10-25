@@ -19,3 +19,10 @@
     U+0309-0328, U+0329-1DBF, U+1E00-1E9F, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
     U+A720-A7FF;
 }
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("/brand/signselector/plus-jakarta-sans.woff2") format("woff2");
+}

@@ -1,0 +1,271 @@
+/* Design direction "Modernes SaaS mit Gamification": warm ground, top navigation, large rounded cards. */
+.cc-app {
+  --cc-card-shadow: 0 1px 2px rgb(20 16 10 / 5%), 0 8px 24px -12px rgb(20 16 10 / 14%);
+  background: var(--cc-ground);
+  min-height: 100vh;
+  font-family: "Plus Jakarta Sans", "Instrument Sans Variable", "Helvetica Neue", Arial, sans-serif;
+}
+.cc-theme h1 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.cc-theme h2,
+.cc-theme h3 {
+  font-weight: 700;
+}
+
+/* Top navigation */
+.cc-topnav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgb(246 243 238 / 90%);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--cc-border);
+}
+.cc-topnav-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 10px 32px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.cc-topnav .cc-brand {
+  flex-shrink: 0;
+}
+.cc-topnav .cc-brand-content img {
+  height: 30px;
+  width: auto;
+  display: block;
+}
+.cc-topnav .cc-brand-content small {
+  display: none;
+}
+.cc-topnav-links {
+  display: flex;
+  gap: 4px;
+  background: #ece8e0;
+  padding: 4px;
+  border-radius: 999px;
+  overflow-x: auto;
+  min-width: 0;
+  scrollbar-width: none;
+}
+.cc-topnav-links::-webkit-scrollbar {
+  display: none;
+}
+.cc-topnav-links .cc-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  min-height: 40px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--cc-muted);
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: none;
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+.cc-topnav-links .cc-nav-link > svg {
+  width: 17px;
+  height: 17px;
+}
+.cc-topnav-links .cc-nav-link:hover {
+  color: var(--cc-ink);
+}
+.cc-topnav-links .cc-nav-link[data-active="true"] {
+  background: #0e0e10;
+  color: white;
+  box-shadow: none;
+}
+.cc-topnav-user {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.cc-topnav .cc-avatar {
+  height: 36px;
+  width: 36px;
+  border-radius: 50%;
+  background: #0e0e10;
+  color: white;
+}
+.cc-topnav .cc-user strong {
+  color: var(--cc-ink);
+  font-weight: 700;
+}
+.cc-topnav .cc-user small {
+  color: var(--cc-muted);
+  margin-top: 0;
+}
+.cc-topnav .cc-signout {
+  color: var(--cc-muted);
+  min-height: 40px;
+  width: 40px;
+  padding: 0;
+  border-radius: 999px;
+}
+.cc-topnav .cc-signout:hover {
+  background: #ece8e0;
+  color: var(--cc-ink);
+}
+.cc-workspace {
+  padding: 28px 32px 72px;
+}
+
+/* Cards */
+.cc-surface,
+.cc-metric,
+.cc-batch,
+.cc-app .cc-daytile {
+  border-radius: 24px;
+}
+.cc-surface,
+.cc-metric {
+  box-shadow: var(--cc-card-shadow);
+  border-color: var(--cc-border);
+}
+.cc-metric {
+  padding: 20px 22px 22px;
+}
+.cc-metric-label {
+  color: var(--cc-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.cc-metric-value {
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.15;
+}
+.cc-metric-icon {
+  color: var(--cc-accent);
+}
+/* The monthly average is the hero figure: black card with a red accent */
+.cc-metrics > .cc-metric:nth-child(3),
+.cc-app .grid > .cc-metric:nth-child(3) {
+  background: #0e0e10;
+  border-color: #0e0e10;
+  color: white;
+}
+.cc-app .grid > .cc-metric:nth-child(3) .cc-metric-label,
+.cc-app .grid > .cc-metric:nth-child(3) p {
+  color: #a8a6ad;
+}
+.cc-app .grid > .cc-metric:nth-child(3) .cc-metric-icon {
+  color: #ff6b73;
+}
+.cc-app .cc-daytile {
+  background: #faf8f4;
+  border: 1px solid var(--cc-border);
+  transition:
+    transform 150ms,
+    border-color 150ms;
+}
+.cc-app .cc-daytile:hover {
+  transform: translateY(-2px);
+  border-color: #d6d0c4;
+}
+.cc-app .cc-daytile--key {
+  background: #fdebec;
+  border-color: #f6c9cc;
+}
+.cc-app .cc-daytile strong {
+  font-weight: 800;
+}
+.cc-batch {
+  background: #faf8f4;
+}
+.cc-app .cc-ranking-me {
+  background: #fdebec;
+  border-radius: 14px;
+}
+.cc-app .cc-ranking-points {
+  font-weight: 800;
+}
+
+/* Buttons: pill black by default, red for the main call to action */
+.cc-button {
+  border-radius: 14px;
+}
+.cc-button--primary,
+.cc-app button[data-slot="button"]:not([class*="outline"]):not([class*="ghost"]) {
+  transition:
+    transform 150ms,
+    background-color 150ms;
+}
+.cc-app .cc-start-actions .cc-button--primary,
+.cc-app .cc-page-actions .cc-button--primary {
+  background: var(--cc-accent);
+  box-shadow: 0 8px 18px -8px rgb(229 36 47 / 70%);
+}
+
+/* Entry animation, transform/opacity only */
+@keyframes cc-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.cc-page > *,
+.cc-metrics > * {
+  animation: cc-up 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.cc-page > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+.cc-page > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+.cc-page > *:nth-child(4) {
+  animation-delay: 180ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-page > *,
+  .cc-metrics > * {
+    animation: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .cc-topnav-inner {
+    flex-wrap: wrap;
+    padding: 10px 16px;
+    gap: 10px;
+  }
+  .cc-topnav-links {
+    order: 3;
+    width: 100%;
+  }
+  .cc-topnav .cc-user > div {
+    display: none;
+  }
+  .cc-workspace {
+    padding: 20px 16px 60px;
+  }
+}
+
+/* Progress in brand red, calmer inactive navigation */
+.cc-batch [role="progressbar"] {
+  background: #e6e1d6;
+  height: 8px;
+}
+.cc-batch [role="progressbar"] > div {
+  background: linear-gradient(90deg, var(--cc-accent), #ff6b73);
+  border-radius: 99px;
+}
+.cc-topnav-links .cc-nav-link:not([data-active="true"]) {
+  color: #4a494f;
+}
+.cc-topnav-links .cc-nav-link:not([data-active="true"]) > svg {
+  opacity: 0.7;
+}
