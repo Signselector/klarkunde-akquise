@@ -214,16 +214,19 @@ function Layout() {
             )}
             <CountrySwitcher />
           </div>
-          <div className="cc-user">
-            <span className="cc-avatar">
-              {(me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase()}
-            </span>
-            <div>
-              <strong>{me?.name ?? user.email}</strong>
-              <small>
-                {me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}
-              </small>
+          <div className="cc-profile">
+            <div className="cc-user">
+              <span className="cc-avatar">
+                {(me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase()}
+              </span>
+              <div>
+                <strong>{me?.name ?? user.email}</strong>
+                <small>
+                  {me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}
+                </small>
+              </div>
             </div>
+            <LevelCard />
           </div>
           <Button variant="ghost" className="cc-signout" onClick={signOut}>
             <LogOut size={18} />
@@ -277,5 +280,33 @@ function NavigationItem({
         {badge > 0 && <b className="cc-nav-badge">{badge}</b>}
       </Link>
     </SidebarMenuButton>
+  );
+}
+
+/**
+ * Placeholder for the level and coin mechanic that is still to be designed.
+ * Shows the starting state only; there is no data source or rule behind it yet.
+ */
+const LEVEL_PLACEHOLDER = { level: 1, xp: 0, xpNext: 1000, coins: 0 };
+
+function LevelCard() {
+  const { level, xp, xpNext, coins } = LEVEL_PLACEHOLDER;
+  const fmt = (n: number) => n.toLocaleString("de-DE");
+  return (
+    <div className="cc-level" aria-label="Level und Coins (Platzhalter)">
+      <div className="cc-level-row">
+        <strong>Level {level}</strong>
+        <span>
+          {fmt(xp)} / {fmt(xpNext)} XP
+        </span>
+      </div>
+      <div className="cc-level-bar" aria-hidden="true">
+        <i style={{ width: `${Math.round((xp / xpNext) * 100)}%` }} />
+      </div>
+      <div className="cc-level-coins">
+        <span className="cc-coin" aria-hidden="true" />
+        {fmt(coins)} Coins
+      </div>
+    </div>
   );
 }
