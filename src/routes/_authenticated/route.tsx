@@ -104,6 +104,9 @@ function Layout() {
     { to: "/completed", label: "Abgeschlossene Leads", icon: CircleCheck },
     { to: "/customers", label: "Meine Kunden", icon: FileText },
     { to: "/appointments", label: "Termine", icon: CalendarCheck },
+    ...(!(me?.admin && !callerView)
+      ? [{ to: "/my-stats", label: "Statistik", icon: ChartNoAxesColumn }]
+      : []),
     ...(me?.admin && !callerView
       ? [
           { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
@@ -118,7 +121,6 @@ function Layout() {
         ]
       : []),
   ] as const;
-
 
   function toggleCallerView() {
     const next = !callerView;
