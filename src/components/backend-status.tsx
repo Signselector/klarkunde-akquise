@@ -30,6 +30,15 @@ const QUALITY: Record<string, string> = {
   missing_sync_contact: "Ansprechpartner für Pipedrive fehlt",
 };
 export function BackendStatus({ admin }: { admin: boolean }) {
+  return (
+    <div className="space-y-4">
+      <PipedriveJobs admin={admin} />
+      <DataQuality />
+    </div>
+  );
+}
+
+export function PipedriveJobs({ admin }: { admin: boolean }) {
   const qc = useQueryClient();
   const [busy, setBusy] = useState<string | null>(null);
   const jobs = useQuery({
@@ -45,16 +54,6 @@ export function BackendStatus({ admin }: { admin: boolean }) {
       return data;
     },
   });
-  const quality = useQuery({
-    queryKey: ["quality-issues"],
-    queryFn: async () =>
-      (await backendRpc("get_quality_issues", {})) as {
-        lead_id: string;
-        company: string;
-        kind: string;
-        acknowledged_reason: string | null;
-      }[],
-  });
   async function retry(id: string) {
     setBusy(id);
     try {
@@ -67,50 +66,60 @@ export function BackendStatus({ admin }: { admin: boolean }) {
     }
   }
   return (
-    <div className="space-y-4">
-      <section className="space-y-2 rounded-lg border p-4">
-        <h2 className="font-semibold">Pipedrive-Übertragungen</h2>
-        {jobs.isError && <p>Übertragungsstatus konnte nicht geladen werden.</p>}
-        {jobs.data?.length === 0 && <p>Noch keine Übertragungen.</p>}
-        {jobs.data?.map((j) => (
-          <div
-            key={j.id}
-            className="flex flex-wrap items-center justify-between gap-2 border-b py-2"
-          >
-            <span>
-              {j.lead?.company || j.lead?.contact_name || "Lead"} · {STATUS[j.status] ?? j.status}
-              {j.error_code && (
-                <span className="block text-sm text-muted-foreground">
-                  {ERRORS[j.error_code] ?? "Verbindung vorübergehend nicht verfügbar"}
-                </span>
-              )}
-              {j.status === "needs_review" && (
-                <span className="block text-sm">
-                  Vor einem neuen Versuch muss ein Admin die Übertragung in Pipedrive abgleichen.
-                </span>
-              )}
-            </span>
-            {admin && j.status === "failed" && (
-              <Button size="sm" disabled={busy !== null} onClick={() => retry(j.id)}>
-                Erneut versuchen
-              </Button>
+    <section className="space-y-2 rounded-lg border p-4">
+      <h2 className="font-semibold">Pipedrive-Übertragungen</h2>
+      {jobs.isError && <p>Übertragungsstatus konnte nicht geladen werden.</p>}
+      {jobs.data?.length === 0 && <p>Noch keine Übertragungen.</p>}
+      {jobs.data?.map((j) => (
+        <div key={j.id} className="flex flex-wrap items-center justify-between gap-2 border-b py-2">
+          <span>
+            {j.lead?.company || j.lead?.contact_name || "Lead"} · {STATUS[j.status] ?? j.status}
+            {j.error_code && (
+              <span className="block text-sm text-muted-foreground">
+                {ERRORS[j.error_code] ?? "Verbindung vorübergehend nicht verfügbar"}
+              </span>
             )}
-          </div>
-        ))}
-      </section>
-      <section className="space-y-2 rounded-lg border p-4">
-        <h2 className="font-semibold">Datenqualität</h2>
-        {quality.isError && <p>Qualitätshinweise konnten nicht geladen werden.</p>}
-        {quality.data?.length === 0 && <p>Keine offenen Qualitätshinweise.</p>}
-        {quality.data?.map((q) => (
-          <p key={q.lead_id + q.kind}>
-            <a className="underline" href={`/leads?lead=${q.lead_id}`}>
-              {q.company}: {QUALITY[q.kind] ?? q.kind}
-            </a>
-            {q.acknowledged_reason && ` · ${q.acknowledged_reason}`}
-          </p>
-        ))}
-      </section>
-    </div>
+            {j.status === "needs_review" && (
+              <span className="block text-sm">
+                Vor einem neuen Versuch muss ein Admin die Übertragung in Pipedrive abgleichen.
+              </span>
+            )}
+          </span>
+          {admin && j.status === "failed" && (
+            <Button size="sm" disabled={busy !== null} onClick={() => retry(j.id)}>
+              Erneut versuchen
+            </Button>
+          )}
+        </div>
+      ))}
+    </section>
+  );
+}
+
+export function DataQuality() {
+  const quality = useQuery({
+    queryKey: ["quality-issues"],
+    queryFn: async () =>
+      (await backendRpc("get_quality_issues", {})) as {
+        lead_id: string;
+        company: string;
+        kind: string;
+        acknowledged_reason: string | null;
+      }[],
+  });
+  return (
+    <section className="space-y-2 rounded-lg border p-4">
+      <h2 className="font-semibold">Datenqualität</h2>
+      {quality.isError && <p>Qualitätshinweise konnten nicht geladen werden.</p>}
+      {quality.data?.length === 0 && <p>Keine offenen Qualitätshinweise.</p>}
+      {quality.data?.map((q) => (
+        <p key={q.lead_id + q.kind}>
+          <a className="underline" href={`/leads?lead=${q.lead_id}`}>
+            {q.company}: {QUALITY[q.kind] ?? q.kind}
+          </a>
+          {q.acknowledged_reason && ` · ${q.acknowledged_reason}`}
+        </p>
+      ))}
+    </section>
   );
 }
