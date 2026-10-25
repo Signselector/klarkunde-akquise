@@ -126,7 +126,7 @@ export function StatusLeadList({
               title="Kontakte nicht verfügbar"
               action={<Button onClick={() => query.refetch()}>Erneut versuchen</Button>}
             />
-          ) : !rows.length ? (
+          ) : !rows.length && !customers ? (
             <FeedbackState kind="empty" title="Keine passenden Kontakte">
               Sobald du Kontakte bearbeitet hast, erscheinen sie hier.
             </FeedbackState>
