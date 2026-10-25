@@ -21,7 +21,6 @@ import {
   ChartNoAxesColumn,
   CircleCheck,
   Crown,
-  Phone,
   LogOut,
   FileText,
   LayoutDashboard,
