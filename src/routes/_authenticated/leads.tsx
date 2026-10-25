@@ -1,17 +1,16 @@
 import { LeadDialog } from "@/components/caller/lead-dialog";
 import { LeadsTable } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
+import { STATUS_LABEL } from "@/lib/leads";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { STATUS_LABEL } from "@/lib/leads";
-import { useIsAdmin } from "@/lib/use-admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Building2, ChevronRight, Search, Trash2 } from "@/components/coldcaller/icons";
+import { Search } from "@/components/coldcaller/icons";
 import { Link } from "@tanstack/react-router";
 import {
   FeedbackState,
@@ -20,17 +19,6 @@ import {
   Surface,
 } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -47,10 +35,8 @@ export const Route = createFileRoute("/_authenticated/leads")({
 function LeadsPage() {
   const country = useCountry();
   const { user } = Route.useRouteContext();
-  const admin = useIsAdmin(user.id);
   const qc = useQueryClient();
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState("open");
   const [batch, setBatch] = useState("all");
   const [openId, setOpenId] = useState<string | null>(null);
   useEffect(() => {
@@ -95,7 +81,7 @@ function LeadsPage() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["leads", q, status, country, batch, user.id, onlyMine],
+    queryKey: ["leads", q, country, batch, user.id, onlyMine],
     enabled: assignment.isFetched,
     queryFn: async () => {
       let query = supabase
@@ -114,8 +100,8 @@ function LeadsPage() {
       if (backendEnabled) query = query.is("archived_at", null);
       if (onlyMine) query = query.eq("lead_batches.assigned_to", user.id);
       if (batch !== "all") query = query.eq("batch_id", batch);
-      if (status !== "all") query = query.eq("status", status);
-      if (status === "open") query = query.eq("attempts", 0);
+      // Still to work on: untouched, not reached, no interest and future projects stay in this list.
+      query = query.in("status", ["open", "no_interest", "on_hold"]);
       const term = q.trim().replace(/[,()%]/g, " ");
       if (term)
         query = query.or(
@@ -127,18 +113,6 @@ function LeadsPage() {
     },
   });
   const leads = result?.rows;
-
-  async function deleteAllOpen() {
-    const { error } = await (backendEnabled
-      ? supabase.rpc("archive_open_leads", {} as never)
-      : supabase.from("leads").delete().eq("status", "open"));
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Alle offenen Leads entfernt.");
-    qc.invalidateQueries();
-  }
 
   return (
     <div className="cc-page">
@@ -179,19 +153,6 @@ function LeadsPage() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="cc-filter-select" aria-label="Leadstatus filtern">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alle Status</SelectItem>
-              {Object.entries(STATUS_LABEL).map(([k, v]) => (
-                <SelectItem key={k} value={k}>
-                  {v}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
         <div className="cc-list-caption flex flex-wrap items-center justify-between gap-3">
           <span>
@@ -201,30 +162,6 @@ function LeadsPage() {
                 ? "Liste nicht verfügbar"
                 : `${leads?.length ?? 0} ${leads?.length === 1 ? "Lead" : "Leads"} von ${result?.total ?? 0} geladen`}
           </span>
-          {admin && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-destructive">
-                  <Trash2 size={16} />
-                  Offene Leads löschen
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Alle offenen Leads löschen?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {backendEnabled
-                      ? "Offene Leads werden archiviert. Bearbeitete Leads bleiben erhalten."
-                      : "Das kann nicht rückgängig gemacht werden. Bearbeitete Leads bleiben erhalten."}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                  <AlertDialogAction onClick={deleteAllOpen}>Löschen</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
         </div>
         {isLoading ? (
           <FeedbackState kind="loading" title="Leads werden geladen" />
@@ -249,7 +186,7 @@ function LeadsPage() {
                 variant="outline"
                 onClick={() => {
                   setQ("");
-                  setStatus("all");
+                  setBatch("all");
                 }}
               >
                 Filter zurücksetzen
@@ -261,7 +198,15 @@ function LeadsPage() {
               : "Passe deine Suche oder die Filter an."}
           </FeedbackState>
         ) : (
-          <LeadsTable leads={leads ?? []} onOpen={setOpenId} />
+          <LeadsTable
+            leads={leads ?? []}
+            onOpen={setOpenId}
+            resultLabel={(l) =>
+              l.status === "open" && l.attempts > 0
+                ? "Nicht erreicht"
+                : (STATUS_LABEL[l.status] ?? l.status)
+            }
+          />
         )}
         {leads && leads.length === 300 && (
           <p className="cc-list-caption pt-4">
@@ -269,7 +214,7 @@ function LeadsPage() {
           </p>
         )}
       </Surface>
-      <LeadDialog leadId={openId} userId={user.id} admin={admin} onClose={() => setOpenId(null)} />
+      <LeadDialog leadId={openId} userId={user.id} onClose={() => setOpenId(null)} />
     </div>
   );
 }

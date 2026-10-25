@@ -306,6 +306,10 @@ export type Database = {
         Row: {
           action: string
           created_at: string
+          crm_attempted_at: string | null
+          crm_error: string | null
+          crm_steps: Json
+          crm_synced_at: string | null
           crm_sync_state: string | null
           details: Json | null
           id: string
@@ -319,6 +323,10 @@ export type Database = {
         Insert: {
           action: string
           created_at?: string
+          crm_attempted_at?: string | null
+          crm_error?: string | null
+          crm_steps?: Json
+          crm_synced_at?: string | null
           crm_sync_state?: string | null
           details?: Json | null
           id?: string
@@ -332,6 +340,10 @@ export type Database = {
         Update: {
           action?: string
           created_at?: string
+          crm_attempted_at?: string | null
+          crm_error?: string | null
+          crm_steps?: Json
+          crm_synced_at?: string | null
           crm_sync_state?: string | null
           details?: Json | null
           id?: string
@@ -415,6 +427,41 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lead_claims_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_crm_links: {
+        Row: {
+          country: string
+          deal_id: number | null
+          lead_id: string
+          organization_id: number | null
+          person_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          country: string
+          deal_id?: number | null
+          lead_id: string
+          organization_id?: number | null
+          person_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          country?: string
+          deal_id?: number | null
+          lead_id?: string
+          organization_id?: number | null
+          person_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_crm_links_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: true
             referencedRelation: "leads"

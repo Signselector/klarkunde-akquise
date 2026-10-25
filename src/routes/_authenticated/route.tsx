@@ -119,7 +119,6 @@ function Layout() {
       : []),
   ] as const;
 
-  const pageTitle = items.find((item) => item.to === location.pathname)?.label ?? "Arbeitsplatz";
 
   function toggleCallerView() {
     const next = !callerView;
@@ -188,9 +187,6 @@ function Layout() {
               className="cc-menu-trigger"
               aria-label="Navigation öffnen oder schließen"
             />
-            <span className="cc-breadcrumb">
-              Sign Selector <span aria-hidden="true">/</span> <strong>{pageTitle}</strong>
-            </span>
           </div>
           <div className="flex items-center gap-2">
             {isMaster && callerView && (

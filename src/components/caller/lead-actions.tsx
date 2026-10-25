@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { syncLeadAction } from "@/lib/crm-sync.functions";
+import { crmErrorMessage } from "@/lib/crm-sync";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
 import {
@@ -12,7 +15,6 @@ import {
   type LeadActionKey,
 } from "@/lib/lead-actions";
 import { Mail } from "@/components/coldcaller/icons";
-import { parseLeadLinks } from "@/components/coldcaller/workspace-parts";
 import { SuccessBanner } from "@/components/coldcaller/success-banner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +26,7 @@ const STAGE_NAME: Record<string, string> = {
   high_q: "Realismus Render",
   waiting_3d: "Logo ausstehend",
   on_hold: "Zukunftsprojekt",
-  no_interest: "Kein Interesse",
+  reference_mail: "Referenzmail",
 };
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
@@ -69,6 +71,7 @@ export function LeadActions({
   onDone: () => void;
 }) {
   const qc = useQueryClient();
+  const sync = useServerFn(syncLeadAction);
   const [active, setActive] = useState<LeadActionKey | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
@@ -84,15 +87,6 @@ export function LeadActions({
   const requestId = useRef<string | null>(null);
   const uploaded = useRef<string | null>(null);
 
-  const links = parseLeadLinks(lead.extra as Record<string, unknown>, lead.city);
-  const [contact, setContact] = useState({
-    company: lead.company ?? "",
-    phone: lead.phone ?? "",
-    email: lead.email ?? "",
-    website: links.websiteText ?? "",
-    city: lead.city ?? "",
-    address: links.addressRaw ?? "",
-  });
   const [mail, setMail] = useState({ to: lead.email ?? "", subject: "", body: "", template: "" });
 
   const templates = useQuery({
@@ -115,6 +109,24 @@ export function LeadActions({
     return () => window.clearTimeout(timer);
   }, [success]);
 
+  const slots = useQuery({
+    enabled: active === "callback" || active === "on_hold",
+    queryKey: ["callback-slots", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("callbacks")
+        .select("lead_id,due_at")
+        .eq("user_id", userId)
+        .eq("done", false);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const chosen = date && time ? toIso(date, time) : null;
+  const minute = (iso: string) => Math.floor(new Date(iso).getTime() / 60000);
+  const slotTaken =
+    !!chosen &&
+    !!slots.data?.some((c) => c.lead_id !== lead.id && minute(c.due_at) === minute(chosen));
   const current = LEAD_ACTIONS.find((a) => a.key === active) ?? null;
   const reducedMotion =
     typeof window !== "undefined" &&
@@ -128,7 +140,7 @@ export function LeadActions({
     setDate("");
     setTime("");
     setFile(null);
-    if (action.key === "contact_details" || action.key === "reference_mail") {
+    if (action.key === "reference_mail") {
       setActive(action.key);
       return;
     }
@@ -138,6 +150,12 @@ export function LeadActions({
       return;
     }
     setActive(action.key);
+  }
+
+  function refreshLists() {
+    void qc.invalidateQueries({ queryKey: ["leads"] });
+    void qc.invalidateQueries({ queryKey: ["lead-list"] });
+    void qc.invalidateQueries({ queryKey: ["callbacks"] });
   }
 
   function pickTemplate(id: string) {
@@ -188,7 +206,6 @@ export function LeadActions({
     try {
       const logo = needs.logo && file ? await uploadLogo(file) : undefined;
       let details: Json | undefined;
-      if (action.key === "contact_details") details = contact;
       if (action.key === "reference_mail")
         details = {
           to: mail.to,
@@ -208,27 +225,47 @@ export function LeadActions({
         ...(details ? { p_details: details } : {}),
       });
       if (error) throw new Error(error.message);
-      const result = data as unknown as Result;
+      const result = data as unknown as Result & { action_id?: string };
       const stage = result.stage_key ? STAGE_NAME[result.stage_key] : null;
+      const special = action.celebration === "special";
+      const plain =
+        action.key === "callback"
+          ? "Du wirst zur gewählten Zeit erinnert."
+          : action.key === "no_interest"
+            ? "Der Lead bleibt unter Offene Leads, kein CRM-Deal."
+            : action.key === "not_reached"
+              ? "Kontaktversuch gespeichert. Der Lead bleibt unter Offene Leads, kein CRM-Deal."
+              : "Gespeichert.";
       setSuccess({
         title: `${ACTION_LABEL[action.key]} gespeichert`,
-        description: stage
-          ? `Für die CRM-Stage „${stage}“ vorgemerkt. Noch nicht an Pipedrive übertragen.`
-          : action.key === "callback"
-            ? "Du wirst zur gewählten Zeit erinnert."
-            : action.key === "contact_details"
-              ? "Kontaktdaten aktualisiert. Die CRM-Stage bleibt unverändert."
-              : action.key === "reference_mail"
-                ? "Als vorbereitet vermerkt. Die Stage bleibt unverändert."
-                : "Gespeichert.",
-        special: action.celebration === "special",
+        description: stage ? `Deal in Pipedrive wird in der Stage „${stage}“ angelegt …` : plain,
+        special,
       });
       requestId.current = null;
       setActive(null);
-      void qc.invalidateQueries({ queryKey: ["leads"] });
-      void qc.invalidateQueries({ queryKey: ["lead-list"] });
-      void qc.invalidateQueries({ queryKey: ["callbacks"] });
+      refreshLists();
       onDone();
+      if (stage && result.action_id) {
+        // The action is saved either way; a failed CRM sync stays visible and can be retried in the history.
+        try {
+          const synced = await sync({ data: { actionId: result.action_id } });
+          if (synced.state === "synced")
+            setSuccess({
+              title: `${ACTION_LABEL[action.key]} gespeichert`,
+              description: `Deal in Pipedrive angelegt (Stage „${stage}“).`,
+              special,
+            });
+          else if (synced.state === "error") throw new Error(synced.error ?? "unexpected_error");
+        } catch (syncError) {
+          const code = syncError instanceof Error ? syncError.message : "unexpected_error";
+          setSuccess(null);
+          toast.error(
+            `Gespeichert, aber nicht an Pipedrive übertragen: ${crmErrorMessage(code) || "Fehler bei der Übertragung."} Du kannst es im Verlauf erneut versuchen.`,
+            { duration: 12000 },
+          );
+        }
+        onDone();
+      }
     } catch (e) {
       const message = e instanceof Error ? e.message : "";
       toast.error(
@@ -280,7 +317,7 @@ export function LeadActions({
         ))}
       </div>
 
-      {current && current.key !== "contact_details" && current.key !== "reference_mail" && (
+      {current && current.key !== "reference_mail" && (
         <form
           className="space-y-3 rounded-[10px] border p-3"
           onSubmit={(e) => {
@@ -319,6 +356,11 @@ export function LeadActions({
               </label>
             </div>
           )}
+          {slotTaken && (
+            <p role="alert" className="text-sm font-medium text-destructive">
+              Zu dieser Zeit ist bereits ein Rückruf eingetragen. Bitte wähle eine Minute später.
+            </p>
+          )}
           {current.needs.note && (
             <label className="block text-sm">
               Gesprächsnotiz{current.needs.note === "required" ? " (Pflicht)" : " (optional)"}
@@ -326,50 +368,8 @@ export function LeadActions({
             </label>
           )}
           <div className="flex gap-2">
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy || slotTaken}>
               {busy ? "Wird gespeichert …" : "Bestätigen"}
-            </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => setActive(null)}>
-              Abbrechen
-            </Button>
-          </div>
-        </form>
-      )}
-
-      {current?.key === "contact_details" && (
-        <form
-          className="space-y-2 rounded-[10px] border p-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit(current);
-          }}
-        >
-          <p className="font-medium">Kontaktdaten</p>
-          <p className="text-sm text-muted-foreground">
-            Ändert nur die Daten, nicht die CRM-Stage.
-          </p>
-          {(
-            [
-              ["company", "Firmenname"],
-              ["phone", "Telefonnummer"],
-              ["email", "E-Mail"],
-              ["website", "Website"],
-              ["city", "Stadt"],
-              ["address", "Adresse"],
-            ] as const
-          ).map(([key, label]) => (
-            <label className="block text-sm" key={key}>
-              {label}
-              <Input
-                type={key === "email" ? "email" : "text"}
-                value={contact[key]}
-                onChange={(e) => setContact({ ...contact, [key]: e.target.value })}
-              />
-            </label>
-          ))}
-          <div className="flex gap-2">
-            <Button type="submit" disabled={busy}>
-              {busy ? "Wird gespeichert …" : "Speichern"}
             </Button>
             <Button type="button" variant="outline" disabled={busy} onClick={() => setActive(null)}>
               Abbrechen
@@ -436,8 +436,9 @@ export function LeadActions({
             />
           </label>
           <p className="text-sm text-muted-foreground">
-            Die Mail öffnet sich in deinem E-Mail-Programm. Ein direkter Versand aus dem Tool und
-            die Dokumentation im CRM sind noch nicht angebunden. Die Stage bleibt unverändert.
+            Die Mail öffnet sich in deinem E-Mail-Programm (ein direkter Versand aus dem Tool ist
+            noch nicht angebunden). Danach wandert der Lead nach Abgeschlossene Leads und ein Deal
+            wird in Pipedrive in der Stage „Referenzmail“ angelegt.
           </p>
           <div className="flex gap-2">
             <Button type="submit" disabled={busy}>

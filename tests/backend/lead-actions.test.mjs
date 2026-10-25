@@ -81,7 +81,7 @@ const action = (lead, version, name, extra = {}) =>
     extra.details ? JSON.stringify(extra.details) : null,
   ]);
 const row = async (id) => (await db.query("select * from public.leads where id=$1", [id])).rows[0];
-const future = () => new Date(Date.now() + 3600e3).toISOString();
+const future = (hours = 1) => new Date(Date.now() + hours * 3600e3).toISOString();
 
 test("3D-R-LowQ needs a note and a logo from the caller's own folder", async () => {
   await as(anna);
@@ -98,7 +98,7 @@ test("3D-R-LowQ needs a note and a logo from the caller's own folder", async () 
   const id = randomUUID();
   const args = { id, note: "Will ein einfaches Logo", logo: `${anna}/${lead}/logo.png` };
   const done = await action(lead, 0, "low_q", args);
-  assert.equal(done.status, "in_progress");
+  assert.equal(done.status, "low_q");
   assert.equal(done.stage_key, "low_q");
   assert.equal(done.crm_sync_state, "queued", "queued is not synced");
   assert.equal(done.attempts, 1);
@@ -108,7 +108,7 @@ test("3D-R-LowQ needs a note and a logo from the caller's own folder", async () 
     "same request is replayed, not repeated",
   );
   const l = await row(lead);
-  assert.equal(l.status, "in_progress");
+  assert.equal(l.status, "low_q");
   assert.equal(l.attempts, 1);
   const notes = (
     await db.query("select user_id,body,created_at from public.lead_notes where lead_id=$1", [lead])
@@ -130,7 +130,8 @@ test("only the owner of the batch, earlier editors and admins can act on a lead"
   await assert.rejects(() => action(lead, 0, "gibt_es_nicht"), /validation_failed/);
   const done = await action(lead, 0, "no_interest");
   assert.equal(done.status, "no_interest");
-  assert.equal(done.stage_key, "no_interest");
+  assert.equal(done.stage_key, null, "Kein Interesse never creates a CRM deal");
+  assert.equal(done.crm_sync_state, null);
   await as(admin);
   assert.equal((await action(leads[2], 0, "not_reached")).status, "open");
 });
@@ -163,7 +164,7 @@ test("callback needs a future time, is not a CRM stage and replaces older callba
     () => action(lead, 0, "callback", { at: "2000-01-01T00:00:00Z" }),
     /invalid_schedule/,
   );
-  const first = await action(lead, 0, "callback", { at: future() });
+  const first = await action(lead, 0, "callback", { at: future(5) });
   assert.equal(first.status, "callback");
   assert.equal(first.stage_key, null);
   assert.equal(first.crm_sync_state, null);
@@ -211,12 +212,61 @@ test("contact details change data only; reference mail changes nothing", async (
   assert.equal(l.extra.Website, "neu.example");
   assert.equal(l.extra.Adresse, "Neuweg 1");
   assert.equal(l.status, before.status);
+});
+
+test("Referenzmail moves the lead on and is queued for the CRM", async () => {
+  await as(anna);
+  const lead = leads[0];
+  const l = await row(lead);
   const mail = await action(lead, l.version, "reference_mail", {
-    details: { to: "neu@example.test", subject: "Referenzen", template: "t1" },
+    details: { to: "f1@example.test", subject: "Referenzen", template: "t1" },
   });
-  assert.equal(mail.version, l.version, "no stage or version change");
-  assert.equal(mail.crm_sync_state, null);
-  assert.equal((await row(lead)).status, before.status);
+  assert.equal(mail.status, "reference_mail");
+  assert.equal(mail.stage_key, "reference_mail");
+  assert.equal(mail.crm_sync_state, "queued");
+  assert.equal((await row(lead)).status, "reference_mail");
+});
+
+test("a caller never gets two open callbacks in the same minute", async () => {
+  await as(anna);
+  const base = new Date(Date.now() + 2 * 3600e3);
+  base.setSeconds(10, 0);
+  const lead = (
+    await db.query(
+      "select id,version from public.leads where status='open' and batch_id=$1 limit 2",
+      [open],
+    )
+  ).rows;
+  assert.ok(lead.length >= 1);
+  const first = await action(lead[0].id, lead[0].version, "callback", { at: base.toISOString() });
+  assert.equal(first.status, "callback");
+  // Same minute, other lead and other second: rejected.
+  const other = new Date(base.getTime() + 20000).toISOString();
+  if (lead[1])
+    await assert.rejects(
+      () => action(lead[1].id, lead[1].version, "callback", { at: other }),
+      /callback_slot_taken/,
+    );
+  // The same lead again replaces its own callback, so it is not a clash.
+  const again = await action(lead[0].id, first.version, "callback", { at: other });
+  assert.equal(again.status, "callback");
+  if (lead[1]) {
+    const later = new Date(base.getTime() + 60000).toISOString();
+    assert.equal(
+      (await action(lead[1].id, lead[1].version, "callback", { at: later })).status,
+      "callback",
+    );
+    // Another caller is not affected.
+    await as(admin);
+    assert.equal(
+      (
+        await action(leads[2], (await row(leads[2])).version, "callback", {
+          at: base.toISOString(),
+        })
+      ).status,
+      "callback",
+    );
+  }
 });
 
 test("actions are written only through the function", async () => {

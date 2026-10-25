@@ -3,7 +3,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { backendEnabled } from "@/lib/backend";
-import { STATUS_LABEL, suggestNextStep } from "@/lib/leads";
+import { STATUS_LABEL } from "@/lib/leads";
+import { useServerFn } from "@tanstack/react-start";
+import { syncLeadAction } from "@/lib/crm-sync.functions";
+import { crmErrorMessage } from "@/lib/crm-sync";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
@@ -17,22 +20,15 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 export function LeadDialog({
   leadId,
   userId,
-  admin,
   onClose,
 }: {
   leadId: string | null;
   userId: string;
-  admin: boolean;
+  /** Kept for the callers; the dialog no longer offers admin-only actions. */
+  admin?: boolean;
   onClose: () => void;
 }) {
   const qc = useQueryClient();
@@ -45,7 +41,7 @@ export function LeadDialog({
     enabled: !!leadId,
     queryKey: ["lead-detail", leadId],
     queryFn: async () => {
-      const [l, n, s, b, act] = await Promise.all([
+      const [l, n, s, act] = await Promise.all([
         supabase.from("leads").select("*").eq("id", leadId!).maybeSingle(),
         supabase
           .from("lead_notes")
@@ -57,7 +53,6 @@ export function LeadDialog({
           .select("*")
           .eq("lead_id", leadId!)
           .order("created_at", { ascending: false }),
-        supabase.from("lead_batches").select("id,name").order("created_at", { ascending: false }),
         backendEnabled
           ? supabase
               .from("lead_actions")
@@ -67,13 +62,12 @@ export function LeadDialog({
           : Promise.resolve({ data: [], error: null }),
       ]);
       // The action history is optional: before migration 0010 the table does not exist yet.
-      const error = [l.error, n.error, s.error, b.error].find(Boolean);
+      const error = [l.error, n.error, s.error].find(Boolean);
       if (error) throw error;
       return {
         lead: l.data,
         notes: n.data ?? [],
         history: s.data ?? [],
-        batches: b.data ?? [],
         actions: act.data ?? [],
       };
     },
@@ -85,11 +79,28 @@ export function LeadDialog({
       (await supabase.from("profiles").select("display_name").eq("id", userId).maybeSingle()).data
         ?.display_name ?? "",
   });
+  const sync = useServerFn(syncLeadAction);
+  const [retrying, setRetrying] = useState<string | null>(null);
+  async function retry(actionId: string) {
+    setRetrying(actionId);
+    try {
+      const result = await sync({ data: { actionId } });
+      if (result.state === "error")
+        toast.error(crmErrorMessage(result.error) || "Übertragung fehlgeschlagen.");
+      else toast.success("An Pipedrive übertragen.");
+    } catch {
+      toast.error("Übertragung fehlgeschlagen. Bitte später erneut versuchen.");
+    } finally {
+      setRetrying(null);
+      refresh();
+    }
+  }
   const lead = data?.lead;
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["lead-detail", leadId] });
     qc.invalidateQueries({ queryKey: ["leads"] });
     qc.invalidateQueries({ queryKey: ["batches"] });
+    qc.invalidateQueries({ queryKey: ["lead-list"] });
   };
 
   async function addNote() {
@@ -125,36 +136,6 @@ export function LeadDialog({
     toast.success("Lead wieder geöffnet.");
     refresh();
   }
-  async function moveTo(batchId: string) {
-    if (!lead) return;
-    const { error } = await (backendEnabled
-      ? supabase.rpc("move_lead", {
-          p_lead_id: lead.id,
-          p_expected_version: lead.version,
-          p_batch_id: batchId,
-        })
-      : supabase.from("leads").update({ batch_id: batchId }).eq("id", lead.id));
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Lead verschoben.");
-    refresh();
-  }
-  async function remove() {
-    if (!lead) return;
-    const { error } = await (backendEnabled
-      ? supabase.rpc("archive_leads", { p_ids: [lead.id] })
-      : supabase.from("leads").delete().eq("id", lead.id));
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Lead entfernt.");
-    refresh();
-    onClose();
-  }
-
   return (
     <Dialog open={!!leadId} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="cc-theme cc-detail-dialog">
@@ -193,10 +174,6 @@ export function LeadDialog({
                 <StatusBadge tone="info">{STATUS_LABEL[lead.status] ?? lead.status}</StatusBadge> ·
                 Versuche: {lead.attempts}
               </p>
-              <p className="rounded-lg bg-primary/10 p-2">
-                <b>Vorschlag: </b>
-                {suggestNextStep(lead)}
-              </p>
             </div>
             {backendEnabled && (
               <LeadActions
@@ -211,23 +188,6 @@ export function LeadDialog({
               {lead.status !== "open" && (
                 <Button size="sm" onClick={reopen}>
                   Wieder öffnen
-                </Button>
-              )}
-              <Select onValueChange={moveTo}>
-                <SelectTrigger className="h-9 w-44">
-                  <SelectValue placeholder="Verschieben nach …" />
-                </SelectTrigger>
-                <SelectContent>
-                  {data?.batches.map((b) => (
-                    <SelectItem key={b.id} value={b.id}>
-                      {b.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {admin && (
-                <Button size="sm" variant="destructive" onClick={remove}>
-                  Löschen
                 </Button>
               )}
             </div>
@@ -260,10 +220,22 @@ export function LeadDialog({
                   <li key={a.id}>
                     {new Date(a.created_at).toLocaleString("de-DE")}:{" "}
                     {ACTION_LABEL[a.action] ?? a.action}
-                    {a.crm_sync_state === "queued" &&
-                      " · für CRM vorgemerkt, noch nicht übertragen"}
-                    {a.crm_sync_state === "error" && " · CRM-Übertragung fehlgeschlagen"}
-                    {a.crm_sync_state === "synced" && " · mit CRM synchronisiert"}
+                    {a.crm_sync_state === "queued" && " · für Pipedrive vorgemerkt"}
+                    {a.crm_sync_state === "syncing" && " · wird an Pipedrive übertragen"}
+                    {a.crm_sync_state === "synced" && " · in Pipedrive angelegt"}
+                    {a.crm_sync_state === "error" &&
+                      ` · Pipedrive-Übertragung fehlgeschlagen: ${crmErrorMessage(a.crm_error) || "Fehler"}`}
+                    {(a.crm_sync_state === "error" || a.crm_sync_state === "queued") && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="ml-2"
+                        disabled={retrying === a.id}
+                        onClick={() => void retry(a.id)}
+                      >
+                        {retrying === a.id ? "Läuft …" : "Erneut übertragen"}
+                      </Button>
+                    )}
                   </li>
                 ))}
                 {data?.history.map((h) => (

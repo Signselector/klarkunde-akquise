@@ -19,7 +19,7 @@ export type LeadAction = {
   hint: string;
   /** Tailwind classes for the coloured button. */
   color: string;
-  stageKey?: "low_q" | "high_q" | "waiting_3d" | "on_hold" | "no_interest";
+  stageKey?: "low_q" | "high_q" | "waiting_3d" | "on_hold" | "reference_mail";
   /** Needs the form step before it can be confirmed. */
   needs: { note?: "required" | "optional"; logo?: boolean; schedule?: "required" | "optional" };
   /** Shown as a bigger success moment. */
@@ -58,7 +58,6 @@ export const LEAD_ACTIONS: LeadAction[] = [
     label: "Kein Interesse",
     hint: "Lead abschließen",
     color: "bg-[#e0534f] text-white hover:bg-[#cc4440]",
-    stageKey: "no_interest",
     needs: {},
   },
   {
@@ -70,13 +69,6 @@ export const LEAD_ACTIONS: LeadAction[] = [
     needs: { note: "required", schedule: "optional" },
   },
   {
-    key: "contact_details",
-    label: "Kontaktdaten",
-    hint: "Daten ergänzen, keine Stage",
-    color: "bg-[#4eb2d3] text-white hover:bg-[#3fa0c1]",
-    needs: {},
-  },
-  {
     key: "callback",
     label: "Rückruf",
     hint: "Neuen Anruf vereinbaren",
@@ -86,8 +78,9 @@ export const LEAD_ACTIONS: LeadAction[] = [
   {
     key: "reference_mail",
     label: "Referenzmail",
-    hint: "Mail vorbereiten, keine Stage",
+    hint: "Mail vorbereiten, Lead abschließen",
     color: "bg-[#6366e8] text-white hover:bg-[#5255d6]",
+    stageKey: "reference_mail",
     needs: {},
   },
   {
@@ -107,6 +100,8 @@ const ERRORS: Record<string, string> = {
   note_required: "Bitte eine Gesprächsnotiz eintragen.",
   logo_required: "Bitte das Firmenlogo hochladen.",
   invalid_schedule: "Bitte Datum und Uhrzeit in der Zukunft wählen.",
+  callback_slot_taken:
+    "Zu dieser Zeit ist bereits ein Rückruf eingetragen. Bitte wähle eine Minute später.",
   invalid_email: "Die E-Mail-Adresse ist ungültig.",
   stale_lead:
     "Der Lead wurde inzwischen geändert. Die Ansicht wird aktualisiert, bitte erneut versuchen.",

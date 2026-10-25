@@ -15,11 +15,20 @@ import { CustomersBoard } from "@/components/caller/customers-board";
 /** Order of the categories on "Abgeschlossene Leads". */
 const GROUP_ORDER = [
   "Rückruf vereinbart",
-  "In Bearbeitung",
-  "Zukunftsprojekt",
+  "Logo Render",
+  "Realismus Render",
   "Logo ausstehend",
-  "Nicht erreicht",
-  "Kein Interesse",
+  "Referenzmail",
+  "In Bearbeitung",
+];
+/** Leads that moved on after the call. Kein Interesse, Zukunftsprojekt and Nicht erreicht stay in Offene Leads. */
+const COMPLETED_STATUSES = [
+  "callback",
+  "low_q",
+  "high_q",
+  "waiting_3d",
+  "reference_mail",
+  "in_progress",
 ];
 const groupRank = (label: string) => {
   const i = GROUP_ORDER.indexOf(label);
@@ -53,8 +62,7 @@ export function StatusLeadList({
         .limit(300);
       if (backendEnabled) q = q.is("archived_at", null);
       if (customers) q = q.in("status", statuses);
-      else
-        q = q.or("status.neq.open,attempts.gt.0").not("status", "in", "(appointment,production)");
+      else q = q.in("status", COMPLETED_STATUSES);
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
@@ -81,7 +89,7 @@ export function StatusLeadList({
         description={
           customers
             ? "Deine bearbeiteten Kunden mit Kontaktdaten, Notizen und Verlauf."
-            : "Deine bearbeiteten Kontakte nach Kategorie: Rückruf vereinbart, In Bearbeitung, Zukunftsprojekt, Logo ausstehend, Nicht erreicht, Kein Interesse."
+            : "Deine bearbeiteten Leads nach Kategorie: Rückruf vereinbart, Logo Render, Realismus Render, Logo ausstehend, Referenzmail."
         }
       />
       {customers && (
