@@ -857,3 +857,134 @@
     transition: none;
   }
 }
+
+/* ---- Sidebar in the new design: flat graphite, red active pill, roomy rows ---- */
+.cc-app [data-sidebar="sidebar"],
+[data-sidebar="sidebar"][data-mobile="true"] {
+  background-color: #0f0f11;
+  background-image: linear-gradient(180deg, #17171a 0%, #0c0c0e 100%);
+}
+.cc-app .cc-nav-caption {
+  display: none;
+}
+.cc-app .cc-sidebar-header {
+  padding: 26px 24px 18px;
+}
+.cc-app .cc-brand-content img {
+  width: 180px;
+  height: auto;
+}
+.cc-app .cc-brand small {
+  color: #c9c7cc;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.cc-app .cc-nav-link[data-sidebar="menu-button"] {
+  height: 46px;
+  min-height: 46px;
+  padding: 0 14px;
+  gap: 14px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f1efec;
+  border-color: transparent;
+  box-shadow: none;
+}
+.cc-app .cc-nav-link > svg {
+  width: 22px;
+  height: 22px;
+}
+.cc-app .cc-nav-link[data-sidebar="menu-button"]:not([data-active="true"]):hover {
+  background: rgb(255 255 255 / 7%);
+}
+.cc-app .cc-nav-link[data-active="true"],
+[data-mobile="true"] .cc-nav-link[data-active="true"] {
+  color: white;
+  background: linear-gradient(135deg, #cf2431, #8d1219);
+  border-color: transparent;
+  box-shadow: 0 8px 20px -8px rgb(229 36 47 / 70%);
+}
+.cc-nav-badge {
+  margin-left: auto;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: #e5242f;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+.cc-admin-group {
+  border-top-color: rgb(255 255 255 / 12%);
+}
+.cc-admin-toggle {
+  height: 46px;
+  padding: 0 14px;
+  font-size: 15px;
+  color: #f1efec;
+}
+.cc-app .cc-sidebar-footer {
+  background: transparent;
+  border-top: 0;
+  padding: 16px;
+  gap: 10px;
+}
+.cc-sidebar-tools {
+  display: grid;
+  gap: 8px;
+}
+.cc-sidebar-tools [role="combobox"],
+.cc-sidebar-tools button {
+  width: 100%;
+  background: rgb(255 255 255 / 6%);
+  color: #f1efec;
+  border-color: rgb(255 255 255 / 12%);
+}
+.cc-app .cc-sidebar-footer .cc-user {
+  background: rgb(255 255 255 / 5%);
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 18px;
+  padding: 14px;
+}
+.cc-app .cc-sidebar-footer .cc-avatar {
+  background: #8d1219;
+  border: 0;
+  box-shadow: none;
+  color: white;
+}
+.cc-app .cc-signout {
+  color: #f1efec;
+  height: 44px;
+}
+
+/* No white top bar on desktop: the page header carries the context. */
+@media (min-width: 768px) {
+  .cc-topbar {
+    display: none;
+  }
+}
+.cc-hello-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.cc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--cc-border);
+  background: white;
+  font-weight: 700;
+  font-size: 14px;
+}
+.cc-chip svg {
+  width: 20px;
+  height: 20px;
+}

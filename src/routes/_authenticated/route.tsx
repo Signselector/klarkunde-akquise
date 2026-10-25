@@ -2,7 +2,7 @@ import { isMasterEmail } from "@/lib/master";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
-import { CountrySwitcher } from "@/lib/country";
+import { CountrySwitcher, useCountry } from "@/lib/country";
 import { useEffect, useState, type CSSProperties } from "react";
 import {
   createFileRoute,
@@ -96,6 +96,20 @@ function Layout() {
     }
   }, [me, nav]);
 
+  const country = useCountry();
+  const { data: openCallbacks } = useQuery({
+    queryKey: ["callback-count", user.id, country],
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("callbacks")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("country", country)
+        .eq("done", false);
+      return count ?? 0;
+    },
+  });
   const showAdmin = !!me?.admin && !callerView;
   const items = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -131,7 +145,7 @@ function Layout() {
   return (
     <SidebarProvider
       className="cc-theme cc-app"
-      style={{ "--sidebar-width": "15.5rem" } as CSSProperties}
+      style={{ "--sidebar-width": "17rem" } as CSSProperties}
     >
       <a href="#arbeitsbereich" className="cc-skip-link">
         Zum Arbeitsbereich
@@ -156,6 +170,7 @@ function Layout() {
                   label={i.label}
                   icon={i.icon}
                   active={location.pathname === i.to}
+                  badge={i.to === "/callbacks" ? (openCallbacks ?? 0) : 0}
                 />
               </SidebarMenuItem>
             ))}
@@ -190,6 +205,15 @@ function Layout() {
           )}
         </SidebarContent>
         <SidebarFooter className="cc-sidebar-footer">
+          <div className="cc-sidebar-tools">
+            {isMaster && callerView && (
+              <Button size="sm" aria-pressed={callerView} onClick={toggleCallerView}>
+                <Crown size={16} />
+                Zur Admin-Sicht
+              </Button>
+            )}
+            <CountrySwitcher />
+          </div>
           <div className="cc-user">
             <span className="cc-avatar">
               {(me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase()}
@@ -215,20 +239,6 @@ function Layout() {
               aria-label="Navigation öffnen oder schließen"
             />
           </div>
-          <div className="flex items-center gap-2">
-            {isMaster && callerView && (
-              <Button
-                size="sm"
-                variant={callerView ? "default" : "outline"}
-                aria-pressed={callerView}
-                onClick={toggleCallerView}
-              >
-                <Crown size={16} />
-                Zur Admin-Sicht
-              </Button>
-            )}
-            <CountrySwitcher />
-          </div>
         </header>
         <TestModeBanner />
         <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
@@ -245,11 +255,13 @@ function NavigationItem({
   label,
   icon: Icon,
   active,
+  badge = 0,
 }: {
   to: string;
   label: string;
   icon: typeof Users;
   active: boolean;
+  badge?: number;
 }) {
   const { isMobile, setOpenMobile } = useSidebar();
   return (
@@ -262,6 +274,7 @@ function NavigationItem({
       >
         <Icon aria-hidden="true" />
         <span>{label}</span>
+        {badge > 0 && <b className="cc-nav-badge">{badge}</b>}
       </Link>
     </SidebarMenuButton>
   );

@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import {
   Building2,
+  CalendarCheck,
   ChevronLeft,
   ChevronRight,
   CircleCheck,
@@ -191,7 +192,7 @@ export function CallerPerformance({
       <div className="cc-hello">
         <div>
           <h1>
-            {first ? `Hallo ${first}.` : "Hallo."}
+            {first ? `Hallo ${first}!` : "Hallo!"}
             <br />
             {day.data
               ? remaining > 0
@@ -201,9 +202,15 @@ export function CallerPerformance({
           </h1>
           <p>Deine Leads im Blick. Der nächste Schritt ganz klar.</p>
         </div>
-        <Link to="/leads" className="cc-cta">
-          Zu den Offenen Leads →
-        </Link>
+        <div className="cc-hello-actions">
+          <span className="cc-chip">
+            <CalendarCheck aria-hidden="true" />
+            {monthLabel(currentMonth())}
+          </span>
+          <Link to="/leads" className="cc-cta">
+            Zu den Offenen Leads →
+          </Link>
+        </div>
       </div>
 
       <div className="cc-bento">
