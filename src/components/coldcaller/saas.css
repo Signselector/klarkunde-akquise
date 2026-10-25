@@ -695,3 +695,15 @@
     transition: opacity 150ms !important;
   }
 }
+
+/* The wordmark is always white; on light grounds it sits on a black chip. */
+.cc-brand-chip {
+  display: inline-flex;
+  flex-direction: column;
+  background: #0e0e10;
+  border-radius: 14px;
+  padding: 7px 14px;
+}
+.cc-topnav .cc-brand-content img {
+  height: 26px;
+}
