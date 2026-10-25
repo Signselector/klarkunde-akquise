@@ -137,6 +137,25 @@ function AuthPage() {
               </>
             )}
           </Button>
+          {mode === "in" && (
+            <button
+              type="button"
+              disabled={busy}
+              className="cc-auth-mode"
+              onClick={async () => {
+                if (!email) return toast.error("Bitte zuerst deine E-Mail eintragen.");
+                setBusy(true);
+                const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                  redirectTo: `${window.location.origin}/reset-password`,
+                });
+                setBusy(false);
+                if (error) return toast.error(error.message);
+                toast.success("Link zum Zurücksetzen wurde an deine E-Mail gesendet.");
+              }}
+            >
+              Passwort vergessen?
+            </button>
+          )}
           <button
             type="button"
             disabled={busy}
