@@ -2,17 +2,11 @@ import { CallerPerformance } from "@/components/caller/performance";
 import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import { BackendStatus } from "@/components/backend-status";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
-import {
-  ArrowRight,
-  FolderOpen,
-  Phone,
-  Upload,
-  CalendarClock,
-} from "@/components/coldcaller/icons";
+import { FolderOpen } from "@/components/coldcaller/icons";
 import { FeedbackState, InfoButton, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
@@ -86,34 +80,9 @@ function Dashboard() {
         description="Deine Leads im Blick. Der nächste Schritt ganz klar."
       />
       <CallerPerformance userId={user.id} />
-      <section className="cc-start" aria-labelledby="start-title">
-        <div>
-          <h2 id="start-title">Ein Gespräch kann alles verändern.</h2>
-          <p>
-            Starte deinen Anrufablauf oder kümmere dich um vereinbarte Rückrufe. Deine importierten
-            Leadlisten findest du darunter.
-          </p>
-          <div className="cc-start-actions">
-            <Button asChild>
-              <Link to="/call">
-                <Phone />
-                Anrufen starten
-                <ArrowRight />
-              </Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/callbacks">
-                <CalendarClock />
-                Rückrufe öffnen
-              </Link>
-            </Button>
-          </div>
-        </div>
-        <Phone className="cc-start-mark" size={90} strokeWidth={1.5} aria-hidden="true" />
-      </section>
       <Surface
-        title="Deine Lead-Batches"
-        description="Fortschritt der gemeinsam verfügbaren Importlisten"
+        title="Lead Batches"
+        description="Alle verfügbaren Leadlisten in deinem Land"
         action={
           <InfoButton label="Batchfortschritt">
             Der vorhandene Fortschritt zählt Leads, die nicht mehr offen sind. Er ist keine
