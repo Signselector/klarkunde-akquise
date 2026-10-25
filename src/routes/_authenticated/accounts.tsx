@@ -34,7 +34,7 @@ function AccountsPage() {
   }
 
   async function setRole(id: string, makeAdmin: boolean) {
-    if (import.meta.env["VITE_ATOMIC_BACKEND_ENABLED"] !== "true") return setRoleLegacy(id, makeAdmin);
+    if (import.meta.env["VITE_ATOMIC_BACKEND_ENABLED"] === "false") return setRoleLegacy(id, makeAdmin);
     if (id === user.id && !makeAdmin) { toast.error("Du kannst dir die Admin-Rolle nicht selbst entziehen."); return; }
     const { error } = await supabase.rpc("set_user_role", { p_user_id: id, p_role: makeAdmin ? "admin" : "caller" });
     if (error) { toast.error(error.message === "last_admin" ? "Der letzte Admin kann nicht entfernt werden." : "Rollenänderung fehlgeschlagen."); return; }

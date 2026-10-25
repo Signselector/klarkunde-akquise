@@ -90,7 +90,7 @@ function LeadsPage() {
 
   async function deleteAllOpen() {
     const { error } = await (backendEnabled
-      ? supabase.rpc("archive_open_leads", {})
+      ? supabase.rpc("archive_open_leads", {} as never)
       : supabase.from("leads").delete().eq("status", "open"));
     if (error) {
       toast.error(error.message);

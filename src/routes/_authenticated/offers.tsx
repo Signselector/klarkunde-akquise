@@ -107,7 +107,7 @@ function OfferList() {
       saving.current = true;
       try {
         const args = { p_customer_id: customerId || null, p_items: valid, p_note: note || null };
-        const { data, error } = await supabase.rpc("save_offer", {
+        const { data, error } = await (supabase.rpc as (n: string, a: unknown) => ReturnType<typeof supabase.rpc>)("save_offer", {
           ...args,
           p_request_id: request.idFor(args),
         });

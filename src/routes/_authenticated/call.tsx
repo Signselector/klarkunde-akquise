@@ -63,7 +63,7 @@ function CallPage() {
     enabled: backendEnabled,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
-    queryFn: async () => (await backendRpc("claim_next_lead", {})) as LeadClaim | null,
+    queryFn: async () => (await backendRpc("claim_next_lead", {} as never)) as LeadClaim | null,
   });
   const claimId = reservation.data?.claim_id;
   useEffect(() => {
@@ -205,7 +205,7 @@ function CallPage() {
   }
 
   async function record(outcome: Outcome) {
-    if (import.meta.env["VITE_ATOMIC_BACKEND_ENABLED"] !== "true") return recordLegacy(outcome);
+    if (!backendEnabled) return recordLegacy(outcome);
     if (!lead) return;
     if ((outcome === "callback" || outcome === "appointment") && !when) {
       setPending(outcome);
