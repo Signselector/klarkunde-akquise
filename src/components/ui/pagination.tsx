@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ChevronLeft, ChevronRight, MoreHorizontal } from "@/components/coldcaller/icons-3d";
+import { ChevronLeft, ChevronRight, MoreHorizontal } from "@/components/coldcaller/icons";
 
 import { cn } from "@/lib/utils";
 import { ButtonProps, buttonVariants } from "@/components/ui/button";

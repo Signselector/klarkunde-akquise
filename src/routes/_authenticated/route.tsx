@@ -29,7 +29,7 @@ import {
   Settings,
   Upload,
   Users,
-} from "@/components/coldcaller/icons-3d";
+} from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,

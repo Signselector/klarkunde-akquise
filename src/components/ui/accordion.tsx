@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
-import { ChevronDown } from "@/components/coldcaller/icons-3d";
+import { ChevronDown } from "@/components/coldcaller/icons";
 
 import { cn } from "@/lib/utils";
 

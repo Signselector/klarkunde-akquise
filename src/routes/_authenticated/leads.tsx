@@ -10,7 +10,7 @@ import { STATUS_LABEL } from "@/lib/leads";
 import { useIsAdmin } from "@/lib/use-admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Building2, ChevronRight, Search, Trash2, Upload } from "@/components/coldcaller/icons-3d";
+import { Building2, ChevronRight, Search, Trash2, Upload } from "@/components/coldcaller/icons";
 import { Link } from "@tanstack/react-router";
 import {
   FeedbackState,

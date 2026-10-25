@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
 import { cva } from "class-variance-authority";
-import { ChevronDown } from "@/components/coldcaller/icons-3d";
+import { ChevronDown } from "@/components/coldcaller/icons";
 
 import { cn } from "@/lib/utils";
 

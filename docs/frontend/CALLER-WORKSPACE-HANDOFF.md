@@ -1,6 +1,6 @@
 # Caller workspace: implementation and backend handoff
 
-Implemented in the live authenticated routes, using the existing Signselector theme and 3D icons. The appointment calendar route is unchanged.
+Implemented in the live authenticated routes, using the existing Signselector theme and approved clear icons. The appointment calendar route is unchanged.
 
 - Caller navigation: Dashboard, Offene Leads, Rückrufe, Abgeschlossene Leads, Meine Kunden, existing Termine link. Administrative navigation remains available outside caller view.
 - Dashboard: server-provided personal daily results; clearly labeled as covering all countries because get_dashboard has no country argument. Quality, contributed leads, average, ranking and rewards have explicit unavailable states, without fabricated scores.

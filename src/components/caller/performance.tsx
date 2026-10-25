@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import { FeedbackState, MetricCard, Surface } from "@/components/coldcaller/primitives";
-import { Phone, Users, ChartNoAxesColumn, Crown } from "@/components/coldcaller/icons-3d";
+import { Phone, Users, ChartNoAxesColumn, Crown } from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
 
 type DailyPerformance = {

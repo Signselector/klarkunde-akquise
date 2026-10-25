@@ -1,34 +1,25 @@
-# Glas-Icon-Familie
+# Bestätigte Richtung: klare Icons auf Graphit
 
-Die Icons verwenden lokale SVG-Geometrie mit transparenten rubinroten Flächen,
-roséfarbenen Lichtkanten und dezenten Schatten. Die Glastiefe, Reflexionen und
-Hover-Effekte bleiben erhalten. Helle gravierte Motive sind auch auf dunklen
-Glasflächen lesbar; kleine funktionale Controls passen sich weiterhin der
-Textfarbe an.
-Gemeinsame Implementierung: `icons-3d.tsx`/`.css`.
-Keine externen Bild-/Font-Dienste und keine zusätzliche Laufzeitabhängigkeit.
+Die früheren Glas-Kacheln sind durch klare, einfarbige Bibliotheks-Icons ersetzt.
+Quelle: `icons.tsx` und `icons.css`. `icons-3d.tsx` bleibt lediglich als
+Import-Kompatibilität erhalten; es rendert keine Glas-/3D-Ebenen mehr.
 
-Jeder der 14 Navigationspunkte hat eine andere Silhouette. Rückrufe verwenden
-Wecker, Termine einen bestätigten Kalender, Tagesstatistik eine Sonne, Auswertung
-ein Kreisdiagramm, Kunden einen Handschlag und Angebote einen Beleg. Dieselbe
-Funktion verwendet an mehreren Stellen bewusst dasselbe Motiv.
+Visuelle Vorlage: `icon-options/04-klare-icons-graphit.png`, vom Nutzer bestätigt.
+Hintergrund: lokale generierte Graphit-Textur, dezente rote Auswahlfläche mit
+heller Oberkante und weichem Schatten. Keine farbigen Icon-Kacheln, kein
+3D-Kippen und keine Lichtlaufanimationen. Alle 14 Navigationsmotive sind eindeutig.
 
-Anrufmaske, Dashboard, Lead-Details, Kontaktangaben, Accounts, Anmeldung,
-Feedback und Dialoge verwenden dieselbe Familie. Kleine funktionale Pfeile,
-Suche, Schließen und Navigationsschalter haben einen leichteren Reliefstil.
-Checkbox-/Radio-Zustände und Größen-Griffe bleiben native funktionale Controls.
+Icons: Lucide entspricht der gewählten klaren Linienführung. Rückrufe verwenden
+History, Termine CalendarDays, abgeschlossene Leads CircleCheck, Kunden Handshake,
+Angebote FilePenLine. Die gleichen semantischen Motive werden in Seiten und
+Dialogen konsistent verwendet. Strichstärke standardmäßig 1,8; Navigation 24px.
 
-Hover-/Druckbewegungen sind dezent und werden bei reduzierter Bewegung deaktiviert.
-Beschriftungen bleiben erhalten; die Icons sind dekorativ und für Screenreader
-verborgen. Einzigartige React-useId-Werte verhindern kollidierende SVG-Verläufe.
+Produktionslayout und zusätzliche Dashboard-Navigation bleiben erhalten.
+44px hohe Menüziele verhindern die zuvor angeschnittene Einstellungen-Zeile auf
+einem Desktop mit 1.000px Höhe. Kleinere Displays verwenden weiterhin die
+scrollbare mobile Navigation. Logo und lokale Instrument-Sans-Schrift bleiben.
 
-Prüfung: Typprüfung, 18 bestehende Tests und Produktionsbuild bestanden.
-Mit lokalen Browser-Fixtures Desktop und 390px-Mobilnavigation geprüft:
-14 einzigartige Navigationsmotive, keine Page-Exceptions, reduzierte Bewegung
-wirksam. Screenshots unter `docs/frontend/icon-refresh/`. Die Fixtures stellen
-keinen Test der Cloud-Verbindungen oder echter Konten dar.
-
-Die verstärkte Glasversion ergänzt eine deutlich versetzte Rückplatte, eine
-innere Brechungskante, mehrere spiegelnde Facetten und einen einmaligen Lichtlauf
-bei Hover. Die Hover-Neigung nutzt CSS-Perspektive. Bei reduzierter Bewegung
-werden auch die Animationen der inneren SVG-Ebenen deaktiviert.
+Prüfung: Typprüfung, 18 Tests, Build sowie Desktop-/Mobil-Browserprüfung.
+Browser-Fixtures prüfen Darstellung, eindeutige Motive und Navigation; keine
+Cloud-/Benutzerkonten werden dabei verändert. Aktuelle Screenshots unter
+`icon-refresh/`, visueller Vergleich und Ergebnis in `design-qa.md`.
