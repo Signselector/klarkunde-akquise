@@ -1,3 +1,4 @@
+import { useCountry } from "@/lib/country";
 import { backendRpc, jsonObject } from "@/lib/backend";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -146,6 +147,7 @@ function ImportPage() {
       }
       if (!batchId) return;
       state.batchId = batchId;
+      await supabase.from("lead_batches").update({ country }).eq("id", batchId);
       const invalid: number[] = [];
       for (let offset = 0; offset < leads.length; offset += 500) {
         const { data: checked, error } = await supabase
@@ -198,7 +200,7 @@ function ImportPage() {
     const { data: u } = await supabase.auth.getUser();
     const { data: batch, error } = await supabase
       .from("lead_batches")
-      .insert({ name, created_by: u.user!.id })
+      .insert({ name, created_by: u.user!.id, country })
       .select("id")
       .single();
     if (error || !batch) {

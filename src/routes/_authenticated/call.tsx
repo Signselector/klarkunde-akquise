@@ -1,3 +1,4 @@
+import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc, type LeadClaim } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -36,6 +37,7 @@ export const Route = createFileRoute("/_authenticated/call")({
 type Outcome = "not_reached" | "no_interest" | "callback" | "appointment" | "production";
 
 function CallPage() {
+  const country = useCountry();
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const [drafts, setDrafts] = useState<
@@ -59,11 +61,11 @@ function CallPage() {
         .data?.value ?? null,
   });
   const reservation = useQuery({
-    queryKey: ["next-lead", "claim", user.id],
+    queryKey: ["next-lead", "claim", user.id, country],
     enabled: backendEnabled,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
-    queryFn: async () => (await backendRpc("claim_next_lead", {} as never)) as LeadClaim | null,
+    queryFn: async () => (await backendRpc("claim_next_lead", { p_country: country } as never)) as LeadClaim | null,
   });
   const claimId = reservation.data?.claim_id;
   useEffect(() => {
