@@ -1,4 +1,3 @@
-import { isMasterEmail } from "@/lib/master";
 import { CallerPerformance } from "@/components/caller/performance";
 import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc } from "@/lib/backend";
@@ -85,16 +84,6 @@ function Dashboard() {
       <PageHeading
         title="Bereit für gute Gespräche."
         description="Deine Leads im Blick. Der nächste Schritt ganz klar."
-        action={
-          isMasterEmail(user.email) ? (
-            <Button asChild variant="outline">
-              <Link to="/import">
-                <Upload />
-                Leads importieren
-              </Link>
-            </Button>
-          ) : undefined
-        }
       />
       <CallerPerformance userId={user.id} />
       <section className="cc-start" aria-labelledby="start-title">
@@ -147,21 +136,9 @@ function Dashboard() {
             Bitte versuche es erneut.
           </FeedbackState>
         ) : batches?.length === 0 ? (
-          <FeedbackState
-            kind="empty"
-            title="Dein Arbeitsplatz wartet auf Leads"
-            action={
-              isMasterEmail(user.email) ? (
-                <Button asChild>
-                  <Link to="/import">
-                    <Upload />
-                    Erste Liste importieren
-                  </Link>
-                </Button>
-              ) : undefined
-            }
-          >
-            Importiere eine CSV- oder Excel-Datei und starte dein erstes Gespräch.
+          <FeedbackState kind="empty" title="Dein Arbeitsplatz wartet auf Leads">
+            Sobald der Master-Admin einen Leadbatch hochgeladen hat, kannst du dein erstes Gespräch
+            starten.
           </FeedbackState>
         ) : (
           <div className="cc-batch-grid">

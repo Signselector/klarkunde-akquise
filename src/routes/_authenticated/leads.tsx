@@ -1,4 +1,3 @@
-import { isMasterEmail } from "@/lib/master";
 import { LeadDialog } from "@/components/caller/lead-dialog";
 import { LeadsTable } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
@@ -12,7 +11,7 @@ import { STATUS_LABEL } from "@/lib/leads";
 import { useIsAdmin } from "@/lib/use-admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Building2, ChevronRight, Search, Trash2, Upload } from "@/components/coldcaller/icons";
+import { Building2, ChevronRight, Search, Trash2 } from "@/components/coldcaller/icons";
 import { Link } from "@tanstack/react-router";
 import {
   FeedbackState,
@@ -121,16 +120,6 @@ function LeadsPage() {
       <PageHeading
         title="Offene Leads"
         description="Deine offenen Kontakte aus den verfügbaren Batches. Starte den Anrufablauf, um ein Ergebnis einzutragen."
-        action={
-          isMasterEmail(user.email) ? (
-            <Button asChild>
-              <Link to="/import">
-                <Upload />
-                Leads importieren
-              </Link>
-            </Button>
-          ) : undefined
-        }
       />
       <Button asChild>
         <Link to="/call">Anrufen & Ergebnis eintragen</Link>
@@ -245,7 +234,7 @@ function LeadsPage() {
               </Button>
             }
           >
-            Passe deine Suche an oder importiere eine neue Kontaktliste.
+            Passe deine Suche oder die Filter an.
           </FeedbackState>
         ) : (
           <LeadsTable leads={leads ?? []} onOpen={setOpenId} />

@@ -1,4 +1,3 @@
-import { isMasterEmail } from "@/lib/master";
 import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc, type LeadClaim } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
@@ -310,18 +309,8 @@ function CallPage() {
       <div className="cc-page">
         <PageHeading title="Anrufen" description="Dein Arbeitsplatz für gute Gespräche." />
         <Surface title="Alles bearbeitet">
-          <FeedbackState
-            kind="empty"
-            title="Keine offenen Leads oder fälligen Rückrufe"
-            action={
-              isMasterEmail(user.email) ? (
-                <Button asChild>
-                  <Link to="/import">Leads importieren</Link>
-                </Button>
-              ) : undefined
-            }
-          >
-            Neue Kontakte erscheinen hier nach dem Import.
+          <FeedbackState kind="empty" title="Keine offenen Leads oder fälligen Rückrufe">
+            Neue Kontakte erscheinen hier, sobald ein neuer Leadbatch bereitsteht.
           </FeedbackState>
         </Surface>
       </div>
