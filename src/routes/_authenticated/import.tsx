@@ -243,7 +243,9 @@ function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-[22px] font-semibold">Leads importieren</h1>
+      <h1 className="text-[22px] font-semibold">
+        Leads importieren – {COUNTRIES.find((c) => c.code === country)?.label}
+      </h1>
       <div className="space-y-1">
         <Label htmlFor="f">
           CSV- oder Excel-Datei (.csv, .xlsx; erstes Tabellenblatt, erste Zeile = Spaltennamen)
