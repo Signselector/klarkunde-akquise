@@ -29,6 +29,7 @@ const FIELDS = [
 ] as const;
 
 function ImportPage() {
+  const country = useCountry();
   const nav = useNavigate();
   const [rows, setRows] = useState<string[][]>([]);
   const [map, setMap] = useState<Record<string, number>>({});

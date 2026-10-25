@@ -52,6 +52,7 @@ export const Route = createFileRoute("/_authenticated/leads")({
 });
 
 function LeadsPage() {
+  const country = useCountry();
   const { user } = Route.useRouteContext();
   const admin = useIsAdmin(user.id);
   const qc = useQueryClient();
