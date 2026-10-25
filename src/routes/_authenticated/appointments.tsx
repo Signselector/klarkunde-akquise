@@ -100,7 +100,7 @@ function AppointmentsPage() {
     const { error } = await (backendEnabled
       ? supabase.rpc("delete_appointment", { p_appointment_id: id })
       : supabase.from("appointments").delete().eq("id", id));
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Termin gelöscht.");
     refresh();
   }
@@ -314,7 +314,7 @@ function EventForm({ country, initialDate, onCreated }: { country: string; initi
   const [busy, setBusy] = useState(false);
 
   async function save() {
-    if (!title.trim() || !date) return toast.error("Bitte Titel und Datum angeben.");
+    if (!title.trim() || !date) { toast.error("Bitte Titel und Datum angeben."); return; }
     setBusy(true);
     const { error } = await supabase.rpc("save_calendar_appointment", {
       p_starts_at: new Date(`${date}T${time || "10:00"}:00`).toISOString(),
@@ -324,7 +324,7 @@ function EventForm({ country, initialDate, onCreated }: { country: string; initi
       p_country: country,
     });
     setBusy(false);
-    if (error) return toast.error("Termin konnte nicht angelegt werden.");
+    if (error) { toast.error("Termin konnte nicht angelegt werden."); return; }
     toast.success("Termin angelegt.");
     onCreated();
   }
