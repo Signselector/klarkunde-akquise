@@ -1081,3 +1081,13 @@
   background: radial-gradient(circle at 35% 30%, #ffe08a, #e0a526 60%, #a8741a);
   box-shadow: inset 0 0 0 2px rgb(255 255 255 / 25%);
 }
+
+/* Sidebar surface: dark anthracite with a light concrete grain (tileable 512px) */
+.cc-app [data-sidebar="sidebar"],
+[data-sidebar="sidebar"][data-mobile="true"] {
+  background-color: #26282b;
+  background-image: url("/brand/signselector/concrete-texture.png");
+  background-size: 512px 512px;
+  background-repeat: repeat;
+  background-blend-mode: soft-light;
+}
