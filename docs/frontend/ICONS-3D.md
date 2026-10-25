@@ -1,7 +1,9 @@
-# 3D-Icon-Familie
+# Glas-Icon-Familie
 
-Die Icons verwenden lokale SVG-Geometrie mit extrudierten Kanten, Farbverläufen,
-Lichtkanten und Schatten. Gemeinsame Implementierung: `icons-3d.tsx`/`.css`.
+Die Icons verwenden lokale SVG-Geometrie mit transparenten neutralen Flächen,
+silbernen Lichtkanten und dezenten Schatten. Die vorherigen bunten Materialien
+sind entfernt. Monochrome Motive passen sich über currentColor an helle und
+dunkle Oberflächen an. Gemeinsame Implementierung: `icons-3d.tsx`/`.css`.
 Keine externen Bild-/Font-Dienste und keine zusätzliche Laufzeitabhängigkeit.
 
 Jeder der 14 Navigationspunkte hat eine andere Silhouette. Rückrufe verwenden

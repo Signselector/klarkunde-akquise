@@ -3,7 +3,7 @@
   overflow: visible;
   flex-shrink: 0;
   vertical-align: middle;
-  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 14%));
+  filter: drop-shadow(0 2px 2px rgb(0 0 0 / 9%));
   transform-origin: 50% 70%;
   transition:
     transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -26,8 +26,8 @@
   gap: 12px;
 }
 .cc-nav-link[data-active="true"] > .cc-icon3d {
-  transform: translateY(-1px) rotate(-5deg);
-  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 28%));
+  transform: translateY(-1px);
+  filter: drop-shadow(0 3px 4px rgb(0 0 0 / 16%));
 }
 .cc-signout > .cc-icon3d {
   width: 25px;
@@ -35,15 +35,15 @@
 }
 @media (hover: hover) and (pointer: fine) {
   :is(a, button):hover > .cc-icon3d:not(.animate-spin) {
-    transform: translateY(-2px) rotate(-6deg) scale(1.06);
-    filter: drop-shadow(0 4px 4px rgb(0 0 0 / 22%));
+    transform: translateY(-1px) scale(1.03);
+    filter: drop-shadow(0 4px 4px rgb(0 0 0 / 14%));
   }
   :is(a, button):active > .cc-icon3d:not(.animate-spin) {
     transform: translateY(1px) scale(0.96);
   }
 }
 :is(a, button):focus-visible > .cc-icon3d {
-  filter: drop-shadow(0 0 3px rgb(255 213 143 / 55%));
+  filter: drop-shadow(0 0 3px rgb(190 200 210 / 45%));
 }
 @media (prefers-reduced-motion: reduce) {
   .cc-icon3d {
