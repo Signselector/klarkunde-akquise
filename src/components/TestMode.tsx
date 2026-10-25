@@ -46,7 +46,7 @@ export function TestModeCard() {
     if (!next && !confirm("Testmodus ausschalten? Ab dann werden Termine und Deals live an Pipedrive übertragen."))
       return;
     const { error } = await supabase.from("integration_config").update({ test_mode: next }).eq("id", true);
-    if (error) return toast.error("Konnte Testmodus nicht ändern.");
+    if (error) { toast.error("Konnte Testmodus nicht ändern."); return; }
     toast.success(next ? "Testmodus eingeschaltet." : "Testmodus ausgeschaltet – Sync ist live.");
     qc.invalidateQueries({ queryKey: ["integration-config"] });
   }

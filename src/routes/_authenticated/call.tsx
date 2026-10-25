@@ -63,7 +63,7 @@ function CallPage() {
     enabled: backendEnabled,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
-    queryFn: async () => (await backendRpc("claim_next_lead", {})) as LeadClaim | null,
+    queryFn: async () => (await backendRpc("claim_next_lead", {} as never)) as LeadClaim | null,
   });
   const claimId = reservation.data?.claim_id;
   useEffect(() => {

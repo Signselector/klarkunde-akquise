@@ -24,7 +24,7 @@ function Dashboard() {
     queryKey: ["batches"],
     queryFn: async () => {
       if (backendEnabled) {
-        const progress = (await backendRpc("get_batch_progress", {})) as {
+        const progress = (await backendRpc("get_batch_progress", {} as never)) as {
           id: string;
           name: string;
           created_at: string;
