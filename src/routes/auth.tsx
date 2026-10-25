@@ -143,13 +143,13 @@ function AuthPage() {
               disabled={busy}
               className="cc-auth-mode"
               onClick={async () => {
-                if (!email) return toast.error("Bitte zuerst deine E-Mail eintragen.");
+                if (!email) { toast.error("Bitte zuerst deine E-Mail eintragen."); return; }
                 setBusy(true);
                 const { error } = await supabase.auth.resetPasswordForEmail(email, {
                   redirectTo: `${window.location.origin}/reset-password`,
                 });
                 setBusy(false);
-                if (error) return toast.error(error.message);
+                if (error) { toast.error(error.message); return; }
                 toast.success("Link zum Zurücksetzen wurde an deine E-Mail gesendet.");
               }}
             >

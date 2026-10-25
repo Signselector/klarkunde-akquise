@@ -39,11 +39,11 @@ function ResetPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (pw !== pw2) return toast.error("Die Passwörter stimmen nicht überein.");
+    if (pw !== pw2) { toast.error("Die Passwörter stimmen nicht überein."); return; }
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password: pw });
     setBusy(false);
-    if (error) return toast.error("Fehler: " + error.message);
+    if (error) { toast.error("Fehler: " + error.message); return; }
     toast.success("Passwort geändert.");
     nav({ to: "/dashboard" });
   }
