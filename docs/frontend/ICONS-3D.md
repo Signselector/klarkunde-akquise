@@ -1,9 +1,11 @@
 # Glas-Icon-Familie
 
-Die Icons verwenden lokale SVG-Geometrie mit transparenten neutralen Flächen,
-silbernen Lichtkanten und dezenten Schatten. Die vorherigen bunten Materialien
-sind entfernt. Monochrome Motive passen sich über currentColor an helle und
-dunkle Oberflächen an. Gemeinsame Implementierung: `icons-3d.tsx`/`.css`.
+Die Icons verwenden lokale SVG-Geometrie mit transparenten rubinroten Flächen,
+roséfarbenen Lichtkanten und dezenten Schatten. Die Glastiefe, Reflexionen und
+Hover-Effekte bleiben erhalten. Helle gravierte Motive sind auch auf dunklen
+Glasflächen lesbar; kleine funktionale Controls passen sich weiterhin der
+Textfarbe an.
+Gemeinsame Implementierung: `icons-3d.tsx`/`.css`.
 Keine externen Bild-/Font-Dienste und keine zusätzliche Laufzeitabhängigkeit.
 
 Jeder der 14 Navigationspunkte hat eine andere Silhouette. Rückrufe verwenden

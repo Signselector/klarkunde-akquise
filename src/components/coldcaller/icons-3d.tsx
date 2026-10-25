@@ -3,7 +3,7 @@ import * as Glyph from "lucide-react";
 import type { LucideIcon, LucideProps } from "lucide-react";
 import "./icons-3d.css";
 
-/** Neutral glass surfaces with translucent edges and adaptive monochrome glyphs. */
+/** Ruby-red glass surfaces with translucent edges and bright engraved glyphs. */
 function sculpt(Shape: LucideIcon, name: string, utility = false) {
   const Icon = forwardRef<SVGSVGElement, LucideProps>(function SculptedIcon(
     { size = 24, className = "", strokeWidth: _stroke, color: _color, children, ...props },
@@ -32,19 +32,19 @@ function sculpt(Shape: LucideIcon, name: string, utility = false) {
       >
         <defs>
           <linearGradient id={face} x1="6" y1="3" x2="32" y2="34" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#ffffff" stopOpacity=".48" />
-            <stop offset=".46" stopColor="#d8dce0" stopOpacity=".06" />
-            <stop offset="1" stopColor="#7c838b" stopOpacity=".24" />
+            <stop stopColor="#ffb7bc" stopOpacity=".68" />
+            <stop offset=".46" stopColor="#bb122b" stopOpacity=".58" />
+            <stop offset="1" stopColor="#510715" stopOpacity=".8" />
           </linearGradient>
           <linearGradient id={edge} x1="9" y1="28" x2="33" y2="36" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#090b0f" stopOpacity=".48" />
-            <stop offset=".5" stopColor="#c9cdd2" stopOpacity=".38" />
-            <stop offset="1" stopColor="#363c44" stopOpacity=".48" />
+            <stop stopColor="#26030b" stopOpacity=".84" />
+            <stop offset=".5" stopColor="#b74c5b" stopOpacity=".64" />
+            <stop offset="1" stopColor="#4c0715" stopOpacity=".86" />
           </linearGradient>
           <linearGradient id={ink} x1="10" y1="8" x2="28" y2="29" gradientUnits="userSpaceOnUse">
-            <stop stopColor="currentColor" stopOpacity=".96" />
-            <stop offset=".5" stopColor="currentColor" stopOpacity=".72" />
-            <stop offset="1" stopColor="currentColor" stopOpacity=".94" />
+            <stop stopColor={utility ? "currentColor" : "#fff7f8"} stopOpacity=".96" />
+            <stop offset=".5" stopColor={utility ? "currentColor" : "#ffd1d7"} stopOpacity=".82" />
+            <stop offset="1" stopColor={utility ? "currentColor" : "#ffffff"} stopOpacity=".98" />
           </linearGradient>
           <clipPath id={clip}>
             <rect x="4" y="3" width="30" height="29" rx="9" />
@@ -56,7 +56,7 @@ function sculpt(Shape: LucideIcon, name: string, utility = false) {
             <stop offset="1" stopColor="#fff" stopOpacity="0" />
           </linearGradient>
           <linearGradient id={rim} x1="4" y1="3" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#fff" stopOpacity=".92" />
+            <stop stopColor="#ffe0e4" stopOpacity=".96" />
             <stop offset=".35" stopColor="#fff" stopOpacity=".18" />
             <stop offset=".72" stopColor="#fff" stopOpacity=".04" />
             <stop offset="1" stopColor="#fff" stopOpacity=".58" />
