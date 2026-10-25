@@ -1,5 +1,6 @@
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
+import { CountrySwitcher } from "@/lib/country";
 import type { CSSProperties } from "react";
 import {
   createFileRoute,
@@ -161,7 +162,7 @@ function Layout() {
               Sign Selector <span aria-hidden="true">/</span> <strong>{pageTitle}</strong>
             </span>
           </div>
-          <span className="cc-topbar-label">Team-Akquise</span>
+          <CountrySwitcher />
         </header>
         <TestModeBanner />
         <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
