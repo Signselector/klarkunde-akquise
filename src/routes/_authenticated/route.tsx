@@ -14,6 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   CalendarClock,
+  CalendarCheck,
   CalendarDays,
   ChartNoAxesColumn,
   CircleCheck,
@@ -27,7 +28,7 @@ import {
   Settings,
   Upload,
   Users,
-} from "lucide-react";
+} from "@/components/coldcaller/icons-3d";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -102,7 +103,7 @@ function Layout() {
     { to: "/callbacks", label: "Rückrufe", icon: CalendarClock },
     { to: "/completed", label: "Abgeschlossen", icon: CircleCheck },
     { to: "/customers", label: "Meine Kunden", icon: FileText },
-    { to: "/appointments", label: "Termine", icon: CalendarClock },
+    { to: "/appointments", label: "Termine", icon: CalendarCheck },
     { to: "/offers", label: "Angebote", icon: FilePen },
     { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
     { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
@@ -167,7 +168,9 @@ function Layout() {
             </span>
             <div>
               <strong>{me?.name ?? user.email}</strong>
-              <small>{me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}</small>
+              <small>
+                {me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}
+              </small>
             </div>
           </div>
           <Button variant="ghost" className="cc-signout" onClick={signOut}>

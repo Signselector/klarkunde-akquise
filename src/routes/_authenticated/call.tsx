@@ -15,7 +15,7 @@ import {
   PhoneMissed,
   Send,
   X,
-} from "lucide-react";
+} from "@/components/coldcaller/icons-3d";
 import {
   FeedbackState,
   InfoButton,

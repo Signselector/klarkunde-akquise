@@ -1,4 +1,4 @@
-import { Trophy, X } from "lucide-react";
+import { Trophy, X } from "@/components/coldcaller/icons-3d";
 
 /** Parent supplies a confirmed event. Does not grant coins, infer a win or play audio. */
 export function SuccessBanner({

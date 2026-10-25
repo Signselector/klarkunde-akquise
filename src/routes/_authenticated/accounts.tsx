@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Eye, KeyRound, Power, Shield, Trash2, Wrench } from "lucide-react";
+import { Eye, KeyRound, Power, Shield, Trash2, Wrench } from "@/components/coldcaller/icons-3d";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/lib/use-admin";
 import { Button } from "@/components/ui/button";

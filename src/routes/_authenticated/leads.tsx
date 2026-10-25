@@ -11,7 +11,7 @@ import { useIsAdmin } from "@/lib/use-admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Building2, ChevronRight, Search, Trash2, Upload } from "lucide-react";
+import { Building2, ChevronRight, Search, Trash2, Upload } from "@/components/coldcaller/icons-3d";
 import { Link } from "@tanstack/react-router";
 import {
   FeedbackState,

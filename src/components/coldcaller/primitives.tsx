@@ -8,7 +8,7 @@ import {
   LoaderCircle,
   Search,
   ShieldCheck,
-} from "lucide-react";
+} from "@/components/coldcaller/icons-3d";
 
 export type Tone = "neutral" | "info" | "success" | "warning" | "danger";
 

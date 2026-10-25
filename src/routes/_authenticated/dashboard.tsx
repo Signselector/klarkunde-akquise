@@ -5,7 +5,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, FolderOpen, Phone, Upload, CalendarClock } from "lucide-react";
+import { ArrowRight, FolderOpen, Phone, Upload, CalendarClock } from "@/components/coldcaller/icons-3d";
 import { FeedbackState, InfoButton, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";

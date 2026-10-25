@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, LoaderCircle, Target } from "lucide-react";
+import { ArrowRight, LoaderCircle, Target } from "@/components/coldcaller/icons-3d";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/auth")({
