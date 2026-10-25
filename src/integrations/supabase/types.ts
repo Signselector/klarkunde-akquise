@@ -304,6 +304,8 @@ export type Database = {
       }
       lead_batches: {
         Row: {
+          assigned_at: string | null
+          assigned_to: string | null
           country: string
           created_at: string
           created_by: string | null
@@ -312,6 +314,8 @@ export type Database = {
           name: string
         }
         Insert: {
+          assigned_at?: string | null
+          assigned_to?: string | null
           country?: string
           created_at?: string
           created_by?: string | null
@@ -320,6 +324,8 @@ export type Database = {
           name: string
         }
         Update: {
+          assigned_at?: string | null
+          assigned_to?: string | null
           country?: string
           created_at?: string
           created_by?: string | null
@@ -327,7 +333,15 @@ export type Database = {
           import_state?: string
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "lead_batches_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_claims: {
         Row: {
@@ -767,6 +781,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      claim_batch: { Args: { p_batch_id: string }; Returns: Json }
       claim_integration_jobs: { Args: { p_limit?: number }; Returns: Json }
       claim_next_lead:
         | { Args: never; Returns: Json }
@@ -861,6 +876,7 @@ export type Database = {
         }
         Returns: Json
       }
+      release_batch: { Args: { p_batch_id: string }; Returns: Json }
       renew_lead_claim: {
         Args: { p_claim_id: string; p_release?: boolean }
         Returns: Json

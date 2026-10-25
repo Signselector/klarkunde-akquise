@@ -310,7 +310,7 @@ function CallPage() {
         <PageHeading title="Anrufen" description="Dein Arbeitsplatz für gute Gespräche." />
         <Surface title="Alles bearbeitet">
           <FeedbackState kind="empty" title="Keine offenen Leads oder fälligen Rückrufe">
-            Neue Kontakte erscheinen hier, sobald ein neuer Leadbatch bereitsteht.
+            Übernimm im Dashboard unter Lead Batches einen Batch, um Leads zum Anrufen zu erhalten.
           </FeedbackState>
         </Surface>
       </div>

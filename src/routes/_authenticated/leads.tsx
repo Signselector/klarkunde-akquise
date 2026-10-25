@@ -61,33 +61,58 @@ function LeadsPage() {
     if (id && /^[0-9a-f-]{36}$/i.test(id)) setOpenId(id);
   }, []);
 
-  const { data: batches } = useQuery({
-    queryKey: ["lead-batches", country],
+  // Batches of this country. Before the batch-assignment migration is applied the column is missing:
+  // then the page keeps showing every lead of the country instead of failing.
+  const assignment = useQuery({
+    queryKey: ["lead-batches", country, user.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("lead_batches")
-        .select("id,name")
+        .select("id,name,assigned_to")
         .eq("country", country)
         .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+      if (error) {
+        const fallback = await supabase
+          .from("lead_batches")
+          .select("id,name")
+          .eq("country", country)
+          .order("created_at", { ascending: false });
+        if (fallback.error) throw fallback.error;
+        return { supported: false, batches: fallback.data ?? [] };
+      }
+      const rows = data ?? [];
+      return {
+        supported: backendEnabled,
+        batches: backendEnabled ? rows.filter((r) => r.assigned_to === user.id) : rows,
+      };
     },
   });
+  const batches = assignment.data?.batches;
+  const onlyMine = !!assignment.data?.supported;
   const {
     data: result,
     isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["leads", q, status, country, batch],
+    queryKey: ["leads", q, status, country, batch, user.id, onlyMine],
+    enabled: assignment.isFetched,
     queryFn: async () => {
       let query = supabase
         .from("leads")
-        .select("*, lead_batches!inner(country)", { count: "exact" })
+        .select(
+          onlyMine
+            ? "*, lead_batches!inner(country,assigned_to)"
+            : "*, lead_batches!inner(country)",
+          {
+            count: "exact",
+          },
+        )
         .eq("lead_batches.country", country)
         .order("created_at", { ascending: false })
         .limit(300);
       if (backendEnabled) query = query.is("archived_at", null);
+      if (onlyMine) query = query.eq("lead_batches.assigned_to", user.id);
       if (batch !== "all") query = query.eq("batch_id", batch);
       if (status !== "all") query = query.eq("status", status);
       if (status === "open") query = query.eq("attempts", 0);
@@ -119,7 +144,7 @@ function LeadsPage() {
     <div className="cc-page">
       <PageHeading
         title="Offene Leads"
-        description="Deine offenen Kontakte aus den verfügbaren Batches. Starte den Anrufablauf, um ein Ergebnis einzutragen."
+        description="Die Leads deiner übernommenen Batches. Starte den Anrufablauf, um ein Ergebnis einzutragen."
       />
       <Button asChild>
         <Link to="/call">Anrufen & Ergebnis eintragen</Link>
@@ -129,8 +154,8 @@ function LeadsPage() {
         description="Offene Erstkontakte · nach Status und Kontakt durchsuchen"
         action={
           <InfoButton label="Leadpool">
-            Diese Liste zeigt die vorhandenen gemeinsamen Leads. Eine persönliche Zuweisung wird
-            erst mit der entsprechenden Backend-Schnittstelle ergänzt.
+            Diese Liste zeigt die Leads der Batches, die du im Dashboard übernommen hast. Jeder
+            Batch gehört genau einem Caller. Ein Admin kann ihn wieder freigeben.
           </InfoButton>
         }
       >
@@ -234,7 +259,9 @@ function LeadsPage() {
               </Button>
             }
           >
-            Passe deine Suche oder die Filter an.
+            {backendEnabled
+              ? "Passe deine Suche oder die Filter an. Noch keinen Batch? Übernimm einen im Dashboard unter Lead Batches."
+              : "Passe deine Suche oder die Filter an."}
           </FeedbackState>
         ) : (
           <LeadsTable leads={leads ?? []} onOpen={setOpenId} />
