@@ -18,6 +18,9 @@ describe("suggestNextStep", () => {
 
 describe("parseCsv", () => {
   it("erkennt Semikolon und Anführungszeichen", () => {
-    expect(parseCsv('a;b\n"x;1";2\n')).toEqual([["a", "b"], ["x;1", "2"]]);
+    expect(parseCsv('a;b\n"x;1";2\n')).toEqual([
+      ["a", "b"],
+      ["x;1", "2"],
+    ]);
   });
 });

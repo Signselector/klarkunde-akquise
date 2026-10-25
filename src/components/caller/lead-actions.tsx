@@ -11,6 +11,7 @@ import {
   type LeadAction,
   type LeadActionKey,
 } from "@/lib/lead-actions";
+import { Mail } from "@/components/coldcaller/icons";
 import { parseLeadLinks } from "@/components/coldcaller/workspace-parts";
 import { SuccessBanner } from "@/components/coldcaller/success-banner";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,10 @@ import { Textarea } from "@/components/ui/textarea";
 
 type Template = { id: string; name: string; subject?: string; body: string };
 const STAGE_NAME: Record<string, string> = {
-  low_q: "3D Low Q",
-  high_q: "3D High Q",
-  waiting_3d: "3D Waiting",
-  on_hold: "On Hold",
+  low_q: "Logo Render",
+  high_q: "Realismus Render",
+  waiting_3d: "Logo ausstehend",
+  on_hold: "Zukunftsprojekt",
   no_interest: "Kein Interesse",
 };
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
@@ -262,18 +263,19 @@ export function LeadActions({
           {...(success.special ? { emphasis: true } : {})}
         />
       )}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div className="flex flex-wrap gap-2">
         {LEAD_ACTIONS.map((action) => (
           <button
             key={action.key}
             type="button"
+            title={action.hint}
             disabled={busy}
             aria-pressed={active === action.key}
             onClick={() => open(action)}
-            className={`cc-action-button rounded-[10px] px-3 py-2.5 text-left text-sm font-semibold disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 ${action.color} ${active === action.key ? "ring-2 ring-offset-2 ring-foreground" : ""}`}
+            className={`cc-action-button inline-flex items-center gap-2 rounded-[10px] px-4 py-2 text-sm font-medium disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 ${action.color} ${active === action.key ? "ring-2 ring-offset-2 ring-foreground" : ""}`}
           >
-            <span className="block">{action.label}</span>
-            <span className="block text-xs font-normal opacity-90">{action.hint}</span>
+            {action.key === "reference_mail" && <Mail size={16} aria-hidden="true" />}
+            {action.label}
           </button>
         ))}
       </div>

@@ -10,8 +10,8 @@ export const STATUS_LABEL: Record<string, string> = {
   no_interest: "Kein Interesse",
   callback: "Rückruf vereinbart",
   in_progress: "In Bearbeitung",
-  on_hold: "On Hold",
-  waiting_3d: "3D Waiting",
+  on_hold: "Zukunftsprojekt",
+  waiting_3d: "Logo ausstehend",
   appointment: "Termin",
   production: "Deal in Produktion",
 };
@@ -69,14 +69,19 @@ export function parseCsv(text: string): string[][] {
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
     if (q) {
-      if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
-      else if (c === '"') q = false;
+      if (c === '"' && text[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else if (c === '"') q = false;
       else cell += c;
     } else if (c === '"') q = true;
-    else if (c === delim) { row.push(cell); cell = ""; }
-    else if (c === "\n" || c === "\r") {
+    else if (c === delim) {
+      row.push(cell);
+      cell = "";
+    } else if (c === "\n" || c === "\r") {
       if (c === "\r" && text[i + 1] === "\n") i++;
-      row.push(cell); cell = "";
+      row.push(cell);
+      cell = "";
       if (row.some((x) => x.trim())) rows.push(row);
       row = [];
     } else cell += c;

@@ -61,7 +61,11 @@ export function CountrySwitcher() {
   if (allowed.length === 0)
     return <span className="text-xs text-muted-foreground">Kein Land freigeschaltet</span>;
   return (
-    <div role="radiogroup" aria-label="Land wählen" className="flex rounded-md border bg-background p-0.5">
+    <div
+      role="radiogroup"
+      aria-label="Land wählen"
+      className="flex rounded-md border bg-background p-0.5"
+    >
       {COUNTRIES.filter((c) => allowed.includes(c.code)).map((c) => (
         <button
           key={c.code}

@@ -16,8 +16,8 @@ import { CustomersBoard } from "@/components/caller/customers-board";
 const GROUP_ORDER = [
   "Rückruf vereinbart",
   "In Bearbeitung",
-  "On Hold",
-  "3D Waiting",
+  "Zukunftsprojekt",
+  "Logo ausstehend",
   "Nicht erreicht",
   "Kein Interesse",
 ];
@@ -81,7 +81,7 @@ export function StatusLeadList({
         description={
           customers
             ? "Deine bearbeiteten Kunden mit Kontaktdaten, Notizen und Verlauf."
-            : "Deine bearbeiteten Kontakte nach Kategorie: Rückruf vereinbart, In Bearbeitung, On Hold, 3D Waiting, Nicht erreicht, Kein Interesse."
+            : "Deine bearbeiteten Kontakte nach Kategorie: Rückruf vereinbart, In Bearbeitung, Zukunftsprojekt, Logo ausstehend, Nicht erreicht, Kein Interesse."
         }
       />
       {customers && (

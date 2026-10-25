@@ -12,11 +12,11 @@ Batch des Aufrufers (oder wurde von ihm bearbeitet, oder Admin), kein fremder ak
 
 | Aktion | Lead-Status | CRM-Stage-Schlüssel | Pflicht |
 | --- | --- | --- | --- |
-| `low_q` (3D-R-LowQ) | In Bearbeitung | `low_q` | Notiz, Logo |
-| `high_q` (3D-R-HighQ) | In Bearbeitung | `high_q` | Notiz, Logo |
-| `waiting_3d` | 3D Waiting | `waiting_3d` | Notiz |
+| `low_q` (Logo Render) | In Bearbeitung | `low_q` | Notiz, Logo |
+| `high_q` (Realismus Render) | In Bearbeitung | `high_q` | Notiz, Logo |
+| `waiting_3d` (Logo ausstehend) | Logo ausstehend | `waiting_3d` (Logo ausstehend) | Notiz |
 | `no_interest` | Kein Interesse | `no_interest` | – |
-| `on_hold` | On Hold | `on_hold` | Notiz; optional Wiedervorlage (wird ein Rückruf) |
+| `on_hold` (Zukunftsprojekt) | Zukunftsprojekt | `on_hold` (Zukunftsprojekt) | Notiz; optional Wiedervorlage (wird ein Rückruf) |
 | `callback` | Rückruf vereinbart | – (interne Aktion) | Datum und Uhrzeit in der Zukunft |
 | `not_reached` | offen, +1 Versuch („Nicht erreicht“) | – (interner Status) | – |
 | `contact_details` | unverändert | – | – (ändert nur Daten, kein Versuch) |

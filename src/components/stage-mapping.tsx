@@ -11,10 +11,10 @@ const GROUPS: { title: string; fields: [string, string][] }[] = [
   {
     title: "Anruf-Stages",
     fields: [
-      ["low_q", "3D-R-LowQ Stage"],
-      ["high_q", "3D-R-HighQ Stage"],
+      ["low_q", "Logo Render Stage"],
+      ["high_q", "Realismus Render Stage"],
       ["no_interest", "Kein Interesse Stage"],
-      ["on_hold", "Interessiert / On Hold Stage"],
+      ["on_hold", "Zukunftsprojekt Stage"],
       ["reference_mail", "Referenzmail verschickt Stage"],
     ],
   },
@@ -23,7 +23,7 @@ const GROUPS: { title: string; fields: [string, string][] }[] = [
     fields: [
       ["animation", "Animation in Bearbeitung"],
       ["rd_done", "3D RD fertig"],
-      ["waiting_3d", "3D-Waiting Stage"],
+      ["waiting_3d", "Logo ausstehend Stage"],
       ["gerald_waiting", "Gerald Waiting Stage"],
       ["nico_waiting", "Nico Waiting Stage"],
       ["offer", "Angebot erstellen"],
