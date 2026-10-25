@@ -255,6 +255,12 @@ function ImportPage() {
       <h1 className="text-[22px] font-semibold">
         Leads importieren – {COUNTRIES.find((c) => c.code === country)?.label}
       </h1>
+      <p className="text-sm text-muted-foreground">
+        Zum Ausprobieren:{" "}
+        <a className="underline" href="/test-leads-de.csv" download>
+          Test-CSV mit 15 Fake-Leads herunterladen
+        </a>
+      </p>
       <div className="space-y-1">
         <Label htmlFor="f">
           CSV- oder Excel-Datei (.csv, .xlsx; erstes Tabellenblatt, erste Zeile = Spaltennamen)
