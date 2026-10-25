@@ -71,6 +71,20 @@
       "when": 1792942179168,
       "tag": "0009_batch_assignment",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792947730987,
+      "tag": "0010_lead_actions",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792947776028,
+      "tag": "0011_actions_crm_sync",
+      "breakpoints": true
     }
   ]
 }

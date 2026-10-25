@@ -154,12 +154,10 @@ END $$;
 REVOKE ALL ON FUNCTION public.record_lead_action(uuid,uuid,integer,text,text,timestamptz,text,jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.record_lead_action(uuid,uuid,integer,text,text,timestamptz,text,jsonb) TO authenticated;
 
--- Private bucket for company logos, one folder per user. Skipped where no storage schema exists (tests).
+-- Policies for the private bucket for company logos, one folder per user. Skipped where no storage schema exists (tests).
 DO $$ BEGIN
  IF to_regclass('storage.buckets') IS NOT NULL AND to_regclass('storage.objects') IS NOT NULL THEN
-  INSERT INTO storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
-   VALUES('lead-logos','lead-logos',false,5242880,ARRAY['image/png','image/jpeg','image/webp','image/svg+xml','application/pdf'])
-   ON CONFLICT (id) DO NOTHING;
+  -- Bucket 'lead-logos' is created through the storage API (private, 5 MB).
   EXECUTE $p$CREATE POLICY lead_logos_insert ON storage.objects FOR INSERT TO authenticated
    WITH CHECK (bucket_id='lead-logos' AND (storage.foldername(name))[1]=auth.uid()::text)$p$;
   EXECUTE $p$CREATE POLICY lead_logos_read ON storage.objects FOR SELECT TO authenticated
