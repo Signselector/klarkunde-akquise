@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V2 · The Arena – Dark Gaming · SignSelector</title>
+<link rel="stylesheet" href="../fonts.css">
+<style>
+:root{--bg:#060607;--p:#111114;--p2:#1a1a1f;--line:#2a2a31;--ink:#f6f4f1;--mut:#8e8c96;--red:#e5242f;--red-rgb:229 36 47;--gold:#f5c445;--ok:#3ddc97;
+--d:"Oswald",Impact,sans-serif;--b:"Plus Jakarta Sans",Arial,sans-serif}
+*{box-sizing:border-box;margin:0}body{background:var(--bg);color:var(--ink);font:500 14px/1.5 var(--b);overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(60% 50% at 50% 0%,rgb(var(--red-rgb)/.28),transparent 70%),conic-gradient(from 200deg at 50% -20%,transparent,rgb(var(--red-rgb)/.08),transparent 30%)}
+.tag{font:600 11px var(--b);letter-spacing:.18em;text-transform:uppercase;color:var(--mut)}
+.top{display:flex;align-items:center;gap:20px;padding:14px 28px;border-bottom:1px solid var(--line)}
+.logo{font:700 22px var(--d);letter-spacing:.04em}.logo b{color:var(--red)}
+.top nav{display:flex;gap:6px}.top a{color:var(--mut);text-decoration:none;font:500 13px var(--d);letter-spacing:.12em;text-transform:uppercase;padding:8px 14px;border-radius:4px;transition:.15s}
+.top a:hover,.top a:focus-visible{color:var(--ink);background:var(--p2);outline:none}.top a.on{color:var(--ink);box-shadow:inset 0 -2px var(--red)}
+.coins{margin-left:auto;display:flex;gap:14px;font:600 15px var(--d)}.coins span{background:var(--p);border:1px solid var(--line);padding:6px 12px;border-radius:4px}.coins i{color:var(--gold);font-style:normal}
+main{padding:24px 28px 60px;max-width:1560px;margin:auto;display:grid;gap:22px}
+/* VERSUS MATCH HERO */
+.match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;padding:30px;border:1px solid var(--line);background:linear-gradient(90deg,rgb(var(--red-rgb)/.18),var(--p) 40%,var(--p) 60%,rgb(255 255 255/.04));clip-path:polygon(0 0,100% 0,100% 82%,97% 100%,0 100%);animation:in .6s both}
+.side{display:flex;align-items:center;gap:18px}.side.r{flex-direction:row-reverse;text-align:right}
+.av{width:86px;height:86px;border-radius:50%;display:grid;place-items:center;font:700 30px var(--d);background:var(--red);box-shadow:0 0 0 4px var(--bg),0 0 0 6px var(--red),0 0 40px rgb(var(--red-rgb)/.6)}
+.side.r .av{background:var(--p2);box-shadow:0 0 0 4px var(--bg),0 0 0 6px var(--line)}
+.name{font:700 30px/1 var(--d);text-transform:uppercase}.lvl{color:var(--gold);font:600 13px var(--d);letter-spacing:.14em}
+.score{text-align:center}.score .big{font:700 clamp(56px,7vw,96px)/1 var(--d);letter-spacing:-.02em}.score .big b{color:var(--red)}
+.score .t{font:500 12px var(--d);letter-spacing:.3em;color:var(--mut)}
+.live{display:inline-flex;gap:6px;align-items:center;background:var(--red);padding:3px 10px;font:600 11px var(--d);letter-spacing:.2em;margin-bottom:8px}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ink);animation:bl 1s infinite}
+.xp{grid-column:1/-1;height:10px;background:var(--p2);position:relative;overflow:hidden}.xp i{position:absolute;inset:0 32% 0 0;background:linear-gradient(90deg,var(--red),var(--gold));animation:grow 1.6s cubic-bezier(.2,.8,.2,1) both}
+.xp::after{content:"LEVEL 23 · 6.840 / 10.000 XP";position:absolute;right:0;top:14px;font:500 11px var(--d);letter-spacing:.14em;color:var(--mut)}
+/* GRID */
+.g{display:grid;grid-template-columns:2fr 1.2fr 1fr;gap:22px}
+.card{background:var(--p);border:1px solid var(--line);padding:22px;position:relative;animation:in .6s both}
+.card h2{font:700 20px var(--d);text-transform:uppercase;letter-spacing:.04em;margin:4px 0 16px}
+.combo{display:flex;gap:28px;align-items:center}
+.combo .n{font:700 140px/0.8 var(--d);color:transparent;-webkit-text-stroke:2px var(--red);text-shadow:0 0 50px rgb(var(--red-rgb)/.5);animation:pulse 2s infinite}
+.combo .x{font:700 34px var(--d);color:var(--gold)}
+.chain{display:flex;gap:6px;margin-top:12px}.chain i{width:26px;height:36px;background:var(--red);clip-path:polygon(25% 0,100% 0,75% 100%,0 100%)}.chain i.o{background:var(--p2)}
+.quest{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;padding:14px;border:1px solid var(--line);margin-bottom:10px;transition:.15s;cursor:pointer}
+.quest:hover,.quest:focus-visible{border-color:var(--red);transform:translateX(4px);outline:none}
+.quest .ic{width:44px;height:44px;display:grid;place-items:center;background:var(--p2);font:700 18px var(--d);color:var(--red)}
+.quest.done .ic{background:var(--ok);color:var(--bg)}.quest b{font:600 15px var(--d);letter-spacing:.03em}
+.bar{height:5px;background:var(--p2);margin-top:6px}.bar i{display:block;height:100%;background:var(--red)}
+.rw{font:700 14px var(--d);color:var(--gold)}
+.feed li{list-style:none;display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px;animation:in .5s both}
+.feed ul{padding:0}.feed .k{color:var(--red);font-weight:700}.feed .tm{margin-left:auto;color:var(--mut);font-variant-numeric:tabular-nums}
+.rank{display:grid;gap:8px}.rank div{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:center;padding:10px 12px;background:var(--p2);font:600 15px var(--d)}
+.rank div:nth-child(1){background:linear-gradient(90deg,rgb(245 196 69/.25),var(--p2));border-left:3px solid var(--gold)}
+.rank div.me{border-left:3px solid var(--red);background:linear-gradient(90deg,rgb(var(--red-rgb)/.25),var(--p2))}
+.rank em{font-style:normal;color:var(--mut);font-size:13px}
+.trophies{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.tr{aspect-ratio:1;display:grid;place-items:center;text-align:center;background:var(--p2);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);font:700 12px/1.15 var(--d);letter-spacing:.06em;padding:10px;transition:.2s}
+.tr:hover{transform:scale(1.08) rotate(-3deg)}.tr.on{background:linear-gradient(160deg,var(--red),#5a0a10);box-shadow:0 0 30px rgb(var(--red-rgb)/.5)}.tr.lock{opacity:.35}
+.cta{background:var(--red);color:var(--ink);border:0;font:700 16px var(--d);letter-spacing:.14em;text-transform:uppercase;padding:16px 26px;cursor:pointer;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%);transition:.15s}
+.cta:hover{filter:brightness(1.15);transform:translateY(-2px)}.cta:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+@keyframes in{from{opacity:0;transform:translateY(14px)}}@keyframes grow{from{transform:scaleX(0);transform-origin:left}}
+@keyframes pulse{50%{text-shadow:0 0 80px rgb(var(--red-rgb)/.9)}}@keyframes bl{50%{opacity:.2}}
+@media(max-width:1100px){.g{grid-template-columns:1fr}.match{grid-template-columns:1fr;text-align:center}.side,.side.r{justify-content:center}.trophies{grid-template-columns:repeat(3,1fr)}.top nav{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<header class="top"><div class="logo">SIGN<b>SELECTOR</b> · ARENA</div>
+<nav><a class="on" href="#">Arena</a><a href="#">Leads</a><a href="#">Rückrufe</a><a href="#">Termine</a><a href="#">Shop</a></nav>
+<div class="coins"><span><i>●</i> 1.240 Coins</span><span>🔥 9 Tage</span></div></header>
+<main>
+<section class="match">
+ <div class="side"><div class="av">LV</div><div><div class="lvl">LEVEL 23 · CLOSER</div><div class="name">Laurentiu V.</div><div class="tag">DE · Batch „Werbetechnik Bayern“</div></div></div>
+ <div class="score"><div class="live">LIVE DUELL</div><div class="big"><b>7</b>:5</div><div class="t">QUALIFIZIERTE LEADS HEUTE</div></div>
+ <div class="side r"><div class="av">MK</div><div><div class="lvl">LEVEL 21 · HUNTER</div><div class="name">Marco K.</div><div class="tag">AT · Wochen-Rivale</div></div></div>
+ <div class="xp"><i></i></div>
+</section>
+<div class="g">
+ <section class="card"><div class="tag">Combo-Serie</div><h2>Du bist on fire</h2>
+  <div class="combo"><div class="n">12</div><div><div class="x">×1,5 XP</div><p style="color:var(--mut)">Erreichte Kontakte in Folge ohne „Nicht erreicht“. Noch 3 bis ×2.</p>
+  <div class="chain"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="o"></i><i class="o"></i><i class="o"></i></div>
+  <p style="margin-top:20px"><button class="cta">Nächster Lead ▸</button></p></div></div>
+ </section>
+ <section class="card"><div class="tag">Tagesmissionen</div><h2>Bounties</h2>
+  <div class="quest done" tabindex="0"><div class="ic">✓</div><div><b>40 Anrufversuche</b><div class="bar"><i style="width:100%"></i></div></div><div class="rw">+200</div></div>
+  <div class="quest" tabindex="0"><div class="ic">2</div><div><b>3 Präsentationstermine</b><div class="bar"><i style="width:66%"></i></div></div><div class="rw">+450</div></div>
+  <div class="quest" tabindex="0"><div class="ic">%</div><div><b>Erreichquote über 35 %</b><div class="bar"><i style="width:82%"></i></div></div><div class="rw">+300</div></div>
+  <div class="quest" tabindex="0"><div class="ic">★</div><div><b>1 High-Q Lead nach 16 Uhr</b><div class="bar"><i style="width:0"></i></div></div><div class="rw">+600</div></div>
+ </section>
+ <section class="card feed"><div class="tag">Kill-Feed</div><h2>Team live</h2><ul>
+  <li><span class="k">Sarah</span> Termin „Lichtwerbung Graz“<span class="tm">14:32</span></li>
+  <li><span class="k">Du</span> High-Q · Autohaus Weber<span class="tm">14:28</span></li>
+  <li><span class="k">Marco</span> Combo ×10 erreicht<span class="tm">14:21</span></li>
+  <li><span class="k">Jonas</span> Rückruf vereinbart<span class="tm">14:17</span></li>
+  <li><span class="k">Du</span> Mission abgeschlossen<span class="tm">14:02</span></li>
+  <li><span class="k">Lisa</span> Low-Q · Bäckerei Huber<span class="tm">13:55</span></li></ul></section>
+</div>
+<div class="g" style="grid-template-columns:1fr 2fr">
+ <section class="card"><div class="tag">Wochen-Rangliste KW 43</div><h2>Leaderboard</h2><div class="rank">
+  <div><span>1</span>Sarah M.<em>2.940 XP</em></div><div class="me"><span>2</span>Du<em>2.710 XP</em></div><div><span>3</span>Marco K.<em>2.480 XP</em></div><div><span>4</span>Jonas B.<em>1.920 XP</em></div><div><span>5</span>Lisa T.<em>1.610 XP</em></div></div></section>
+ <section class="card"><div class="tag">Trophäen</div><h2>Freigeschaltet 4 / 12</h2><div class="trophies">
+  <div class="tr on">FIRST<br>BLOOD</div><div class="tr on">100<br>CALLS</div><div class="tr on">STREAK<br>7</div><div class="tr on">CLOSER</div><div class="tr lock">STREAK<br>30</div><div class="tr lock">MVP<br>MONAT</div></div></section>
+</div>
+</main></body></html>

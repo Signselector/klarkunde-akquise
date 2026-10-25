@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V2 · Mission Control – Command Center · SignSelector</title>
+<link rel="stylesheet" href="../fonts.css">
+<style>
+:root{--bg:#030304;--line:#1f1f25;--hi:#34343d;--ink:#e9e8e4;--dim:#6d6c75;--red:#ff2b36;--red-rgb:255 43 54;--white-rgb:255 255 255;
+--m:"JetBrains Mono",ui-monospace,monospace;--s:"Space Grotesk",Arial,sans-serif}
+*{box-sizing:border-box;margin:0}body{background:var(--bg);color:var(--ink);font:400 13px/1.45 var(--m);overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 50% 55%,rgb(var(--red-rgb)/.12),transparent 50%),radial-gradient(rgb(var(--white-rgb)/.07) 1px,transparent 1px) 0 0/22px 22px}
+.bar{display:flex;gap:24px;align-items:center;padding:10px 24px;border-bottom:1px solid var(--line);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.bar b{color:var(--ink)}.bar .r{color:var(--red)}.bar .clock{margin-left:auto;font:500 22px var(--m);color:var(--ink);letter-spacing:.05em}
+.blink{display:inline-block;width:7px;height:7px;background:var(--red);border-radius:50%;margin-right:6px;animation:bl 1.2s infinite}
+.ticker{overflow:hidden;border-bottom:1px solid var(--line);white-space:nowrap;font-size:11px;color:var(--dim);padding:7px 0}
+.ticker div{display:inline-block;animation:mq 40s linear infinite;padding-left:100%}.ticker span{margin-right:44px}.ticker em{color:var(--red);font-style:normal}
+main{display:grid;grid-template-columns:1fr minmax(420px,1.25fr) 1fr;gap:1px;background:var(--line);min-height:calc(100vh - 80px)}
+.col{background:var(--bg);padding:20px;display:flex;flex-direction:column;gap:22px}
+.h{font-size:10.5px;letter-spacing:.22em;color:var(--dim);text-transform:uppercase;display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:12px}
+.h::before{content:"▍";color:var(--red);margin-right:6px}
+.big{font:500 64px/1 var(--s);letter-spacing:-.04em}.big sup{font-size:20px;color:var(--red)}
+.seg{display:flex;gap:3px;margin-top:10px}.seg i{flex:1;height:18px;background:var(--hi)}.seg i.on{background:var(--red);box-shadow:0 0 10px rgb(var(--red-rgb)/.6)}
+.rows div{display:grid;grid-template-columns:1fr auto;padding:7px 0;border-bottom:1px dashed var(--line)}.rows span:last-child{color:var(--ink)}.rows span:first-child{color:var(--dim)}
+/* RADAR center */
+.radar{position:relative;aspect-ratio:1;max-width:560px;width:100%;margin:10px auto 0;border-radius:50%;border:1px solid var(--hi);
+background:repeating-radial-gradient(circle,transparent 0 59px,var(--line) 59px 60px),linear-gradient(var(--line),var(--line)) center/1px 100% no-repeat,linear-gradient(90deg,var(--line),var(--line)) center/100% 1px no-repeat}
+.sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgb(var(--red-rgb)/.45),transparent 22%);animation:spin 5s linear infinite}
+.blip{position:absolute;width:10px;height:10px;margin:-5px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgb(var(--red-rgb)/.7);animation:ping 2.4s infinite}
+.blip.w{background:var(--ink);box-shadow:0 0 0 0 rgb(var(--white-rgb)/.5)}
+.blip span{position:absolute;left:14px;top:-4px;font-size:10px;white-space:nowrap;color:var(--ink);letter-spacing:.06em}
+.core{position:absolute;inset:38%;border-radius:50%;border:1px solid var(--red);display:grid;place-content:center;text-align:center;background:rgb(3 3 4/.85)}
+.core b{font:500 40px/1 var(--s)}.core small{font-size:9.5px;letter-spacing:.2em;color:var(--dim)}
+.countries{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.countries div{background:var(--bg);padding:14px;transition:.15s;cursor:pointer}.countries div:hover,.countries div:focus-visible{background:rgb(var(--red-rgb)/.1);outline:none}
+.countries b{font:500 28px var(--s);display:block}.countries .on{box-shadow:inset 0 2px var(--red)}
+.mission{border:1px solid var(--red);padding:16px;position:relative;background:rgb(var(--red-rgb)/.06)}
+.mission::after{content:"PRIO 1";position:absolute;top:-9px;right:12px;background:var(--red);color:var(--bg);padding:0 6px;font-size:10px;letter-spacing:.14em}
+.mission .co{font:500 22px var(--s);margin:4px 0}.go{margin-top:12px;width:100%;background:transparent;border:1px solid var(--red);color:var(--ink);font:500 12px var(--m);letter-spacing:.22em;padding:13px;cursor:pointer;transition:.15s}
+.go:hover{background:var(--red);color:var(--bg)}.go:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.log li{list-style:none;display:grid;grid-template-columns:54px 1fr;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);animation:in .5s both}.log ul{padding:0}
+.log time{color:var(--dim)}.log em{color:var(--red);font-style:normal}
+.funnel div{height:30px;margin:0 auto 4px;background:linear-gradient(90deg,rgb(var(--red-rgb)/.15),rgb(var(--red-rgb)/.55),rgb(var(--red-rgb)/.15));display:flex;justify-content:space-between;align-items:center;padding:0 10px;font-size:11px;animation:wd 1.2s both}
+@keyframes bl{50%{opacity:.15}}@keyframes mq{to{transform:translateX(-100%)}}@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes ping{70%{box-shadow:0 0 0 14px transparent}100%{box-shadow:0 0 0 0 transparent}}@keyframes in{from{opacity:0;transform:translateX(10px)}}@keyframes wd{from{width:0!important}}
+@media(max-width:1100px){main{grid-template-columns:1fr}.bar{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body>
+<div class="bar"><span><b>SIGNSELECTOR</b> <span class="r">//</span> MISSION CONTROL</span><span><i class="blink"></i>SYSTEM LIVE</span><span>OPERATOR <b>L.VARGA</b></span><span>SCHICHT <b>04:12:33</b></span><span class="clock" id="clk">23:02:00</span></div>
+<div class="ticker"><div><span><em>DE</em> Sarah M. → Termin gebucht · Lichtwerbung Müller</span><span><em>AT</em> Marco K. → High-Q · Autohaus Graz</span><span><em>DE</em> Batch „Werbetechnik Bayern“ 72 % bearbeitet</span><span><em>NL</em> Keine aktive Pipeline</span><span><em>DE</em> Jonas B. → Rückruf 09:30</span><span><em>AT</em> Team-Quote heute 34,2 %</span></div></div>
+<main>
+<section class="col">
+ <div><div class="h"><span>Erfolgsquote heute</span><span>T-0</span></div><div class="big">36,1<sup>%</sup></div>
+ <div class="seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div></div>
+ <div><div class="h"><span>Telemetrie</span><span>Caller</span></div><div class="rows">
+  <div><span>ANRUFVERSUCHE</span><span>142</span></div><div><span>ERREICHT</span><span>51</span></div><div><span>KEIN INTERESSE</span><span>29</span></div><div><span>LOW-Q</span><span>11</span></div><div><span>HIGH-Q</span><span style="color:var(--red)">7</span></div><div><span>RÜCKRUFE OFFEN</span><span>6</span></div><div><span>Ø ANRUFDAUER</span><span>02:47</span></div></div></div>
+ <div><div class="h"><span>Pipeline-Funnel</span><span>KW 43</span></div><div class="funnel">
+  <div style="width:100%"><span>LEADS</span><span>620</span></div><div style="width:82%"><span>ERREICHT</span><span>224</span></div><div style="width:60%"><span>QUALIFIZIERT</span><span>58</span></div><div style="width:40%"><span>TERMIN</span><span>21</span></div><div style="width:24%"><span>ABSCHLUSS</span><span>6</span></div></div></div>
+</section>
+<section class="col">
+ <div class="h"><span>Lead-Radar · Batch „Werbetechnik Bayern“</span><span>48 offen</span></div>
+ <div class="radar"><div class="sweep"></div>
+  <div class="blip" style="left:30%;top:28%"><span>AUTOHAUS WEBER</span></div><div class="blip w" style="left:70%;top:36%"><span>RÜCKRUF 09:30</span></div>
+  <div class="blip" style="left:62%;top:72%"><span>HOTEL ALPENBLICK</span></div><div class="blip w" style="left:22%;top:64%"><span>BÄCKEREI HUBER</span></div><div class="blip" style="left:82%;top:58%"><span>FITNESS 24</span></div>
+  <div class="core"><b>72%</b><small>BATCH BEARBEITET</small></div></div>
+ <div class="countries"><div class="on" tabindex="0"><small>DE</small><b>418</b>LEADS AKTIV</div><div tabindex="0"><small>AT</small><b>202</b>LEADS AKTIV</div><div tabindex="0" style="opacity:.5"><small>NL</small><b>—</b>OFFLINE</div></div>
+</section>
+<section class="col">
+ <div><div class="h"><span>Nächste Mission</span><span>ETA JETZT</span></div><div class="mission"><small style="color:var(--dim)">ZIEL</small><div class="co">Autohaus Weber GmbH</div><div style="color:var(--dim)">Regensburg · T. Weber · GF<br>Score 87 · 3D-Leuchtbuchstaben</div><button class="go">▶ MISSION STARTEN</button></div></div>
+ <div class="log"><div class="h"><span>Event-Log</span><span>Team</span></div><ul>
+  <li><time>23:01</time><span><em>TERMIN</em> Sarah · Präsentation Mo 10:00</span></li><li><time>22:58</time><span><em>HIGH-Q</em> Du · Autohaus Weber</span></li>
+  <li><time>22:51</time><span>RÜCKRUF · Jonas · Fitness 24</span></li><li><time>22:47</time><span>BATCH · „Gastro Wien“ übernommen</span></li>
+  <li><time>22:40</time><span><em>RANG</em> Du → Platz 2 Woche</span></li><li><time>22:33</time><span>NICHT ERREICHT · Hotel Alpenblick</span></li></ul></div>
+</section>
+</main>
+<script>const c=document.getElementById('clk');setInterval(()=>c.textContent=new Date().toLocaleTimeString('de-DE'),1000)</script>
+</body></html>
