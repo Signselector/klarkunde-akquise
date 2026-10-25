@@ -309,8 +309,8 @@ export type Database = {
           crm_attempted_at: string | null
           crm_error: string | null
           crm_steps: Json
-          crm_synced_at: string | null
           crm_sync_state: string | null
+          crm_synced_at: string | null
           details: Json | null
           id: string
           lead_id: string
@@ -326,8 +326,8 @@ export type Database = {
           crm_attempted_at?: string | null
           crm_error?: string | null
           crm_steps?: Json
-          crm_synced_at?: string | null
           crm_sync_state?: string | null
+          crm_synced_at?: string | null
           details?: Json | null
           id?: string
           lead_id: string
@@ -343,8 +343,8 @@ export type Database = {
           crm_attempted_at?: string | null
           crm_error?: string | null
           crm_steps?: Json
-          crm_synced_at?: string | null
           crm_sync_state?: string | null
+          crm_synced_at?: string | null
           details?: Json | null
           id?: string
           lead_id?: string
