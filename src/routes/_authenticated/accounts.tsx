@@ -1,11 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { Eye, KeyRound, Power, Shield, Trash2, Wrench } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/lib/use-admin";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { COUNTRIES } from "@/lib/country";
+import { deleteAccount } from "@/lib/accounts.functions";
 
 const MASTER = "office@signselector.com";
 
@@ -18,31 +21,36 @@ function AccountsPage() {
   const { user } = Route.useRouteContext();
   const admin = useIsAdmin(user.id);
   const qc = useQueryClient();
+  const nav = useNavigate();
+  const del = useServerFn(deleteAccount);
   const { data: users } = useQuery({
     enabled: admin,
     queryKey: ["users"],
     queryFn: async () => {
       const [p, r, c] = await Promise.all([
-        supabase.from("profiles").select("id,display_name,email"),
+        supabase.from("profiles").select("id,display_name,email,active"),
         supabase.from("user_roles").select("user_id,role"),
         supabase.from("user_countries").select("user_id,country"),
       ]);
+      const has = (id: string, role: string) => !!r.data?.some((x) => x.user_id === id && x.role === role);
       return (p.data ?? []).map((u) => ({
         ...u,
         master: u.email?.toLowerCase() === MASTER,
-        admin: !!r.data?.some((x) => x.user_id === u.id && x.role === "admin"),
+        admin: has(u.id, "admin"),
+        fulfilment: has(u.id, "fulfilment"),
         countries: (c.data ?? []).filter((x) => x.user_id === u.id).map((x) => x.country),
       }));
     },
   });
   const isMaster = user.email?.toLowerCase() === MASTER;
+  const refresh = () => qc.invalidateQueries({ queryKey: ["users"] });
 
   async function toggleCountry(id: string, code: string, on: boolean) {
     const { error } = on
       ? await supabase.from("user_countries").insert({ user_id: id, country: code })
       : await supabase.from("user_countries").delete().eq("user_id", id).eq("country", code);
     if (error) { toast.error("Länder darf nur der Master-Admin ändern."); return; }
-    qc.invalidateQueries({ queryKey: ["users"] });
+    refresh();
     qc.invalidateQueries({ queryKey: ["my-countries"] });
   }
 
@@ -50,7 +58,40 @@ function AccountsPage() {
     if (id === user.id && !makeAdmin) { toast.error("Du kannst dir die Admin-Rolle nicht selbst entziehen."); return; }
     const { error } = await supabase.rpc("set_user_role", { p_user_id: id, p_role: makeAdmin ? "admin" : "caller" });
     if (error) { toast.error(error.message === "last_admin" ? "Der letzte Admin kann nicht entfernt werden." : "Rollenänderung fehlgeschlagen."); return; }
-    toast.success("Rolle geändert."); qc.invalidateQueries({ queryKey: ["users"] });
+    toast.success("Rolle geändert."); refresh();
+  }
+
+  async function toggleFulfilment(id: string, on: boolean) {
+    const { error } = on
+      ? await supabase.from("user_roles").insert({ user_id: id, role: "fulfilment" })
+      : await supabase.from("user_roles").delete().eq("user_id", id).eq("role", "fulfilment");
+    if (error) { toast.error("Fulfilment konnte nicht geändert werden."); return; }
+    toast.success(on ? "Fulfilment aktiviert." : "Fulfilment entfernt."); refresh();
+  }
+
+  async function resetPassword(email: string | null) {
+    if (!email) return;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
+    if (error) toast.error("Link konnte nicht gesendet werden.");
+    else toast.success(`Link zum Passwort-Zurücksetzen an ${email} gesendet.`);
+  }
+
+  async function setActive(id: string, active: boolean) {
+    const { error } = await supabase.rpc("set_user_active", { p_user_id: id, p_active: active });
+    if (error) { toast.error("Status konnte nicht geändert werden."); return; }
+    toast.success(active ? "Account aktiviert." : "Account deaktiviert."); refresh();
+  }
+
+  async function remove(id: string, name: string | null) {
+    if (!confirm(`Account „${name ?? ""}“ wirklich endgültig löschen?`)) return;
+    try { await del({ data: { userId: id } }); toast.success("Account gelöscht."); refresh(); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Löschen fehlgeschlagen."); }
+  }
+
+  function openCallerView() {
+    localStorage.setItem("cc-caller-view", "1");
+    window.dispatchEvent(new Event("cc-caller-view"));
+    nav({ to: "/call" });
   }
 
   if (!admin) return <p className="text-muted-foreground">Accounts sind nur für Admins.</p>;
@@ -62,30 +103,57 @@ function AccountsPage() {
           Neue Nutzer registrieren sich selbst, sind zuerst Caller und sehen erst etwas, wenn der Master-Admin ihnen ein Land freischaltet.
         </p>
         <div className="divide-y">
-          {users?.map((u) => (
-            <div key={u.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-              <span><span className="block font-medium">{u.display_name}</span><span className="text-sm text-muted-foreground">{u.email}</span></span>
-              <span className="flex flex-wrap items-center gap-2">
-                {u.master ? (
-                  <Badge>Master-Admin · alle Länder</Badge>
-                ) : (
-                  <>
-                    {COUNTRIES.map((c) => {
-                      const on = u.countries.includes(c.code);
-                      return (
-                        <Button key={c.code} size="sm" variant={on ? "default" : "outline"} disabled={!isMaster}
-                          aria-pressed={on} onClick={() => toggleCountry(u.id, c.code, !on)}>
-                          {c.flag} {c.code}
-                        </Button>
-                      );
-                    })}
-                    <Badge variant={u.admin ? "default" : "secondary"}>{u.admin ? "Admin" : "Caller"}</Badge>
-                    <Button size="sm" variant="outline" onClick={() => setRole(u.id, !u.admin)}>{u.admin ? "Zu Caller" : "Zu Admin"}</Button>
-                  </>
-                )}
-              </span>
-            </div>
-          ))}
+          {users?.map((u) => {
+            const self = u.id === user.id;
+            return (
+              <div key={u.id} className="grid gap-3 py-3 lg:grid-cols-[1.2fr_1.6fr_auto_auto_auto] lg:items-center">
+                <span className="font-medium">{u.display_name}</span>
+                <span className="truncate text-sm text-muted-foreground">{u.email}</span>
+                <span className="flex flex-wrap gap-1">
+                  <Badge variant="secondary">{u.master ? "Master-Admin" : u.admin ? "Admin" : "Caller"}</Badge>
+                  {u.fulfilment && <Badge variant="secondary">Fulfilment</Badge>}
+                </span>
+                <Badge variant="outline">{u.active ? "Aktiv" : "Deaktiviert"}</Badge>
+                <span className="flex flex-wrap items-center justify-end gap-2">
+                  {u.master
+                    ? COUNTRIES.map((c) => <Badge key={c.code} variant="outline">{c.flag} {c.code}</Badge>)
+                    : COUNTRIES.map((c) => {
+                        const on = u.countries.includes(c.code);
+                        return (
+                          <Button key={c.code} size="sm" variant={on ? "default" : "outline"} disabled={!isMaster}
+                            aria-pressed={on} onClick={() => toggleCountry(u.id, c.code, !on)}>
+                            {c.flag} {c.code}
+                          </Button>
+                        );
+                      })}
+                  {self && isMaster && (
+                    <Button size="sm" variant="outline" onClick={openCallerView}><Eye size={16} />Ansicht</Button>
+                  )}
+                  {!u.master && (
+                    <>
+                      <Button size="sm" variant="outline" onClick={() => setRole(u.id, !u.admin)}>
+                        <Shield size={16} />{u.admin ? "Zu Caller" : "Zu Admin"}
+                      </Button>
+                      <Button size="sm" variant={u.fulfilment ? "default" : "outline"} onClick={() => toggleFulfilment(u.id, !u.fulfilment)}>
+                        <Wrench size={16} />Fulfilment
+                      </Button>
+                    </>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => resetPassword(u.email)}><KeyRound size={16} />Passwort</Button>
+                  {!u.master && !self && (
+                    <>
+                      <Button size="sm" variant="secondary" onClick={() => setActive(u.id, !u.active)}>
+                        <Power size={16} />{u.active ? "Deaktivieren" : "Aktivieren"}
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => remove(u.id, u.display_name)}>
+                        <Trash2 size={16} />Löschen
+                      </Button>
+                    </>
+                  )}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>
