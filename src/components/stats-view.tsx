@@ -28,7 +28,7 @@ function Bars({ items }: { items: { label: string; value: number }[] }) {
   );
 }
 
-export type StatsMode = "overview" | "daily" | "evaluation";
+export type StatsMode = "overview" | "daily";
 
 export function StatsView({
   userId,
@@ -40,7 +40,7 @@ export function StatsView({
   title: string;
 }) {
   const admin = useIsAdmin(userId);
-  const [scope, setScope] = useState<"mine" | "all">(mode === "evaluation" ? "all" : "mine");
+  const [scope, setScope] = useState<"mine" | "all">("mine");
   const [range, setRange] = useState<"today" | "30">(mode === "daily" ? "today" : "30");
   type Summary = {
     attempts: number;
@@ -111,36 +111,25 @@ export function StatsView({
           .reduce((sum, x) => sum + x.attempts, 0)
       : ch.filter((c) => new Date(c.created_at).getDay() === d).length,
   }));
-  const tiles =
-    mode === "evaluation"
+  const tiles = [
+    ["Anrufe", calls],
+    ["Erreicht", reached],
+    ["Termine", count("appointment")],
+    ["Terminquote", calls ? `${Math.round((count("appointment") / calls) * 100)} %` : "–"],
+    ...(!backendEnabled
       ? [
-          ["Anrufe", calls],
-          ["Erreichungsquote", calls ? `${Math.round((reached / calls) * 100)} %` : "–"],
-          ["Terminquote", calls ? `${Math.round((count("appointment") / calls) * 100)} %` : "–"],
-          [
-            "Produktionsquote",
-            calls ? `${Math.round((count("production") / calls) * 100)} %` : "–",
-          ],
+          ["Offene Leads", data?.open ?? 0],
+          ["Leads gesamt", data?.total ?? 0],
         ]
-      : [
-          ["Anrufe", calls],
-          ["Erreicht", reached],
-          ["Termine", count("appointment")],
-          ["Terminquote", calls ? `${Math.round((count("appointment") / calls) * 100)} %` : "–"],
-          ...(!backendEnabled
-            ? [
-                ["Offene Leads", data?.open ?? 0],
-                ["Leads gesamt", data?.total ?? 0],
-              ]
-            : []),
-        ];
+      : []),
+  ];
   if (backendEnabled && summary.isError) return <p>Statistik konnte nicht geladen werden.</p>;
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-[22px] font-semibold">{title}</h1>
         <div className="flex gap-2">
-          {mode !== "evaluation" && (!backendEnabled || admin) && (
+          {(!backendEnabled || admin) && (
             <Tabs value={scope} onValueChange={(v) => setScope(v as "mine" | "all")}>
               <TabsList>
                 <TabsTrigger value="mine">Meine</TabsTrigger>
@@ -167,12 +156,12 @@ export function StatsView({
         ))}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        {mode !== "evaluation" && (
+        {
           <section className="space-y-2 rounded-lg border bg-card p-4">
             <h2 className="font-semibold">Ergebnisse</h2>
             <Bars items={byStatus} />
           </section>
-        )}
+        }
         {mode !== "daily" && (
           <section className="space-y-2 rounded-lg border bg-card p-4">
             <h2 className="font-semibold">Anrufe pro Wochentag</h2>

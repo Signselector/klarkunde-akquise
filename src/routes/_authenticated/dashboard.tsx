@@ -1,3 +1,4 @@
+import { isMasterEmail } from "@/lib/master";
 import { CallerPerformance } from "@/components/caller/performance";
 import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc } from "@/lib/backend";
@@ -6,7 +7,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, FolderOpen, Phone, Upload, CalendarClock } from "@/components/coldcaller/icons";
+import {
+  ArrowRight,
+  FolderOpen,
+  Phone,
+  Upload,
+  CalendarClock,
+} from "@/components/coldcaller/icons";
 import { FeedbackState, InfoButton, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
@@ -79,12 +86,14 @@ function Dashboard() {
         title="Bereit für gute Gespräche."
         description="Deine Leads im Blick. Der nächste Schritt ganz klar."
         action={
-          <Button asChild variant="outline">
-            <Link to="/import">
-              <Upload />
-              Leads importieren
-            </Link>
-          </Button>
+          isMasterEmail(user.email) ? (
+            <Button asChild variant="outline">
+              <Link to="/import">
+                <Upload />
+                Leads importieren
+              </Link>
+            </Button>
+          ) : undefined
         }
       />
       <CallerPerformance userId={user.id} />
@@ -142,12 +151,14 @@ function Dashboard() {
             kind="empty"
             title="Dein Arbeitsplatz wartet auf Leads"
             action={
-              <Button asChild>
-                <Link to="/import">
-                  <Upload />
-                  Erste Liste importieren
-                </Link>
-              </Button>
+              isMasterEmail(user.email) ? (
+                <Button asChild>
+                  <Link to="/import">
+                    <Upload />
+                    Erste Liste importieren
+                  </Link>
+                </Button>
+              ) : undefined
             }
           >
             Importiere eine CSV- oder Excel-Datei und starte dein erstes Gespräch.

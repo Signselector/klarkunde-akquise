@@ -1,3 +1,4 @@
+import { isMasterEmail } from "@/lib/master";
 import { LeadDialog } from "@/components/caller/lead-dialog";
 import { LeadsTable } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
@@ -121,12 +122,14 @@ function LeadsPage() {
         title="Offene Leads"
         description="Deine offenen Kontakte aus den verfügbaren Batches. Starte den Anrufablauf, um ein Ergebnis einzutragen."
         action={
-          <Button asChild>
-            <Link to="/import">
-              <Upload />
-              Leads importieren
-            </Link>
-          </Button>
+          isMasterEmail(user.email) ? (
+            <Button asChild>
+              <Link to="/import">
+                <Upload />
+                Leads importieren
+              </Link>
+            </Button>
+          ) : undefined
         }
       />
       <Button asChild>

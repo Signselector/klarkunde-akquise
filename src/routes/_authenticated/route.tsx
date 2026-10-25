@@ -1,3 +1,4 @@
+import { isMasterEmail } from "@/lib/master";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
@@ -19,11 +20,9 @@ import {
   CalendarDays,
   ChartNoAxesColumn,
   CircleCheck,
-  ClipboardList,
   Crown,
   Phone,
   LogOut,
-  FilePen,
   FileText,
   LayoutDashboard,
   Settings,
@@ -82,7 +81,7 @@ function Layout() {
     nav({ to: "/auth", replace: true });
   }
 
-  const isMaster = user.email?.toLowerCase() === "office@signselector.com";
+  const isMaster = isMasterEmail(user.email);
   const [callerView, setCallerView] = useState(false);
   useEffect(() => {
     if (!isMaster) return;
@@ -107,13 +106,11 @@ function Layout() {
     { to: "/appointments", label: "Termine", icon: CalendarCheck },
     ...(me?.admin && !callerView
       ? [
-          { to: "/offers", label: "Angebote", icon: FilePen },
           { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
           { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
-          { to: "/evaluation", label: "Auswertung", icon: ClipboardList },
-          { to: "/import", label: "Upload", icon: Upload },
         ]
       : []),
+    ...(isMaster && !callerView ? [{ to: "/import", label: "Upload", icon: Upload }] : []),
     ...(me?.admin && !callerView
       ? [
           { to: "/accounts", label: "Accounts", icon: Crown },

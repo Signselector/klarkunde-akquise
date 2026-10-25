@@ -1,3 +1,4 @@
+import { isMasterEmail } from "@/lib/master";
 import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc, type LeadClaim } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
@@ -65,7 +66,8 @@ function CallPage() {
     enabled: backendEnabled,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
-    queryFn: async () => (await backendRpc("claim_next_lead", { p_country: country } as never)) as LeadClaim | null,
+    queryFn: async () =>
+      (await backendRpc("claim_next_lead", { p_country: country } as never)) as LeadClaim | null,
   });
   const claimId = reservation.data?.claim_id;
   useEffect(() => {
@@ -312,9 +314,11 @@ function CallPage() {
             kind="empty"
             title="Keine offenen Leads oder fälligen Rückrufe"
             action={
-              <Button asChild>
-                <Link to="/import">Leads importieren</Link>
-              </Button>
+              isMasterEmail(user.email) ? (
+                <Button asChild>
+                  <Link to="/import">Leads importieren</Link>
+                </Button>
+              ) : undefined
             }
           >
             Neue Kontakte erscheinen hier nach dem Import.

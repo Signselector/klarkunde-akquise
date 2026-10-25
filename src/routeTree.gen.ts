@@ -21,10 +21,8 @@ import { Route as AuthenticatedCompletedRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedDailyStatsRouteImport } from './routes/_authenticated/daily-stats'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedEvaluationRouteImport } from './routes/_authenticated/evaluation'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
-import { Route as AuthenticatedOffersRouteImport } from './routes/_authenticated/offers'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
 
@@ -88,11 +86,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedEvaluationRoute = AuthenticatedEvaluationRouteImport.update({
-  id: '/evaluation',
-  path: '/evaluation',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
   id: '/import',
   path: '/import',
@@ -101,11 +94,6 @@ const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
 const AuthenticatedLeadsRoute = AuthenticatedLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOffersRoute = AuthenticatedOffersRouteImport.update({
-  id: '/offers',
-  path: '/offers',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -131,10 +119,8 @@ export interface FileRoutesByFullPath {
   '/customers': typeof AuthenticatedCustomersRoute
   '/daily-stats': typeof AuthenticatedDailyStatsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/evaluation': typeof AuthenticatedEvaluationRoute
   '/import': typeof AuthenticatedImportRoute
   '/leads': typeof AuthenticatedLeadsRoute
-  '/offers': typeof AuthenticatedOffersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
 }
@@ -150,10 +136,8 @@ export interface FileRoutesByTo {
   '/customers': typeof AuthenticatedCustomersRoute
   '/daily-stats': typeof AuthenticatedDailyStatsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/evaluation': typeof AuthenticatedEvaluationRoute
   '/import': typeof AuthenticatedImportRoute
   '/leads': typeof AuthenticatedLeadsRoute
-  '/offers': typeof AuthenticatedOffersRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
 }
@@ -171,10 +155,8 @@ export interface FileRoutesById {
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/daily-stats': typeof AuthenticatedDailyStatsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/evaluation': typeof AuthenticatedEvaluationRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
-  '/_authenticated/offers': typeof AuthenticatedOffersRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
 }
@@ -192,10 +174,8 @@ export interface FileRouteTypes {
     | '/customers'
     | '/daily-stats'
     | '/dashboard'
-    | '/evaluation'
     | '/import'
     | '/leads'
-    | '/offers'
     | '/settings'
     | '/stats'
   fileRoutesByTo: FileRoutesByTo
@@ -211,10 +191,8 @@ export interface FileRouteTypes {
     | '/customers'
     | '/daily-stats'
     | '/dashboard'
-    | '/evaluation'
     | '/import'
     | '/leads'
-    | '/offers'
     | '/settings'
     | '/stats'
   id:
@@ -231,10 +209,8 @@ export interface FileRouteTypes {
     | '/_authenticated/customers'
     | '/_authenticated/daily-stats'
     | '/_authenticated/dashboard'
-    | '/_authenticated/evaluation'
     | '/_authenticated/import'
     | '/_authenticated/leads'
-    | '/_authenticated/offers'
     | '/_authenticated/settings'
     | '/_authenticated/stats'
   fileRoutesById: FileRoutesById
@@ -332,13 +308,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/evaluation': {
-      id: '/_authenticated/evaluation'
-      path: '/evaluation'
-      fullPath: '/evaluation'
-      preLoaderRoute: typeof AuthenticatedEvaluationRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/import': {
       id: '/_authenticated/import'
       path: '/import'
@@ -351,13 +320,6 @@ declare module '@tanstack/react-router' {
       path: '/leads'
       fullPath: '/leads'
       preLoaderRoute: typeof AuthenticatedLeadsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/offers': {
-      id: '/_authenticated/offers'
-      path: '/offers'
-      fullPath: '/offers'
-      preLoaderRoute: typeof AuthenticatedOffersRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -386,10 +348,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedDailyStatsRoute: typeof AuthenticatedDailyStatsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedEvaluationRoute: typeof AuthenticatedEvaluationRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
-  AuthenticatedOffersRoute: typeof AuthenticatedOffersRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStatsRoute: typeof AuthenticatedStatsRoute
 }
@@ -403,10 +363,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedDailyStatsRoute: AuthenticatedDailyStatsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedEvaluationRoute: AuthenticatedEvaluationRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
-  AuthenticatedOffersRoute: AuthenticatedOffersRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStatsRoute: AuthenticatedStatsRoute,
 }

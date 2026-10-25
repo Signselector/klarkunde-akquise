@@ -1,3 +1,5 @@
+import { isMasterEmail } from "@/lib/master";
+import { FeedbackState } from "@/components/coldcaller/primitives";
 import { COUNTRIES, useCountry } from "@/lib/country";
 import { backendRpc, jsonObject } from "@/lib/backend";
 import { backendEnabled } from "@/lib/backend";
@@ -29,6 +31,7 @@ const FIELDS = [
 ] as const;
 
 function ImportPage() {
+  const { user } = Route.useRouteContext();
   const country = useCountry();
   const nav = useNavigate();
   const [rows, setRows] = useState<string[][]>([]);
@@ -241,6 +244,12 @@ function ImportPage() {
     nav({ to: "/dashboard" });
   }
 
+  if (!isMasterEmail(user.email))
+    return (
+      <FeedbackState kind="error" title="Nur für den Master-Admin">
+        Neue Leadbatches kann ausschließlich der Master-Admin hochladen.
+      </FeedbackState>
+    );
   return (
     <div className="space-y-6">
       <h1 className="text-[22px] font-semibold">
