@@ -43,6 +43,13 @@
       "when": 1792926253430,
       "tag": "0005_backup_function_and_schedule",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792932379167,
+      "tag": "0006_account_status_fulfilment",
+      "breakpoints": true
     }
   ]
 }

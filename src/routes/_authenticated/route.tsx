@@ -62,12 +62,13 @@ function Layout() {
     queryKey: ["me", user.id],
     queryFn: async () => {
       const [p, r] = await Promise.all([
-        supabase.from("profiles").select("display_name").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("display_name,active").eq("id", user.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user.id),
       ]);
       return {
         name: p.data?.display_name ?? user.email,
         admin: !!r.data?.some((x) => x.role === "admin"),
+        active: p.data?.active !== false,
       };
     },
   });
@@ -82,8 +83,17 @@ function Layout() {
   const isMaster = user.email?.toLowerCase() === "office@signselector.com";
   const [callerView, setCallerView] = useState(false);
   useEffect(() => {
-    if (isMaster) setCallerView(localStorage.getItem("cc-caller-view") === "1");
+    if (!isMaster) return;
+    const sync = () => setCallerView(localStorage.getItem("cc-caller-view") === "1");
+    sync();
+    window.addEventListener("cc-caller-view", sync);
+    return () => window.removeEventListener("cc-caller-view", sync);
   }, [isMaster]);
+  useEffect(() => {
+    if (me && !me.active) {
+      void supabase.auth.signOut().then(() => nav({ to: "/auth", replace: true }));
+    }
+  }, [me, nav]);
 
   const items = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -178,15 +188,15 @@ function Layout() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {isMaster && (
+            {isMaster && callerView && (
               <Button
                 size="sm"
                 variant={callerView ? "default" : "outline"}
                 aria-pressed={callerView}
                 onClick={toggleCallerView}
               >
-                {callerView ? <Crown size={16} /> : <Phone size={16} />}
-                {callerView ? "Zur Admin-Sicht" : "Caller-Sicht"}
+                <Crown size={16} />
+                Zur Admin-Sicht
               </Button>
             )}
             <CountrySwitcher />
