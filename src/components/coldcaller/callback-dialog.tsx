@@ -1,6 +1,6 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useRef } from "react";
-import { Phone, X } from "@/components/coldcaller/icons-3d";
+import { Phone, X } from "@/components/coldcaller/icons";
 import { ActionButton, StatusBadge } from "./primitives";
 
 export type CallbackPreview = {

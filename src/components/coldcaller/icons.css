@@ -1,0 +1,21 @@
+.cc-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.cc-nav-link > .cc-icon {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  color: #f5f3f0;
+}
+.cc-signout > .cc-icon {
+  width: 24px;
+  height: 24px;
+}
+/* Existing explicit loading states remain accessible with motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  .cc-icon {
+    animation: none !important;
+  }
+}

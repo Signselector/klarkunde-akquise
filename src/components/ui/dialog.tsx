@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "@/components/coldcaller/icons-3d";
+import { X } from "@/components/coldcaller/icons";
 
 import { cn } from "@/lib/utils";
 

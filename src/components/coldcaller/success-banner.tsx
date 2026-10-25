@@ -1,4 +1,4 @@
-import { Trophy, X } from "@/components/coldcaller/icons-3d";
+import { Trophy, X } from "@/components/coldcaller/icons";
 
 /** Parent supplies a confirmed event. Does not grant coins, infer a win or play audio. */
 export function SuccessBanner({

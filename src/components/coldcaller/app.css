@@ -843,3 +843,62 @@
 .cc-theme h2 {
   font-weight: 500;
 }
+
+/* Approved direction: clear off-white glyphs on a fine graphite surface. */
+.cc-app [data-sidebar="sidebar"],
+[data-sidebar="sidebar"][data-mobile="true"] {
+  background-color: #181818;
+  background-image: url("/brand/signselector/graphite-texture.png");
+  background-size: 256px 256px;
+  background-repeat: repeat;
+}
+.cc-nav-link {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  gap: 14px;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.cc-app .cc-nav-link {
+  border-radius: 14px;
+}
+.cc-nav-link:not([data-active="true"]):hover {
+  background-color: rgb(255 255 255 / 5%);
+}
+.cc-app .cc-nav-link[data-active="true"],
+[data-mobile="true"] .cc-nav-link[data-active="true"] {
+  color: #fff7f5;
+  background-color: #620b12;
+  border-color: #8d2931;
+  box-shadow:
+    inset 0 1px 0 rgb(255 206 206 / 12%),
+    inset 0 -7px 12px rgb(27 0 3 / 25%),
+    0 3px 4px rgb(0 0 0 / 38%);
+}
+.cc-nav-link[data-active="true"] > .cc-icon {
+  color: #fff8f5;
+}
+.cc-sidebar-footer {
+  background-color: rgb(14 14 14 / 30%);
+}
+.cc-sidebar-footer .cc-avatar {
+  border-radius: 50%;
+  border: 1px solid #8d2931;
+  background-color: #690c15;
+  box-shadow:
+    inset 0 1px 0 rgb(255 206 206 / 12%),
+    0 2px 4px rgb(0 0 0 / 25%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-nav-link {
+    transition: none;
+  }
+}
+/* Keep all desktop destinations visible while retaining a 44px touch target. */
+.cc-nav-link[data-sidebar="menu-button"] {
+  height: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+}

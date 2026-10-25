@@ -8,7 +8,7 @@ import {
   LoaderCircle,
   Search,
   ShieldCheck,
-} from "@/components/coldcaller/icons-3d";
+} from "@/components/coldcaller/icons";
 
 export type Tone = "neutral" | "info" | "success" | "warning" | "danger";
 

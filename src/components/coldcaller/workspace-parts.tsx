@@ -1,4 +1,4 @@
-import { Building2, ExternalLink, Mail, MapPin, Phone } from "@/components/coldcaller/icons-3d";
+import { Building2, ExternalLink, Mail, MapPin, Phone } from "@/components/coldcaller/icons";
 import type { ReactNode } from "react";
 
 export function PageHeading({

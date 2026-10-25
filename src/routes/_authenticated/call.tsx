@@ -15,7 +15,7 @@ import {
   PhoneMissed,
   Send,
   X,
-} from "@/components/coldcaller/icons-3d";
+} from "@/components/coldcaller/icons";
 import {
   FeedbackState,
   InfoButton,
