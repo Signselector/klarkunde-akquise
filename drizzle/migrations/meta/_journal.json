@@ -64,6 +64,13 @@
       "when": 1792935913360,
       "tag": "0008_pipedrive_stage_mapping",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792942179168,
+      "tag": "0009_batch_assignment",
+      "breakpoints": true
     }
   ]
 }
