@@ -50,6 +50,13 @@
       "when": 1792932379167,
       "tag": "0006_account_status_fulfilment",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1792933789545,
+      "tag": "0007_fulfilment_toggle",
+      "breakpoints": true
     }
   ]
 }
