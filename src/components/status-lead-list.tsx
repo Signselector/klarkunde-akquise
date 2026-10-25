@@ -12,6 +12,20 @@ import { LeadDialog } from "@/components/caller/lead-dialog";
 import { LeadsTable } from "@/components/caller/leads-table";
 import { CustomersBoard } from "@/components/caller/customers-board";
 
+/** Order of the categories on "Abgeschlossene Leads". */
+const GROUP_ORDER = [
+  "Rückruf vereinbart",
+  "In Bearbeitung",
+  "On Hold",
+  "3D Waiting",
+  "Nicht erreicht",
+  "Kein Interesse",
+];
+const groupRank = (label: string) => {
+  const i = GROUP_ORDER.indexOf(label);
+  return i === -1 ? GROUP_ORDER.length : i;
+};
+
 export function StatusLeadList({
   userId,
   title,
@@ -39,7 +53,8 @@ export function StatusLeadList({
         .limit(300);
       if (backendEnabled) q = q.is("archived_at", null);
       if (customers) q = q.in("status", statuses);
-      else q = q.or("status.neq.open,attempts.gt.0").neq("status", "callback");
+      else
+        q = q.or("status.neq.open,attempts.gt.0").not("status", "in", "(appointment,production)");
       const { data, error } = await q;
       if (error) throw error;
       return data ?? [];
@@ -56,6 +71,9 @@ export function StatusLeadList({
           .includes(search.toLocaleLowerCase())) &&
       (filter === "all" || resultLabel(l.status) === filter),
   );
+  const groups = [...new Set(rows.map((l) => resultLabel(l.status)))].sort(
+    (a, b) => groupRank(a) - groupRank(b) || a.localeCompare(b, "de"),
+  );
   return (
     <div className="cc-page">
       <PageHeading
@@ -63,7 +81,7 @@ export function StatusLeadList({
         description={
           customers
             ? "Deine bearbeiteten Kunden mit Kontaktdaten, Notizen und Verlauf."
-            : "Deine bearbeiteten Kontakte, nach dem aktuellen Anrufergebnis gruppiert. Rückrufe findest du separat."
+            : "Deine bearbeiteten Kontakte nach Kategorie: Rückruf vereinbart, In Bearbeitung, On Hold, 3D Waiting, Nicht erreicht, Kein Interesse."
         }
       />
       {customers && (
@@ -133,13 +151,25 @@ export function StatusLeadList({
           ) : customers ? (
             <CustomersBoard leads={rows} onOpen={setSelected} />
           ) : (
-            <div className="overflow-hidden rounded-[10px] border">
-              <LeadsTable
-                leads={rows}
-                onOpen={setSelected}
-                resultLabel={(l) => resultLabel(l.status)}
-                processed
-              />
+            <div className="space-y-5">
+              {groups.map((group) => {
+                const items = rows.filter((l) => resultLabel(l.status) === group);
+                return (
+                  <section key={group} aria-label={group}>
+                    <h2 className="mb-2 font-semibold">
+                      {group} ({items.length})
+                    </h2>
+                    <div className="overflow-hidden rounded-[10px] border">
+                      <LeadsTable
+                        leads={items}
+                        onOpen={setSelected}
+                        resultLabel={() => group}
+                        processed
+                      />
+                    </div>
+                  </section>
+                );
+              })}
             </div>
           )}
         </div>

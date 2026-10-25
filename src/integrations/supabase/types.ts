@@ -302,6 +302,56 @@ export type Database = {
           },
         ]
       }
+      lead_actions: {
+        Row: {
+          action: string
+          created_at: string
+          crm_sync_state: string | null
+          details: Json | null
+          id: string
+          lead_id: string
+          logo_path: string | null
+          note: string | null
+          scheduled_at: string | null
+          stage_key: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          crm_sync_state?: string | null
+          details?: Json | null
+          id?: string
+          lead_id: string
+          logo_path?: string | null
+          note?: string | null
+          scheduled_at?: string | null
+          stage_key?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          crm_sync_state?: string | null
+          details?: Json | null
+          id?: string
+          lead_id?: string
+          logo_path?: string | null
+          note?: string | null
+          scheduled_at?: string | null
+          stage_key?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_actions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_batches: {
         Row: {
           assigned_at: string | null
@@ -871,6 +921,19 @@ export type Database = {
           p_lead_id: string
           p_note?: string
           p_outcome: string
+          p_request_id: string
+          p_scheduled_at?: string
+        }
+        Returns: Json
+      }
+      record_lead_action: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_expected_version: number
+          p_lead_id: string
+          p_logo_path?: string
+          p_note?: string
           p_request_id: string
           p_scheduled_at?: string
         }

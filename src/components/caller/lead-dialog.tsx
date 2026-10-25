@@ -3,13 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { backendEnabled } from "@/lib/backend";
-import type { Tables } from "@/integrations/supabase/types";
 import { STATUS_LABEL, suggestNextStep } from "@/lib/leads";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
 import { LeadContact } from "@/components/coldcaller/workspace-parts";
+import { LeadActions } from "@/components/caller/lead-actions";
+import { ACTION_LABEL } from "@/lib/lead-actions";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +45,7 @@ export function LeadDialog({
     enabled: !!leadId,
     queryKey: ["lead-detail", leadId],
     queryFn: async () => {
-      const [l, n, s, b] = await Promise.all([
+      const [l, n, s, b, act] = await Promise.all([
         supabase.from("leads").select("*").eq("id", leadId!).maybeSingle(),
         supabase
           .from("lead_notes")
@@ -58,11 +58,32 @@ export function LeadDialog({
           .eq("lead_id", leadId!)
           .order("created_at", { ascending: false }),
         supabase.from("lead_batches").select("id,name").order("created_at", { ascending: false }),
+        backendEnabled
+          ? supabase
+              .from("lead_actions")
+              .select("*")
+              .eq("lead_id", leadId!)
+              .order("created_at", { ascending: false })
+          : Promise.resolve({ data: [], error: null }),
       ]);
+      // The action history is optional: before migration 0010 the table does not exist yet.
       const error = [l.error, n.error, s.error, b.error].find(Boolean);
       if (error) throw error;
-      return { lead: l.data, notes: n.data ?? [], history: s.data ?? [], batches: b.data ?? [] };
+      return {
+        lead: l.data,
+        notes: n.data ?? [],
+        history: s.data ?? [],
+        batches: b.data ?? [],
+        actions: act.data ?? [],
+      };
     },
+  });
+  const callerName = useQuery({
+    enabled: !!leadId && backendEnabled,
+    queryKey: ["profile-name", userId],
+    queryFn: async () =>
+      (await supabase.from("profiles").select("display_name").eq("id", userId).maybeSingle()).data
+        ?.display_name ?? "",
   });
   const lead = data?.lead;
   const refresh = () => {
@@ -178,7 +199,13 @@ export function LeadDialog({
               </p>
             </div>
             {backendEnabled && (
-              <LeadContactEditor key={`${lead.id}:${lead.version}`} lead={lead} onSaved={refresh} />
+              <LeadActions
+                key={lead.id}
+                lead={lead}
+                userId={userId}
+                callerName={callerName.data ?? ""}
+                onDone={refresh}
+              />
             )}
             <div className="flex flex-wrap gap-2">
               {lead.status !== "open" && (
@@ -229,6 +256,16 @@ export function LeadDialog({
             <div className="cc-detail-section">
               <h3>Verlauf</h3>
               <ul className="cc-history">
+                {data?.actions.map((a) => (
+                  <li key={a.id}>
+                    {new Date(a.created_at).toLocaleString("de-DE")}:{" "}
+                    {ACTION_LABEL[a.action] ?? a.action}
+                    {a.crm_sync_state === "queued" &&
+                      " · für CRM vorgemerkt, noch nicht übertragen"}
+                    {a.crm_sync_state === "error" && " · CRM-Übertragung fehlgeschlagen"}
+                    {a.crm_sync_state === "synced" && " · mit CRM synchronisiert"}
+                  </li>
+                ))}
                 {data?.history.map((h) => (
                   <li key={h.id}>
                     {new Date(h.created_at).toLocaleString("de-DE")}:{" "}
@@ -242,68 +279,5 @@ export function LeadDialog({
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function LeadContactEditor({ lead, onSaved }: { lead: Tables<"leads">; onSaved: () => void }) {
-  const [editing, setEditing] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [contact, setContact] = useState({
-    company: lead.company ?? "",
-    contact_name: lead.contact_name ?? "",
-    email: lead.email ?? "",
-    phone: lead.phone ?? "",
-    city: lead.city ?? "",
-  });
-  const labels = {
-    company: "Firma",
-    contact_name: "Ansprechpartner",
-    email: "E-Mail",
-    phone: "Telefon",
-    city: "Stadt",
-  };
-  async function save() {
-    setBusy(true);
-    try {
-      const { error } = await supabase.rpc("update_lead_contact", {
-        p_lead_id: lead.id,
-        p_expected_version: lead.version,
-        p_contact: contact,
-      });
-      if (error) {
-        toast.error(
-          "Kontaktdaten konnten nicht gespeichert werden. Eingaben und aktuellen Leadstand prüfen.",
-        );
-        return;
-      }
-      setEditing(false);
-      onSaved();
-    } catch {
-      toast.error("Verbindung unterbrochen. Bitte erneut versuchen.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  if (!editing)
-    return (
-      <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
-        Kontaktdaten bearbeiten
-      </Button>
-    );
-  return (
-    <div className="space-y-2">
-      {(Object.keys(contact) as (keyof typeof contact)[]).map((key) => (
-        <label className="block text-sm" key={key}>
-          {labels[key]}
-          <Input
-            value={contact[key]}
-            onChange={(event) => setContact({ ...contact, [key]: event.target.value })}
-          />
-        </label>
-      ))}
-      <Button disabled={busy} onClick={save}>
-        Kontaktdaten speichern
-      </Button>
-    </div>
   );
 }

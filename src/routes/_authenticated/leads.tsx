@@ -144,11 +144,8 @@ function LeadsPage() {
     <div className="cc-page">
       <PageHeading
         title="Offene Leads"
-        description="Die Leads deiner übernommenen Batches. Starte den Anrufablauf, um ein Ergebnis einzutragen."
+        description="Die Leads deiner übernommenen Batches. Öffne die Kundenakte, um nach dem Telefonat das Gesprächsergebnis einzutragen."
       />
-      <Button asChild>
-        <Link to="/call">Anrufen & Ergebnis eintragen</Link>
-      </Button>
       <Surface
         title="Offene Leads"
         description="Offene Erstkontakte · nach Status und Kontakt durchsuchen"

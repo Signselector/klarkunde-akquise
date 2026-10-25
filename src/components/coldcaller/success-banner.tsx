@@ -5,15 +5,21 @@ export function SuccessBanner({
   title,
   description,
   animationsEnabled,
+  emphasis = false,
   onDismiss,
 }: {
   title: string;
   description: string;
   animationsEnabled: boolean;
+  /** A bigger celebration for especially valuable results. */
+  emphasis?: boolean;
   onDismiss: () => void;
 }) {
   return (
-    <aside className={`cc-success ${animationsEnabled ? "cc-success--animate" : ""}`} role="status">
+    <aside
+      className={`cc-success ${animationsEnabled ? "cc-success--animate" : ""} ${emphasis ? "cc-success--special" : ""}`}
+      role="status"
+    >
       <span className="cc-success-icon" aria-hidden="true">
         <Trophy size={28} />
       </span>

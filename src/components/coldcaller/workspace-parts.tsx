@@ -46,7 +46,13 @@ export function parseLeadLinks(
   const mapsUrl = addressText
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressText)}`
     : null;
-  return { websiteUrl, websiteText: website?.[1] ?? null, addressText, mapsUrl };
+  return {
+    websiteUrl,
+    websiteText: website?.[1] ?? null,
+    addressRaw: address?.[1] ?? null,
+    addressText,
+    mapsUrl,
+  };
 }
 
 /** Render imported contact values without treating arbitrary URLs as executable links. */
@@ -113,15 +119,13 @@ export function LeadContact({
           )}
         </span>
       </div>
-      {email && (
-        <div>
-          <Mail aria-hidden="true" />
-          <span>
-            <small>E-Mail</small>
-            <a href={`mailto:${email}`}>{email}</a>
-          </span>
-        </div>
-      )}
+      <div>
+        <Mail aria-hidden="true" />
+        <span>
+          <small>E-Mail</small>
+          {email ? <a href={`mailto:${email}`}>{email}</a> : <span>–</span>}
+        </span>
+      </div>
       {website && (
         <div>
           <Building2 aria-hidden="true" />

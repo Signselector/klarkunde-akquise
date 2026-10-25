@@ -8,7 +8,10 @@ export const STATUS_LABEL: Record<string, string> = {
   open: "Offen",
   not_reached: "Nicht erreicht",
   no_interest: "Kein Interesse",
-  callback: "Callback",
+  callback: "Rückruf vereinbart",
+  in_progress: "In Bearbeitung",
+  on_hold: "On Hold",
+  waiting_3d: "3D Waiting",
   appointment: "Termin",
   production: "Deal in Produktion",
 };

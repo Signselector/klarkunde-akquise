@@ -47,16 +47,6 @@ function ContactLinks({ lead }: { lead: TableLead }) {
         ) : (
           <span className="text-muted-foreground">Keine Nummer</span>
         )}
-        {lead.email && (
-          <a
-            className="text-primary"
-            href={`mailto:${lead.email}`}
-            aria-label={`E-Mail an ${lead.company ?? "Kontakt"}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Mail size={15} aria-hidden="true" />
-          </a>
-        )}
         {websiteUrl && (
           <a
             className="text-primary"
@@ -71,6 +61,19 @@ function ContactLinks({ lead }: { lead: TableLead }) {
         )}
       </div>
     </div>
+  );
+}
+
+function EmailLink({ lead }: { lead: TableLead }) {
+  if (!lead.email) return <span className="text-muted-foreground">-</span>;
+  return (
+    <a
+      className="text-primary hover:underline"
+      href={`mailto:${lead.email}`}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {lead.email}
+    </a>
   );
 }
 
@@ -117,6 +120,7 @@ export function LeadsTable({
             <tr>
               <th className="px-6 py-3 font-medium">Firma</th>
               <th className="px-3 py-3 font-medium">Kontakt</th>
+              <th className="px-3 py-3 font-medium">E-Mail</th>
               <th className="px-3 py-3 font-medium">Stadt</th>
               <th className="px-3 py-3 font-medium">Adresse</th>
               <th className="px-3 py-3 font-medium">{processed ? "Ergebnis" : "Status"}</th>
@@ -132,6 +136,9 @@ export function LeadsTable({
                 <td className="px-6 py-4 font-medium">{l.company || "Ohne Firmenname"}</td>
                 <td className="px-3 py-4">
                   <ContactLinks lead={l} />
+                </td>
+                <td className="px-3 py-4 break-all">
+                  <EmailLink lead={l} />
                 </td>
                 <td className="px-3 py-4">{l.city || "–"}</td>
                 <td className="px-3 py-4">
@@ -173,6 +180,10 @@ export function LeadsTable({
               <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
             </div>
             <ContactLinks lead={l} />
+            <p className="text-sm break-all">
+              <span className="text-muted-foreground">E-Mail: </span>
+              <EmailLink lead={l} />
+            </p>
             {(l.city || l.last_called_at) && (
               <p className="text-sm text-muted-foreground">
                 {[
