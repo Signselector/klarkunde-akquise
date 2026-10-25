@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Richtung 1 – Dark Gaming Dashboard · SignSelector</title>
+<style>
+@import url("./fonts.css");
+@font-face { font-family: "Instrument Sans"; src: url("../brand/signselector/instrument-sans-latin.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+:root {
+  --bg: #08080a; --panel: #121216; --panel-2: #191920; --line: #26262e;
+  --ink: #f5f3f0; --muted: #9a98a3; --red: #e5242f; --red-deep: #8d1219; --red-glow: rgb(229 36 47 / 45%);
+  --gold: #f2c14e; --ok: #3ddc97;
+  --display: "Oswald", "Arial Narrow", Impact, sans-serif;
+  --body: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+}
+* { box-sizing: border-box; margin: 0; }
+html { background: var(--bg); color-scheme: dark; }
+body {
+  font: 400 15px/1.5 var(--body); color: var(--ink); min-height: 100vh;
+  background:
+    radial-gradient(900px 500px at 8% -10%, rgb(229 36 47 / 22%), transparent 60%),
+    radial-gradient(700px 480px at 100% 30%, rgb(141 18 25 / 20%), transparent 60%),
+    repeating-linear-gradient(135deg, rgb(255 255 255 / 2.2%) 0 2px, transparent 2px 22px),
+    var(--bg);
+}
+.banner { background: #1b0c0e; color: #ffb3b7; text-align: center; font-size: 12px; padding: 6px 12px; letter-spacing: .04em; }
+.app { display: grid; grid-template-columns: 76px 1fr; min-height: calc(100vh - 28px); }
+.rail { border-right: 1px solid var(--line); background: rgb(10 10 12 / 80%); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 0; position: sticky; top: 0; height: 100vh; }
+.rail .logo { width: 44px; height: 44px; border-radius: 12px; background: var(--red); display: grid; place-items: center; font: 700 22px var(--display); box-shadow: 0 0 24px var(--red-glow); margin-bottom: 14px; }
+.rail a { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; color: var(--muted); transition: background .15s, color .15s, transform .15s; }
+.rail a:hover { background: var(--panel-2); color: var(--ink); transform: translateX(2px); }
+.rail a.on { background: linear-gradient(135deg, var(--red), var(--red-deep)); color: #fff; box-shadow: 0 0 20px var(--red-glow); }
+.rail svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+main { padding: 26px clamp(16px, 3vw, 40px) 60px; display: grid; gap: 22px; max-width: 1500px; width: 100%; }
+
+/* HERO: the player card */
+.hero { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 22px; padding: 28px clamp(18px, 3vw, 36px);
+  background: linear-gradient(120deg, #1d0b0e 0%, #121216 55%, #101014 100%); display: grid; grid-template-columns: auto 1fr auto; gap: 28px; align-items: center; }
+.hero::after { content: ""; position: absolute; right: -80px; top: -120px; width: 420px; height: 420px; background: radial-gradient(circle, var(--red-glow), transparent 65%); pointer-events: none; }
+.avatar { position: relative; width: 112px; height: 112px; }
+.avatar svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.avatar .face { position: absolute; inset: 12px; border-radius: 50%; background: linear-gradient(145deg, #2a2a33, #15151a); display: grid; place-items: center; font: 700 38px var(--display); letter-spacing: .02em; }
+.avatar .lvl { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); background: var(--red); font: 700 13px var(--display); padding: 2px 12px; border-radius: 999px; letter-spacing: .08em; box-shadow: 0 0 16px var(--red-glow); white-space: nowrap; }
+.hero h1 { font: 700 clamp(34px, 5vw, 56px)/1 var(--display); text-transform: uppercase; letter-spacing: .01em; }
+.hero .rank-line { color: var(--muted); margin-top: 6px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); font-size: 13px; color: var(--ink); }
+.chip.red { background: rgb(229 36 47 / 14%); border-color: rgb(229 36 47 / 45%); color: #ff8a90; }
+.chip.gold { background: rgb(242 193 78 / 12%); border-color: rgb(242 193 78 / 40%); color: var(--gold); }
+.xp { margin-top: 18px; max-width: 560px; }
+.xp-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+.xp-bar { height: 14px; border-radius: 4px; background: #0b0b0e; border: 1px solid var(--line); overflow: hidden; padding: 2px; transform: skewX(-14deg); }
+.xp-fill { height: 100%; width: 0; border-radius: 2px; background: linear-gradient(90deg, var(--red-deep), var(--red) 70%, #ff6a72); box-shadow: 0 0 14px var(--red-glow); position: relative; transition: width 1.4s cubic-bezier(.2,.8,.2,1); }
+.xp-fill::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 45%) 50%, transparent 70%); transform: translateX(-100%); animation: shimmer 2.8s 1.6s infinite; }
+@keyframes shimmer { to { transform: translateX(100%); } }
+.goal { text-align: right; min-width: 190px; }
+.goal small { color: var(--muted); text-transform: uppercase; letter-spacing: .12em; font-size: 11px; }
+.goal strong { display: block; font: 700 clamp(54px, 7vw, 86px)/1 var(--display); letter-spacing: -.01em; }
+.goal strong span { color: var(--muted); font-size: .45em; }
+.goal .pips { display: flex; gap: 3px; justify-content: flex-end; margin-top: 8px; }
+.goal .pips i { width: 9px; height: 18px; background: #23232b; transform: skewX(-14deg); border-radius: 1px; }
+.goal .pips i.on { background: var(--red); box-shadow: 0 0 8px var(--red-glow); }
+
+/* KPI plates */
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.plate { position: relative; padding: 20px 22px 18px; background: var(--panel); clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%); border-left: 4px solid var(--red); transition: transform .18s, background .18s; }
+.plate:hover { transform: translateY(-3px); background: var(--panel-2); }
+.plate small { color: var(--muted); text-transform: uppercase; letter-spacing: .14em; font-size: 11px; }
+.plate strong { display: block; font: 700 clamp(44px, 5vw, 66px)/1.05 var(--display); margin: 4px 0 2px; }
+.plate strong sup { white-space: nowrap; font-size: .3em; color: var(--muted); letter-spacing: .06em; margin-left: 4px; vertical-align: super; }
+.plate p { font-size: 13px; color: var(--muted); }
+.plate .delta { color: var(--ok); font-weight: 600; }
+.plate.hot { background: linear-gradient(160deg, #2a0e12, var(--panel)); }
+.plate.hot strong { color: #fff; text-shadow: 0 0 28px var(--red-glow); }
+
+.cols { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 22px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 22px; }
+.card h2 { font: 600 18px var(--display); text-transform: uppercase; letter-spacing: .14em; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.card h2::before { content: ""; width: 4px; height: 18px; background: var(--red); box-shadow: 0 0 10px var(--red-glow); }
+.card h2 em { margin-left: auto; font: 400 12px var(--body); letter-spacing: .04em; color: var(--muted); text-transform: none; }
+
+/* quests */
+.quests { display: grid; gap: 10px; margin-bottom: 22px; }
+.quest { display: grid; grid-template-columns: 34px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; background: var(--panel-2); border-radius: 12px; border: 1px solid transparent; }
+.quest.done { border-color: rgb(61 220 151 / 35%); }
+.quest .tick { width: 30px; height: 30px; border-radius: 8px; border: 2px solid #3a3a45; display: grid; place-items: center; }
+.quest.done .tick { background: var(--ok); border-color: var(--ok); color: #04210f; }
+.quest b { display: block; font-weight: 600; }
+.quest small { color: var(--muted); }
+.quest .reward { font: 700 15px var(--display); color: var(--gold); letter-spacing: .06em; }
+.mini { height: 6px; background: #0b0b0e; border-radius: 3px; margin-top: 6px; overflow: hidden; }
+.mini i { display: block; height: 100%; width: 0; background: var(--red); transition: width 1.1s .3s cubic-bezier(.2,.8,.2,1); }
+.quest.done .mini i { background: var(--ok); }
+
+/* RPG stat bars */
+.stats { display: grid; gap: 9px; }
+.stat { display: grid; grid-template-columns: 150px 1fr 44px; gap: 12px; align-items: center; font-size: 14px; }
+.stat .bar { height: 12px; background: #0b0b0e; border-radius: 2px; transform: skewX(-14deg); overflow: hidden; border: 1px solid var(--line); }
+.stat .bar i { display: block; height: 100%; width: 0; background: #5b5b69; transition: width 1.1s .4s cubic-bezier(.2,.8,.2,1); }
+.stat.key .bar i { background: linear-gradient(90deg, var(--red-deep), var(--red)); box-shadow: 0 0 12px var(--red-glow); }
+.stat.key { font-weight: 700; }
+.stat b { font: 700 20px var(--display); text-align: right; }
+.note { color: var(--muted); font-size: 12px; margin-top: 12px; }
+
+/* podium */
+.podium { padding-top: 56px; display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 10px; align-items: end; margin: 6px 0 18px; }
+.step { text-align: center; padding: 12px 8px 14px; border-radius: 12px 12px 0 0; background: var(--panel-2); border: 1px solid var(--line); border-bottom: 0; position: relative; }
+.step .ava { width: 54px; height: 54px; border-radius: 50%; margin: -38px auto 8px; display: grid; place-items: center; font: 700 20px var(--display); background: #2b2b34; border: 3px solid #3d3d49; }
+.step b { display: block; font-weight: 600; font-size: 14px; }
+.step strong { font: 700 24px var(--display); letter-spacing: .02em; }
+.step small { color: var(--muted); display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; }
+.step.p1 { height: 190px; background: linear-gradient(180deg, #34121a, var(--panel-2)); border-color: rgb(229 36 47 / 55%); box-shadow: 0 0 30px rgb(229 36 47 / 18%); }
+.step.p1 .ava { border-color: var(--gold); box-shadow: 0 0 18px rgb(242 193 78 / 40%); width: 64px; height: 64px; margin-top: -46px; }
+.step.p2 { height: 150px; } .step.p2 .ava { border-color: #c9ccd4; }
+.step.p3 { height: 120px; } .step.p3 .ava { border-color: #c98a55; }
+.step.me { outline: 2px solid var(--red); outline-offset: 2px; }
+.crown { position: absolute; top: -78px; left: 50%; transform: translateX(-50%); color: var(--gold); filter: drop-shadow(0 0 8px rgb(242 193 78 / 55%)); animation: float 3s ease-in-out infinite; }
+@keyframes float { 50% { transform: translate(-50%, -5px); } }
+.list { display: grid; gap: 6px; }
+.row { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; padding: 8px 12px; border-radius: 10px; background: var(--panel-2); font-size: 14px; }
+.row.me { outline: 1px solid var(--red); background: rgb(229 36 47 / 10%); }
+.row i { font: 700 16px var(--display); color: var(--muted); font-style: normal; }
+.row span:last-child { font: 600 15px var(--display); letter-spacing: .04em; }
+
+/* campaigns */
+.camp { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.mission { position: relative; padding: 20px; border-radius: 16px; background: linear-gradient(170deg, #1a1a21, var(--panel)); border: 1px solid var(--line); overflow: hidden; display: grid; gap: 10px; transition: transform .18s, border-color .18s; }
+.mission:hover { transform: translateY(-4px); border-color: rgb(229 36 47 / 55%); }
+.mission.mine { border-color: var(--red); box-shadow: 0 0 28px rgb(229 36 47 / 18%); }
+.mission.done { opacity: .7; }
+.mission h3 { font: 600 20px var(--display); text-transform: uppercase; letter-spacing: .06em; }
+.mission .meta { color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; }
+.mission .big { font: 700 44px/1 var(--display); }
+.mission .big span { font-size: 18px; color: var(--muted); }
+.seg { display: grid; grid-template-columns: repeat(20, 1fr); gap: 2px; }
+.seg i { height: 10px; background: #26262e; transform: skewX(-14deg); }
+.seg i.on { background: var(--red); box-shadow: 0 0 6px var(--red-glow); }
+.seg.done i.on { background: var(--ok); box-shadow: none; }
+.btn { appearance: none; border: 0; cursor: pointer; font: 600 14px var(--display); text-transform: uppercase; letter-spacing: .12em; padding: 11px 16px; border-radius: 10px; color: #fff; background: linear-gradient(135deg, var(--red), var(--red-deep)); box-shadow: 0 6px 20px rgb(229 36 47 / 28%); transition: transform .12s, box-shadow .12s; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgb(229 36 47 / 45%); }
+.btn:active { transform: scale(.97); }
+.btn.ghost { background: transparent; border: 1px solid var(--line); box-shadow: none; color: var(--ink); }
+.badge-state { justify-self: start;  font: 600 11px var(--display); letter-spacing: .14em; padding: 3px 10px; border-radius: 999px; text-transform: uppercase; }
+.free { background: rgb(255 255 255 / 8%); color: #d8d6de; } .taken { background: rgb(229 36 47 / 16%); color: #ff8a90; } .fin { background: rgb(61 220 151 / 14%); color: var(--ok); }
+.achv { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; }
+.hex { text-align: center; font-size: 12px; color: var(--muted); }
+.hex div { width: 76px; height: 84px; margin: 0 auto 8px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); display: grid; place-items: center; background: linear-gradient(160deg, var(--red), var(--red-deep)); font: 700 26px var(--display); color: #fff; }
+.hex.locked div { background: #22222a; color: #55555f; }
+.hex b { display: block; color: var(--ink); font-weight: 600; }
+.reveal { opacity: 0; transform: translateY(14px); animation: rise .6s cubic-bezier(.2,.8,.2,1) forwards; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+@media (max-width: 1100px) { .kpis, .camp { grid-template-columns: repeat(2, 1fr); } .cols { grid-template-columns: 1fr; } .achv { grid-template-columns: repeat(3, 1fr); } .hero { grid-template-columns: auto 1fr; } .goal { grid-column: 1 / -1; text-align: left; } .goal .pips { justify-content: flex-start; } }
+@media (max-width: 640px) {
+  .app { grid-template-columns: 1fr; } .rail { flex-direction: row; height: auto; position: static; border-right: 0; border-bottom: 1px solid var(--line); overflow-x: auto; padding: 10px; justify-content: flex-start; }
+  .rail .logo { margin: 0 8px 0 0; } .kpis, .camp { grid-template-columns: 1fr; } .stat { grid-template-columns: 110px 1fr 36px; } .achv { grid-template-columns: repeat(2, 1fr); }
+  .hero { grid-template-columns: 1fr; text-align: left; } .podium { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } .reveal { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="banner">Designvorschau · Richtung 1 von 3 · alle Zahlen, Namen, Level, Missionen und Abzeichen sind Beispieldaten und noch keine Funktion der App</div>
+<div class="app">
+  <nav class="rail" aria-label="Navigation (Vorschau)">
+    <div class="logo">S</div>
+    <a class="on" href="#" aria-label="Dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></a>
+    <a href="#" aria-label="Offene Leads"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.8c2 .7 3.2 2.4 3.5 5.2"/></svg></a>
+    <a href="#" aria-label="Rückrufe"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></a>
+    <a href="#" aria-label="Abgeschlossene Leads"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></a>
+    <a href="#" aria-label="Meine Kunden"><svg viewBox="0 0 24 24"><path d="M7 11 12 6l5 5M5 13l4 4a2 2 0 0 0 3 0l5-5"/><path d="M3 11l4-4M21 11l-4-4"/></svg></a>
+    <a href="#" aria-label="Statistik"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></a>
+  </nav>
+  <main>
+    <section class="hero reveal" style="animation-delay:.02s" aria-label="Spielerprofil">
+      <div class="avatar">
+        <svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="52" fill="none" stroke="#25252d" stroke-width="6"/><circle id="ring" cx="56" cy="56" r="52" fill="none" stroke="#e5242f" stroke-width="6" stroke-linecap="round" stroke-dasharray="327" stroke-dashoffset="327" style="transition: stroke-dashoffset 1.4s cubic-bezier(.2,.8,.2,1); filter: drop-shadow(0 0 6px rgb(229 36 47 / 70%))"/></svg>
+        <div class="face">LH</div><div class="lvl">LEVEL 14</div>
+      </div>
+      <div>
+        <h1>Lena Hofer</h1>
+        <div class="rank-line"><span>Closer · Österreich</span><span class="chip red">Platz 2 diese Woche</span><span class="chip gold">9 Tage Serie</span><span class="chip">Mittwoch, 22. Oktober</span></div>
+        <div class="xp"><div class="xp-top"><span>Erfahrung</span><span id="xptxt">4.820 / 5.500 XP</span></div><div class="xp-bar"><div class="xp-fill" id="xp"></div></div></div>
+      </div>
+      <div class="goal"><small>Tagesziel Anrufe</small><strong><span id="callsBig">0</span><span> / 40</span></strong><div class="pips" id="pips"></div></div>
+    </section>
+
+    <section class="kpis" aria-label="Kennzahlen">
+      <article class="plate reveal" style="animation-delay:.08s"><small>Leadqualität</small><strong data-count="8.4" data-dec="1">0</strong><p>Team Management · September</p></article>
+      <article class="plate reveal" style="animation-delay:.14s"><small>Eingebrachte Leads</small><strong data-count="31">0</strong><p>von dir eingebracht</p></article>
+      <article class="plate hot reveal" style="animation-delay:.2s"><small>Durchschnitt</small><strong><span data-count="18.85" data-dec="2">0</span><sup>LEADS / 100</sup></strong><p>September 2026 · <span class="delta">+1,35 zum Vormonat</span></p></article>
+      <article class="plate reveal" style="animation-delay:.26s"><small>Anrufe heute</small><strong data-count="23">0</strong><p>dokumentierte Versuche · Wiener Zeit</p></article>
+    </section>
+
+    <div class="cols">
+      <section class="card reveal" style="animation-delay:.3s" aria-label="Missionen und Tagesstatistik">
+        <h2>Tagesmissionen <em>Beispiel · Belohnungen noch nicht definiert</em></h2>
+        <div class="quests">
+          <div class="quest done"><span class="tick">✓</span><div><b>20 Anrufe tätigen</b><small>23 / 20</small><div class="mini"><i data-w="100"></i></div></div><span class="reward">+120 XP</span></div>
+          <div class="quest done"><span class="tick">✓</span><div><b>3 Leads qualifizieren</b><small>5 / 3 · Logo Render und Realismus Render</small><div class="mini"><i data-w="100"></i></div></div><span class="reward">+200 XP</span></div>
+          <div class="quest"><span class="tick"></span><div><b>1 Referenzmail versenden</b><small>0 / 1</small><div class="mini"><i data-w="6"></i></div></div><span class="reward">+80 XP</span></div>
+        </div>
+        <h2>Tagesstatistik <em>Heute · nur deine Ergebnisse</em></h2>
+        <div class="stats" id="stats"></div>
+        <p class="note">Erreicht und Gesamt Leads zählen jeden Lead einmal. Ein Lead kann mehrere Aktionen haben, die Zahlen müssen sich nicht addieren.</p>
+      </section>
+
+      <section class="card reveal" style="animation-delay:.36s" aria-label="Wochenrangliste">
+        <h2>Wochenrangliste <em>19.–25.10. · Punkte</em></h2>
+        <div class="podium">
+          <div class="step p2"><div class="ava">LH</div><b>Lena H. (du)</b><strong>1.115</strong><small>Platz 2</small></div>
+          <div class="step p1"><svg class="crown" width="34" height="26" viewBox="0 0 34 26" fill="currentColor"><path d="M2 8l7 6 8-12 8 12 7-6-3 16H5z"/></svg><div class="ava">MK</div><b>Marlene K.</b><strong>1.240</strong><small>Platz 1</small></div>
+          <div class="step p3"><div class="ava">TR</div><b>Tobias R.</b><strong>980</strong><small>Platz 3</small></div>
+        </div>
+        <div class="list">
+          <div class="row"><i>4</i><span>Sofia M.</span><span>845</span></div>
+          <div class="row"><i>5</i><span>Jonas B.</span><span>720</span></div>
+          <div class="row"><i>6</i><span>Aylin D.</span><span>655</span></div>
+        </div>
+        <p class="note">Dir fehlen 125 Punkte auf Platz 1. Die Rangliste startet jeden Montag neu, frühere Wochen bleiben gespeichert.</p>
+      </section>
+    </div>
+
+    <section class="card reveal" style="animation-delay:.42s" aria-label="Lead Batches">
+      <h2>Kampagnen · Lead Batches <em>Ein Batch gehört immer genau einer Person</em></h2>
+      <div class="camp">
+        <article class="mission mine"><span class="badge-state taken">Übernommen · du</span><h3>Architektur Österreich</h3><div class="meta"><span>Import 20.10.2026</span><span>150 Leads</span></div><div class="big">30<span> %</span></div><div class="seg" data-p="30"></div><div class="meta"><span>45 bearbeitet</span><span>105 offen</span></div><div style="display:flex;gap:8px"><button class="btn">Offene Leads</button><button class="btn ghost">Freigeben</button></div></article>
+        <article class="mission"><span class="badge-state free">Frei</span><h3>Gastronomie Süd</h3><div class="meta"><span>Import 21.10.2026</span><span>150 Leads</span></div><div class="big">0<span> %</span></div><div class="seg" data-p="0"></div><div class="meta"><span>0 bearbeitet</span><span>150 offen</span></div><button class="btn">Batch übernehmen</button></article>
+        <article class="mission"><span class="badge-state taken">Marlene K.</span><h3>Handwerk West</h3><div class="meta"><span>Import 14.10.2026</span><span>220 Leads</span></div><div class="big">60<span> %</span></div><div class="seg" data-p="60"></div><div class="meta"><span>132 bearbeitet</span><span>88 offen</span></div><button class="btn ghost" disabled style="opacity:.5;cursor:not-allowed">Vergeben</button></article>
+        <article class="mission done"><span class="badge-state fin">Abgeschlossen</span><h3>Hotels Salzburg</h3><div class="meta"><span>Import 02.10.2026</span><span>80 Leads</span></div><div class="big">100<span> %</span></div><div class="seg done" data-p="100"></div><div class="meta"><span>80 bearbeitet</span><span>0 offen</span></div><button class="btn ghost" disabled style="opacity:.5">Tobias R.</button></article>
+      </div>
+    </section>
+
+    <section class="card reveal" style="animation-delay:.48s" aria-label="Abzeichen">
+      <h2>Abzeichen <em>Beispiel · 3 von 6 freigeschaltet</em></h2>
+      <div class="achv">
+        <div class="hex"><div>1</div><b>Erste Qualifizierung</b>Logo Render</div>
+        <div class="hex"><div>7</div><b>7 Tage Serie</b>jeden Tag angerufen</div>
+        <div class="hex"><div>50</div><b>50 Anrufe</b>an einem Tag</div>
+        <div class="hex locked"><div>10</div><b>10 Realismus Render</b>noch 8</div>
+        <div class="hex locked"><div>30</div><b>30 Tage Serie</b>noch 21 Tage</div>
+        <div class="hex locked"><div>Ø</div><b>25 Leads / 100</b>Monatsziel</div>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const fmt = (v, d) => v.toLocaleString("de-DE", { minimumFractionDigits: d, maximumFractionDigits: d });
+function count(el, to, dec, ms = 1100) {
+  if (reduce) { el.textContent = fmt(to, dec); return; }
+  const t0 = performance.now();
+  const tick = (t) => { const p = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(to * e, dec); if (p < 1) requestAnimationFrame(tick); };
+  requestAnimationFrame(tick);
+}
+document.querySelectorAll("[data-count]").forEach((el) => count(el, +el.dataset.count, +(el.dataset.dec || 0)));
+count(document.getElementById("callsBig"), 23, 0, 1200);
+const pips = document.getElementById("pips");
+for (let i = 0; i < 20; i++) pips.insertAdjacentHTML("beforeend", `<i class="${i < 12 ? "on" : ""}"></i>`);
+const stats = [["Erreicht", 14, 1], ["Kein Interesse", 4, 0], ["Nicht erreicht", 9, 0], ["Logo Render", 3, 1], ["Realismus Render", 2, 1], ["Logo ausstehend", 1, 0], ["Gesamt Leads", 19, 0]];
+document.getElementById("stats").innerHTML = stats.map(([l, v, k]) => `<div class="stat ${k ? "key" : ""}"><span>${l}</span><div class="bar"><i data-w="${Math.round(v / 20 * 100)}"></i></div><b>${v}</b></div>`).join("");
+document.querySelectorAll(".seg").forEach((s) => { const on = Math.round(+s.dataset.p / 5); s.innerHTML = Array.from({ length: 20 }, (_, i) => `<i class="${i < on ? "on" : ""}"></i>`).join(""); });
+requestAnimationFrame(() => setTimeout(() => {
+  document.getElementById("xp").style.width = "87.6%";
+  document.getElementById("ring").style.strokeDashoffset = String(327 * (1 - 0.876));
+  document.querySelectorAll("[data-w]").forEach((el) => (el.style.width = el.dataset.w + "%"));
+}, 120));
+</script>
+</body>
+</html>

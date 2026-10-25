@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard-Designrichtungen · SignSelector</title>
+<style>
+@import url("./fonts.css");
+body { margin: 0; background: #0b0b0d; color: #f3f1ed; font: 400 16px/1.5 "Plus Jakarta Sans", Arial, sans-serif; padding: clamp(20px, 5vw, 64px); }
+h1 { font-size: clamp(28px, 4vw, 44px); letter-spacing: -.03em; margin: 0 0 8px; }
+p.lead { color: #a3a1aa; max-width: 62ch; margin: 0 0 32px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; max-width: 1200px; }
+a.c { display: block; text-decoration: none; color: inherit; border: 1px solid #2a2a31; border-radius: 18px; padding: 24px; background: #131316; transition: transform .2s, border-color .2s; }
+a.c:hover { transform: translateY(-4px); border-color: #e5242f; }
+.n { color: #e5242f; font-weight: 800; font-size: 13px; letter-spacing: .12em; }
+a.c h2 { margin: 6px 0 8px; font-size: 22px; letter-spacing: -.02em; }
+a.c p { color: #a3a1aa; margin: 0 0 14px; font-size: 14.5px; }
+a.c span { font-weight: 700; font-size: 14px; }
+.note { margin-top: 28px; color: #77757e; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>Dashboard-Designrichtungen</h1>
+<p class="lead">Drei klar verschiedene Vorschläge für ein gamifiziertes Sales Command Center. Alle Zahlen sind Beispieldaten; die produktiven Seiten und die Business-Logik sind unverändert.</p>
+<div class="grid">
+  <a class="c" href="./01-dark-gaming.html"><div class="n">RICHTUNG 1</div><h2>Dark Gaming Dashboard</h2><p>Spielerkarte mit XP-Ring, Level-Serie, Tagesmissionen, Podium und Kampagnenkarten. Laut, kompetitiv, rot leuchtend.</p><span>Vorschau öffnen →</span></a>
+  <a class="c" href="./02-saas-gamified.html"><div class="n">RICHTUNG 2</div><h2>Modernes SaaS mit Gamification</h2><p>Helles Bento-Layout, Top-Navigation, Zielring, Erfolge und Rangliste. Ruhig, freundlich, mit dezentem Spielelement.</p><span>Vorschau öffnen →</span></a>
+  <a class="c" href="./03-command-center.html"><div class="n">RICHTUNG 3</div><h2>Futuristisches Command Center</h2><p>HUD mit Messuhren, Radar, Funnel, Live-Feed und Punktmatrix-Batches. Technisch, datenstark, dreispaltig.</p><span>Vorschau öffnen →</span></a>
+</div>
+<p class="note">Pfad im Projekt: public/design-previews/ · im Browser: /design-previews/index.html</p>
+</body>
+</html>

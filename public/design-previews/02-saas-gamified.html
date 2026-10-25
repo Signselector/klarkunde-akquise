@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Richtung 2 – Modernes SaaS mit Gamification · SignSelector</title>
+<style>
+@import url("./fonts.css");
+:root {
+  --bg: #f6f3ee; --card: #ffffff; --ink: #111113; --muted: #6b6a70; --line: #e8e4dc;
+  --red: #e5242f; --red-soft: #fdebec; --black: #0e0e10; --ok: #1f9d6b; --gold: #e0a526;
+  --font: "Plus Jakarta Sans", "Helvetica Neue", Arial, sans-serif;
+  --shadow: 0 1px 2px rgb(20 16 10 / 5%), 0 8px 24px -12px rgb(20 16 10 / 14%);
+}
+* { box-sizing: border-box; margin: 0; }
+html { background: var(--bg); color-scheme: light; }
+body { font: 500 15px/1.5 var(--font); color: var(--ink); min-height: 100vh; }
+.banner { background: var(--black); color: #fff; text-align: center; font-size: 12px; padding: 6px 12px; }
+.banner b { color: #ff6b73; }
+header.top { position: sticky; top: 0; z-index: 5; background: rgb(246 243 238 / 88%); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.top-in { max-width: 1320px; margin: 0 auto; padding: 12px clamp(16px, 3vw, 32px); display: flex; align-items: center; gap: 22px; }
+.brand { font-weight: 800; letter-spacing: -.02em; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.brand i { width: 26px; height: 26px; border-radius: 8px; background: var(--red); display: inline-block; }
+nav { display: flex; gap: 4px; background: #ece8e0; padding: 4px; border-radius: 999px; overflow-x: auto; }
+nav a { padding: 7px 16px; border-radius: 999px; font-size: 13.5px; font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; transition: background .15s, color .15s; }
+nav a:hover { color: var(--ink); }
+nav a.on { background: var(--black); color: #fff; }
+.me { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
+.streak { background: var(--red-soft); color: var(--red); padding: 6px 12px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--black); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; flex: none; }
+main { max-width: 1320px; margin: 0 auto; padding: 28px clamp(16px, 3vw, 32px) 70px; }
+.hello { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.hello h1 { font-size: clamp(26px, 3.2vw, 38px); letter-spacing: -.03em; font-weight: 800; line-height: 1.1; }
+.hello p { color: var(--muted); margin-top: 6px; }
+.btn { background: var(--red); color: #fff; border: 0; padding: 12px 20px; border-radius: 14px; font: 700 14px var(--font); cursor: pointer; box-shadow: 0 8px 18px -8px rgb(229 36 47 / 70%); transition: transform .15s; }
+.btn:hover { transform: translateY(-1px); }
+.bento { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 22px; box-shadow: var(--shadow); opacity: 0; transform: translateY(14px); animation: up .6s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(var(--i, 0) * 70ms); }
+@keyframes up { to { opacity: 1; transform: none; } }
+.card h3 { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .02em; margin-bottom: 12px; display: flex; justify-content: space-between; }
+.c-goal { grid-column: span 5; display: grid; grid-template-columns: 150px 1fr; gap: 20px; align-items: center; }
+.ring { position: relative; width: 150px; height: 150px; }
+.ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+.ring circle { fill: none; stroke-width: 13; stroke-linecap: round; }
+.ring .bg { stroke: #f0ece4; }
+.ring .fg { stroke: var(--red); stroke-dasharray: 377; stroke-dashoffset: 377; animation: ring 1.4s .3s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes ring { to { stroke-dashoffset: calc(377 * (1 - var(--p))); } }
+.ring .mid { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring .mid b { font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+.ring .mid span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.goal-txt h2 { font-size: 20px; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; }
+.goal-txt p { color: var(--muted); font-size: 13.5px; margin: 8px 0 12px; }
+.xp { height: 10px; background: #f0ece4; border-radius: 99px; overflow: hidden; }
+.xp i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--red), #ff6b73); border-radius: 99px; animation: grow 1.2s .5s cubic-bezier(.2,.7,.2,1) forwards; }
+@keyframes grow { to { width: var(--w); } }
+.xp-l { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 600; }
+.c-avg { grid-column: span 4; background: var(--black); color: #fff; border-color: var(--black); position: relative; overflow: hidden; }
+.c-avg h3 { color: #a8a6ad; }
+.c-avg .big { font-size: 56px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+.c-avg .big small { font-size: 18px; color: #a8a6ad; font-weight: 600; letter-spacing: 0; margin-left: 6px; }
+.bars { display: flex; align-items: end; gap: 7px; height: 78px; margin-top: 20px; }
+.bars i { flex: 1; background: #2a2a2f; border-radius: 6px 6px 3px 3px; height: 0; animation: bar .9s cubic-bezier(.2,.7,.2,1) forwards; animation-delay: calc(.4s + var(--k) * 60ms); }
+.bars i.hi { background: var(--red); }
+@keyframes bar { to { height: var(--h); } }
+.bars-l { display: flex; justify-content: space-between; font-size: 11px; color: #85838b; margin-top: 6px; }
+.c-kpi { grid-column: span 3; display: grid; gap: 16px; padding: 0; background: none; border: 0; box-shadow: none; }
+.mini { background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 18px 22px; box-shadow: var(--shadow); }
+.mini span { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.mini b { display: block; font-size: 34px; font-weight: 800; letter-spacing: -.03em; line-height: 1.15; }
+.mini em { font-style: normal; font-size: 12px; color: var(--ok); font-weight: 700; }
+.c-stats { grid-column: span 7; }
+.pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.pill { background: #faf8f4; border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; transition: transform .15s, border-color .15s; }
+.pill:hover { transform: translateY(-2px); border-color: #d6d0c4; }
+.pill b { font-size: 24px; font-weight: 800; letter-spacing: -.02em; display: block; line-height: 1.2; }
+.pill span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.pill.hot { background: var(--red-soft); border-color: #f6c9cc; }
+.pill.hot b { color: var(--red); }
+.c-lb { grid-column: span 5; }
+.row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid #f1ede5; }
+.row:last-child { border: 0; }
+.row .pos { width: 22px; font-weight: 800; color: var(--muted); font-size: 14px; text-align: center; }
+.row .pos.g { color: var(--gold); }
+.row .nm { flex: 1; font-weight: 700; font-size: 14px; }
+.row .nm small { display: block; color: var(--muted); font-weight: 500; font-size: 12px; }
+.row .pt { font-weight: 800; font-variant-numeric: tabular-nums; }
+.row.me-r { background: var(--red-soft); margin: 0 -12px; padding: 9px 12px; border-radius: 14px; border: 0; }
+.row .avatar.alt { background: #d9d3c6; color: #111; }
+.c-ach { grid-column: span 4; }
+.ach { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.ach div { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--muted); }
+.ach i { display: grid; place-items: center; width: 56px; height: 56px; margin: 0 auto 6px; border-radius: 18px; background: var(--black); color: #fff; font-style: normal; font-size: 22px; transition: transform .2s; }
+.ach div:hover i { transform: rotate(-6deg) scale(1.06); }
+.ach .lock i { background: #ece8e0; color: #b5b0a4; }
+.ach .gold i { background: var(--red); }
+.c-batch { grid-column: span 8; }
+.batches { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.batch { border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; background: #faf8f4; }
+.batch.mine { background: var(--black); color: #fff; border-color: var(--black); }
+.batch h4 { font-size: 15px; font-weight: 800; display: flex; justify-content: space-between; gap: 8px; }
+.tag { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 99px; background: #e9e5db; color: #444; white-space: nowrap; }
+.mine .tag { background: var(--red); color: #fff; }
+.tag.free { background: #dff3ea; color: var(--ok); }
+.batch p { font-size: 12.5px; color: var(--muted); margin: 4px 0 10px; }
+.mine p { color: #a8a6ad; }
+.batch .xp { background: #e6e1d6; height: 8px; }
+.mine .xp { background: #2a2a2f; }
+@media (max-width: 1100px) { .c-goal, .c-avg, .c-kpi, .c-stats, .c-lb, .c-ach, .c-batch { grid-column: span 12; } .c-kpi { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) {
+  .c-goal { grid-template-columns: 1fr; justify-items: start; }
+  .pills { grid-template-columns: repeat(2, 1fr); } .batches { grid-template-columns: 1fr; }
+  .c-kpi { grid-template-columns: 1fr; } .me .nm2 { display: none; } .top-in { flex-wrap: wrap; gap: 10px; } nav { order: 3; width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .card, .ring .fg, .xp i, .bars i { animation: none !important; opacity: 1; transform: none; } .xp i { width: var(--w); } .bars i { height: var(--h); } .ring .fg { stroke-dashoffset: calc(377 * (1 - var(--p))); } }
+</style>
+</head>
+<body>
+<div class="banner">Designvorschau · <b>Richtung 2 von 3</b> · Modernes SaaS mit Gamification · Alle Zahlen sind Beispieldaten – keine produktive Seite verändert</div>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><i></i>SignSelector</div>
+    <nav><a class="on" href="#">Dashboard</a><a href="#">Offene Leads</a><a href="#">Abgeschlossen</a><a href="#">Meine Kunden</a><a href="#">Statistik</a></nav>
+    <div class="me"><span class="streak">🔥 9 Tage Serie</span><span class="nm2">Lena Hofer</span><span class="avatar">LH</span></div>
+  </div>
+</header>
+<main>
+  <div class="hello">
+    <div><h1>Guten Morgen, Lena.<br>Noch 17 Anrufe bis zum Tagesziel.</h1><p>Du bist heute 2 Leads vor deinem Schnitt – weiter so.</p></div>
+    <button class="btn">Nächsten Lead anrufen →</button>
+  </div>
+  <div class="bento">
+    <section class="card c-goal" style="--i:0">
+      <div class="ring" style="--p:.575"><svg viewBox="0 0 140 140"><circle class="bg" cx="70" cy="70" r="60"/><circle class="fg" cx="70" cy="70" r="60"/></svg><div class="mid"><b data-n="23">0</b><span>von 40 Anrufen</span></div></div>
+      <div class="goal-txt"><h2>Level 14 · Closer</h2><p>1.240 XP bis Level 15 – noch 2 Abschlüsse heute.</p>
+        <div class="xp" style="--w:72%"><i></i></div><div class="xp-l"><span>Level 14</span><span>72 %</span><span>Level 15</span></div></div>
+    </section>
+    <section class="card c-avg" style="--i:1">
+      <h3>Ø Leads pro 100 <span>Dieser Monat</span></h3>
+      <div class="big"><span data-n="18.85" data-d="2">0</span><small>Leads / 100</small></div>
+      <div class="bars">
+        <i style="--h:46%;--k:0"></i><i style="--h:58%;--k:1"></i><i style="--h:52%;--k:2"></i><i style="--h:71%;--k:3"></i><i style="--h:64%;--k:4"></i><i style="--h:83%;--k:5"></i><i class="hi" style="--h:100%;--k:6"></i>
+      </div>
+      <div class="bars-l"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>Heute</span></div>
+    </section>
+    <div class="c-kpi">
+      <div class="mini card" style="--i:2"><span>Leadqualität</span><b data-n="8.4" data-d="1">0</b><em>▲ 0,6 zur Vorwoche</em></div>
+      <div class="mini card" style="--i:3"><span>Eingebrachte Leads</span><b data-n="31">0</b><em>▲ 4 seit gestern</em></div>
+    </div>
+    <section class="card c-stats" style="--i:4">
+      <h3>Tagesstatistik <span>Heute</span></h3>
+      <div class="pills">
+        <div class="pill"><b>23</b><span>Anrufe</span></div><div class="pill"><b>9</b><span>Erreicht</span></div>
+        <div class="pill"><b>4</b><span>Rückrufe</span></div><div class="pill"><b>3</b><span>Referenzmail</span></div>
+        <div class="pill hot"><b>5</b><span>Logo Render</span></div><div class="pill hot"><b>2</b><span>Realismus Render</span></div>
+        <div class="pill"><b>1</b><span>Logo ausstehend</span></div><div class="pill"><b>6</b><span>Kein Interesse</span></div>
+      </div>
+    </section>
+    <section class="card c-lb" style="--i:5">
+      <h3>Wochenrangliste <span>KW 43</span></h3>
+      <div class="row"><span class="pos g">1</span><span class="avatar alt">MK</span><span class="nm">Marlene K.<small>Level 17</small></span><span class="pt">1.240</span></div>
+      <div class="row me-r"><span class="pos">2</span><span class="avatar">LH</span><span class="nm">Lena H. (du)<small>Level 14</small></span><span class="pt">1.115</span></div>
+      <div class="row"><span class="pos">3</span><span class="avatar alt">TR</span><span class="nm">Tobias R.<small>Level 12</small></span><span class="pt">980</span></div>
+      <div class="row"><span class="pos">4</span><span class="avatar alt">SB</span><span class="nm">Sara B.<small>Level 9</small></span><span class="pt">742</span></div>
+    </section>
+    <section class="card c-ach" style="--i:6">
+      <h3>Erfolge <span>4 von 9</span></h3>
+      <div class="ach">
+        <div class="gold"><i>🔥</i>Serie 7</div><div><i>📞</i>100 Anrufe</div><div><i>🎯</i>Volltreffer</div>
+        <div class="gold"><i>⭐</i>Top 3</div><div class="lock"><i>🏆</i>Platz 1</div><div class="lock"><i>💎</i>20 Leads</div>
+      </div>
+    </section>
+    <section class="card c-batch" style="--i:7">
+      <h3>Lead Batches <span>Deutschland</span></h3>
+      <div class="batches">
+        <div class="batch mine"><h4>DE · Fassadenwerbung 04 <span class="tag">Dein Batch</span></h4><p>150 Leads · 98 bearbeitet</p><div class="xp" style="--w:65%"><i></i></div></div>
+        <div class="batch"><h4>DE · Gastro Süd <span class="tag free">Frei</span></h4><p>120 Leads · unberührt</p><div class="xp" style="--w:0%"><i></i></div></div>
+        <div class="batch"><h4>DE · Handwerk Nord <span class="tag">Vergeben</span></h4><p>150 Leads · Tobias R.</p><div class="xp" style="--w:41%"><i></i></div></div>
+        <div class="batch"><h4>DE · Autohäuser 02 <span class="tag">Abgeschlossen</span></h4><p>90 Leads · 100 %</p><div class="xp" style="--w:100%"><i></i></div></div>
+      </div>
+    </section>
+  </div>
+</main>
+<script>
+(function () {
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll("[data-n]").forEach(function (el) {
+    var to = parseFloat(el.dataset.n), d = +(el.dataset.d || 0);
+    var fmt = function (v) { return v.toFixed(d).replace(".", ","); };
+    if (reduce) { el.textContent = fmt(to); return; }
+    var t0 = performance.now();
+    (function tick(t) {
+      var p = Math.min(1, (t - t0) / 1200), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(to * e);
+      if (p < 1) requestAnimationFrame(tick);
+    })(t0);
+  });
+})();
+</script>
+</body>
+</html>

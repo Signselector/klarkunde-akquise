@@ -1,0 +1,2 @@
+Oswald, Plus Jakarta Sans, Space Grotesk und JetBrains Mono sind unter der SIL Open Font License 1.1 lizenziert
+(https://openfontlicense.org). Die Dateien gehören nur zu den Design-Vorschauen und werden von der App nicht verwendet.
