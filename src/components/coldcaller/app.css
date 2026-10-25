@@ -77,6 +77,7 @@
 .cc-nav-link[data-active="true"] {
   background: var(--sidebar-accent);
   color: white;
+  box-shadow: inset 3px 0 oklch(0.80952 0.06685 18.633);
 }
 .cc-sidebar-footer {
   border-top: 1px solid var(--sidebar-border);
@@ -812,10 +813,7 @@
 .cc-auth-mobile-brand .cc-brand-content img {
   width: 180px;
 }
-.cc-app
-  button:not(.cc-info):not(.cc-icon-button):not(.cc-lead-row):not(.cc-card-button):not(
-    [data-sidebar]
-  ),
+.cc-app button:not(.cc-info):not(.cc-icon-button):not(.cc-lead-row):not(.cc-card-button):not([data-sidebar]),
 .cc-app .cc-page-actions a,
 .cc-app .cc-start-actions a,
 .cc-auth-form > button[type="submit"] {
@@ -850,10 +848,13 @@
 .cc-app [data-sidebar="sidebar"],
 [data-sidebar="sidebar"][data-mobile="true"] {
   background-color: #181818;
+  background-image: url("/brand/signselector/graphite-texture.png");
+  background-size: 256px 256px;
+  background-repeat: repeat;
 }
 .cc-nav-link {
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 14px;
   gap: 14px;
   transition:
     background-color 160ms ease,
@@ -861,7 +862,7 @@
     box-shadow 160ms ease;
 }
 .cc-app .cc-nav-link {
-  border-radius: 10px;
+  border-radius: 14px;
 }
 .cc-nav-link:not([data-active="true"]):hover {
   background-color: rgb(255 255 255 / 5%);
@@ -870,7 +871,11 @@
 [data-mobile="true"] .cc-nav-link[data-active="true"] {
   color: #fff7f5;
   background-color: #620b12;
-  border-color: transparent;
+  border-color: #8d2931;
+  box-shadow:
+    inset 0 1px 0 rgb(255 206 206 / 12%),
+    inset 0 -7px 12px rgb(27 0 3 / 25%),
+    0 3px 4px rgb(0 0 0 / 38%);
 }
 .cc-nav-link[data-active="true"] > .cc-icon {
   color: #fff8f5;
@@ -880,7 +885,11 @@
 }
 .cc-sidebar-footer .cc-avatar {
   border-radius: 50%;
+  border: 1px solid #8d2931;
   background-color: #690c15;
+  box-shadow:
+    inset 0 1px 0 rgb(255 206 206 / 12%),
+    0 2px 4px rgb(0 0 0 / 25%);
 }
 @media (prefers-reduced-motion: reduce) {
   .cc-nav-link {
@@ -903,53 +912,4 @@
   .cc-app .cc-surface-body {
     padding: 0 16px 20px;
   }
-}
-
-/* Design pass: quiet surfaces, type instead of tiles, one weight of heading. */
-.cc-app input,
-.cc-app textarea,
-.cc-app select,
-.cc-app button,
-.cc-app a,
-.cc-app [role="combobox"] {
-  box-shadow: none !important;
-}
-.cc-app .cc-page-heading h1 {
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-.cc-app .cc-section-heading {
-  padding: 18px 24px;
-}
-.cc-app .cc-section-heading h2 {
-  font-size: 17px;
-  font-weight: 600;
-}
-.cc-app .cc-batch {
-  background: white;
-}
-.cc-app .cc-figures {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 20px 32px;
-  padding: 0 24px 8px;
-}
-.cc-app .cc-figures dt {
-  color: var(--cc-muted);
-  font-size: 13px;
-}
-.cc-app .cc-figures dd {
-  font-size: 30px;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-}
-.cc-app .cc-surface-note {
-  color: var(--cc-muted);
-  font-size: 13px;
-  padding: 8px 24px 20px;
-  max-width: 70ch;
 }

@@ -65,12 +65,11 @@ export function PipedriveJobs({ admin }: { admin: boolean }) {
       setBusy(null);
     }
   }
-  // Nothing to report: stay out of the way instead of showing an empty box.
-  if (!jobs.isError && (jobs.isLoading || jobs.data?.length === 0)) return null;
   return (
     <section className="space-y-2 rounded-lg border p-4">
       <h2 className="font-semibold">Pipedrive-Übertragungen</h2>
       {jobs.isError && <p>Übertragungsstatus konnte nicht geladen werden.</p>}
+      {jobs.data?.length === 0 && <p>Noch keine Übertragungen.</p>}
       {jobs.data?.map((j) => (
         <div key={j.id} className="flex flex-wrap items-center justify-between gap-2 border-b py-2">
           <span>
@@ -108,11 +107,11 @@ export function DataQuality() {
         acknowledged_reason: string | null;
       }[],
   });
-  if (!quality.isError && (quality.isLoading || quality.data?.length === 0)) return null;
   return (
     <section className="space-y-2 rounded-lg border p-4">
       <h2 className="font-semibold">Datenqualität</h2>
       {quality.isError && <p>Qualitätshinweise konnten nicht geladen werden.</p>}
+      {quality.data?.length === 0 && <p>Keine offenen Qualitätshinweise.</p>}
       {quality.data?.map((q) => (
         <p key={q.lead_id + q.kind}>
           <a className="underline" href={`/leads?lead=${q.lead_id}`}>

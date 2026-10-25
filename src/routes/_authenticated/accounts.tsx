@@ -109,7 +109,7 @@ function AccountsPage() {
                 <span className="truncate text-sm text-muted-foreground">{u.email}</span>
                 <span className="flex flex-col items-start gap-1">
                   <Badge variant={u.master || u.admin ? "default" : "secondary"} className="rounded-full">
-                    {u.master ? "Master-Admin" : u.admin ? "Admin" : "Caller"}
+                    {u.master ? "👑 Master-Admin" : u.admin ? "👑 Admin" : "Caller"}
                   </Badge>
                   {u.fulfilment && <Badge variant="outline" className="rounded-full"><Wrench size={12} />Fulfilment</Badge>}
                 </span>

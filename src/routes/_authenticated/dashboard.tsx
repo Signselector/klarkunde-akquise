@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
+import { FolderOpen } from "@/components/coldcaller/icons";
 import { FeedbackState, InfoButton, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
@@ -191,6 +192,7 @@ function Dashboard() {
                       <h3>{b.name}</h3>
                       <small>{new Date(b.created_at).toLocaleDateString("de-DE")}</small>
                     </div>
+                    <FolderOpen size={24} aria-hidden="true" />
                   </div>
                   <Progress value={pct} aria-label={`Fortschritt ${b.name}: ${pct} Prozent`} />
                   <p>

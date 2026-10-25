@@ -137,7 +137,7 @@ export function LeadsTable({
                 <td className="px-3 py-4">
                   <ContactLinks lead={l} />
                 </td>
-                <td className="min-w-48 px-3 py-4 [overflow-wrap:anywhere]">
+                <td className="px-3 py-4 break-all">
                   <EmailLink lead={l} />
                 </td>
                 <td className="px-3 py-4">{l.city || "–"}</td>

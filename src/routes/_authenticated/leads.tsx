@@ -121,8 +121,8 @@ function LeadsPage() {
         description="Die Leads deiner übernommenen Batches. Öffne die Kundenakte, um nach dem Telefonat das Gesprächsergebnis einzutragen."
       />
       <Surface
-        title="Deine Leads"
-        description="Nach Firma, Kontakt, Telefon oder Stadt suchen"
+        title="Offene Leads"
+        description="Offene Erstkontakte · nach Status und Kontakt durchsuchen"
         action={
           <InfoButton label="Leadpool">
             Diese Liste zeigt die Leads der Batches, die du im Dashboard übernommen hast. Jeder

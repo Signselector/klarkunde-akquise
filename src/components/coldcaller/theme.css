@@ -139,7 +139,7 @@
   font-size: 13px;
   font-weight: 600;
   max-width: 100%;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .cc-dot {
   width: 6px;
