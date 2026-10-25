@@ -171,11 +171,11 @@ function CallbacksPage() {
               })}
             </div>
             <p className="text-sm text-muted-foreground">
-              Rückruf vereinbaren oder Ergebnis ändern: Öffne den im{" "}
-              <Link to="/call" className="underline">
-                Anrufablauf
+              Rückruf vereinbaren oder Ergebnis ändern: Öffne den Lead unter{" "}
+              <Link to="/leads" className="underline">
+                Offene Leads
               </Link>
-              . Der Server reserviert den nächsten fälligen Rückruf automatisch.
+              .
             </p>
           </div>
         </Surface>
