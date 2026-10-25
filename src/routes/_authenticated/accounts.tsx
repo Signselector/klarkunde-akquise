@@ -62,9 +62,7 @@ function AccountsPage() {
   }
 
   async function toggleFulfilment(id: string, on: boolean) {
-    const { error } = on
-      ? await supabase.from("user_roles").insert({ user_id: id, role: "fulfilment" })
-      : await supabase.from("user_roles").delete().eq("user_id", id).eq("role", "fulfilment");
+    const { error } = await supabase.rpc("set_user_fulfilment", { p_user_id: id, p_on: on });
     if (error) { toast.error("Fulfilment konnte nicht geändert werden."); return; }
     toast.success(on ? "Fulfilment aktiviert." : "Fulfilment entfernt."); refresh();
   }
@@ -106,51 +104,53 @@ function AccountsPage() {
           {users?.map((u) => {
             const self = u.id === user.id;
             return (
-              <div key={u.id} className="grid gap-3 py-3 lg:grid-cols-[1.2fr_1.6fr_auto_auto_auto] lg:items-center">
+              <div key={u.id} className="grid gap-3 py-4 lg:grid-cols-[1fr_1.4fr_auto_auto_auto] lg:items-center">
                 <span className="font-medium">{u.display_name}</span>
                 <span className="truncate text-sm text-muted-foreground">{u.email}</span>
-                <span className="flex flex-wrap gap-1">
-                  <Badge variant="secondary">{u.master ? "Master-Admin" : u.admin ? "Admin" : "Caller"}</Badge>
-                  {u.fulfilment && <Badge variant="secondary">Fulfilment</Badge>}
+                <span className="flex flex-col items-start gap-1">
+                  <Badge variant={u.master || u.admin ? "default" : "secondary"} className="rounded-full">
+                    {u.master ? "👑 Master-Admin" : u.admin ? "👑 Admin" : "Caller"}
+                  </Badge>
+                  {u.fulfilment && <Badge variant="outline" className="rounded-full"><Wrench size={12} />Fulfilment</Badge>}
                 </span>
-                <Badge variant="outline">{u.active ? "Aktiv" : "Deaktiviert"}</Badge>
-                <span className="flex flex-wrap items-center justify-end gap-2">
-                  {u.master
-                    ? COUNTRIES.map((c) => <Badge key={c.code} variant="outline">{c.flag} {c.code}</Badge>)
-                    : COUNTRIES.map((c) => {
-                        const on = u.countries.includes(c.code);
-                        return (
-                          <Button key={c.code} size="sm" variant={on ? "default" : "outline"} disabled={!isMaster}
-                            aria-pressed={on} onClick={() => toggleCountry(u.id, c.code, !on)}>
-                            {c.flag} {c.code}
-                          </Button>
-                        );
-                      })}
-                  {self && isMaster && (
+                <Badge variant={u.active ? "outline" : "destructive"} className="w-fit rounded-full">{u.active ? "Aktiv" : "Deaktiviert"}</Badge>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-wrap justify-end gap-2">
+                    {u.master
+                      ? COUNTRIES.map((c) => <Badge key={c.code} variant="outline">{c.flag} {c.code}</Badge>)
+                      : COUNTRIES.map((c) => {
+                          const on = u.countries.includes(c.code);
+                          return (
+                            <Button key={c.code} size="sm" variant={on ? "default" : "outline"} disabled={!isMaster}
+                              aria-pressed={on} onClick={() => toggleCountry(u.id, c.code, !on)}>
+                              {c.flag} {c.code}
+                            </Button>
+                          );
+                        })}
+                  </div>
+                  <div className="flex flex-wrap justify-end gap-2">
                     <Button size="sm" variant="outline" onClick={openCallerView}><Eye size={16} />Ansicht</Button>
-                  )}
-                  {!u.master && (
-                    <>
+                    {!u.master && (
                       <Button size="sm" variant="outline" onClick={() => setRole(u.id, !u.admin)}>
                         <Shield size={16} />{u.admin ? "Zu Caller" : "Zu Admin"}
                       </Button>
-                      <Button size="sm" variant={u.fulfilment ? "default" : "outline"} onClick={() => toggleFulfilment(u.id, !u.fulfilment)}>
-                        <Wrench size={16} />Fulfilment
-                      </Button>
-                    </>
-                  )}
-                  <Button size="sm" variant="outline" onClick={() => resetPassword(u.email)}><KeyRound size={16} />Passwort</Button>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => toggleFulfilment(u.id, !u.fulfilment)}>
+                      <Wrench size={16} />{u.fulfilment ? "Fulfilment entfernen" : "Fulfilment"}
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => resetPassword(u.email)}><KeyRound size={16} />Passwort</Button>
+                  </div>
                   {!u.master && !self && (
-                    <>
-                      <Button size="sm" variant="secondary" onClick={() => setActive(u.id, !u.active)}>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button size="sm" variant={u.active ? "secondary" : "default"} onClick={() => setActive(u.id, !u.active)}>
                         <Power size={16} />{u.active ? "Deaktivieren" : "Aktivieren"}
                       </Button>
                       <Button size="sm" variant="destructive" onClick={() => remove(u.id, u.display_name)}>
                         <Trash2 size={16} />Löschen
                       </Button>
-                    </>
+                    </div>
                   )}
-                </span>
+                </div>
               </div>
             );
           })}
