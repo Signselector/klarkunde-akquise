@@ -1,5 +1,7 @@
 # Cold Call Tool – Roadmap
 
+- [x] Accounts: Ansicht, Rollen, Fulfilment, Passwort, Deaktivieren, Löschen, Länder beim Master-Admin
+
 ## Phase 1
 - [x] Auth (E-Mail/Passwort), Profile + Rollen (Admin/Caller, erster Nutzer = Admin)
 - [x] Schema: Leads, Batches, Notizen, Status-Historie, Callbacks, Termine (RLS)
