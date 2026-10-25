@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database, Json, Tables } from "@/integrations/supabase/types";
-export const backendEnabled = import.meta.env["VITE_ATOMIC_BACKEND_ENABLED"] === "true";
+// The database now only accepts writes through checked functions, so this is on unless explicitly disabled.
+export const backendEnabled = import.meta.env["VITE_ATOMIC_BACKEND_ENABLED"] !== "false";
 export type LeadClaim = {
   lead: Tables<"leads">;
   claim_id: string;
