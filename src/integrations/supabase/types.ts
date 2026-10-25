@@ -37,27 +37,33 @@ export type Database = {
           country: string
           created_at: string
           id: string
+          kind: string
           lead_id: string | null
           notes: string | null
           starts_at: string
+          title: string | null
           user_id: string | null
         }
         Insert: {
           country?: string
           created_at?: string
           id?: string
+          kind?: string
           lead_id?: string | null
           notes?: string | null
           starts_at: string
+          title?: string | null
           user_id?: string | null
         }
         Update: {
           country?: string
           created_at?: string
           id?: string
+          kind?: string
           lead_id?: string | null
           notes?: string | null
           starts_at?: string
+          title?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -1011,6 +1017,17 @@ export type Database = {
         Returns: undefined
       }
       retry_integration: { Args: { p_job_id: string }; Returns: Json }
+      save_calendar_appointment: {
+        Args: {
+          p_country: string
+          p_kind: string
+          p_lead_id?: string
+          p_notes: string
+          p_starts_at: string
+          p_title: string
+        }
+        Returns: string
+      }
       save_offer: {
         Args: {
           p_customer_id: string
