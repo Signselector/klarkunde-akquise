@@ -15,6 +15,13 @@
       "when": 1792854768538,
       "tag": "0001_atomic_call_and_role_management",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792923291745,
+      "tag": "0002_backend_workflows_integrations_testmode",
+      "breakpoints": true
     }
   ]
 }

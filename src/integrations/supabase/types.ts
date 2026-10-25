@@ -67,6 +67,30 @@ export type Database = {
           },
         ]
       }
+      audit_events: {
+        Row: {
+          action: string
+          actor: string | null
+          created_at: string
+          id: string
+          target_id: string | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          created_at?: string
+          id?: string
+          target_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          created_at?: string
+          id?: string
+          target_id?: string | null
+        }
+        Relationships: []
+      }
       call_requests: {
         Row: {
           payload: Json
@@ -96,6 +120,7 @@ export type Database = {
           id: string
           lead_id: string
           user_id: string | null
+          version: number
         }
         Insert: {
           created_at?: string
@@ -104,6 +129,7 @@ export type Database = {
           id?: string
           lead_id: string
           user_id?: string | null
+          version?: number
         }
         Update: {
           created_at?: string
@@ -112,10 +138,130 @@ export type Database = {
           id?: string
           lead_id?: string
           user_id?: string | null
+          version?: number
         }
         Relationships: [
           {
             foreignKeyName: "callbacks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      import_rows: {
+        Row: {
+          batch_id: string
+          data: Json
+          errors: string[]
+          row_no: number
+        }
+        Insert: {
+          batch_id: string
+          data: Json
+          errors: string[]
+          row_no: number
+        }
+        Update: {
+          batch_id?: string
+          data?: Json
+          errors?: string[]
+          row_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "import_rows_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "lead_batches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_config: {
+        Row: {
+          appointment_stage_id: number | null
+          enabled: boolean
+          id: boolean
+          owner_id: number | null
+          pipeline_id: number | null
+          production_stage_id: number | null
+          test_mode: boolean
+        }
+        Insert: {
+          appointment_stage_id?: number | null
+          enabled?: boolean
+          id?: boolean
+          owner_id?: number | null
+          pipeline_id?: number | null
+          production_stage_id?: number | null
+          test_mode?: boolean
+        }
+        Update: {
+          appointment_stage_id?: number | null
+          enabled?: boolean
+          id?: boolean
+          owner_id?: number | null
+          pipeline_id?: number | null
+          production_stage_id?: number | null
+          test_mode?: boolean
+        }
+        Relationships: []
+      }
+      integration_jobs: {
+        Row: {
+          attempts: number
+          created_at: string
+          error_code: string | null
+          event_id: string
+          id: string
+          lead_id: string
+          lease_token: string | null
+          lease_until: string | null
+          next_attempt_at: string
+          outcome: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          error_code?: string | null
+          event_id: string
+          id?: string
+          lead_id: string
+          lease_token?: string | null
+          lease_until?: string | null
+          next_attempt_at?: string
+          outcome: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          error_code?: string | null
+          event_id?: string
+          id?: string
+          lead_id?: string
+          lease_token?: string | null
+          lease_until?: string | null
+          next_attempt_at?: string
+          outcome?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_jobs_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "status_changes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "integration_jobs_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
@@ -128,21 +274,53 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          import_state: string
           name: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           id?: string
+          import_state?: string
           name: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
           id?: string
+          import_state?: string
           name?: string
         }
         Relationships: []
+      }
+      lead_claims: {
+        Row: {
+          expires_at: string
+          id: string
+          lead_id: string
+          user_id: string
+        }
+        Insert: {
+          expires_at: string
+          id?: string
+          lead_id: string
+          user_id: string
+        }
+        Update: {
+          expires_at?: string
+          id?: string
+          lead_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_claims_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: true
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_notes: {
         Row: {
@@ -178,6 +356,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          archived_at: string | null
           attempts: number
           batch_id: string | null
           city: string | null
@@ -191,8 +370,10 @@ export type Database = {
           last_called_by: string | null
           phone: string | null
           status: string
+          version: number
         }
         Insert: {
+          archived_at?: string | null
           attempts?: number
           batch_id?: string | null
           city?: string | null
@@ -206,8 +387,10 @@ export type Database = {
           last_called_by?: string | null
           phone?: string | null
           status?: string
+          version?: number
         }
         Update: {
+          archived_at?: string | null
           attempts?: number
           batch_id?: string | null
           city?: string | null
@@ -221,6 +404,7 @@ export type Database = {
           last_called_by?: string | null
           phone?: string | null
           status?: string
+          version?: number
         }
         Relationships: [
           {
@@ -337,6 +521,7 @@ export type Database = {
           note: string | null
           offer_number: string
           status: string
+          version: number
         }
         Insert: {
           created_at?: string
@@ -346,6 +531,7 @@ export type Database = {
           note?: string | null
           offer_number: string
           status?: string
+          version?: number
         }
         Update: {
           created_at?: string
@@ -355,6 +541,7 @@ export type Database = {
           note?: string | null
           offer_number?: string
           status?: string
+          version?: number
         }
         Relationships: [
           {
@@ -386,6 +573,38 @@ export type Database = {
           id?: string
         }
         Relationships: []
+      }
+      quality_resolutions: {
+        Row: {
+          kind: string
+          lead_id: string
+          reason: string
+          resolved_at: string
+          resolved_by: string
+        }
+        Insert: {
+          kind: string
+          lead_id: string
+          reason: string
+          resolved_at?: string
+          resolved_by: string
+        }
+        Update: {
+          kind?: string
+          lead_id?: string
+          reason?: string
+          resolved_at?: string
+          resolved_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_resolutions_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       status_changes: {
         Row: {
@@ -445,12 +664,98 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      acknowledge_quality: {
+        Args: { p_kind: string; p_lead_id: string; p_reason: string }
+        Returns: undefined
+      }
+      archive_leads: { Args: { p_ids: string[] }; Returns: number }
+      archive_open_leads: { Args: never; Returns: number }
+      backend_maintenance: { Args: never; Returns: Json }
+      checkpoint_integration: {
+        Args: {
+          p_external_id: number
+          p_job_id: string
+          p_kind: string
+          p_lease_token: string
+        }
+        Returns: undefined
+      }
+      claim_integration_jobs: { Args: { p_limit?: number }; Returns: Json }
+      claim_next_lead: { Args: never; Returns: Json }
+      complete_callback: {
+        Args: {
+          p_callback_id: string
+          p_expected_version: number
+          p_request_id: string
+        }
+        Returns: Json
+      }
+      confirm_import: {
+        Args: {
+          p_allow_duplicates?: boolean
+          p_batch_id: string
+          p_request_id: string
+          p_skip_rows?: number[]
+        }
+        Returns: Json
+      }
+      create_appointment: {
+        Args: {
+          p_lead_id?: string
+          p_notes?: string
+          p_request_id: string
+          p_starts_at: string
+        }
+        Returns: Json
+      }
+      delete_appointment: {
+        Args: { p_appointment_id: string }
+        Returns: undefined
+      }
+      finish_integration_job: {
+        Args: {
+          p_error_code?: string
+          p_job_id: string
+          p_lease_token: string
+          p_retry_after?: number
+          p_status: string
+        }
+        Returns: undefined
+      }
+      get_batch_progress: { Args: never; Returns: Json }
+      get_capabilities: { Args: never; Returns: Json }
+      get_dashboard: {
+        Args: { p_from: string; p_scope?: string; p_to: string }
+        Returns: Json
+      }
+      get_quality_issues: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      import_duplicates: { Args: { p_batch_id: string }; Returns: Json }
+      move_lead: {
+        Args: {
+          p_batch_id: string
+          p_expected_version: number
+          p_lead_id: string
+        }
+        Returns: undefined
+      }
+      preview_import: {
+        Args: {
+          p_batch_id?: string
+          p_name: string
+          p_request_id: string
+          p_rows: Json
+        }
+        Returns: Json
       }
       record_call_outcome: {
         Args: {
@@ -464,12 +769,59 @@ export type Database = {
         }
         Returns: Json
       }
+      renew_lead_claim: {
+        Args: { p_claim_id: string; p_release?: boolean }
+        Returns: Json
+      }
+      reopen_lead: {
+        Args: {
+          p_expected_version: number
+          p_lead_id: string
+          p_reason: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
+      resolve_integration_review: {
+        Args: {
+          p_confirmed_absent?: boolean
+          p_deal_id: number
+          p_job_id: string
+          p_organization_id: number
+          p_person_id: number
+        }
+        Returns: undefined
+      }
+      retry_integration: { Args: { p_job_id: string }; Returns: Json }
+      save_offer: {
+        Args: {
+          p_customer_id: string
+          p_expected_version?: number
+          p_items: Json
+          p_note?: string
+          p_offer_id?: string
+          p_request_id: string
+        }
+        Returns: Json
+      }
+      set_offer_status: {
+        Args: {
+          p_expected_version: number
+          p_offer_id: string
+          p_status: string
+        }
+        Returns: Json
+      }
       set_user_role: {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
           p_user_id: string
         }
         Returns: undefined
+      }
+      update_lead_contact: {
+        Args: { p_contact: Json; p_expected_version: number; p_lead_id: string }
+        Returns: Json
       }
     }
     Enums: {
