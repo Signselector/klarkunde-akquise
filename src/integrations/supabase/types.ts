@@ -189,6 +189,47 @@ export type Database = {
           },
         ]
       }
+      coins_ledger: {
+        Row: {
+          coins: number
+          created_at: string
+          id: string
+          occurred_at: string
+          reason: string
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          coins: number
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          reason: string
+          source_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          reason?: string
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coins_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_rows: {
         Row: {
           batch_id: string
@@ -569,6 +610,47 @@ export type Database = {
           },
         ]
       }
+      monthly_quality: {
+        Row: {
+          frozen_at: string
+          high_q: number
+          low_q: number
+          month: string
+          per_100: number | null
+          processed: number
+          qualified: number
+          user_id: string
+        }
+        Insert: {
+          frozen_at?: string
+          high_q: number
+          low_q: number
+          month: string
+          per_100?: number | null
+          processed: number
+          qualified: number
+          user_id: string
+        }
+        Update: {
+          frozen_at?: string
+          high_q?: number
+          low_q?: number
+          month?: string
+          per_100?: number | null
+          processed?: number
+          qualified?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_quality_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       offer_customers: {
         Row: {
           address: string | null
@@ -730,6 +812,47 @@ export type Database = {
         }
         Relationships: []
       }
+      points_ledger: {
+        Row: {
+          created_at: string
+          id: string
+          occurred_at: string
+          points: number
+          reason: string
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          points: number
+          reason: string
+          source_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          occurred_at?: string
+          points?: number
+          reason?: string
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "points_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active: boolean
@@ -821,6 +944,38 @@ export type Database = {
           },
         ]
       }
+      team_metrics: {
+        Row: {
+          lead_quality: number | null
+          leads_contributed: number | null
+          period: string
+          synced_at: string
+          user_id: string
+        }
+        Insert: {
+          lead_quality?: number | null
+          leads_contributed?: number | null
+          period: string
+          synced_at?: string
+          user_id: string
+        }
+        Update: {
+          lead_quality?: number | null
+          leads_contributed?: number | null
+          period?: string
+          synced_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_countries: {
         Row: {
           country: string
@@ -861,6 +1016,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      weekly_ranking_snapshots: {
+        Row: {
+          frozen_at: string
+          points: number
+          rank: number
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          frozen_at?: string
+          points: number
+          rank: number
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          frozen_at?: string
+          points?: number
+          rank?: number
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_ranking_snapshots_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -930,16 +1117,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
       get_batch_progress: { Args: never; Returns: Json }
+      get_caller_day: { Args: { p_day?: string }; Returns: Json }
       get_capabilities: { Args: never; Returns: Json }
       get_dashboard: {
         Args: { p_from: string; p_scope?: string; p_to: string }
         Returns: Json
       }
+      get_monthly_quality: { Args: { p_month?: string }; Returns: Json }
       get_quality_issues: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
       }
+      get_team_metrics: { Args: never; Returns: Json }
+      get_weekly_ranking: { Args: { p_week?: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -965,6 +1157,10 @@ export type Database = {
           p_request_id: string
           p_rows: Json
         }
+        Returns: Json
+      }
+      reassign_batch: {
+        Args: { p_batch_id: string; p_user_id: string }
         Returns: Json
       }
       record_call_outcome: {
@@ -1066,6 +1262,7 @@ export type Database = {
         Args: { p_contact: Json; p_expected_version: number; p_lead_id: string }
         Returns: Json
       }
+      upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "caller" | "fulfilment"
