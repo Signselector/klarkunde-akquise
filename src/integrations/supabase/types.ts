@@ -271,6 +271,7 @@ export type Database = {
       }
       lead_batches: {
         Row: {
+          country: string
           created_at: string
           created_by: string | null
           id: string
@@ -278,6 +279,7 @@ export type Database = {
           name: string
         }
         Insert: {
+          country?: string
           created_at?: string
           created_by?: string | null
           id?: string
@@ -285,6 +287,7 @@ export type Database = {
           name: string
         }
         Update: {
+          country?: string
           created_at?: string
           created_by?: string | null
           id?: string
@@ -681,7 +684,9 @@ export type Database = {
         Returns: undefined
       }
       claim_integration_jobs: { Args: { p_limit?: number }; Returns: Json }
-      claim_next_lead: { Args: never; Returns: Json }
+      claim_next_lead:
+        | { Args: never; Returns: Json }
+        | { Args: { p_country: string }; Returns: Json }
       complete_callback: {
         Args: {
           p_callback_id: string

@@ -1,3 +1,4 @@
+import { useCountry } from "@/lib/country";
 import { backendEnabled } from "@/lib/backend";
 import type { Tables } from "@/integrations/supabase/types";
 import { createFileRoute } from "@tanstack/react-router";
@@ -51,6 +52,7 @@ export const Route = createFileRoute("/_authenticated/leads")({
 });
 
 function LeadsPage() {
+  const country = useCountry();
   const { user } = Route.useRouteContext();
   const admin = useIsAdmin(user.id);
   const qc = useQueryClient();
@@ -68,11 +70,12 @@ function LeadsPage() {
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["leads", q, status],
+    queryKey: ["leads", q, status, country],
     queryFn: async () => {
       let query = supabase
         .from("leads")
-        .select("*")
+        .select("*, lead_batches!inner(country)")
+        .eq("lead_batches.country", country)
         .order("created_at", { ascending: false })
         .limit(300);
       if (backendEnabled) query = query.is("archived_at", null);

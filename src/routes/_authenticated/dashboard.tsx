@@ -1,3 +1,4 @@
+import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import { BackendStatus } from "@/components/backend-status";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -15,13 +16,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
+  const country = useCountry();
   const {
     data: batches,
     isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["batches"],
+    queryKey: ["batches", country],
     queryFn: async () => {
       if (backendEnabled) {
         const progress = (await backendRpc("get_batch_progress", {} as never)) as {
@@ -32,13 +34,16 @@ function Dashboard() {
           total: number;
           completed: number;
         }[];
+        const { data: own } = await supabase.from("lead_batches").select("id").eq("country", country);
+        const ids = new Set((own ?? []).map((b) => b.id));
         return progress
-          .filter((b) => b.import_state === "confirmed")
+          .filter((b) => b.import_state === "confirmed" && ids.has(b.id))
           .map((b) => ({ ...b, done: b.completed }));
       }
       const { data, error } = await supabase
         .from("lead_batches")
         .select("id,name,created_at")
+        .eq("country", country)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return Promise.all(

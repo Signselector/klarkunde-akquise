@@ -1,3 +1,4 @@
+import { COUNTRIES, useCountry } from "@/lib/country";
 import { backendRpc, jsonObject } from "@/lib/backend";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -28,6 +29,7 @@ const FIELDS = [
 ] as const;
 
 function ImportPage() {
+  const country = useCountry();
   const nav = useNavigate();
   const [rows, setRows] = useState<string[][]>([]);
   const [map, setMap] = useState<Record<string, number>>({});
@@ -146,6 +148,7 @@ function ImportPage() {
       }
       if (!batchId) return;
       state.batchId = batchId;
+      await supabase.from("lead_batches").update({ country }).eq("id", batchId);
       const invalid: number[] = [];
       for (let offset = 0; offset < leads.length; offset += 500) {
         const { data: checked, error } = await supabase
@@ -198,7 +201,7 @@ function ImportPage() {
     const { data: u } = await supabase.auth.getUser();
     const { data: batch, error } = await supabase
       .from("lead_batches")
-      .insert({ name, created_by: u.user!.id })
+      .insert({ name, created_by: u.user!.id, country })
       .select("id")
       .single();
     if (error || !batch) {
@@ -240,7 +243,9 @@ function ImportPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-[22px] font-semibold">Leads importieren</h1>
+      <h1 className="text-[22px] font-semibold">
+        Leads importieren – {COUNTRIES.find((c) => c.code === country)?.label}
+      </h1>
       <div className="space-y-1">
         <Label htmlFor="f">
           CSV- oder Excel-Datei (.csv, .xlsx; erstes Tabellenblatt, erste Zeile = Spaltennamen)
