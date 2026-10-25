@@ -1,6 +1,7 @@
 import { BackendStatus } from "@/components/backend-status";
 import { BackupCenter } from "@/components/backup-center";
 import { TestModeCard } from "@/components/TestMode";
+import { StageMapping } from "@/components/stage-mapping";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -57,11 +58,7 @@ function SettingsPage() {
       {user.email?.toLowerCase() === "office@signselector.com" && <BackupCenter />}
       {backendEnabled && <BackendStatus admin={admin} />}
       <TestModeCard />
-      <section className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
-        <h2 className="mb-1 font-semibold text-foreground">Pipedrive</h2>
-        Der Pipedrive-Sync wird über die Pipedrive-Verbindung eingerichtet, nicht über einen Token
-        in dieser App.
-      </section>
+      <StageMapping />
     </div>
   );
 }
