@@ -1,4 +1,5 @@
 import { Brand } from "@/components/coldcaller/brand";
+import { TestModeBanner } from "@/components/TestMode";
 import type { CSSProperties } from "react";
 import {
   createFileRoute,
@@ -162,6 +163,7 @@ function Layout() {
           </div>
           <span className="cc-topbar-label">Team-Akquise</span>
         </header>
+        <TestModeBanner />
         <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
           <Outlet />
         </div>
