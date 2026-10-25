@@ -20,7 +20,7 @@ import {
   CalendarDays,
   ChartNoAxesColumn,
   CircleCheck,
-  ChevronDown,
+  ChevronRight,
   Crown,
   LogOut,
   FileText,
@@ -30,6 +30,19 @@ import {
   Users,
 } from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -70,8 +83,6 @@ function Layout() {
 
   const isMaster = isMasterEmail(user.email);
   const [callerView, setCallerView] = useState(false);
-  // The pill shows only the current area; hover or focus opens it, a click closes it again.
-  const [navOpen, setNavOpen] = useState(false);
   useEffect(() => {
     if (!isMaster) return;
     const sync = () => setCallerView(localStorage.getItem("cc-caller-view") === "1");
@@ -85,6 +96,7 @@ function Layout() {
     }
   }, [me, nav]);
 
+  const showAdmin = !!me?.admin && !callerView;
   const items = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/leads", label: "Offene Leads", icon: Users },
@@ -92,23 +104,20 @@ function Layout() {
     { to: "/completed", label: "Abgeschlossene Leads", icon: CircleCheck },
     { to: "/customers", label: "Meine Kunden", icon: FileText },
     { to: "/appointments", label: "Termine", icon: CalendarCheck },
-    ...(!(me?.admin && !callerView)
-      ? [{ to: "/my-stats", label: "Statistik", icon: ChartNoAxesColumn }]
-      : []),
-    ...(me?.admin && !callerView
-      ? [
-          { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
-          { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
-        ]
-      : []),
-    ...(isMaster && !callerView ? [{ to: "/import", label: "Upload", icon: Upload }] : []),
-    ...(me?.admin && !callerView
-      ? [
-          { to: "/accounts", label: "Accounts", icon: Crown },
-          { to: "/settings", label: "Einstellungen", icon: Settings },
-        ]
-      : []),
+    ...(!showAdmin ? [{ to: "/my-stats", label: "Statistik", icon: ChartNoAxesColumn }] : []),
   ] as const;
+  // Admin pages live in their own collapsible group so the caller workspace stays calm.
+  const adminItems = showAdmin
+    ? ([
+        { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
+        { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
+        ...(isMaster ? [{ to: "/import", label: "Upload", icon: Upload }] : []),
+        { to: "/accounts", label: "Accounts", icon: Crown },
+        { to: "/settings", label: "Einstellungen", icon: Settings },
+      ] as const)
+    : [];
+  const adminActive = adminItems.some((i) => i.to === location.pathname);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   function toggleCallerView() {
     const next = !callerView;
@@ -119,97 +128,115 @@ function Layout() {
     }
   }
 
-  const initials = (me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase();
   return (
-    <div className="cc-theme cc-app cc-shell">
+    <SidebarProvider
+      className="cc-theme cc-app"
+      style={{ "--sidebar-width": "15.5rem" } as CSSProperties}
+    >
       <a href="#arbeitsbereich" className="cc-skip-link">
         Zum Arbeitsbereich
       </a>
-      <header className="cc-topnav">
-        <div className="cc-topnav-inner">
+      <Sidebar>
+        <SidebarHeader className="cc-sidebar-header">
           <Link
             to="/dashboard"
             className="cc-brand"
             aria-label="Sign Selector Cold Caller – Dashboard"
           >
-            <Brand />
+            <Brand inverse />
           </Link>
-          <nav
-            className="cc-topnav-links"
-            aria-label="Hauptnavigation"
-            data-open={navOpen}
-            onMouseEnter={() => setNavOpen(true)}
-            onMouseLeave={() => setNavOpen(false)}
-            onFocus={() => setNavOpen(true)}
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget)) setNavOpen(false);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") setNavOpen(false);
-            }}
-          >
-            <button
-              type="button"
-              className="cc-nav-trigger"
-              aria-expanded={navOpen}
-              aria-haspopup="true"
-              onClick={() => setNavOpen((o) => !o)}
-            >
-              {(() => {
-                const cur = items.find((i) => i.to === location.pathname) ?? items[0];
-                const Icon = cur.icon;
-                return (
-                  <>
-                    <Icon aria-hidden="true" />
-                    <span>{cur.label}</span>
-                  </>
-                );
-              })()}
-              <ChevronDown className="cc-nav-chevron" aria-hidden="true" />
-            </button>
-            <div className="cc-nav-panel">
-              {items.map((i, k) => (
+        </SidebarHeader>
+        <SidebarContent className="px-3 pb-4">
+          <p className="cc-nav-caption">Dein Arbeitsplatz</p>
+          <SidebarMenu aria-label="Hauptnavigation">
+            {items.map((i) => (
+              <SidebarMenuItem key={i.to}>
                 <NavigationItem
-                  key={i.to}
                   to={i.to}
                   label={i.label}
                   icon={i.icon}
                   active={location.pathname === i.to}
-                  index={k}
-                  onNavigate={() => setNavOpen(false)}
                 />
-              ))}
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+          {adminItems.length > 0 && (
+            <div className="cc-admin-group">
+              <button
+                type="button"
+                className="cc-admin-toggle"
+                aria-expanded={adminOpen || adminActive}
+                onClick={() => setAdminOpen((o) => !o)}
+              >
+                <Settings aria-hidden="true" />
+                <span>Admin-Bereich</span>
+                <ChevronRight className="cc-admin-chevron" aria-hidden="true" />
+              </button>
+              <div className="cc-admin-body" data-open={adminOpen || adminActive}>
+                <SidebarMenu aria-label="Admin-Bereich">
+                  {adminItems.map((i) => (
+                    <SidebarMenuItem key={i.to}>
+                      <NavigationItem
+                        to={i.to}
+                        label={i.label}
+                        icon={i.icon}
+                        active={location.pathname === i.to}
+                      />
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </div>
             </div>
-          </nav>
-          <div className="cc-topnav-user">
+          )}
+        </SidebarContent>
+        <SidebarFooter className="cc-sidebar-footer">
+          <div className="cc-user">
+            <span className="cc-avatar">
+              {(me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase()}
+            </span>
+            <div>
+              <strong>{me?.name ?? user.email}</strong>
+              <small>
+                {me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}
+              </small>
+            </div>
+          </div>
+          <Button variant="ghost" className="cc-signout" onClick={signOut}>
+            <LogOut size={18} />
+            Abmelden
+          </Button>
+        </SidebarFooter>
+      </Sidebar>
+      <SidebarInset className="min-w-0">
+        <header className="cc-topbar">
+          <div className="flex min-w-0 items-center gap-3">
+            <SidebarTrigger
+              className="cc-menu-trigger"
+              aria-label="Navigation öffnen oder schließen"
+            />
+          </div>
+          <div className="flex items-center gap-2">
             {isMaster && callerView && (
-              <Button size="sm" aria-pressed={callerView} onClick={toggleCallerView}>
+              <Button
+                size="sm"
+                variant={callerView ? "default" : "outline"}
+                aria-pressed={callerView}
+                onClick={toggleCallerView}
+              >
                 <Crown size={16} />
                 Zur Admin-Sicht
               </Button>
             )}
             <CountrySwitcher />
-            <div className="cc-user">
-              <span className="cc-avatar">{initials}</span>
-              <div>
-                <strong>{me?.name ?? user.email}</strong>
-                <small>
-                  {me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}
-                </small>
-              </div>
-            </div>
-            <Button variant="ghost" className="cc-signout" onClick={signOut} aria-label="Abmelden">
-              <LogOut size={18} />
-            </Button>
           </div>
+        </header>
+        <TestModeBanner />
+        <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
+          <CallbackReminder userId={user.id} />
+          <Outlet />
         </div>
-      </header>
-      <TestModeBanner />
-      <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
-        <CallbackReminder userId={user.id} />
-        <Outlet />
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
 
@@ -218,27 +245,24 @@ function NavigationItem({
   label,
   icon: Icon,
   active,
-  index,
-  onNavigate,
 }: {
   to: string;
   label: string;
   icon: typeof Users;
   active: boolean;
-  index: number;
-  onNavigate: () => void;
 }) {
+  const { isMobile, setOpenMobile } = useSidebar();
   return (
-    <Link
-      onClick={onNavigate}
-      to={to}
-      className="cc-nav-link"
-      data-active={active}
-      style={{ "--k": index } as CSSProperties}
-      aria-current={active ? "page" : undefined}
-    >
-      <Icon aria-hidden="true" />
-      <span>{label}</span>
-    </Link>
+    <SidebarMenuButton asChild isActive={active} size="lg" className="cc-nav-link">
+      <Link
+        to={to}
+        onClick={() => {
+          if (isMobile) setOpenMobile(false);
+        }}
+      >
+        <Icon aria-hidden="true" />
+        <span>{label}</span>
+      </Link>
+    </SidebarMenuButton>
   );
 }
