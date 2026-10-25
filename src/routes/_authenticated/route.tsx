@@ -3,7 +3,7 @@ import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
 import { CountrySwitcher } from "@/lib/country";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import {
   createFileRoute,
   redirect,
@@ -20,6 +20,7 @@ import {
   CalendarDays,
   ChartNoAxesColumn,
   CircleCheck,
+  ChevronDown,
   Crown,
   LogOut,
   FileText,
@@ -143,17 +144,42 @@ function Layout() {
             onBlur={(e) => {
               if (!e.currentTarget.contains(e.relatedTarget)) setNavOpen(false);
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setNavOpen(false);
+            }}
           >
-            {items.map((i) => (
-              <NavigationItem
-                key={i.to}
-                to={i.to}
-                label={i.label}
-                icon={i.icon}
-                active={location.pathname === i.to}
-                onNavigate={() => setNavOpen(false)}
-              />
-            ))}
+            <button
+              type="button"
+              className="cc-nav-trigger"
+              aria-expanded={navOpen}
+              aria-haspopup="true"
+              onClick={() => setNavOpen((o) => !o)}
+            >
+              {(() => {
+                const cur = items.find((i) => i.to === location.pathname) ?? items[0];
+                const Icon = cur.icon;
+                return (
+                  <>
+                    <Icon aria-hidden="true" />
+                    <span>{cur.label}</span>
+                  </>
+                );
+              })()}
+              <ChevronDown className="cc-nav-chevron" aria-hidden="true" />
+            </button>
+            <div className="cc-nav-panel">
+              {items.map((i, k) => (
+                <NavigationItem
+                  key={i.to}
+                  to={i.to}
+                  label={i.label}
+                  icon={i.icon}
+                  active={location.pathname === i.to}
+                  index={k}
+                  onNavigate={() => setNavOpen(false)}
+                />
+              ))}
+            </div>
           </nav>
           <div className="cc-topnav-user">
             {isMaster && callerView && (
@@ -192,12 +218,14 @@ function NavigationItem({
   label,
   icon: Icon,
   active,
+  index,
   onNavigate,
 }: {
   to: string;
   label: string;
   icon: typeof Users;
   active: boolean;
+  index: number;
   onNavigate: () => void;
 }) {
   return (
@@ -206,6 +234,7 @@ function NavigationItem({
       to={to}
       className="cc-nav-link"
       data-active={active}
+      style={{ "--k": index } as CSSProperties}
       aria-current={active ? "page" : undefined}
     >
       <Icon aria-hidden="true" />
