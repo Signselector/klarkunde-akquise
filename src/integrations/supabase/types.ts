@@ -1497,6 +1497,7 @@ export type Database = {
         Returns: undefined
       }
       freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
+      get_batch_crm_objects: { Args: { p_batch_id: string }; Returns: Json }
       get_batch_progress: { Args: never; Returns: Json }
       get_caller_day: { Args: { p_day?: string }; Returns: Json }
       get_caller_month: { Args: { p_month?: string }; Returns: Json }
@@ -1563,6 +1564,7 @@ export type Database = {
         }
         Returns: Json
       }
+      purge_test_batch: { Args: { p_batch_id: string }; Returns: Json }
       reassign_batch: {
         Args: { p_batch_id: string; p_user_id: string }
         Returns: Json
