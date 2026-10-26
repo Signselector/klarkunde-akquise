@@ -519,8 +519,8 @@ export function LeadActions({
           )}
           {current.needs.appointment && (
             <p className="text-xs text-muted-foreground">
-              Der Termin erscheint im Terminkalender und im Pipedrive-Kalender. Bei einem Recruit
-              wird er dem Manager des Landes zugeordnet.
+              Der Termin erscheint im Terminkalender und im Pipedrive-Kalender. Er geht an den Manager
+              des Landes, der ihn selbst wahrnimmt oder jemandem zuweist.
             </p>
           )}
           {current.needs.doNotCall && (
