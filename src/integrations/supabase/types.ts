@@ -1249,10 +1249,6 @@ export type Database = {
       archive_open_leads: { Args: never; Returns: number }
       backend_maintenance: { Args: never; Returns: Json }
       can_access_country: { Args: { _c: string }; Returns: boolean }
-      can_grant_country: {
-        Args: { _country: string; _target: string }
-        Returns: boolean
-      }
       checkpoint_integration: {
         Args: {
           p_external_id: number
