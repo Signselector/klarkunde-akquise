@@ -18,7 +18,7 @@ export type LeadAction = {
   hint: string;
   /** Tailwind classes for the coloured button. */
   color: string;
-  stageKey?: "low_q" | "high_q" | "waiting_3d" | "reference_mail";
+  stageKey?: "low_q" | "high_q" | "waiting_3d";
   /** Needs the form step before it can be confirmed. */
   needs: {
     note?: "required" | "optional";
@@ -90,7 +90,6 @@ export const LEAD_ACTIONS: LeadAction[] = [
     label: "Referenzmail",
     hint: "Mail senden, Lead abschließen",
     color: "bg-[#6366e8] text-white hover:bg-[#5255d6]",
-    stageKey: "reference_mail",
     needs: {},
   },
   {

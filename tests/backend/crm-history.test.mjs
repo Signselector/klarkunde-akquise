@@ -115,23 +115,25 @@ const stage = (deal, id, event, extra = {}) =>
   ]);
 const future = (h = 1) => new Date(Date.now() + h * 3600e3).toISOString();
 
-test("Referenzmail: deal exists, original caller is fixed, no customer yet", async () => {
+test("Referenzmail: no deal, original caller is fixed, no customer", async () => {
   const lead = leads[0];
   const m = await mail(anna, lead, "reference_mail");
   const done = await act(anna, lead, "reference_mail", { details: { email_id: m } });
-  assert.equal(done.stage_key, "reference_mail");
+  assert.equal(done.stage_key, null);
   let l = await link(lead);
   assert.equal(l.origin_caller_id, anna);
   assert.equal(l.origin_lead_id, lead);
-  await service();
-  const saved = await rpc("crm_save_links", [lead, "DE", 11, 12, 5001, anna, "reference_mail", anna]);
-  assert.equal(saved.deal_created, true);
-  l = await link(lead);
-  assert.equal(Number(l.deal_id), 5001);
+  assert.equal(l.deal_id, null);
   assert.equal(l.is_customer, false, "Referenzmail does not make a customer");
-  assert.equal(l.current_stage_key, "reference_mail");
   await as(anna);
   assert.deepEqual(await rpc("get_my_customers", ["DE"]), []);
+  await service();
+  // a deal created later (after a reply) keeps the original caller
+  const saved = await rpc("crm_save_links", [lead, "DE", 11, 12, 5001, anna, "contact_saved", anna]);
+  assert.equal(saved.deal_created, true);
+  l = await link(lead);
+  assert.equal(l.origin_caller_id, anna);
+  assert.equal(Number(l.deal_id), 5001);
 });
 
 test("original caller and deal can never be overwritten", async () => {
@@ -150,7 +152,7 @@ test("original caller and deal can never be overwritten", async () => {
   assert.equal((await link(lead)).origin_caller_id, anna);
   // Saving links again never creates a second deal or replaces the first.
   await service();
-  const again = await rpc("crm_save_links", [lead, "DE", 11, 12, 5999, ben, "reference_mail", ben]);
+  const again = await rpc("crm_save_links", [lead, "DE", 11, 12, 5999, ben, "contact_saved", ben]);
   assert.equal(again.deal_created, false);
   assert.equal(Number((await link(lead)).deal_id), 5001);
   assert.equal((await link(lead)).origin_caller_id, anna);
@@ -194,7 +196,7 @@ test("a later Pipedrive stage change makes the deal a customer of the original c
   assert.deepEqual(
     changes.map((e) => [e.previous_stage, e.new_stage, e.source]),
     [
-      ["reference_mail", "low_q", "pipedrive"],
+      ["contact_saved", "low_q", "pipedrive"],
       ["low_q", "rd_done", "pipedrive"],
       ["rd_done", "offer", "pipedrive"],
     ],

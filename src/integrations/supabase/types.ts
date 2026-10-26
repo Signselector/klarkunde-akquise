@@ -648,6 +648,7 @@ export type Database = {
           lead_id: string
           provider: string | null
           provider_message_id: string | null
+          replied_at: string | null
           request_id: string
           sent_at: string | null
           status: string
@@ -667,6 +668,7 @@ export type Database = {
           lead_id: string
           provider?: string | null
           provider_message_id?: string | null
+          replied_at?: string | null
           request_id: string
           sent_at?: string | null
           status?: string
@@ -686,6 +688,7 @@ export type Database = {
           lead_id?: string
           provider?: string | null
           provider_message_id?: string | null
+          replied_at?: string | null
           request_id?: string
           sent_at?: string | null
           status?: string
@@ -1334,6 +1337,8 @@ export type Database = {
       }
       activate_future_projects: { Args: never; Returns: Json }
       get_no_interest_leads: { Args: { p_country: string }; Returns: Json }
+      get_unanswered_reference_leads: { Args: { p_country: string }; Returns: Json }
+      register_reference_reply: { Args: { p_from: string; p_refs?: string[] }; Returns: Json }
       can_access_country: { Args: { _c: string }; Returns: boolean }
       checkpoint_integration: {
         Args: {

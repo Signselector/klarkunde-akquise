@@ -37,12 +37,6 @@ export const REQUIRED_STAGES: { key: string; label: string; hint: RegExp; hintTe
     hint: /zuk(ü|u)nft|hold|future/i,
     hintText: "Zukünftiges Interesse",
   },
-  {
-    key: "reference_mail",
-    label: "Referenzmail → Referenzmail versendet",
-    hint: /referenz/i,
-    hintText: "Referenzmail versendet",
-  },
 ];
 
 export function buildValidationReport(input: {

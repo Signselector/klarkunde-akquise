@@ -16,7 +16,7 @@ export const OUTCOME_LABEL: Record<string, string> = {
   production: "Deal in Produktion",
 };
 /** Results that put a deal into Pipedrive. */
-export const DEAL_OUTCOMES = ["low_q", "high_q", "waiting_3d", "on_hold", "reference_mail"];
+export const DEAL_OUTCOMES = ["low_q", "high_q", "waiting_3d", "on_hold"];
 
 const viennaDay = new Intl.DateTimeFormat("sv-SE", {
   timeZone: "Europe/Vienna",

@@ -13,7 +13,7 @@ export type NoInterestLead = {
   note: string | null;
 };
 
-const pick = (extra: Record<string, unknown> | null, names: string[]) => {
+export const pick = (extra: Record<string, unknown> | null, names: string[]) => {
   for (const [k, v] of Object.entries(extra ?? {}))
     if (names.includes(k.trim().toLowerCase()) && v !== null && v !== undefined && String(v).trim())
       return String(v).trim();
@@ -21,7 +21,7 @@ const pick = (extra: Record<string, unknown> | null, names: string[]) => {
 };
 
 /** Cells starting with = + - @ would run as formulas in Excel, so they get a leading apostrophe. */
-const cell = (value: unknown) => {
+export const cell = (value: unknown) => {
   let t = value === null || value === undefined ? "" : String(value).replace(/\r?\n/g, " ");
   if (/^[=+\-@]/.test(t) && !/^[+-]?\d[\d\s().-]*$/.test(t)) t = `'${t}`;
   return /[";]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;

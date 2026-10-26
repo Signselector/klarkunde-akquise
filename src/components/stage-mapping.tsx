@@ -22,7 +22,6 @@ const GROUPS: { title: string; fields: [string, string][] }[] = [
       ["high_q", "Realismus Render Stage"],
       ["no_interest", "Kein Interesse Stage"],
       ["on_hold", "Zukunftsprojekt Stage"],
-      ["reference_mail", "Referenzmail verschickt Stage"],
     ],
   },
   {

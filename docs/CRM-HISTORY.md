@@ -14,7 +14,7 @@ Tests: `node --test tests/backend/crm-history.test.mjs tests/backend/lead-action
 | Kein Interesse   | Abgeschlossen (intern „Kein Interesse“)              | kein Deal                                 | nein                            |
 | Rückruf          | **bleibt in Offene Leads**, erscheint unter Rückrufe | kein Deal                                 | nein                            |
 | Nicht erreicht   | bleibt in Offene Leads, Versuch gespeichert          | kein Deal                                 | nein                            |
-| Referenzmail     | Abgeschlossen, nach bestätigter Mail                 | `reference_mail`                          | erst nach späterem Kunden-Stage |
+| Referenzmail     | Abgeschlossen, nach bestätigter Mail                 | `reference_mail`                          | kein Deal; Rückkehr zum Caller bei Antwort |
 
 Das ersetzt die frühere Anweisung, dass Kein Interesse und Zukunftsprojekt in Offene Leads bleiben.
 

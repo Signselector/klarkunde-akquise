@@ -224,7 +224,7 @@ test("Kontaktdaten is no longer a conversation outcome", async () => {
   assert.equal((await row(lead)).status, before.status, "nothing changed");
 });
 
-test("Referenzmail moves the lead on and is queued for the CRM", async () => {
+test("Referenzmail moves the lead on without a CRM deal", async () => {
   await as(anna);
   const lead = leads[0];
   const l = await row(lead);
@@ -248,8 +248,8 @@ test("Referenzmail moves the lead on and is queued for the CRM", async () => {
     details: { email_id: mail, template: "t1" },
   });
   assert.equal(done.status, "reference_mail");
-  assert.equal(done.stage_key, "reference_mail");
-  assert.equal(done.crm_sync_state, "queued");
+  assert.equal(done.stage_key, null);
+  assert.equal(done.crm_sync_state, null);
   assert.equal((await row(lead)).status, "reference_mail");
 });
 

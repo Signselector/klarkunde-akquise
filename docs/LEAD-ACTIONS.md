@@ -32,7 +32,7 @@ Batch des Aufrufers (oder wurde von ihm bearbeitet, oder Admin), kein fremder ak
 | `low_q` (Logo Render) | `low_q` | Abgeschlossene Leads | `low_q` | Notiz, Logo |
 | `high_q` (Realismus Render) | `high_q` | Abgeschlossene Leads | `high_q` | Notiz, Logo |
 | `waiting_3d` (Logo ausstehend) | `waiting_3d` | Abgeschlossene Leads | `waiting_3d` | Notiz |
-| `reference_mail` (Referenzmail) | `reference_mail` | Abgeschlossene Leads | `reference_mail` | bestätigte Mail |
+| `reference_mail` (Referenzmail) | `reference_mail` | Abgeschlossene Leads | keine (kein Deal) | bestätigte Mail |
 | `callback` (Rückruf) | `callback` | bleibt in Offene Leads (siehe Rückrufe) | keine (intern) | Datum und Uhrzeit |
 | `no_interest` (Kein Interesse) | `no_interest` | Abgeschlossene Leads | keine, kein Deal | – |
 | `on_hold` (Zukunftsprojekt) | `on_hold` | Abgeschlossene Leads | `on_hold` | Notiz; optional Wiedervorlage (wird ein Rückruf) |
@@ -86,3 +86,17 @@ Die Spalten stehen in `src/lib/customer-stages.ts`; ihre Stage-IDs kommen aus de
 `won_other_percent`, `won_production_planning` und `won_zero_percent` zusammen.
 
 Nicht getestet gegen echtes Pipedrive: die Gateway-Pfade `/deals?ids=…`, `/deals/{id}` und `/stages`.
+
+
+## Referenzmail (Migration 0021)
+
+- Der Caller schreibt die Mail selbst oder nimmt eine Vorlage. Der Versand läuft über die Versandschicht (Testmodus: nur simuliert).
+  Der Lead ist danach unter Abgeschlossen. **Es wird kein Deal angelegt**, die Stage „Referenzmail“ ist nicht mehr nötig.
+- Der ursprüngliche Caller wird dauerhaft gespeichert (`lead_crm_links.origin_caller_id`, seine Profil-ID).
+- **Antwort:** Der Webhook `POST /api/mail-reply` (Basic Auth wie der Pipedrive-Webhook, Nutzer/Passwort `PIPEDRIVE_WEBHOOK_USER/PASSWORD`)
+  nimmt eingehende Mails an. Zuordnung über die Message-ID aus `In-Reply-To`/`References`, sonst über die Absenderadresse einer
+  unbeantworteten Referenzmail. Der Lead geht als Rückruf (sofort fällig) an den ursprünglichen Caller zurück und erscheint in dessen Warteschlange.
+  Ein zweites Eintreffen derselben Antwort ändert nichts.
+- **Keine Antwort nach 3 Monaten:** Der Lead erscheint für Admins/Manager im Menü „Referenzmail offen“. Die Liste ist als CSV herunterladbar,
+  jede Zeile beginnt mit der Caller-ID des ursprünglichen Callers.
+- Einrichtung: den eingehenden Mailverkehr des Absenders (Antworten an `EMAIL_FROM`) an `/api/mail-reply` weiterleiten (z. B. Inbound-Webhook des Mail-Providers).

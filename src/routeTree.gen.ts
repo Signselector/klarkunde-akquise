@@ -25,8 +25,10 @@ import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedMyStatsRouteImport } from './routes/_authenticated/my-stats'
 import { Route as AuthenticatedNoInterestRouteImport } from './routes/_authenticated/no-interest'
+import { Route as AuthenticatedReferenceUnansweredRouteImport } from './routes/_authenticated/reference-unanswered'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
+import { Route as ApiMailReplyRouteImport } from './routes/api/mail-reply'
 import { Route as ApiPipedriveReconcileRouteImport } from './routes/api/pipedrive-reconcile'
 import { Route as ApiPipedriveWebhookRouteImport } from './routes/api/pipedrive-webhook'
 
@@ -110,6 +112,12 @@ const AuthenticatedNoInterestRoute = AuthenticatedNoInterestRouteImport.update({
   path: '/no-interest',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReferenceUnansweredRoute =
+  AuthenticatedReferenceUnansweredRouteImport.update({
+    id: '/reference-unanswered',
+    path: '/reference-unanswered',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -119,6 +127,11 @@ const AuthenticatedStatsRoute = AuthenticatedStatsRouteImport.update({
   id: '/stats',
   path: '/stats',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiMailReplyRoute = ApiMailReplyRouteImport.update({
+  id: '/api/mail-reply',
+  path: '/api/mail-reply',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPipedriveReconcileRoute = ApiPipedriveReconcileRouteImport.update({
   id: '/api/pipedrive-reconcile',
@@ -147,8 +160,10 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AuthenticatedLeadsRoute
   '/my-stats': typeof AuthenticatedMyStatsRoute
   '/no-interest': typeof AuthenticatedNoInterestRoute
+  '/reference-unanswered': typeof AuthenticatedReferenceUnansweredRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
 }
@@ -168,8 +183,10 @@ export interface FileRoutesByTo {
   '/leads': typeof AuthenticatedLeadsRoute
   '/my-stats': typeof AuthenticatedMyStatsRoute
   '/no-interest': typeof AuthenticatedNoInterestRoute
+  '/reference-unanswered': typeof AuthenticatedReferenceUnansweredRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
 }
@@ -191,8 +208,10 @@ export interface FileRoutesById {
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/my-stats': typeof AuthenticatedMyStatsRoute
   '/_authenticated/no-interest': typeof AuthenticatedNoInterestRoute
+  '/_authenticated/reference-unanswered': typeof AuthenticatedReferenceUnansweredRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
+  '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
 }
@@ -214,8 +233,10 @@ export interface FileRouteTypes {
     | '/leads'
     | '/my-stats'
     | '/no-interest'
+    | '/reference-unanswered'
     | '/settings'
     | '/stats'
+    | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -235,8 +256,10 @@ export interface FileRouteTypes {
     | '/leads'
     | '/my-stats'
     | '/no-interest'
+    | '/reference-unanswered'
     | '/settings'
     | '/stats'
+    | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
   id:
@@ -257,8 +280,10 @@ export interface FileRouteTypes {
     | '/_authenticated/leads'
     | '/_authenticated/my-stats'
     | '/_authenticated/no-interest'
+    | '/_authenticated/reference-unanswered'
     | '/_authenticated/settings'
     | '/_authenticated/stats'
+    | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
   fileRoutesById: FileRoutesById
@@ -268,6 +293,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiMailReplyRoute: typeof ApiMailReplyRoute
   ApiPipedriveReconcileRoute: typeof ApiPipedriveReconcileRoute
   ApiPipedriveWebhookRoute: typeof ApiPipedriveWebhookRoute
 }
@@ -386,6 +412,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNoInterestRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/reference-unanswered': {
+      id: '/_authenticated/reference-unanswered'
+      path: '/reference-unanswered'
+      fullPath: '/reference-unanswered'
+      preLoaderRoute: typeof AuthenticatedReferenceUnansweredRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -399,6 +432,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/stats'
       preLoaderRoute: typeof AuthenticatedStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/mail-reply': {
+      id: '/api/mail-reply'
+      path: '/api/mail-reply'
+      fullPath: '/api/mail-reply'
+      preLoaderRoute: typeof ApiMailReplyRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/pipedrive-reconcile': {
       id: '/api/pipedrive-reconcile'
@@ -430,6 +470,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedMyStatsRoute: typeof AuthenticatedMyStatsRoute
   AuthenticatedNoInterestRoute: typeof AuthenticatedNoInterestRoute
+  AuthenticatedReferenceUnansweredRoute: typeof AuthenticatedReferenceUnansweredRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStatsRoute: typeof AuthenticatedStatsRoute
 }
@@ -447,6 +488,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedMyStatsRoute: AuthenticatedMyStatsRoute,
   AuthenticatedNoInterestRoute: AuthenticatedNoInterestRoute,
+  AuthenticatedReferenceUnansweredRoute: AuthenticatedReferenceUnansweredRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStatsRoute: AuthenticatedStatsRoute,
 }
@@ -459,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiMailReplyRoute: ApiMailReplyRoute,
   ApiPipedriveReconcileRoute: ApiPipedriveReconcileRoute,
   ApiPipedriveWebhookRoute: ApiPipedriveWebhookRoute,
 }
