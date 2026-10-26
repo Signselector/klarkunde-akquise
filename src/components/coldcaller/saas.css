@@ -1091,3 +1091,23 @@
   background-repeat: repeat;
   background-blend-mode: soft-light;
 }
+
+/* Sidebar tone: fine graphite, near-black, with a deep burgundy active pill */
+.cc-app [data-sidebar="sidebar"],
+[data-sidebar="sidebar"][data-mobile="true"] {
+  background-color: #181818;
+  background-image: url("/brand/signselector/graphite-texture.png");
+  background-size: 256px 256px;
+  background-repeat: repeat;
+  background-blend-mode: normal;
+}
+.cc-app .cc-nav-link[data-active="true"],
+[data-mobile="true"] .cc-nav-link[data-active="true"] {
+  color: #fff7f5;
+  background: #620b12;
+  border-color: #8d2931;
+  box-shadow:
+    inset 0 1px 0 rgb(255 206 206 / 12%),
+    inset 0 -7px 12px rgb(27 0 3 / 25%),
+    0 3px 4px rgb(0 0 0 / 38%);
+}
