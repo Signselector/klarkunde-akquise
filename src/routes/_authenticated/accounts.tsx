@@ -8,6 +8,7 @@ import { primaryRole, ROLE_LABEL, useRoles, type RoleName } from "@/lib/use-admi
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { COUNTRIES } from "@/lib/country";
+import { Flag } from "@/components/flag";
 import { deleteAccount } from "@/lib/accounts.functions";
 
 const MASTER = "office@signselector.com";
@@ -180,7 +181,7 @@ function AccountsPage() {
                     {u.master
                       ? COUNTRIES.map((c) => (
                           <Badge key={c.code} variant="outline">
-                            {c.flag} {c.code}
+                            <Flag code={c.code} /> {c.code}
                           </Badge>
                         ))
                       : COUNTRIES.map((c) => {
@@ -201,7 +202,7 @@ function AccountsPage() {
                               aria-pressed={on}
                               onClick={() => toggleCountry(u.id, c.code, !on)}
                             >
-                              {c.flag} {c.code}
+                              <Flag code={c.code} /> {c.code}
                             </Button>
                           );
                         })}

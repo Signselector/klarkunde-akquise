@@ -1295,3 +1295,13 @@ tr:hover > .cc-sticky-action {
     transition-duration: 120ms;
   }
 }
+
+/* Country switcher: flags only */
+.cc-sidebar-tools [role="radio"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cc-sidebar-tools [role="radio"][aria-checked="false"] svg {
+  opacity: 0.7;
+}

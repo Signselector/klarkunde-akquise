@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Flag } from "@/components/flag";
 
 export const COUNTRIES = [
   { code: "DE", label: "Deutschland", flag: "🇩🇪" },
@@ -80,7 +81,8 @@ export function CountrySwitcher() {
               : "text-muted-foreground hover:bg-muted"
           }`}
         >
-          <span aria-hidden="true">{c.flag}</span> {c.code}
+          <Flag code={c.code} />
+          <span className="sr-only">{c.label}</span>
         </button>
       ))}
     </div>

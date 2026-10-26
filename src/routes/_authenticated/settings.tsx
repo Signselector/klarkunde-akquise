@@ -88,7 +88,7 @@ function SettingsPage() {
         <TabsContent value="pipedrive" className="space-y-4">
           <SectionHeader
             title="Pipedrive"
-            help="Verbindung, Testmodus und Übertragungen für 🇩🇪 DE und 🇦🇹 AT. Die API-Zugänge liegen serverseitig und werden nicht in der Datenbank gespeichert."
+            help="Verbindung, Testmodus und Übertragungen für DE und AT. Die API-Zugänge liegen serverseitig und werden nicht in der Datenbank gespeichert."
           />
           <TestModeCard />
           {backendEnabled && <PipedriveJobs admin={admin} />}

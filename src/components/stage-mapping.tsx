@@ -10,6 +10,7 @@ import {
   validateStageMapping,
 } from "@/lib/crm-admin.functions";
 import type { ValidationReport } from "@/lib/stage-validation";
+import { Flag } from "@/components/flag";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -216,7 +217,7 @@ export function StageMapping() {
               variant={country === c ? "default" : "outline"}
               onClick={() => setCountry(c)}
             >
-              {c === "DE" ? "🇩🇪 DE" : "🇦🇹 AT"}
+              <Flag code={c} /> {c}
             </Button>
           ))}
         </div>
