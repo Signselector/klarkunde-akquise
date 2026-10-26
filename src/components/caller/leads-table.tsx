@@ -1,4 +1,4 @@
-import { ExternalLink, Mail, MapPin, Phone } from "@/components/coldcaller/icons";
+import { Mail, MapPin, Phone } from "@/components/coldcaller/icons";
 import { parseLeadLinks } from "@/components/coldcaller/workspace-parts";
 import { StatusBadge } from "@/components/coldcaller/primitives";
 import type { Tone } from "@/components/coldcaller/primitives";
@@ -28,37 +28,59 @@ export function leadTone(status: string): Tone {
         : "info";
 }
 
-/** Phone, mail and website as quick links; plain text when a value is missing. */
+function GlobeIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M2 12h20" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  );
+}
+
+/** Name, phone and website stacked with even spacing; each stays on one line and is shortened with … if needed. */
 function ContactLinks({ lead }: { lead: TableLead }) {
   const { websiteUrl } = parseLeadLinks(lead.extra as Record<string, unknown>, lead.city);
+  const site = websiteUrl?.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
+  const row = "flex min-w-0 items-center gap-2 text-sm leading-5";
   return (
-    <div className="space-y-1">
-      {lead.contact_name && <p className="text-sm">{lead.contact_name}</p>}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-        {lead.phone ? (
-          <a
-            className="inline-flex items-center gap-1 text-primary hover:underline"
-            href={`tel:${lead.phone}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Phone size={14} aria-hidden="true" />
-            {lead.phone}
-          </a>
-        ) : (
-          <span className="text-muted-foreground">Keine Nummer</span>
-        )}
-      </div>
+    <div className="flex min-w-[13rem] max-w-[18rem] flex-col gap-1.5">
+      {lead.contact_name && <p className={`${row} truncate`}>{lead.contact_name}</p>}
+      {lead.phone ? (
+        <a
+          className={`${row} text-primary hover:underline`}
+          href={`tel:${lead.phone}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Phone size={14} aria-hidden="true" className="shrink-0" />
+          <span className="truncate">{lead.phone}</span>
+        </a>
+      ) : (
+        <span className={`${row} text-muted-foreground`}>Keine Nummer</span>
+      )}
       {websiteUrl && (
         <a
-          className="inline-flex max-w-full items-start gap-1 break-words text-sm text-primary hover:underline"
+          className={`${row} text-primary hover:underline`}
           href={websiteUrl}
           target="_blank"
           rel="noopener noreferrer"
+          title={websiteUrl}
           aria-label={`Website von ${lead.company ?? "Kontakt"} öffnen`}
           onClick={(e) => e.stopPropagation()}
         >
-          <ExternalLink size={14} aria-hidden="true" className="shrink-0" />
-          {websiteUrl.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "")}
+          <GlobeIcon />
+          <span className="truncate">{site}</span>
         </a>
       )}
     </div>
