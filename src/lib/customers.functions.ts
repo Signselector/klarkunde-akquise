@@ -107,7 +107,7 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
             p_source: "pipedrive",
             p_actor_name: "Pipedrive (Abgleich)",
             p_status: status,
-          });
+          } as never);
         }
       } catch (e) {
         error = e instanceof CrmError ? e.code : "network_error";

@@ -163,7 +163,7 @@ async function reconcile(country: string): Promise<ReconcileResult> {
         p_source: "pipedrive",
         p_actor_name: "Pipedrive (Abgleich)",
         p_status: a.status,
-      });
+      } as never);
       return (r ?? {}) as { applied?: boolean; reason?: string };
     },
   );

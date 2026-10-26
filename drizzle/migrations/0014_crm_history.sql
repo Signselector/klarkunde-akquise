@@ -1,7 +1,3 @@
--- Permanent lead history, original-caller attribution, CRM stage tracking, e-mail tracking and validation.
--- Written by the server only where noted. Test mode (integration_config.test_mode) still prevents real CRM and e-mail traffic.
-
--- 1. Statuses: "Kontaktdaten hinterlegt" is a real outcome now.
 ALTER TABLE public.leads DROP CONSTRAINT lead_status_valid;
 ALTER TABLE public.leads ADD CONSTRAINT lead_status_valid
   CHECK (status IN ('open','callback','appointment','production','no_interest','in_progress','on_hold','waiting_3d','low_q','high_q','reference_mail','contact_saved'));
@@ -9,7 +5,6 @@ CREATE OR REPLACE FUNCTION app_private.call_outcomes() RETURNS text[] LANGUAGE s
  SELECT ARRAY['not_reached','no_interest','callback','appointment','production','low_q','high_q','waiting_3d','on_hold','reference_mail','contact_saved','in_progress']
 $$;
 
--- 2. One CRM link per lead: who found it, which deal, where it is now.
 ALTER TABLE public.lead_crm_links
   ADD COLUMN origin_caller_id uuid,
   ADD COLUMN origin_lead_id uuid,
@@ -29,7 +24,6 @@ UPDATE public.lead_crm_links k SET origin_lead_id=k.lead_id,
 CREATE UNIQUE INDEX lead_crm_links_deal_unique ON public.lead_crm_links(country,deal_id) WHERE deal_id IS NOT NULL;
 CREATE INDEX lead_crm_links_origin_idx ON public.lead_crm_links(origin_caller_id) WHERE is_customer;
 
--- The original caller and the deal never change once set. Stage changes and owner changes do not touch them.
 CREATE FUNCTION app_private.crm_link_guard() RETURNS trigger LANGUAGE plpgsql SET search_path='' AS $$
 BEGIN
  IF OLD.origin_caller_id IS NOT NULL AND NEW.origin_caller_id IS DISTINCT FROM OLD.origin_caller_id THEN
@@ -42,7 +36,6 @@ BEGIN
 END $$;
 CREATE TRIGGER crm_link_guard BEFORE UPDATE ON public.lead_crm_links FOR EACH ROW EXECUTE FUNCTION app_private.crm_link_guard();
 
--- 3. Activity history: append only.
 CREATE TABLE public.lead_activity (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   seq bigint GENERATED ALWAYS AS IDENTITY,
@@ -73,13 +66,11 @@ CREATE POLICY lead_activity_read ON public.lead_activity FOR SELECT TO authentic
 
 CREATE FUNCTION app_private.activity_guard() RETURNS trigger LANGUAGE plpgsql SET search_path='' AS $$
 BEGIN
- -- Only cascading deletes (a lead is removed for good) may remove history; nobody edits it.
  IF TG_OP='DELETE' AND pg_trigger_depth()>1 THEN RETURN OLD; END IF;
  RAISE EXCEPTION 'activity_is_append_only' USING ERRCODE='23514';
 END $$;
 CREATE TRIGGER activity_guard BEFORE UPDATE OR DELETE ON public.lead_activity FOR EACH ROW EXECUTE FUNCTION app_private.activity_guard();
 
--- Returns false when an event with the same external id was already stored (webhook delivered twice).
 CREATE FUNCTION app_private.log_activity(
   p_lead uuid, p_type text, p_acting uuid, p_source text DEFAULT 'cold_caller',
   p_prev text DEFAULT NULL, p_new text DEFAULT NULL, p_deal bigint DEFAULT NULL,
@@ -119,7 +110,6 @@ BEGIN
 END $$;
 CREATE TRIGGER lead_action_activity AFTER INSERT ON public.lead_actions FOR EACH ROW EXECUTE FUNCTION app_private.trg_action_activity();
 
--- 4. E-mails: nothing counts as sent until the provider confirmed it.
 CREATE TABLE public.lead_emails (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   lead_id uuid NOT NULL REFERENCES public.leads(id) ON DELETE CASCADE,
@@ -155,7 +145,6 @@ BEGIN
 END $$;
 CREATE TRIGGER lead_email_activity AFTER INSERT OR UPDATE OF status ON public.lead_emails FOR EACH ROW EXECUTE FUNCTION app_private.trg_email_activity();
 
--- 5. Result of the last stage check against the real Pipedrive account. Synchronisation stays locked until it passed.
 CREATE TABLE public.pipedrive_stage_validation (
   country text PRIMARY KEY CHECK (country IN ('DE','AT','NL')),
   ok boolean NOT NULL,
@@ -169,7 +158,6 @@ GRANT ALL ON public.pipedrive_stage_validation TO service_role;
 ALTER TABLE public.pipedrive_stage_validation ENABLE ROW LEVEL SECURITY;
 CREATE POLICY psv_read ON public.pipedrive_stage_validation FOR SELECT TO authenticated USING (public.has_role(auth.uid(),'admin') AND public.can_access_country(country));
 
--- 6. CRM writes, called by the server with the service role only.
 CREATE FUNCTION app_private.customer_stage_keys() RETURNS text[] LANGUAGE sql IMMUTABLE SET search_path='' AS $$
  SELECT ARRAY['low_q','high_q','waiting_3d','on_hold','future_interest']
 $$;
@@ -199,7 +187,6 @@ BEGIN
  RETURN jsonb_build_object('deal_created',created,'origin_caller_id',k.origin_caller_id);
 END $$;
 
--- Applies a stage (and deal status) seen in Pipedrive or sent by this tool. Safe to call again with the same event.
 CREATE FUNCTION public.crm_apply_stage(
   p_country text, p_deal_id bigint, p_stage_id bigint, p_event_id text, p_occurred timestamptz,
   p_source text, p_actor uuid DEFAULT NULL, p_actor_name text DEFAULT NULL, p_status text DEFAULT NULL, p_stage_key text DEFAULT NULL
@@ -217,7 +204,6 @@ BEGIN
  IF ext IS NOT NULL AND EXISTS(SELECT 1 FROM public.lead_activity WHERE external_id=ext) THEN
   RETURN jsonb_build_object('applied',false,'reason','duplicate');
  END IF;
- -- An older event that arrives late must not undo a newer stage.
  IF p_occurred IS NOT NULL AND k.stage_event_at IS NOT NULL AND p_occurred<k.stage_event_at THEN
   RETURN jsonb_build_object('applied',false,'reason','stale');
  END IF;
@@ -230,7 +216,6 @@ BEGIN
     ORDER BY coalesce(array_position(prio,m.key),99), m.key LIMIT 1;
   END IF;
   changed:=p_stage_id IS DISTINCT FROM k.current_stage_id OR newkey IS DISTINCT FROM oldkey;
-  -- A stage set by this tool already knows its key but not its id: only the id is new then.
   IF changed AND p_stage_id IS NOT DISTINCT FROM k.current_stage_id AND newkey IS NOT DISTINCT FROM oldkey THEN changed:=false; END IF;
   IF changed THEN
    flip:=NOT k.is_customer AND newkey=ANY(app_private.customer_stage_keys());
@@ -241,7 +226,6 @@ BEGIN
     IF newkey='offer' THEN PERFORM app_private.log_activity(k.lead_id,'offer_created',p_actor,src,oldkey,newkey,p_deal_id,ext||':offer',NULL,coalesce(p_occurred,now()),p_actor_name); END IF;
     IF flip THEN PERFORM app_private.log_activity(k.lead_id,'customer_assigned',p_actor,src,oldkey,newkey,p_deal_id,'customer:'||p_country||':'||p_deal_id,NULL,coalesce(p_occurred,now()),p_actor_name); END IF;
    ELSE
-    -- Same key, other numeric id (shared mapping): remember the id only.
     UPDATE public.lead_crm_links SET current_stage_id=p_stage_id WHERE lead_id=k.lead_id;
    END IF;
   ELSE
@@ -263,7 +247,6 @@ $$;
 REVOKE ALL ON FUNCTION public.crm_save_links(uuid,text,bigint,bigint,bigint,uuid,text,uuid), public.crm_apply_stage(text,bigint,bigint,text,timestamptz,text,uuid,text,text,text), public.crm_set_sync_state(uuid,text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.crm_save_links(uuid,text,bigint,bigint,bigint,uuid,text,uuid), public.crm_apply_stage(text,bigint,bigint,text,timestamptz,text,uuid,text,text,text), public.crm_set_sync_state(uuid,text) TO service_role;
 
--- 7. Reading: customers, completed leads and performance. Callers only ever see their own.
 CREATE FUNCTION public.get_my_customers(p_country text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor();
 BEGIN
@@ -295,7 +278,6 @@ BEGIN
   ORDER BY l.last_called_at DESC NULLS LAST LIMIT least(greatest(p_limit,1),1000)) t),'[]'::jsonb);
 END $$;
 
--- Data foundation for rewards: counts per original caller and period. Qualified leads count once per lead.
 CREATE FUNCTION public.get_caller_performance(p_from date, p_to date, p_granularity text DEFAULT 'month', p_user uuid DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); adm boolean:=public.has_role(app_private.actor(),'admin'); u uuid;
 BEGIN
@@ -324,7 +306,6 @@ END $$;
 REVOKE ALL ON FUNCTION public.get_my_customers(text), public.get_completed_overview(text,integer), public.get_caller_performance(date,date,text,uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_my_customers(text), public.get_completed_overview(text,integer), public.get_caller_performance(date,date,text,uuid) TO authenticated;
 
--- 8. record_lead_action: e-mail actions need a confirmed e-mail, Kontaktdaten moves the lead on, the first CRM action fixes the original caller.
 CREATE OR REPLACE FUNCTION public.record_lead_action(
   p_request_id uuid, p_lead_id uuid, p_expected_version integer, p_action text,
   p_note text DEFAULT NULL, p_scheduled_at timestamptz DEFAULT NULL,
@@ -360,7 +341,6 @@ BEGIN
  IF l.version IS DISTINCT FROM p_expected_version THEN RAISE EXCEPTION 'stale_lead' USING ERRCODE='40001'; END IF;
  SELECT * INTO bt FROM public.lead_batches WHERE id=l.batch_id;
  IF NOT public.can_access_country(bt.country) THEN RAISE EXCEPTION 'forbidden' USING ERRCODE='42501'; END IF;
- -- Own batch, own earlier work, or an admin. Anyone else may not touch the lead.
  IF NOT (public.has_role(a,'admin') OR bt.assigned_to IS NOT DISTINCT FROM a OR l.last_called_by IS NOT DISTINCT FROM a) THEN
   RAISE EXCEPTION 'not_your_lead' USING ERRCODE='42501';
  END IF;
@@ -368,7 +348,6 @@ BEGIN
   RAISE EXCEPTION 'lead_claimed' USING ERRCODE='40001';
  END IF;
 
- -- Required inputs per action.
  IF p_action IN ('low_q','high_q') THEN
   IF note IS NULL THEN RAISE EXCEPTION 'note_required' USING ERRCODE='22023'; END IF;
   IF p_logo_path IS NULL OR p_logo_path NOT LIKE a::text||'/'||l.id::text||'/%' OR length(p_logo_path)>500 THEN
@@ -392,7 +371,6 @@ BEGIN
    RAISE EXCEPTION 'invalid_email' USING ERRCODE='22023';
   END IF;
  END IF;
- -- Emails must have been sent (or simulated in test mode) before the lead may move on.
  IF p_action IN ('reference_mail','contact_details') THEN
   BEGIN eid:=nullif(p_details->>'email_id','')::uuid; EXCEPTION WHEN others THEN eid:=NULL; END;
   IF eid IS NULL OR NOT EXISTS(SELECT 1 FROM public.lead_emails e WHERE e.id=eid AND e.lead_id=l.id AND e.created_by=a AND e.kind=p_action AND e.status IN ('sent','simulated')) THEN
@@ -403,7 +381,6 @@ BEGIN
   RAISE EXCEPTION 'validation_failed' USING ERRCODE='22023';
  END IF;
 
- -- Status and CRM stage key. Only actions with a stage key are queued for the CRM.
  new_status:=CASE p_action
   WHEN 'low_q' THEN 'low_q' WHEN 'high_q' THEN 'high_q'
   WHEN 'waiting_3d' THEN 'waiting_3d' WHEN 'on_hold' THEN 'on_hold'
@@ -440,7 +417,6 @@ BEGIN
   UPDATE public.leads SET status=new_status,attempts=attempts+1,last_called_at=now(),last_called_by=a WHERE id=l.id;
   INSERT INTO public.status_changes(lead_id,user_id,old_status,new_status) VALUES(l.id,a,l.status,
    CASE WHEN p_action='not_reached' THEN 'not_reached' ELSE new_status END);
-  -- A recorded outcome replaces earlier open callbacks of this lead.
   UPDATE public.callbacks SET done=true WHERE lead_id=l.id AND NOT done;
  END IF;
 
@@ -454,7 +430,6 @@ BEGIN
   VALUES(l.id,a,p_action,note,stage,sync,CASE WHEN p_action IN ('low_q','high_q') THEN p_logo_path END,p_scheduled_at,p_details)
   RETURNING id INTO aid;
  IF stage IS NOT NULL THEN
-  -- The first caller with a CRM action becomes the permanent original caller of this lead.
   INSERT INTO public.lead_crm_links(lead_id,country,origin_caller_id,origin_lead_id) VALUES(l.id,bt.country,a,l.id)
    ON CONFLICT (lead_id) DO UPDATE SET origin_caller_id=coalesce(public.lead_crm_links.origin_caller_id,a),updated_at=now();
  END IF;

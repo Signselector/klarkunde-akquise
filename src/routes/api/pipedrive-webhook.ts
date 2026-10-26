@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/pipedrive-webhook")({
           p_source: "pipedrive",
           p_actor_name: "Pipedrive",
           p_status: event.status === "won" || event.status === "lost" ? event.status : null,
-        });
+        } as never);
         // A server error makes Pipedrive retry; the retry is harmless because the event id is stored.
         if (error) return new Response("error", { status: 500 });
         return Response.json(data);
