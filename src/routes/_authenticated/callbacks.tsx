@@ -9,8 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar } from "@/components/ui/calendar";
-import { de } from "date-fns/locale";
+import { MonthCalendar, sameDay } from "@/components/caller/month-calendar";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
@@ -31,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/callbacks")({
 function CallbacksPage() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
-  const [day, setDay] = useState<Date | undefined>();
+  const [day, setDay] = useState<Date | null>(null);
   const [leadId, setLeadId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
@@ -74,34 +73,50 @@ function CallbacksPage() {
   }
 
   const now = new Date();
-  const visible = (data ?? []).filter(
-    (c) => !day || new Date(c.due_at).toDateString() === day.toDateString(),
-  );
-  const sameDay = (d: Date) => d.toDateString() === now.toDateString();
+  const visible = (data ?? []).filter((c) => !day || sameDay(new Date(c.due_at), day));
+  const isToday = (d: Date) => sameDay(d, now);
+  const markersOf = (d: Date) =>
+    (data ?? [])
+      .filter((c) => sameDay(new Date(c.due_at), d))
+      .map((c) => {
+        const due = new Date(c.due_at);
+        return {
+          id: c.id,
+          dot: due < now ? "bg-destructive" : isToday(due) ? "bg-primary" : "bg-chart-2",
+        };
+      });
   return (
     <div className="cc-page">
       <PageHeading
         title="Rückrufe"
         description="Deine vereinbarten Gespräche. Fällige Rückrufe erscheinen zusätzlich als Erinnerung."
       />
-      <div className="grid items-start gap-5 lg:grid-cols-[auto_1fr]">
-        <Surface title="Rückrufkalender" description="Tag auswählen, um die Liste zu filtern">
-          <Calendar
-            mode="single"
-            selected={day}
-            onSelect={setDay}
-            locale={de}
-            modifiers={{ callback: (data ?? []).map((c) => new Date(c.due_at)) }}
-            modifiersClassNames={{
-              callback: "font-bold underline decoration-primary decoration-2 underline-offset-4",
-            }}
-          />
-          {day && (
-            <Button variant="outline" onClick={() => setDay(undefined)}>
-              Alle Rückrufe anzeigen
-            </Button>
-          )}
-        </Surface>
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
+        <MonthCalendar
+          ariaLabel="Rückrufkalender"
+          markersOf={markersOf}
+          selected={day}
+          onSelect={setDay}
+          loading={isLoading}
+          footer={
+            <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <span className="size-2 rounded-full bg-destructive" /> Überfällig
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="size-2 rounded-full bg-primary" /> Heute
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="size-2 rounded-full bg-chart-2" /> Geplant
+              </span>
+              {day && (
+                <Button size="sm" variant="outline" onClick={() => setDay(null)}>
+                  Alle Rückrufe anzeigen
+                </Button>
+              )}
+            </div>
+          }
+        />
         <Surface
           title="Geplante Rückrufe"
           description="Datum und Uhrzeit sind beim Vereinbaren verpflichtend"
@@ -129,7 +144,7 @@ function CallbacksPage() {
               {visible.map((c) => {
                 const due = new Date(c.due_at);
                 const overdue = due < now;
-                const today = sameDay(due);
+                const today = isToday(due);
                 return (
                   <div
                     key={c.id}
