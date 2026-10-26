@@ -170,7 +170,7 @@ async function databaseStore(
         p_origin: ctx.action.user_id,
         p_stage_key: ctx.action.stage_key ?? null,
         p_actor: ctx.action.user_id,
-      });
+      } as never);
     },
     async stageMoved(ctx, dealId, stageId) {
       await db.rpc("crm_apply_stage", {
@@ -184,7 +184,7 @@ async function databaseStore(
         p_actor_name: ctx.callerName || null,
         p_status: null,
         p_stage_key: ctx.action.stage_key ?? null,
-      });
+      } as never);
     },
     async markStep(actionId, step) {
       const { data } = await db
