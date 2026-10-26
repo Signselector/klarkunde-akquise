@@ -35,48 +35,48 @@ export type Database = {
       appointments: {
         Row: {
           booked_by: string | null
-          pd_activity_id: number | null
-          pd_sync_error: string | null
-          pd_sync_state: string
-          pd_synced_at: string | null
           country: string
           created_at: string
           id: string
           kind: string
           lead_id: string | null
           notes: string | null
+          pd_activity_id: number | null
+          pd_sync_error: string | null
+          pd_sync_state: string
+          pd_synced_at: string | null
           starts_at: string
           title: string | null
           user_id: string | null
         }
         Insert: {
           booked_by?: string | null
-          pd_activity_id?: number | null
-          pd_sync_error?: string | null
-          pd_sync_state?: string
-          pd_synced_at?: string | null
           country?: string
           created_at?: string
           id?: string
           kind?: string
           lead_id?: string | null
           notes?: string | null
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           starts_at: string
           title?: string | null
           user_id?: string | null
         }
         Update: {
           booked_by?: string | null
-          pd_activity_id?: number | null
-          pd_sync_error?: string | null
-          pd_sync_state?: string
-          pd_synced_at?: string | null
           country?: string
           created_at?: string
           id?: string
           kind?: string
           lead_id?: string | null
           notes?: string | null
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           starts_at?: string
           title?: string | null
           user_id?: string | null
@@ -165,44 +165,44 @@ export type Database = {
       }
       callbacks: {
         Row: {
-          pd_activity_id: number | null
-          pd_sync_error: string | null
-          pd_sync_state: string
-          pd_synced_at: string | null
           country: string
           created_at: string
           done: boolean
           due_at: string
           id: string
           lead_id: string
+          pd_activity_id: number | null
+          pd_sync_error: string | null
+          pd_sync_state: string
+          pd_synced_at: string | null
           user_id: string | null
           version: number
         }
         Insert: {
-          pd_activity_id?: number | null
-          pd_sync_error?: string | null
-          pd_sync_state?: string
-          pd_synced_at?: string | null
           country?: string
           created_at?: string
           done?: boolean
           due_at: string
           id?: string
           lead_id: string
-          user_id?: string | null
-          version?: number
-        }
-        Update: {
           pd_activity_id?: number | null
           pd_sync_error?: string | null
           pd_sync_state?: string
           pd_synced_at?: string | null
+          user_id?: string | null
+          version?: number
+        }
+        Update: {
           country?: string
           created_at?: string
           done?: boolean
           due_at?: string
           id?: string
           lead_id?: string
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           user_id?: string | null
           version?: number
         }
@@ -740,7 +740,6 @@ export type Database = {
       }
       leads: {
         Row: {
-          erased_at: string | null
           archived_at: string | null
           attempts: number
           batch_id: string | null
@@ -749,6 +748,7 @@ export type Database = {
           contact_name: string | null
           created_at: string
           email: string | null
+          erased_at: string | null
           extra: Json
           id: string
           last_called_at: string | null
@@ -758,7 +758,6 @@ export type Database = {
           version: number
         }
         Insert: {
-          erased_at?: string | null
           archived_at?: string | null
           attempts?: number
           batch_id?: string | null
@@ -767,6 +766,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           email?: string | null
+          erased_at?: string | null
           extra?: Json
           id?: string
           last_called_at?: string | null
@@ -776,7 +776,6 @@ export type Database = {
           version?: number
         }
         Update: {
-          erased_at?: string | null
           archived_at?: string | null
           attempts?: number
           batch_id?: string | null
@@ -785,6 +784,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           email?: string | null
+          erased_at?: string | null
           extra?: Json
           id?: string
           last_called_at?: string | null
@@ -1004,7 +1004,14 @@ export type Database = {
           id?: string
           user_id?: string | null
         }
-        Update: { action?: string }
+        Update: {
+          action?: string
+          activity_id?: number
+          country?: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
         Relationships: []
       }
       pipedrive_activities: {
@@ -1023,15 +1030,45 @@ export type Database = {
           updated_at: string
           user_id: string
         }
-        Insert: never
-        Update: never
-        Relationships: []
-      }
-      pipedrive_user_map: {
-        Row: { country: string; matched_at: string; pipedrive_user_id: number; user_id: string }
-        Insert: { country: string; matched_at?: string; pipedrive_user_id: number; user_id: string }
-        Update: { matched_at?: string; pipedrive_user_id?: number }
-        Relationships: []
+        Insert: {
+          activity_id: number
+          country: string
+          deal_id?: number | null
+          done?: boolean
+          due_at: string
+          duration_min?: number
+          note?: string | null
+          org_name?: string | null
+          person_name?: string | null
+          subject?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: number
+          country?: string
+          deal_id?: number | null
+          done?: boolean
+          due_at?: string
+          duration_min?: number
+          note?: string | null
+          org_name?: string | null
+          person_name?: string | null
+          subject?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipedrive_activities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pipedrive_stage_mapping: {
         Row: {
@@ -1077,6 +1114,35 @@ export type Database = {
           report?: Json
         }
         Relationships: []
+      }
+      pipedrive_user_map: {
+        Row: {
+          country: string
+          matched_at: string
+          pipedrive_user_id: number
+          user_id: string
+        }
+        Insert: {
+          country: string
+          matched_at?: string
+          pipedrive_user_id: number
+          user_id: string
+        }
+        Update: {
+          country?: string
+          matched_at?: string
+          pipedrive_user_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipedrive_user_map_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       points_ledger: {
         Row: {
@@ -1324,6 +1390,7 @@ export type Database = {
         Args: { p_kind: string; p_lead_id: string; p_reason: string }
         Returns: undefined
       }
+      activate_future_projects: { Args: never; Returns: Json }
       archive_leads: { Args: { p_ids: string[] }; Returns: number }
       archive_open_leads: { Args: never; Returns: number }
       backend_maintenance: { Args: never; Returns: Json }
@@ -1332,13 +1399,15 @@ export type Database = {
         Returns: string
       }
       cal_prune: {
-        Args: { p_country: string; p_from: string; p_keep: number[]; p_to: string; p_user: string }
+        Args: {
+          p_country: string
+          p_from: string
+          p_keep: number[]
+          p_to: string
+          p_user: string
+        }
         Returns: number
       }
-      activate_future_projects: { Args: never; Returns: Json }
-      get_no_interest_leads: { Args: { p_country: string }; Returns: Json }
-      get_unanswered_reference_leads: { Args: { p_country: string }; Returns: Json }
-      register_reference_reply: { Args: { p_from: string; p_refs?: string[] }; Returns: Json }
       can_access_country: { Args: { _c: string }; Returns: boolean }
       checkpoint_integration: {
         Args: {
@@ -1430,6 +1499,7 @@ export type Database = {
       freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
       get_batch_progress: { Args: never; Returns: Json }
       get_caller_day: { Args: { p_day?: string }; Returns: Json }
+      get_caller_month: { Args: { p_month?: string }; Returns: Json }
       get_caller_performance: {
         Args: {
           p_from: string
@@ -1450,12 +1520,21 @@ export type Database = {
       }
       get_monthly_quality: { Args: { p_month?: string }; Returns: Json }
       get_my_customers: { Args: { p_country: string }; Returns: Json }
+      get_no_interest_leads: { Args: { p_country: string }; Returns: Json }
       get_quality_issues: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
       }
       get_team_metrics: { Args: never; Returns: Json }
+      get_unanswered_reference_leads: {
+        Args: { p_country: string }
+        Returns: Json
+      }
       get_weekly_ranking: { Args: { p_week?: string }; Returns: Json }
+      has_admin_rights: {
+        Args: { _country: string; _uid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1464,11 +1543,8 @@ export type Database = {
         Returns: boolean
       }
       import_duplicates: { Args: { p_batch_id: string }; Returns: Json }
-      is_master: { Args: { _uid: string }; Returns: boolean }
       is_global_admin: { Args: { _uid: string }; Returns: boolean }
-      has_admin_rights: { Args: { _country: string; _uid: string }; Returns: boolean }
-      user_role: { Args: { _uid: string }; Returns: string }
-      get_caller_month: { Args: { p_month?: string }; Returns: Json }
+      is_master: { Args: { _uid: string }; Returns: boolean }
       move_lead: {
         Args: {
           p_batch_id: string
@@ -1514,6 +1590,10 @@ export type Database = {
           p_request_id: string
           p_scheduled_at?: string
         }
+        Returns: Json
+      }
+      register_reference_reply: {
+        Args: { p_from: string; p_refs?: string[] }
         Returns: Json
       }
       release_batch: { Args: { p_batch_id: string }; Returns: Json }
@@ -1591,9 +1671,16 @@ export type Database = {
         Returns: Json
       }
       upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
+      user_role: { Args: { _uid: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "caller" | "fulfilment" | "recruit" | "veteran" | "manager"
+      app_role:
+        | "admin"
+        | "caller"
+        | "fulfilment"
+        | "recruit"
+        | "veteran"
+        | "manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1721,7 +1808,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "caller", "fulfilment", "recruit", "veteran", "manager"],
+      app_role: [
+        "admin",
+        "caller",
+        "fulfilment",
+        "recruit",
+        "veteran",
+        "manager",
+      ],
     },
   },
 } as const

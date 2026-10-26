@@ -106,6 +106,55 @@
       "when": 1793016690137,
       "tag": "0014_crm_history",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1793031031227,
+      "tag": "0015_roles_enum",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793031183575,
+      "tag": "0016_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1793031194797,
+      "tag": "0017_countries_admin_only",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793031215813,
+      "tag": "0018_remove_contact_details",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793031246417,
+      "tag": "0019_calendar_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1793031296469,
+      "tag": "0020_action_workflows",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1793031325682,
+      "tag": "0021_reference_mail",
+      "breakpoints": true
     }
   ]
 }

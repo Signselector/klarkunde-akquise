@@ -1,17 +1,9 @@
--- Conversation outcomes, second version:
---  Logo Render / Realismus Render: appointment + logo (+ building photo), lead completed, CRM stage 3D Low Q / High Q
---  Rückruf / Nicht erreicht: lead stays open
---  Logo ausstehend: optional callback, lead completed, CRM stage 3D Waiting
---  Kein Interesse: "do not call again" erases the lead, otherwise it is kept for the admin list
---  Zukunftsprojekt: month and year, the deal is created in the CRM when that month starts
-
 ALTER TABLE public.appointments ADD COLUMN booked_by uuid;
 ALTER TABLE public.lead_actions DROP CONSTRAINT IF EXISTS lead_actions_action_check;
 ALTER TABLE public.lead_actions ADD CONSTRAINT lead_actions_action_check CHECK (action IN
   ('low_q','high_q','waiting_3d','no_interest','on_hold','contact_details','callback','reference_mail','not_reached','future_interest_due'));
 ALTER TABLE public.leads ADD COLUMN erased_at timestamptz;
 
--- Recruits do not book appointments themselves: theirs go to the manager of the country (the caller if there is none).
 CREATE FUNCTION app_private.appointment_owner(_caller uuid,_country text) RETURNS uuid LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT CASE WHEN public.user_role(_caller)<>'recruit' THEN _caller ELSE coalesce((
    SELECT ur.user_id FROM public.user_roles ur
@@ -19,7 +11,8 @@ CREATE FUNCTION app_private.appointment_owner(_caller uuid,_country text) RETURN
     JOIN public.profiles p ON p.id=ur.user_id
    WHERE ur.role='manager' AND p.active ORDER BY p.created_at,p.id LIMIT 1),_caller) END
 $$;
-REVOKE ALL ON FUNCTION app_private.appointment_owner(uuid,text) FROM PUBLIC,anon,authenticated;
+REVOKE ALL ON FUNCTION app_private.appointment_owner(uuid,text) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION app_private.appointment_owner(uuid,text) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.record_lead_action(
   p_request_id uuid, p_lead_id uuid, p_expected_version integer, p_action text,
@@ -71,7 +64,6 @@ BEGIN
   RAISE EXCEPTION 'lead_claimed' USING ERRCODE='40001';
  END IF;
 
- -- Required inputs per action.
  IF p_action IN ('low_q','high_q') THEN
   IF note IS NULL THEN RAISE EXCEPTION 'note_required' USING ERRCODE='22023'; END IF;
   IF p_logo_path IS NULL OR p_logo_path NOT LIKE a::text||'/'||l.id::text||'/%' OR length(p_logo_path)>500 THEN
@@ -107,7 +99,6 @@ BEGIN
   dnc:=coalesce((p_details->>'do_not_call')::boolean,false);
   stored:=CASE WHEN dnc THEN NULL ELSE p_details END;
  END IF;
- -- Mails must have been sent (or simulated in test mode) before the lead may move on.
  IF p_action='reference_mail' THEN
   IF p_details IS NULL THEN RAISE EXCEPTION 'validation_failed' USING ERRCODE='22023'; END IF;
   BEGIN eid:=nullif(p_details->>'email_id','')::uuid; EXCEPTION WHEN others THEN eid:=NULL; END;
@@ -117,14 +108,12 @@ BEGIN
  END IF;
 
  new_status:=CASE p_action WHEN 'not_reached' THEN 'open' ELSE p_action END;
- -- On hold has no CRM stage yet: the deal is created when the chosen month starts.
  stage:=CASE WHEN p_action IN ('low_q','high_q','waiting_3d','reference_mail') THEN p_action END;
  sync:=CASE WHEN stage IS NULL THEN NULL ELSE 'queued' END;
 
  UPDATE public.leads SET status=new_status,attempts=attempts+1,last_called_at=now(),last_called_by=a WHERE id=l.id;
  INSERT INTO public.status_changes(lead_id,user_id,old_status,new_status) VALUES(l.id,a,l.status,
   CASE WHEN p_action='not_reached' THEN 'not_reached' ELSE new_status END);
- -- A recorded outcome replaces earlier open callbacks of this lead.
  UPDATE public.callbacks SET done=true WHERE lead_id=l.id AND NOT done;
 
  IF p_action IN ('callback','waiting_3d') AND p_scheduled_at IS NOT NULL THEN
@@ -144,14 +133,12 @@ BEGIN
   VALUES(l.id,a,p_action,note,stage,sync,CASE WHEN p_action IN ('low_q','high_q') THEN p_logo_path END,p_scheduled_at,stored)
   RETURNING id INTO aid;
  IF stage IS NOT NULL OR p_action='on_hold' THEN
-  -- The first caller with a CRM-relevant action becomes the permanent original caller of this lead.
   INSERT INTO public.lead_crm_links(lead_id,country,origin_caller_id,origin_lead_id) VALUES(l.id,bt.country,a,l.id)
    ON CONFLICT (lead_id) DO UPDATE SET origin_caller_id=coalesce(public.lead_crm_links.origin_caller_id,a),updated_at=now();
  END IF;
  INSERT INTO public.audit_events(actor,action,target_id) VALUES(a,'lead_action:'||p_action,l.id);
 
  IF p_action='no_interest' AND dnc THEN
-  -- "Do not call again": the personal data is erased. The empty shell stays so statistics keep their counts.
   UPDATE public.leads SET company=NULL,contact_name=NULL,phone=NULL,email=NULL,city=NULL,extra='{}'::jsonb,archived_at=now(),erased_at=now() WHERE id=l.id;
   DELETE FROM public.lead_notes WHERE lead_id=l.id;
   DELETE FROM public.lead_emails WHERE lead_id=l.id;
@@ -168,8 +155,6 @@ END $$;
 REVOKE ALL ON FUNCTION public.record_lead_action(uuid,uuid,integer,text,text,timestamptz,text,jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.record_lead_action(uuid,uuid,integer,text,text,timestamptz,text,jsonb) TO authenticated;
 
--- Zukunftsprojekt: once the chosen month has started, the lead becomes a CRM deal in the stage "Zukünftiges Interesse".
--- Creates one queued action per due lead (for the original caller); the server then sends it to the CRM.
 CREATE FUNCTION public.activate_future_projects() RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE r record; ids jsonb:='[]'::jsonb; aid uuid; cur_month date:=date_trunc('month',(now() AT TIME ZONE 'Europe/Vienna'))::date;
 BEGIN
@@ -191,7 +176,6 @@ END $$;
 REVOKE ALL ON FUNCTION public.activate_future_projects() FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.activate_future_projects() TO service_role;
 
--- Admin area: every lead that said "no interest" and was not erased, for download.
 CREATE FUNCTION public.get_no_interest_leads(p_country text) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor();
 BEGIN

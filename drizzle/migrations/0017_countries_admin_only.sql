@@ -1,5 +1,3 @@
--- Only the admin decides which countries an account may use. A manager works inside the countries assigned to them
--- and can no longer grant or remove countries, not even for callers of their own country.
 DROP POLICY IF EXISTS uc_insert ON public.user_countries;
 DROP POLICY IF EXISTS uc_delete ON public.user_countries;
 CREATE POLICY uc_insert ON public.user_countries FOR INSERT TO authenticated WITH CHECK (public.is_global_admin(auth.uid()));

@@ -1,6 +1,3 @@
--- Calendar sync with Pipedrive activities. Every user sees only their own entries.
-
--- Which Pipedrive user is this app user? Matched by e-mail on first use, written by the server only.
 CREATE TABLE public.pipedrive_user_map (
   user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   country text NOT NULL CHECK (country IN ('DE','AT','NL')),
@@ -13,7 +10,6 @@ GRANT ALL ON public.pipedrive_user_map TO service_role;
 ALTER TABLE public.pipedrive_user_map ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pum_own ON public.pipedrive_user_map FOR SELECT TO authenticated USING (user_id = auth.uid());
 
--- Sync state of what this tool created.
 ALTER TABLE public.callbacks
   ADD COLUMN pd_activity_id bigint,
   ADD COLUMN pd_sync_state text NOT NULL DEFAULT 'pending' CHECK (pd_sync_state IN ('pending','synced','failed')),
@@ -24,13 +20,11 @@ ALTER TABLE public.appointments
   ADD COLUMN pd_sync_state text NOT NULL DEFAULT 'pending' CHECK (pd_sync_state IN ('pending','synced','failed')),
   ADD COLUMN pd_sync_error text,
   ADD COLUMN pd_synced_at timestamptz;
--- Items that existed before the sync was switched on are not pushed retroactively.
 UPDATE public.callbacks SET pd_sync_state='synced' WHERE pd_activity_id IS NULL;
 UPDATE public.appointments SET pd_sync_state='synced' WHERE pd_activity_id IS NULL;
 CREATE UNIQUE INDEX callbacks_pd_activity_unique ON public.callbacks(country,pd_activity_id) WHERE pd_activity_id IS NOT NULL;
 CREATE UNIQUE INDEX appointments_pd_activity_unique ON public.appointments(country,pd_activity_id) WHERE pd_activity_id IS NOT NULL;
 
--- Activities that exist only in Pipedrive (created there), mirrored for the owner.
 CREATE TABLE public.pipedrive_activities (
   country text NOT NULL CHECK (country IN ('DE','AT','NL')),
   activity_id bigint NOT NULL,
@@ -53,7 +47,6 @@ GRANT ALL ON public.pipedrive_activities TO service_role;
 ALTER TABLE public.pipedrive_activities ENABLE ROW LEVEL SECURITY;
 CREATE POLICY pa_own ON public.pipedrive_activities FOR SELECT TO authenticated USING (user_id = auth.uid());
 
--- Deleted appointments and finished callbacks still have to be removed or closed in Pipedrive.
 CREATE TABLE public.pd_calendar_queue (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   country text NOT NULL,
@@ -76,7 +69,6 @@ CREATE TRIGGER appointment_deleted BEFORE DELETE ON public.appointments FOR EACH
 CREATE FUNCTION app_private.trg_callback_done() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 BEGIN
  IF NEW.done AND NOT OLD.done AND NEW.pd_activity_id IS NOT NULL AND NEW.pd_sync_state IS DISTINCT FROM 'failed' THEN
-  -- A callback closed by Pipedrive itself is not sent back: the sync marks it synced in the same update.
   IF NEW.pd_synced_at IS NOT DISTINCT FROM OLD.pd_synced_at THEN
    INSERT INTO public.pd_calendar_queue(country,user_id,activity_id,action) VALUES(NEW.country,NEW.user_id,NEW.pd_activity_id,'done');
   END IF;
@@ -85,13 +77,11 @@ BEGIN
 END $$;
 CREATE TRIGGER callback_done AFTER UPDATE OF done ON public.callbacks FOR EACH ROW EXECUTE FUNCTION app_private.trg_callback_done();
 
--- Everybody reads only their own calendar rows, admins and managers included.
 DROP POLICY IF EXISTS "cb read" ON public.callbacks;
 CREATE POLICY "cb read" ON public.callbacks FOR SELECT TO authenticated USING (user_id = auth.uid());
 DROP POLICY IF EXISTS "ap read" ON public.appointments;
 CREATE POLICY "ap read" ON public.appointments FOR SELECT TO authenticated USING (user_id = auth.uid());
 
--- Applies one activity read from Pipedrive. Own items are updated (time, done), foreign ones are mirrored.
 CREATE FUNCTION public.cal_apply_activity(p_country text, p_user uuid, p_a jsonb) RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE v_id bigint:=(p_a->>'id')::bigint; v_due timestamptz:=(p_a->>'due_at')::timestamptz; v_done boolean:=coalesce((p_a->>'done')::boolean,false); n integer;
 BEGIN
@@ -111,7 +101,6 @@ BEGIN
    note=EXCLUDED.note,updated_at=now();
  RETURN 'external';
 END $$;
--- Removes mirrored activities that are gone from Pipedrive inside the window that was read.
 CREATE FUNCTION public.cal_prune(p_country text, p_user uuid, p_from timestamptz, p_to timestamptz, p_keep bigint[]) RETURNS integer LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE n integer;
 BEGIN
