@@ -1,5 +1,6 @@
 import { isMasterEmail } from "@/lib/master";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
+import { AppointmentNotifier } from "@/components/appointment-notifier";
 import { primaryRole, ROLE_LABEL } from "@/lib/use-admin";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
@@ -262,6 +263,7 @@ function Layout() {
         <TestModeBanner />
         <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
           <CallbackReminder userId={user.id} />
+          <AppointmentNotifier userId={user.id} />
           <Outlet />
         </div>
       </SidebarInset>
