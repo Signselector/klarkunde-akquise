@@ -55,7 +55,7 @@ function ContactLinks({ lead }: { lead: TableLead }) {
   const site = websiteUrl?.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
   const row = "flex min-w-0 items-center gap-2 text-sm leading-5";
   return (
-    <div className="flex min-w-[13rem] max-w-[18rem] flex-col gap-1.5">
+    <div className="flex min-w-[11rem] max-w-[18rem] flex-col gap-1.5">
       {lead.contact_name && <p className={`${row} truncate`}>{lead.contact_name}</p>}
       {lead.phone ? (
         <a
@@ -105,7 +105,7 @@ function Address({ lead }: { lead: TableLead }) {
   if (!addressText || !mapsUrl) return <span className="text-muted-foreground">–</span>;
   return (
     <a
-      className="inline-flex items-start gap-1 text-primary hover:underline"
+      className="inline-flex items-center gap-1 text-primary hover:underline"
       href={mapsUrl}
       target="_blank"
       rel="noopener noreferrer"
@@ -138,17 +138,17 @@ export function LeadsTable({
   return (
     <>
       <div className="hidden overflow-x-auto md:block">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
           <thead className="bg-muted/50 text-muted-foreground">
             <tr>
-              <th className="px-6 py-3 font-medium">Firma</th>
-              <th className="px-3 py-3 font-medium">Kontakt</th>
-              <th className="px-3 py-3 font-medium">E-Mail</th>
-              <th className="px-3 py-3 font-medium">Stadt</th>
-              <th className="px-3 py-3 font-medium">Adresse</th>
-              <th className="px-3 py-3 font-medium">{processed ? "Ergebnis" : "Status"}</th>
-              {processed && <th className="px-3 py-3 font-medium">Bearbeitet</th>}
-              <th className="px-6 py-3 text-right font-medium">
+              <th className="px-4 py-3 font-medium">Firma</th>
+              <th className="px-2 py-3 font-medium">Kontakt</th>
+              <th className="px-2 py-3 font-medium">E-Mail</th>
+              <th className="px-2 py-3 font-medium">Stadt</th>
+              <th className="px-2 py-3 font-medium">Adresse</th>
+              <th className="px-2 py-3 font-medium">{processed ? "Ergebnis" : "Status"}</th>
+              {processed && <th className="px-2 py-3 font-medium">Bearbeitet</th>}
+              <th className="sticky right-0 bg-[#faf8f4] px-4 py-3 text-right font-medium">
                 <span className="sr-only">Aktionen</span>
               </th>
             </tr>
@@ -156,18 +156,18 @@ export function LeadsTable({
           <tbody className="divide-y">
             {leads.map((l) => (
               <tr key={l.id} className="align-top hover:bg-muted/40">
-                <td className="px-6 py-4 font-medium">{l.company || "Ohne Firmenname"}</td>
-                <td className="px-3 py-4">
+                <td className="px-4 py-4 font-medium">{l.company || "Ohne Firmenname"}</td>
+                <td className="px-2 py-4">
                   <ContactLinks lead={l} />
                 </td>
-                <td className="px-3 py-4 break-all">
+                <td className="px-2 py-4">
                   <EmailLink lead={l} />
                 </td>
-                <td className="px-3 py-4">{l.city || "–"}</td>
-                <td className="px-3 py-4">
+                <td className="px-2 py-4">{l.city || "–"}</td>
+                <td className="px-2 py-4">
                   <Address lead={l} />
                 </td>
-                <td className="px-3 py-4">
+                <td className="px-2 py-4">
                   <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
                   {l.attempts > 0 && (
                     <span className="mt-1 block text-xs text-muted-foreground">
@@ -176,14 +176,14 @@ export function LeadsTable({
                   )}
                 </td>
                 {processed && (
-                  <td className="whitespace-nowrap px-3 py-4 text-muted-foreground">
+                  <td className="whitespace-nowrap px-2 py-4 text-muted-foreground">
                     {l.last_called_at ? dateFormat.format(new Date(l.last_called_at)) : "–"}
                   </td>
                 )}
-                <td className="px-6 py-4 text-right">
+                <td className="cc-sticky-action sticky right-0 px-4 py-4 text-right">
                   <button
                     type="button"
-                    className="rounded-[10px] border px-3 py-1.5 text-sm hover:bg-muted focus-visible:outline-2"
+                    className="rounded-[10px] border px-2 py-1.5 text-sm hover:bg-muted focus-visible:outline-2"
                     onClick={() => onOpen(l.id)}
                     aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
                   >

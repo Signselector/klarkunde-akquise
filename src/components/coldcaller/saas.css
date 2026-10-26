@@ -1111,3 +1111,18 @@
     inset 0 -7px 12px rgb(27 0 3 / 25%),
     0 3px 4px rgb(0 0 0 / 38%);
 }
+
+/* Tables keep every value on one line; the workspace is wider so they fit */
+.cc-workspace {
+  max-width: 1760px;
+}
+.cc-badge {
+  white-space: nowrap;
+}
+.cc-sticky-action {
+  background: white;
+  box-shadow: -12px 0 12px -12px rgb(20 16 10 / 18%);
+}
+tr:hover > .cc-sticky-action {
+  background: #faf8f4;
+}
