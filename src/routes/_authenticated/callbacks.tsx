@@ -36,7 +36,7 @@ function CallbacksPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
   const country = useCountry();
-  const { sync, external } = useCalendarSync(user.id, country);
+  const { sync } = useCalendarSync(user.id, country);
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["callbacks", user.id, country],
     refetchInterval: 30_000,
