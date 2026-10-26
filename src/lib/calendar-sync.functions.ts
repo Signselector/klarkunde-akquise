@@ -226,8 +226,7 @@ const BUSY_MAX_AGE_MS = 3 * 60_000;
  */
 export async function refreshBusy(country: string, opts: { force?: boolean } = {}) {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-  const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
-  if (config?.test_mode !== false) return { state: "simulated" as const, rows: 0 };
+  // Read-only: free/busy is fetched from Pipedrive in test mode too, so double bookings are avoided.
   const key = `pd_busy_refreshed_${country}`;
   const { data: last } = await db.from("app_settings").select("value").eq("key", key).maybeSingle();
   const age = Date.now() - Number(last?.value ?? 0);

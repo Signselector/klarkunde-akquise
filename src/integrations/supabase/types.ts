@@ -1070,6 +1070,27 @@ export type Database = {
           },
         ]
       }
+      pipedrive_busy: {
+        Row: {
+          activity_id: number
+          country: string
+          ends_at: string
+          starts_at: string
+        }
+        Insert: {
+          activity_id: number
+          country: string
+          ends_at: string
+          starts_at: string
+        }
+        Update: {
+          activity_id?: number
+          country?: string
+          ends_at?: string
+          starts_at?: string
+        }
+        Relationships: []
+      }
       pipedrive_stage_mapping: {
         Row: {
           country: string
@@ -1408,6 +1429,10 @@ export type Database = {
         }
         Returns: number
       }
+      cal_replace_busy: {
+        Args: { p_country: string; p_from: string; p_rows: Json; p_to: string }
+        Returns: number
+      }
       can_access_country: { Args: { _c: string }; Returns: boolean }
       checkpoint_integration: {
         Args: {
@@ -1526,15 +1551,17 @@ export type Database = {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
       }
-      get_team_metrics: { Args: never; Returns: Json }
       get_slot_availability: {
-        Args: { p_country: string; p_from: string; p_to: string; p_kind: string; p_lead?: string }
+        Args: {
+          p_country: string
+          p_from: string
+          p_kind: string
+          p_lead?: string
+          p_to: string
+        }
         Returns: Json
       }
-      cal_replace_busy: {
-        Args: { p_country: string; p_from: string; p_to: string; p_rows: Json }
-        Returns: number
-      }
+      get_team_metrics: { Args: never; Returns: Json }
       get_unanswered_reference_leads: {
         Args: { p_country: string }
         Returns: Json
