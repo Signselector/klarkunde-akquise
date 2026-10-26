@@ -96,12 +96,12 @@ test("the last admin and the master cannot be demoted", async () => {
   await q("insert into public.user_roles(user_id,role) values ($1,'admin')", [master]);
 });
 
-test("country access: admin for everyone, manager only for own country callers", async () => {
+test("only the admin decides countries; a manager cannot grant or remove any", async () => {
   await as(mgrDE);
-  await q("insert into public.user_countries values ($1,'DE')", [fresh]);
+  await assert.rejects(() => q("insert into public.user_countries values ($1,'DE')", [fresh]), /row-level security/);
   await assert.rejects(() => q("insert into public.user_countries values ($1,'AT')", [fresh]), /row-level security/);
-  await assert.rejects(() => q("insert into public.user_countries values ($1,'DE')", [admin]).catch((e) => { throw e; }), /row-level|duplicate/);
-  await q("delete from public.user_countries where user_id=$1 and country='DE'", [fresh]);
+  const del = await q("delete from public.user_countries where user_id=$1 and country='DE' returning 1", [rec]);
+  assert.equal(del.length, 0, "manager cannot remove a country");
   await as(rec);
   await assert.rejects(() => q("insert into public.user_countries values ($1,'AT')", [rec]), /row-level security/);
   await as(admin);

@@ -1377,7 +1377,6 @@ export type Database = {
       is_global_admin: { Args: { _uid: string }; Returns: boolean }
       has_admin_rights: { Args: { _country: string; _uid: string }; Returns: boolean }
       user_role: { Args: { _uid: string }; Returns: string }
-      can_grant_country: { Args: { _country: string; _target: string }; Returns: boolean }
       get_caller_month: { Args: { p_month?: string }; Returns: Json }
       move_lead: {
         Args: {

@@ -49,7 +49,11 @@ function AccountsPage() {
   });
   const isMaster = user.email?.toLowerCase() === MASTER;
   const globalAdmin = me.isGlobalAdmin || isMaster;
-  const myCountries = users?.find((u) => u.id === user.id)?.countries ?? [];
+  // A manager only sees accounts of the countries assigned to them (the database enforces it for every change).
+  const mine = users?.find((u) => u.id === user.id)?.countries ?? [];
+  const visibleUsers = globalAdmin
+    ? users
+    : users?.filter((u) => u.id === user.id || u.countries.some((c) => mine.includes(c)));
   const refresh = () => qc.invalidateQueries({ queryKey: ["users"] });
 
   async function toggleCountry(id: string, code: string, on: boolean) {
@@ -57,7 +61,7 @@ function AccountsPage() {
       ? await supabase.from("user_countries").insert({ user_id: id, country: code })
       : await supabase.from("user_countries").delete().eq("user_id", id).eq("country", code);
     if (error) {
-      toast.error("Dieses Land darfst du für diesen Account nicht ändern.");
+      toast.error("Länder darf nur ein Admin festlegen.");
       return;
     }
     refresh();
@@ -135,11 +139,11 @@ function AccountsPage() {
       <section className="space-y-2 rounded-lg border bg-card p-4">
         <p className="text-sm text-muted-foreground">
           Neue Nutzer registrieren sich selbst und sind zuerst Recruit. Sie sehen erst etwas, wenn
-          ihnen ein Land freigeschaltet wird. Admins vergeben alle Rollen und Länder, Manager
-          befördern Recruits zu Veterans und schalten ihr eigenes Land frei.
+          ihnen ein Land freigeschaltet wird. Nur Admins vergeben Rollen wie Manager und die Länder.
+          Manager arbeiten im ihnen zugewiesenen Land und befördern dort Recruits zu Veterans.
         </p>
         <div className="divide-y">
-          {users?.map((u) => {
+          {visibleUsers?.map((u) => {
             const self = u.id === user.id;
             return (
               <div
@@ -191,14 +195,7 @@ function AccountsPage() {
                               key={c.code}
                               size="sm"
                               variant={on ? "default" : "outline"}
-                              disabled={
-                                !(
-                                  globalAdmin ||
-                                  (me.isManager &&
-                                    myCountries.includes(c.code) &&
-                                    (u.role === "recruit" || u.role === "veteran"))
-                                )
-                              }
+                              disabled={!globalAdmin}
                               aria-pressed={on}
                               onClick={() => toggleCountry(u.id, c.code, !on)}
                             >
