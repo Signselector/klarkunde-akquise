@@ -411,104 +411,6 @@ export type Database = {
           },
         ]
       }
-      lead_activity: {
-        Row: {
-          acting_user_id: string | null
-          acting_user_name: string | null
-          action_type: string
-          created_at: string
-          deal_id: number | null
-          details: Json | null
-          external_id: string | null
-          id: string
-          lead_id: string
-          new_stage: string | null
-          occurred_at: string
-          origin_caller_id: string | null
-          previous_stage: string | null
-          seq: number
-          source: string
-        }
-        Insert: never
-        Update: never
-        Relationships: []
-      }
-      lead_emails: {
-        Row: {
-          attempted_at: string | null
-          attempts: number
-          body: string
-          created_at: string
-          created_by: string
-          error: string | null
-          id: string
-          kind: string
-          lead_id: string
-          provider: string | null
-          provider_message_id: string | null
-          request_id: string
-          sent_at: string | null
-          status: string
-          subject: string
-          template_id: string | null
-          to_email: string
-        }
-        Insert: {
-          attempted_at?: string | null
-          attempts?: number
-          body: string
-          created_at?: string
-          created_by: string
-          error?: string | null
-          id?: string
-          kind: string
-          lead_id: string
-          provider?: string | null
-          provider_message_id?: string | null
-          request_id: string
-          sent_at?: string | null
-          status?: string
-          subject: string
-          template_id?: string | null
-          to_email: string
-        }
-        Update: {
-          attempted_at?: string | null
-          attempts?: number
-          error?: string | null
-          provider?: string | null
-          provider_message_id?: string | null
-          sent_at?: string | null
-          status?: string
-        }
-        Relationships: []
-      }
-      pipedrive_stage_validation: {
-        Row: {
-          checked_at: string
-          checked_by: string | null
-          country: string
-          ok: boolean
-          origin_field_key: string | null
-          report: Json
-        }
-        Insert: {
-          checked_at?: string
-          checked_by?: string | null
-          country: string
-          ok: boolean
-          origin_field_key?: string | null
-          report: Json
-        }
-        Update: {
-          checked_at?: string
-          checked_by?: string | null
-          ok?: boolean
-          origin_field_key?: string | null
-          report?: Json
-        }
-        Relationships: []
-      }
       lead_batches: {
         Row: {
           assigned_at: string | null
@@ -581,16 +483,6 @@ export type Database = {
       }
       lead_crm_links: {
         Row: {
-          created_at: string
-          current_stage_id: number | null
-          current_stage_key: string | null
-          deal_status: string | null
-          is_customer: boolean
-          last_synced_at: string | null
-          origin_caller_id: string | null
-          origin_lead_id: string | null
-          stage_event_at: string | null
-          sync_state: string
           country: string
           deal_id: number | null
           lead_id: string
@@ -599,16 +491,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          created_at?: string
-          current_stage_id?: number | null
-          current_stage_key?: string | null
-          deal_status?: string | null
-          is_customer?: boolean
-          last_synced_at?: string | null
-          origin_caller_id?: string | null
-          origin_lead_id?: string | null
-          stage_event_at?: string | null
-          sync_state?: string
           country: string
           deal_id?: number | null
           lead_id: string
@@ -617,16 +499,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          created_at?: string
-          current_stage_id?: number | null
-          current_stage_key?: string | null
-          deal_status?: string | null
-          is_customer?: boolean
-          last_synced_at?: string | null
-          origin_caller_id?: string | null
-          origin_lead_id?: string | null
-          stage_event_at?: string | null
-          sync_state?: string
           country?: string
           deal_id?: number | null
           lead_id?: string
@@ -1246,41 +1118,6 @@ export type Database = {
         Returns: undefined
       }
       freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
-      crm_apply_stage: {
-        Args: {
-          p_actor?: string | null
-          p_actor_name?: string | null
-          p_country: string
-          p_deal_id: number
-          p_event_id?: string | null
-          p_occurred?: string | null
-          p_source: string
-          p_stage_id?: number | null
-          p_stage_key?: string | null
-          p_status?: string | null
-        }
-        Returns: Json
-      }
-      crm_save_links: {
-        Args: {
-          p_actor?: string | null
-          p_country: string
-          p_deal?: number | null
-          p_lead: string
-          p_org?: number | null
-          p_origin?: string | null
-          p_person?: number | null
-          p_stage_key?: string | null
-        }
-        Returns: Json
-      }
-      crm_set_sync_state: { Args: { p_lead: string; p_state: string }; Returns: undefined }
-      get_caller_performance: {
-        Args: { p_from: string; p_granularity?: string; p_to: string; p_user?: string | null }
-        Returns: Json
-      }
-      get_completed_overview: { Args: { p_country: string; p_limit?: number }; Returns: Json }
-      get_my_customers: { Args: { p_country: string }; Returns: Json }
       get_batch_progress: { Args: never; Returns: Json }
       get_caller_day: { Args: { p_day?: string }; Returns: Json }
       get_capabilities: { Args: never; Returns: Json }
