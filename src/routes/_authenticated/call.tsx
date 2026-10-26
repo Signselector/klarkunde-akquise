@@ -1,3 +1,5 @@
+import { SlotPicker } from "@/components/booking/slot-picker";
+import { dateValue, timeValue } from "@/lib/booking-slots";
 import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc, type LeadClaim } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
@@ -394,15 +396,20 @@ function CallPage() {
             </div>
             {pending && (
               <div className="cc-callback-form">
-                <label htmlFor="call-time">
+                <label>
                   {pending === "callback" ? "Wann sollen wir zurückrufen?" : "Zeitpunkt"}
                 </label>
-                <Input
-                  id="call-time"
-                  type="datetime-local"
-                  value={when}
+                <SlotPicker
+                  kind={pending === "appointment" ? "appointment" : "callback"}
+                  country={country}
+                  {...(lead ? { leadId: lead.id } : {})}
                   disabled={busy}
-                  onChange={(e) => setWhen(e.target.value)}
+                  value={when ? new Date(when).toISOString() : null}
+                  onChange={(iso) => {
+                    if (!iso) return setWhen("");
+                    const d = new Date(iso);
+                    setWhen(`${dateValue(d)}T${timeValue(d)}`);
+                  }}
                 />
                 <div>
                   <Button disabled={busy || !when} onClick={() => record(pending)}>

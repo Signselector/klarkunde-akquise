@@ -20,6 +20,8 @@ import {
 } from "@/lib/lead-actions";
 import { Mail } from "@/components/coldcaller/icons";
 import { SuccessBanner } from "@/components/coldcaller/success-banner";
+import { SlotPicker } from "@/components/booking/slot-picker";
+import { dateValue, timeValue } from "@/lib/booking-slots";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -157,24 +159,7 @@ export function LeadActions({
     return () => window.clearTimeout(timer);
   }, [success]);
 
-  const slots = useQuery({
-    enabled: active === "callback" || active === "waiting_3d",
-    queryKey: ["callback-slots", userId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("callbacks")
-        .select("lead_id,due_at")
-        .eq("user_id", userId)
-        .eq("done", false);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
   const chosen = date && time ? toIso(date, time) : null;
-  const minute = (iso: string) => Math.floor(new Date(iso).getTime() / 60000);
-  const slotTaken =
-    !!chosen &&
-    !!slots.data?.some((c) => c.lead_id !== lead.id && minute(c.due_at) === minute(chosen));
   const current = LEAD_ACTIONS.find((a) => a.key === active) ?? null;
   const reducedMotion =
     typeof window !== "undefined" &&
@@ -319,6 +304,7 @@ export function LeadActions({
       setActive(null);
       setPreview(false);
       refreshLists();
+      void qc.invalidateQueries({ queryKey: ["slots"] });
       onDone();
       // A new callback or follow-up goes to the user's Pipedrive calendar right away; the scheduled sync repeats it if this fails.
       if (action.key === "callback" || (action.key === "waiting_3d" && at))
@@ -492,32 +478,32 @@ export function LeadActions({
             </label>
           )}
           {(current.needs.schedule || current.needs.appointment) && (
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block text-sm">
+            <div className="space-y-1.5">
+              <span className="block text-sm">
                 {current.needs.appointment
-                  ? "Termin (Datum)"
+                  ? "Termin"
                   : current.key === "callback"
-                    ? "Rückrufdatum"
+                    ? "Rückruf"
                     : "Rückruf (optional)"}
-                <Input
-                  type="date"
-                  value={date}
-                  min={new Date().toISOString().slice(0, 10)}
-                  onChange={(e) => setDate(e.target.value)}
-                />
-              </label>
-              <label className="block text-sm">
-                {current.needs.appointment || current.key === "callback"
-                  ? "Uhrzeit"
-                  : "Uhrzeit (optional)"}
-                <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
-              </label>
+              </span>
+              <SlotPicker
+                kind={current.needs.appointment ? "appointment" : "callback"}
+                country={country}
+                leadId={lead.id}
+                value={chosen}
+                optional={current.needs.schedule === "optional"}
+                onChange={(iso) => {
+                  if (!iso) {
+                    setDate("");
+                    setTime("");
+                    return;
+                  }
+                  const d = new Date(iso);
+                  setDate(dateValue(d));
+                  setTime(timeValue(d));
+                }}
+              />
             </div>
-          )}
-          {slotTaken && (
-            <p role="alert" className="text-sm font-medium text-destructive">
-              Zu dieser Zeit ist bereits ein Rückruf eingetragen. Bitte wähle eine Minute später.
-            </p>
           )}
           {current.needs.appointment && (
             <p className="text-xs text-muted-foreground">
@@ -549,7 +535,7 @@ export function LeadActions({
             </label>
           )}
           <div className="flex gap-2">
-            <Button type="submit" disabled={busy || slotTaken}>
+            <Button type="submit" disabled={busy}>
               {busy ? "Wird gespeichert …" : "Bestätigen"}
             </Button>
             <Button type="button" variant="outline" disabled={busy} onClick={() => setActive(null)}>

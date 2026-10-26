@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   activityPayload,
+  busyFromActivities,
   matchPipedriveUser,
   parseActivity,
   syncCalendar,
@@ -57,12 +58,12 @@ describe("calendar sync", () => {
     const p = activityPayload(item({ kind: "appointment", dealId: 5, note: "x" }), 7);
     expect(p).toMatchObject({
       type: "meeting",
-      duration: "01:00",
+      duration: "00:30",
       user_id: 7,
       deal_id: 5,
       note: "x",
     });
-    expect(activityPayload(item(), 7)).toMatchObject({ type: "call", duration: "00:15" });
+    expect(activityPayload(item(), 7)).toMatchObject({ type: "call", duration: "00:30" });
   });
 
   it("creates a new activity once and remembers its id; an existing one is only updated", async () => {
@@ -148,5 +149,21 @@ describe("calendar sync", () => {
     expect(t.log).toContain("delete:1");
     expect(t.log).toContain("update:2:done");
     expect(done).toEqual(["q1", "q2"]);
+  });
+});
+
+describe("busyFromActivities", () => {
+  it("keeps open meetings as anonymous start/end only", () => {
+    const rows = busyFromActivities([
+      { id: 1, type: "meeting", due_date: "2026-11-03", due_time: "10:00", duration: "00:30", subject: "Geheim", person_name: "X" },
+      { id: 2, type: "call", due_date: "2026-11-03", due_time: "10:00" },
+      { id: 3, type: "meeting", due_date: "2026-11-03", due_time: "11:00", done: true },
+      { id: 4, type: "meeting", due_date: "2026-11-03", due_time: "12:00", duration: "01:00" },
+      "junk",
+    ]);
+    expect(rows).toEqual([
+      { id: 1, starts_at: "2026-11-03T10:00:00.000Z", ends_at: "2026-11-03T10:30:00.000Z" },
+      { id: 4, starts_at: "2026-11-03T12:00:00.000Z", ends_at: "2026-11-03T13:00:00.000Z" },
+    ]);
   });
 });

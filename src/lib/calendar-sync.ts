@@ -60,7 +60,9 @@ export function toPipedriveTime(iso: string) {
     due_time: `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`,
   };
 }
-export const durationFor = (kind: CalItem["kind"]) => (kind === "callback" ? 15 : 60);
+/** Every slot in the booking calendar is 30 minutes, callbacks and appointments alike. */
+export const SLOT_MINUTES = 30;
+export const durationFor = (_kind: CalItem["kind"]) => SLOT_MINUTES;
 
 export function activityPayload(item: CalItem, pdUserId: number) {
   const dur = durationFor(item.kind);
@@ -170,4 +172,18 @@ export async function syncCalendar(args: {
   return firstError
     ? { state: "error", pushed, pulled, error: firstError }
     : { state: "synced", pushed, pulled };
+}
+
+export type BusyRow = { id: number; starts_at: string; ends_at: string };
+
+/** Free/busy of the company calendar: open meetings only, reduced to start and end (no names, no owner). */
+export function busyFromActivities(raws: unknown[]): BusyRow[] {
+  const rows: BusyRow[] = [];
+  for (const raw of raws) {
+    const a = parseActivity(raw);
+    if (!a || a.done || a.type !== "meeting") continue;
+    const end = new Date(new Date(a.due_at).getTime() + Math.max(a.duration_min, 1) * 60_000);
+    rows.push({ id: a.id, starts_at: a.due_at, ends_at: end.toISOString() });
+  }
+  return rows;
 }

@@ -117,6 +117,9 @@ const ERRORS: Record<string, string> = {
   invalid_schedule: "Bitte Datum und Uhrzeit in der Zukunft wählen.",
   callback_slot_taken:
     "Zu dieser Zeit ist bereits ein Rückruf eingetragen. Bitte wähle eine Minute später.",
+  slot_full:
+    "Dieser Zeitpunkt ist inzwischen ausgebucht (maximal 2 Termine gleichzeitig). Bitte wähle eine andere Zeit.",
+  slot_conflict: "Zu dieser Zeit hast du schon einen Termin oder Rückruf. Bitte wähle eine andere Zeit.",
   invalid_email: "Die E-Mail-Adresse ist ungültig.",
   email_not_sent:
     "Die E-Mail wurde nicht bestätigt versendet. Der Lead wird erst nach erfolgreichem Versand abgeschlossen.",

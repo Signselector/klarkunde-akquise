@@ -40,6 +40,15 @@ export const Route = createFileRoute("/api/pipedrive-reconcile")({
         } catch (e) {
           calendars["error"] = e instanceof Error ? e.message : "failed";
         }
+        // Free/busy of the company calendar for the booking calendar.
+        for (const country of ["DE", "AT"]) {
+          try {
+            const { refreshBusy } = await import("@/lib/calendar-sync.functions");
+            await refreshBusy(country, { force: true });
+          } catch (e) {
+            calendars[`busy:${country}`] = e instanceof Error ? e.message : "failed";
+          }
+        }
         // Zukunftsprojekte whose month has started become deals in the CRM.
         let activated = 0;
         try {

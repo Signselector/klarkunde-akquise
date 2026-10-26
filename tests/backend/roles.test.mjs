@@ -120,8 +120,9 @@ test("manager may deactivate callers of the own country but not other countries 
 });
 
 test("appointments: recruits cannot book, veterans and managers can", async () => {
+  let n = 0;
   const book = (u) =>
-    as(u).then(() => q("select public.save_calendar_appointment(now()+interval '1 day','other','Demo',null,'DE') id"));
+    as(u).then(() => q("select public.save_calendar_appointment(now()+interval '1 day'+make_interval(hours=>$1::int),'other','Demo',null,'DE') id", [++n]));
   await assert.rejects(() => book(rec), /appointment_forbidden/);
   assert.ok((await book(vet))[0].id);
   assert.ok((await book(mgrDE))[0].id);

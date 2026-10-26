@@ -69,7 +69,9 @@ test("Logo Render: appointment + logo, recruit's appointment goes to the manager
   assert.equal(ap.country, "DE");
   assert.equal(ap.pd_sync_state, "pending", "waits for the Pipedrive calendar sync");
   await as(rec);
-  assert.equal((await q("select 1 from public.appointments")).length, 0, "the recruit does not see the manager's calendar");
+  assert.equal((await q("select 1 from public.appointments")).length, 1, "the recruit sees what was booked through the tool");
+  await as(other);
+  assert.equal((await q("select 1 from public.appointments")).length, 0, "other callers see nothing");
   await as(mgr);
   assert.equal((await q("select 1 from public.appointments")).length, 1);
 });

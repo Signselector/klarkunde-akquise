@@ -1,3 +1,4 @@
+import { SlotPicker } from "@/components/booking/slot-picker";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -83,7 +84,6 @@ function AppointmentsPage() {
         .from("appointments")
         .select("id,starts_at,notes,title,kind,user_id,lead:leads(company,contact_name,phone)")
         .eq("country", country)
-        .eq("user_id", user.id)
         .order("starts_at");
       if (error) throw error;
       return data ?? [];
@@ -334,23 +334,33 @@ function EventForm({ country, initialDate, onCreated }: { country: string; initi
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<Kind>("presentation");
   const [date, setDate] = useState(initialDate ? toDateInput(initialDate) : "");
-  const [time, setTime] = useState("10:00");
+  const [time, setTime] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
+  const qc = useQueryClient();
 
   async function save() {
-    if (!title.trim() || !date) { toast.error("Bitte Titel und Datum angeben."); return; }
+    if (!title.trim() || !date || !time) { toast.error("Bitte Titel, Datum und Uhrzeit angeben."); return; }
     setBusy(true);
     const { error } = await supabase.rpc("save_calendar_appointment", {
-      p_starts_at: new Date(`${date}T${time || "10:00"}:00`).toISOString(),
+      p_starts_at: new Date(`${date}T${time}:00`).toISOString(),
       p_kind: kind,
       p_title: title.trim(),
       p_notes: notes,
       p_country: country,
     });
     setBusy(false);
-    if (error) { toast.error("Termin konnte nicht angelegt werden."); return; }
+    if (error) {
+      toast.error(
+        error.message.includes("slot_full")
+          ? "Dieser Zeitpunkt ist ausgebucht (maximal 2 Termine gleichzeitig). Bitte wähle eine andere Zeit."
+          : "Termin konnte nicht angelegt werden.",
+      );
+      void qc.invalidateQueries({ queryKey: ["slots"] });
+      return;
+    }
     toast.success("Termin angelegt.");
+    void qc.invalidateQueries({ queryKey: ["slots"] });
     onCreated();
   }
 
@@ -373,13 +383,22 @@ function EventForm({ country, initialDate, onCreated }: { country: string; initi
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label htmlFor="ev-date">Datum</Label>
-          <Input id="ev-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-2 min-h-11" />
-        </div>
-        <div>
-          <Label htmlFor="ev-time">Uhrzeit</Label>
-          <Input id="ev-time" type="time" value={time} onChange={(e) => setTime(e.target.value)} className="mt-2 min-h-11" />
+        <div className="md:col-span-2 lg:col-span-3">
+          <Label>Datum und Uhrzeit</Label>
+          <div className="mt-2">
+            <SlotPicker
+              kind="appointment"
+              country={country}
+              initialDay={initialDate}
+              value={date && time ? new Date(`${date}T${time}`).toISOString() : null}
+              onChange={(iso) => {
+                if (!iso) { setDate(""); setTime(""); return; }
+                const d = new Date(iso);
+                setDate(toDateInput(d));
+                setTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
+              }}
+            />
+          </div>
         </div>
         <div className="md:col-span-2 lg:col-span-3">
           <Label htmlFor="ev-notes">Notizen (optional)</Label>
