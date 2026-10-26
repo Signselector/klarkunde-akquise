@@ -162,6 +162,13 @@
       "when": 1793031611130,
       "tag": "0022_purge_test_batch",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1793035521261,
+      "tag": "0023_booking_slots",
+      "breakpoints": true
     }
   ]
 }
