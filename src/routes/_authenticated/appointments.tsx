@@ -8,10 +8,10 @@ import { backendEnabled } from "@/lib/backend";
 import { useCountry } from "@/lib/country";
 import { cn } from "@/lib/utils";
 import { useRoles } from "@/lib/use-admin";
+import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -66,7 +66,8 @@ function AppointmentsPage() {
   const qc = useQueryClient();
   const country = useCountry();
   const roles = useRoles(user.id);
-  const [mine, setMine] = useState(false);
+  const { sync, external } = useCalendarSync(user.id, country);
+  const [mine] = useState(false);
   const [filter, setFilter] = useState<Kind | "all">("all");
   const [month, setMonth] = useState(() => {
     const n = new Date();
@@ -82,19 +83,35 @@ function AppointmentsPage() {
         .from("appointments")
         .select("id,starts_at,notes,title,kind,user_id,lead:leads(company,contact_name,phone)")
         .eq("country", country)
+        .eq("user_id", user.id)
         .order("starts_at");
       if (error) throw error;
       return data ?? [];
     },
   });
 
-  const events = useMemo(
-    () =>
-      (data ?? [])
-        .filter((a) => (!mine || a.user_id === user.id) && (filter === "all" || kindOf(a.kind) === filter))
-        .map((a) => ({ ...a, date: new Date(a.starts_at), k: kindOf(a.kind) })),
-    [data, mine, filter, user.id],
-  );
+  const events = useMemo(() => {
+    const own = (data ?? [])
+      .filter((a) => (!mine || a.user_id === user.id) && (filter === "all" || kindOf(a.kind) === filter))
+      .map((a) => ({ ...a, date: new Date(a.starts_at), k: kindOf(a.kind) }));
+    // Entries that exist only in the user's Pipedrive calendar.
+    const fromPipedrive =
+      filter === "all" || filter === "other"
+        ? external.map((x) => ({
+            id: `pd-${x.activity_id}`,
+            starts_at: x.due_at,
+            notes: [x.person_name, x.org_name].filter(Boolean).join(", ") || null,
+            title: x.subject,
+            kind: "other" as string | null,
+            user_id: user.id,
+            lead: null,
+            date: new Date(x.due_at),
+            k: "other" as Kind,
+            external: true as const,
+          }))
+        : [];
+    return [...own, ...fromPipedrive].sort((p, q) => p.date.getTime() - q.date.getTime());
+  }, [data, external, mine, filter, user.id]);
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["appointments"] });
 
@@ -125,13 +142,10 @@ function AppointmentsPage() {
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <h1 className="text-[22px] font-semibold">Terminkalender</h1>
-          <p className="text-sm text-muted-foreground">Alle Vertriebstermine für {country} im Überblick.</p>
+          <p className="text-sm text-muted-foreground">Deine Termine für {country}, abgeglichen mit deinem Pipedrive-Kalender.</p>
+          <CalendarSyncStatus sync={sync} />
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Switch id="mine" checked={mine} onCheckedChange={setMine} />
-            <Label htmlFor="mine">Nur meine</Label>
-          </div>
           {roles.canBookAppointments ? (
             <Button className="min-h-11" onClick={() => setShowForm((s) => !s)}>
               <CalendarPlus /> Termin anlegen
@@ -153,6 +167,7 @@ function AppointmentsPage() {
           onCreated={() => {
             setShowForm(false);
             refresh();
+            void sync.refetch();
           }}
         />
       )}
@@ -281,7 +296,7 @@ function AppointmentsPage() {
                       )}
                       {e.notes && e.notes !== heading && <p className="mt-1 text-xs text-muted-foreground">{e.notes}</p>}
                     </div>
-                    {e.user_id === user.id && (
+                    {e.user_id === user.id && !("external" in e) && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" aria-label={`${heading} löschen`}>

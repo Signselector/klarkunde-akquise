@@ -15,6 +15,7 @@ import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
 import { backendEnabled } from "@/lib/backend";
 import { useCountry } from "@/lib/country";
+import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -35,6 +36,7 @@ function CallbacksPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
   const country = useCountry();
+  const { sync, external } = useCalendarSync(user.id, country);
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["callbacks", user.id, country],
     refetchInterval: 30_000,
@@ -75,8 +77,8 @@ function CallbacksPage() {
   const now = new Date();
   const visible = (data ?? []).filter((c) => !day || sameDay(new Date(c.due_at), day));
   const isToday = (d: Date) => sameDay(d, now);
-  const markersOf = (d: Date) =>
-    (data ?? [])
+  const markersOf = (d: Date) => [
+    ...(data ?? [])
       .filter((c) => sameDay(new Date(c.due_at), d))
       .map((c) => {
         const due = new Date(c.due_at);
@@ -84,7 +86,14 @@ function CallbacksPage() {
           id: c.id,
           dot: due < now ? "bg-destructive" : isToday(due) ? "bg-primary" : "bg-chart-2",
         };
-      });
+      }),
+    ...external
+      .filter((x) => sameDay(new Date(x.due_at), d))
+      .map((x) => ({ id: `pd-${x.activity_id}`, dot: "bg-chart-4" })),
+  ];
+  const externalVisible = external.filter((x) =>
+    day ? sameDay(new Date(x.due_at), day) : new Date(x.due_at) >= now,
+  );
   return (
     <div className="cc-page">
       <PageHeading
@@ -109,11 +118,17 @@ function CallbacksPage() {
               <span className="flex items-center gap-1">
                 <span className="size-2 rounded-full bg-chart-2" /> Geplant
               </span>
+              <span className="flex items-center gap-1">
+                <span className="size-2 rounded-full bg-chart-4" /> Aus Pipedrive
+              </span>
               {day && (
                 <Button size="sm" variant="outline" onClick={() => setDay(null)}>
                   Alle Rückrufe anzeigen
                 </Button>
               )}
+              <div className="w-full">
+                <CalendarSyncStatus sync={sync} />
+              </div>
             </div>
           }
         />
@@ -185,6 +200,21 @@ function CallbacksPage() {
                 );
               })}
             </div>
+            {externalVisible.length > 0 && (
+              <div className="space-y-2" aria-label="Weitere Aktivitäten aus Pipedrive">
+                <h3 className="text-sm font-semibold">Weitere Aktivitäten aus Pipedrive</h3>
+                {externalVisible.slice(0, 20).map((x) => (
+                  <div key={x.activity_id} className="rounded-lg border bg-card p-3 text-sm">
+                    <p className="font-medium">{x.subject || "Aktivität"}</p>
+                    <p className="text-muted-foreground">
+                      {new Date(x.due_at).toLocaleString("de-DE")}
+                      {[x.person_name, x.org_name].filter(Boolean).length > 0 &&
+                        ` · ${[x.person_name, x.org_name].filter(Boolean).join(", ")}`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
             <p className="text-sm text-muted-foreground">
               Rückruf vereinbaren oder Ergebnis ändern: Öffne den Lead unter{" "}
               <Link to="/leads" className="underline">

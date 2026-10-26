@@ -23,7 +23,24 @@ export const Route = createFileRoute("/api/pipedrive-reconcile")({
             results[country] = { error: e instanceof Error ? e.message : "failed" };
           }
         }
-        return Response.json(results);
+        // Calendars: every user with a Pipedrive match, so changes made in Pipedrive arrive without opening the page.
+        const calendars: Record<string, unknown> = {};
+        try {
+          const { syncCalendarForUser } = await import("@/lib/calendar-sync.functions");
+          const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+          const { data: mapped } = await db
+            .from("pipedrive_user_map")
+            .select("user_id,country")
+            .in("country", ["DE", "AT"])
+            .limit(200);
+          for (const m of mapped ?? []) {
+            const r = await syncCalendarForUser(m.user_id, m.country);
+            calendars[`${m.country}:${m.user_id}`] = r.state;
+          }
+        } catch (e) {
+          calendars["error"] = e instanceof Error ? e.message : "failed";
+        }
+        return Response.json({ deals: results, calendars });
       },
     },
   },

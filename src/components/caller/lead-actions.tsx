@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { syncLeadAction } from "@/lib/crm-sync.functions";
 import { sendLeadEmail } from "@/lib/lead-email.functions";
+import { syncMyCalendar } from "@/lib/calendar-sync.functions";
+import { useCountry } from "@/lib/country";
 import { emailErrorMessage, isValidEmail } from "@/lib/lead-email";
 import { crmErrorMessage } from "@/lib/crm-sync";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +79,8 @@ export function LeadActions({
   const qc = useQueryClient();
   const sync = useServerFn(syncLeadAction);
   const sendMail = useServerFn(sendLeadEmail);
+  const syncCalendar = useServerFn(syncMyCalendar);
+  const country = useCountry();
   const [active, setActive] = useState<LeadActionKey | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
@@ -258,6 +262,9 @@ export function LeadActions({
       setPreview(false);
       refreshLists();
       onDone();
+      // A new callback or follow-up goes to the user's Pipedrive calendar right away; the scheduled sync repeats it if this fails.
+      if (action.key === "callback" || (action.key === "on_hold" && at))
+        void syncCalendar({ data: { country } }).catch(() => undefined);
       if (stage && result.action_id) {
         // The action is saved either way; a failed CRM sync stays visible and can be retried in the history.
         try {

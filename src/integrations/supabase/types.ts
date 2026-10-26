@@ -34,6 +34,10 @@ export type Database = {
       }
       appointments: {
         Row: {
+          pd_activity_id: number | null
+          pd_sync_error: string | null
+          pd_sync_state: string
+          pd_synced_at: string | null
           country: string
           created_at: string
           id: string
@@ -45,6 +49,10 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           country?: string
           created_at?: string
           id?: string
@@ -56,6 +64,10 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           country?: string
           created_at?: string
           id?: string
@@ -150,6 +162,10 @@ export type Database = {
       }
       callbacks: {
         Row: {
+          pd_activity_id: number | null
+          pd_sync_error: string | null
+          pd_sync_state: string
+          pd_synced_at: string | null
           country: string
           created_at: string
           done: boolean
@@ -160,6 +176,10 @@ export type Database = {
           version: number
         }
         Insert: {
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           country?: string
           created_at?: string
           done?: boolean
@@ -170,6 +190,10 @@ export type Database = {
           version?: number
         }
         Update: {
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           country?: string
           created_at?: string
           done?: boolean
@@ -954,6 +978,52 @@ export type Database = {
           },
         ]
       }
+      pd_calendar_queue: {
+        Row: {
+          action: string
+          activity_id: number
+          country: string
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          activity_id: number
+          country: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: { action?: string }
+        Relationships: []
+      }
+      pipedrive_activities: {
+        Row: {
+          activity_id: number
+          country: string
+          deal_id: number | null
+          done: boolean
+          due_at: string
+          duration_min: number
+          note: string | null
+          org_name: string | null
+          person_name: string | null
+          subject: string | null
+          type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      pipedrive_user_map: {
+        Row: { country: string; matched_at: string; pipedrive_user_id: number; user_id: string }
+        Insert: { country: string; matched_at?: string; pipedrive_user_id: number; user_id: string }
+        Update: { matched_at?: string; pipedrive_user_id?: number }
+        Relationships: []
+      }
       pipedrive_stage_mapping: {
         Row: {
           country: string
@@ -1248,6 +1318,14 @@ export type Database = {
       archive_leads: { Args: { p_ids: string[] }; Returns: number }
       archive_open_leads: { Args: never; Returns: number }
       backend_maintenance: { Args: never; Returns: Json }
+      cal_apply_activity: {
+        Args: { p_a: Json; p_country: string; p_user: string }
+        Returns: string
+      }
+      cal_prune: {
+        Args: { p_country: string; p_from: string; p_keep: number[]; p_to: string; p_user: string }
+        Returns: number
+      }
       can_access_country: { Args: { _c: string }; Returns: boolean }
       checkpoint_integration: {
         Args: {
