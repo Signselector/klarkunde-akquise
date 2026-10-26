@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 /** recruit and veteran are callers, manager has admin rights in the own country, admin can do everything. */
 export type RoleName = "recruit" | "veteran" | "manager" | "admin";
 export const ROLE_LABEL: Record<RoleName, string> = {
-  recruit: "Recruit",
-  veteran: "Veteran",
+  recruit: "Caller",
+  veteran: "Senior Caller",
   manager: "Manager",
   admin: "Admin",
 };
