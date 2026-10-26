@@ -32,6 +32,38 @@ export type Database = {
         }
         Relationships: []
       }
+      appointment_notifications: {
+        Row: {
+          appointment_id: string
+          created_at: string
+          id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          appointment_id: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           booked_by: string | null
@@ -1414,6 +1446,10 @@ export type Database = {
       activate_future_projects: { Args: never; Returns: Json }
       archive_leads: { Args: { p_ids: string[] }; Returns: number }
       archive_open_leads: { Args: never; Returns: number }
+      assign_appointment: {
+        Args: { p_appointment_id: string; p_user_id: string }
+        Returns: undefined
+      }
       backend_maintenance: { Args: never; Returns: Json }
       cal_apply_activity: {
         Args: { p_a: Json; p_country: string; p_user: string }
@@ -1664,6 +1700,7 @@ export type Database = {
           p_kind: string
           p_lead_id?: string
           p_notes: string
+          p_self?: boolean
           p_starts_at: string
           p_title: string
         }
