@@ -138,9 +138,9 @@ function AccountsPage() {
       <h1 className="text-[22px] font-semibold">Accounts</h1>
       <section className="space-y-2 rounded-lg border bg-card p-4">
         <p className="text-sm text-muted-foreground">
-          Neue Nutzer registrieren sich selbst und sind zuerst Recruit. Sie sehen erst etwas, wenn
+          Neue Nutzer registrieren sich selbst und sind zuerst Caller. Sie sehen erst etwas, wenn
           ihnen ein Land freigeschaltet wird. Nur Admins vergeben Rollen wie Manager und die Länder.
-          Manager arbeiten im ihnen zugewiesenen Land und befördern dort Recruits zu Veterans.
+          Manager arbeiten im ihnen zugewiesenen Land und befördern dort Caller zu Senior Callern.
         </p>
         <div className="divide-y">
           {visibleUsers?.map((u) => {
@@ -235,7 +235,7 @@ function AccountsPage() {
                           }
                         >
                           <Shield size={16} />
-                          {u.role === "recruit" ? "Zu Veteran" : "Zu Recruit"}
+                          {u.role === "recruit" ? "Zu Senior Caller" : "Zu Caller"}
                         </Button>
                       )}
                     <Button

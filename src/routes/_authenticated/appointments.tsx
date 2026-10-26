@@ -183,7 +183,7 @@ function AppointmentsPage() {
           ) : (
             roles.ready && (
               <p className="max-w-xs text-sm text-muted-foreground">
-                Termine bucht dein Manager. Als Veteran buchst du sie selbst.
+                Termine bucht dein Manager. Als Senior Caller buchst du sie selbst.
               </p>
             )
           )}
