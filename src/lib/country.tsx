@@ -88,3 +88,26 @@ export function CountrySwitcher() {
     </div>
   );
 }
+
+/** Collapsed sidebar: shows the active country as a flag; a click switches to the next allowed country. */
+export function CountryBadge() {
+  const country = useCountry();
+  const { data: allowed } = useAllowedCountries();
+  if (!allowed?.length) return null;
+  const current = COUNTRIES.find((c) => c.code === country) ?? COUNTRIES[0];
+  const next = () => {
+    const i = allowed.indexOf(current.code);
+    setCountry(allowed[(i + 1) % allowed.length] ?? current.code);
+  };
+  return (
+    <button
+      type="button"
+      className="cc-country-badge"
+      onClick={next}
+      title={`${current.label}${allowed.length > 1 ? " · Klicken zum Wechseln" : ""}`}
+      aria-label={`Land: ${current.label}${allowed.length > 1 ? ". Klicken zum Wechseln" : ""}`}
+    >
+      <Flag code={current.code} size={26} />
+    </button>
+  );
+}

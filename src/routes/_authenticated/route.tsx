@@ -3,7 +3,7 @@ import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { primaryRole, ROLE_LABEL } from "@/lib/use-admin";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
-import { CountrySwitcher, useCountry } from "@/lib/country";
+import { CountryBadge, CountrySwitcher, useCountry } from "@/lib/country";
 import { useEffect, useState, type CSSProperties } from "react";
 import {
   createFileRoute,
@@ -212,6 +212,7 @@ function Layout() {
           )}
         </SidebarContent>
         <SidebarFooter className="cc-sidebar-footer">
+          <CountryBadge />
           <div className="cc-sidebar-tools">
             {isMaster && callerView && (
               <Button size="sm" aria-pressed={callerView} onClick={toggleCallerView}>

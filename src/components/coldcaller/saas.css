@@ -1305,3 +1305,24 @@ tr:hover > .cc-sticky-action {
 .cc-sidebar-tools [role="radio"][aria-checked="false"] svg {
   opacity: 0.7;
 }
+
+/* Collapsed sidebar: the active country stays visible as a flag */
+.cc-country-badge {
+  display: none;
+  width: 48px;
+  height: 40px;
+  padding: 0;
+  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 6%);
+  transition: background-color 150ms;
+}
+.cc-country-badge:hover {
+  background: rgb(255 255 255 / 14%);
+}
+.cc-app [data-collapsible="icon"] .cc-country-badge {
+  display: flex;
+}
