@@ -411,6 +411,68 @@ export type Database = {
           },
         ]
       }
+      lead_activity: {
+        Row: {
+          acting_user_id: string | null
+          acting_user_name: string | null
+          action_type: string
+          created_at: string
+          deal_id: number | null
+          details: Json | null
+          external_id: string | null
+          id: string
+          lead_id: string
+          new_stage: string | null
+          occurred_at: string
+          origin_caller_id: string | null
+          previous_stage: string | null
+          seq: number
+          source: string
+        }
+        Insert: {
+          acting_user_id?: string | null
+          acting_user_name?: string | null
+          action_type: string
+          created_at?: string
+          deal_id?: number | null
+          details?: Json | null
+          external_id?: string | null
+          id?: string
+          lead_id: string
+          new_stage?: string | null
+          occurred_at?: string
+          origin_caller_id?: string | null
+          previous_stage?: string | null
+          seq?: never
+          source: string
+        }
+        Update: {
+          acting_user_id?: string | null
+          acting_user_name?: string | null
+          action_type?: string
+          created_at?: string
+          deal_id?: number | null
+          details?: Json | null
+          external_id?: string | null
+          id?: string
+          lead_id?: string
+          new_stage?: string | null
+          occurred_at?: string
+          origin_caller_id?: string | null
+          previous_stage?: string | null
+          seq?: never
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activity_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_batches: {
         Row: {
           assigned_at: string | null
@@ -484,26 +546,56 @@ export type Database = {
       lead_crm_links: {
         Row: {
           country: string
+          created_at: string
+          current_stage_id: number | null
+          current_stage_key: string | null
           deal_id: number | null
+          deal_status: string | null
+          is_customer: boolean
+          last_synced_at: string | null
           lead_id: string
           organization_id: number | null
+          origin_caller_id: string | null
+          origin_lead_id: string | null
           person_id: number | null
+          stage_event_at: string | null
+          sync_state: string
           updated_at: string
         }
         Insert: {
           country: string
+          created_at?: string
+          current_stage_id?: number | null
+          current_stage_key?: string | null
           deal_id?: number | null
+          deal_status?: string | null
+          is_customer?: boolean
+          last_synced_at?: string | null
           lead_id: string
           organization_id?: number | null
+          origin_caller_id?: string | null
+          origin_lead_id?: string | null
           person_id?: number | null
+          stage_event_at?: string | null
+          sync_state?: string
           updated_at?: string
         }
         Update: {
           country?: string
+          created_at?: string
+          current_stage_id?: number | null
+          current_stage_key?: string | null
           deal_id?: number | null
+          deal_status?: string | null
+          is_customer?: boolean
+          last_synced_at?: string | null
           lead_id?: string
           organization_id?: number | null
+          origin_caller_id?: string | null
+          origin_lead_id?: string | null
           person_id?: number | null
+          stage_event_at?: string | null
+          sync_state?: string
           updated_at?: string
         }
         Relationships: [
@@ -511,6 +603,74 @@ export type Database = {
             foreignKeyName: "lead_crm_links_lead_id_fkey"
             columns: ["lead_id"]
             isOneToOne: true
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_emails: {
+        Row: {
+          attempted_at: string | null
+          attempts: number
+          body: string
+          created_at: string
+          created_by: string
+          error: string | null
+          id: string
+          kind: string
+          lead_id: string
+          provider: string | null
+          provider_message_id: string | null
+          request_id: string
+          sent_at: string | null
+          status: string
+          subject: string
+          template_id: string | null
+          to_email: string
+        }
+        Insert: {
+          attempted_at?: string | null
+          attempts?: number
+          body: string
+          created_at?: string
+          created_by: string
+          error?: string | null
+          id?: string
+          kind: string
+          lead_id: string
+          provider?: string | null
+          provider_message_id?: string | null
+          request_id: string
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_id?: string | null
+          to_email: string
+        }
+        Update: {
+          attempted_at?: string | null
+          attempts?: number
+          body?: string
+          created_at?: string
+          created_by?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          lead_id?: string
+          provider?: string | null
+          provider_message_id?: string | null
+          request_id?: string
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_id?: string | null
+          to_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_emails_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
             referencedRelation: "leads"
             referencedColumns: ["id"]
           },
@@ -812,6 +972,33 @@ export type Database = {
         }
         Relationships: []
       }
+      pipedrive_stage_validation: {
+        Row: {
+          checked_at: string
+          checked_by: string | null
+          country: string
+          ok: boolean
+          origin_field_key: string | null
+          report: Json
+        }
+        Insert: {
+          checked_at?: string
+          checked_by?: string | null
+          country: string
+          ok: boolean
+          origin_field_key?: string | null
+          report: Json
+        }
+        Update: {
+          checked_at?: string
+          checked_by?: string | null
+          country?: string
+          ok?: boolean
+          origin_field_key?: string | null
+          report?: Json
+        }
+        Relationships: []
+      }
       points_ledger: {
         Row: {
           created_at: string
@@ -1103,6 +1290,38 @@ export type Database = {
         Returns: Json
       }
       create_backup: { Args: { p_kind?: string }; Returns: string }
+      crm_apply_stage: {
+        Args: {
+          p_actor?: string
+          p_actor_name?: string
+          p_country: string
+          p_deal_id: number
+          p_event_id: string
+          p_occurred: string
+          p_source: string
+          p_stage_id: number
+          p_stage_key?: string
+          p_status?: string
+        }
+        Returns: Json
+      }
+      crm_save_links: {
+        Args: {
+          p_actor: string
+          p_country: string
+          p_deal: number
+          p_lead: string
+          p_org: number
+          p_origin: string
+          p_person: number
+          p_stage_key: string
+        }
+        Returns: Json
+      }
+      crm_set_sync_state: {
+        Args: { p_lead: string; p_state: string }
+        Returns: undefined
+      }
       delete_appointment: {
         Args: { p_appointment_id: string }
         Returns: undefined
@@ -1120,12 +1339,26 @@ export type Database = {
       freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
       get_batch_progress: { Args: never; Returns: Json }
       get_caller_day: { Args: { p_day?: string }; Returns: Json }
+      get_caller_performance: {
+        Args: {
+          p_from: string
+          p_granularity?: string
+          p_to: string
+          p_user?: string
+        }
+        Returns: Json
+      }
       get_capabilities: { Args: never; Returns: Json }
+      get_completed_overview: {
+        Args: { p_country: string; p_limit?: number }
+        Returns: Json
+      }
       get_dashboard: {
         Args: { p_from: string; p_scope?: string; p_to: string }
         Returns: Json
       }
       get_monthly_quality: { Args: { p_month?: string }; Returns: Json }
+      get_my_customers: { Args: { p_country: string }; Returns: Json }
       get_quality_issues: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json

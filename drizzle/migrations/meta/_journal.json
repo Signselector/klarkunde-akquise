@@ -99,6 +99,13 @@
       "when": 1792965229654,
       "tag": "0013_dashboard_metrics",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793016690137,
+      "tag": "0014_crm_history",
+      "breakpoints": true
     }
   ]
 }
