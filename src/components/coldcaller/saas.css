@@ -1112,16 +1112,8 @@
     0 3px 4px rgb(0 0 0 / 38%);
 }
 
-/* Large black card holds a single hero figure */
-.cc-b-avg {
-  display: flex;
-  flex-direction: column;
-}
-.cc-b-avg .cc-big {
-  margin-top: auto;
-  font-size: clamp(64px, 7vw, 104px);
-}
-.cc-b-avg .cc-big-note {
-  margin-bottom: auto;
-  margin-top: 12px;
+.cc-bars-caption {
+  color: #85838b;
+  font-size: 11px;
+  margin-top: 8px;
 }

@@ -174,6 +174,7 @@ export function CallerPerformance({
   const t = team.data;
   const q = history.data?.[5];
   const delta = per100Delta(q?.per_100 ?? null, history.data?.[4]?.per_100 ?? null);
+  const maxQualified = Math.max(1, ...(history.data ?? []).map((m) => m.qualified ?? 0));
   const calls = day.data?.attempts ?? 0;
   const remaining = Math.max(0, DAILY_CALL_GOAL - calls);
   const share = Math.min(1, calls / DAILY_CALL_GOAL);
@@ -261,6 +262,24 @@ export function CallerPerformance({
             <small>Leads</small>
           </div>
           <p className="cc-big-note">{teamContext("Von dir eingebracht")}</p>
+          <div className="cc-bars" aria-hidden="true">
+            {(history.data ?? months.map(() => null)).map((m, k) => (
+              <i
+                key={k}
+                className={k === 5 ? "hi" : ""}
+                style={{
+                  height: `${m?.qualified ? Math.max(6, Math.round((m.qualified / maxQualified) * 100)) : 6}%`,
+                  animationDelay: `${300 + k * 60}ms`,
+                }}
+              />
+            ))}
+          </div>
+          <div className="cc-bars-label" aria-hidden="true">
+            {months.map((m) => (
+              <span key={`${m.year}-${m.month}`}>{monthLabel(m).slice(0, 3)}</span>
+            ))}
+          </div>
+          <p className="cc-bars-caption">Balken: von dir qualifizierte Leads je Monat</p>
         </BentoCard>
 
         <div className="cc-b-kpis">
