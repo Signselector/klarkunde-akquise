@@ -8,7 +8,6 @@ export type LeadActionKey =
   | "waiting_3d"
   | "no_interest"
   | "on_hold"
-  | "contact_details"
   | "callback"
   | "reference_mail"
   | "not_reached";
@@ -19,7 +18,7 @@ export type LeadAction = {
   hint: string;
   /** Tailwind classes for the coloured button. */
   color: string;
-  stageKey?: "low_q" | "high_q" | "waiting_3d" | "on_hold" | "reference_mail" | "contact_saved";
+  stageKey?: "low_q" | "high_q" | "waiting_3d" | "on_hold" | "reference_mail";
   /** Needs the form step before it can be confirmed. */
   needs: { note?: "required" | "optional"; logo?: boolean; schedule?: "required" | "optional" };
   /** Shown as a bigger success moment. */
@@ -84,14 +83,6 @@ export const LEAD_ACTIONS: LeadAction[] = [
     needs: {},
   },
   {
-    key: "contact_details",
-    label: "Kontaktdaten",
-    hint: "Mail senden, Lead abschließen",
-    color: "bg-[#0e9aa7] text-white hover:bg-[#0b8691]",
-    stageKey: "contact_saved",
-    needs: {},
-  },
-  {
     key: "not_reached",
     label: "Nicht erreicht",
     hint: "Kontaktversuch speichern",
@@ -100,9 +91,11 @@ export const LEAD_ACTIONS: LeadAction[] = [
   },
 ];
 
-export const ACTION_LABEL: Record<string, string> = Object.fromEntries(
-  LEAD_ACTIONS.map((a) => [a.key, a.label]),
-);
+export const ACTION_LABEL: Record<string, string> = {
+  ...Object.fromEntries(LEAD_ACTIONS.map((a) => [a.key, a.label])),
+  // No longer offered; old entries in a lead history keep their name.
+  contact_details: "Kontaktdaten (früher)",
+};
 
 const ERRORS: Record<string, string> = {
   note_required: "Bitte eine Gesprächsnotiz eintragen.",

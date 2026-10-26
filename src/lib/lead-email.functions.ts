@@ -12,7 +12,7 @@ import {
 type Input = {
   requestId: string;
   leadId: string;
-  kind: "reference_mail" | "contact_details";
+  kind: "reference_mail";
   to: string;
   subject: string;
   body: string;
@@ -28,7 +28,7 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: Input) => {
     if (!d || !UUID.test(d.requestId) || !UUID.test(d.leadId)) throw new Error("invalid");
-    if (d.kind !== "reference_mail" && d.kind !== "contact_details") throw new Error("invalid");
+    if (d.kind !== "reference_mail") throw new Error("invalid");
     if (!isValidEmail(String(d.to ?? "").trim())) throw new Error("invalid_email");
     if (!d.subject?.trim() || d.subject.length > 300) throw new Error("invalid");
     if (!d.body?.trim() || d.body.length > 20000) throw new Error("invalid");

@@ -7,7 +7,6 @@ const stages: PipedriveStage[] = [
   { id: 7, name: "3D Waiting", pipeline_name: "Sales" },
   { id: 30, name: "Zukünftiges Interesse", pipeline_name: "Sales" },
   { id: 36, name: "Referenzmail versendet", pipeline_name: "Sales" },
-  { id: 6, name: "Kontaktdaten hinterlegt", pipeline_name: "Sales" },
 ];
 const mapping = {
   low_q: 8,
@@ -15,7 +14,6 @@ const mapping = {
   waiting_3d: 7,
   on_hold: 30,
   reference_mail: 36,
-  contact_saved: 6,
 };
 const field = { key: "abc123", name: "Ursprünglicher Caller", field_type: "varchar" };
 const run = (over: Partial<Parameters<typeof buildValidationReport>[0]> = {}) =>

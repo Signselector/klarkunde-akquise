@@ -43,12 +43,6 @@ export const REQUIRED_STAGES: { key: string; label: string; hint: RegExp; hintTe
     hint: /referenz/i,
     hintText: "Referenzmail versendet",
   },
-  {
-    key: "contact_saved",
-    label: "Kontaktdaten → Kontaktdaten hinterlegt",
-    hint: /kontakt/i,
-    hintText: "Kontaktdaten hinterlegt",
-  },
 ];
 
 export function buildValidationReport(input: {

@@ -22,7 +22,6 @@ Batch des Aufrufers (oder wurde von ihm bearbeitet, oder Admin), kein fremder ak
 | `no_interest` (Kein Interesse) | `no_interest` | Abgeschlossene Leads | keine, kein Deal | – |
 | `on_hold` (Zukunftsprojekt) | `on_hold` | Abgeschlossene Leads | `on_hold` | Notiz; optional Wiedervorlage (wird ein Rückruf) |
 | `not_reached` (Nicht erreicht) | offen, +1 Versuch | bleibt in Offene Leads | keine, kein Deal | – |
-| `contact_details` (Kontaktdaten) | `contact_saved` | Abgeschlossene Leads | `contact_saved` | bestätigte Mail |
 
 - **Rückrufe:** Ein Caller kann pro Minute nur einen offenen Rückruf haben (Datenbank-Trigger auf `callbacks`,
   gilt für jede Funktion; Fehler `callback_slot_taken`). Die Oberfläche warnt vorher.

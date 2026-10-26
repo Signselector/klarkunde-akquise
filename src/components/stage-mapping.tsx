@@ -36,7 +36,6 @@ const GROUPS: { title: string; fields: [string, string][] }[] = [
       ["offer", "Angebot erstellen"],
       ["contract", "Kaufvertrag erstellen"],
       ["production", "Deal in Produktion"],
-      ["contact_saved", "Kontaktdaten hinterlegt"],
       ["future_interest", "Zukünftiges Interesse"],
       ["lost", "Verloren / Kein Interesse"],
     ],

@@ -195,45 +195,16 @@ const mailFor = async (user, lead, kind, status = "simulated") => {
   return id;
 };
 
-test("Kontaktdaten need a confirmed e-mail, then the lead moves on with its own stage", async () => {
+test("Kontaktdaten is no longer a conversation outcome", async () => {
   await as(anna);
   const lead = leads[6];
   const before = await row(lead);
+  const mail = await mailFor(anna, lead, "contact_details", "sent");
   await assert.rejects(
-    () => action(lead, before.version, "contact_details", { details: { email: "kaputt" } }),
-    /invalid_email|email_not_sent/,
-  );
-  await assert.rejects(
-    () => action(lead, before.version, "contact_details", { details: { status: "x" } }),
+    () => action(lead, before.version, "contact_details", { details: { email_id: mail } }),
     /validation_failed/,
   );
-  await assert.rejects(
-    () => action(lead, before.version, "contact_details", { details: {} }),
-    /email_not_sent/,
-    "no e-mail, no completion",
-  );
-  const failed = await mailFor(anna, lead, "contact_details", "failed");
-  await assert.rejects(
-    () => action(lead, before.version, "contact_details", { details: { email_id: failed } }),
-    /email_not_sent/,
-    "a failed e-mail does not count",
-  );
-  const wrongKind = await mailFor(anna, lead, "reference_mail", "sent");
-  await assert.rejects(
-    () => action(lead, before.version, "contact_details", { details: { email_id: wrongKind } }),
-    /email_not_sent/,
-  );
-  const mail = await mailFor(anna, lead, "contact_details", "sent");
-  const saved = await action(lead, before.version, "contact_details", {
-    details: { email_id: mail, company: "Neu GmbH", email: " NEU@Example.test " },
-  });
-  assert.equal(saved.stage_key, "contact_saved");
-  assert.equal(saved.status, "contact_saved");
-  assert.equal(saved.crm_sync_state, "queued");
-  const l = await row(lead);
-  assert.equal(l.company, "Neu GmbH");
-  assert.equal(l.email, "neu@example.test");
-  assert.equal(l.status, "contact_saved");
+  assert.equal((await row(lead)).status, before.status, "nothing changed");
 });
 
 test("Referenzmail moves the lead on and is queued for the CRM", async () => {

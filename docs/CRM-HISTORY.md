@@ -56,8 +56,8 @@ Es werden nie Stages oder Felder angelegt. **Offen:** In der Datenbank teilen si
 
 `sendLeadEmail` (Server) speichert jede Mail in `lead_emails` (Status `pending/sending/sent/simulated/failed`, `request_id` verhindert Doppelversand) und sendet über
 einen Provider-Adapter (Resend, aktiv mit `RESEND_API_KEY` und `EMAIL_FROM`). Als `sent` gilt eine Mail nur mit Nachrichten-ID des Anbieters. Im Testmodus
-`simulated`. Die Aktionen Referenzmail und Kontaktdaten verlangen serverseitig eine eigene, bestätigte Mail (`email_not_sent`), sonst wird der Lead nicht
-abgeschlossen; bei Fehler zeigt die Oberfläche „Erneut senden“. Vorlagen: Einstellungen → E-Mail (Referenz- und Kontaktdaten-Vorlagen).
+`simulated`. Die Aktionen Die Referenzmail verlangt serverseitig eine eigene, bestätigte Mail (`email_not_sent`), sonst wird der Lead nicht
+abgeschlossen; bei Fehler zeigt die Oberfläche „Erneut senden“. Vorlagen: Einstellungen → E-Mail.
 Nicht gegen einen echten Anbieter getestet.
 
 ## Verlauf und Auswertung
@@ -85,3 +85,5 @@ Nicht gegen einen echten Anbieter getestet.
 - Wer in Pipedrive einen Stage-Wechsel auslöst, ist nur als „Pipedrive“ bekannt (Webhook liefert keine Zuordnung zu Mitarbeitern des Tools).
 - Rollen Recruit/Veteran/Manager existieren nicht; Fulfillment liest den Verlauf, schreibt ihn aber nicht.
 - Gamification: nur die Datenbasis, keine Punkte, Coins oder Level.
+
+> Die Aktion „Kontaktdaten“ wurde wieder entfernt (Migration 0018). Alte Verlaufseinträge bleiben als „Kontaktdaten (früher)“ lesbar.

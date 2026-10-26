@@ -142,20 +142,6 @@ function SettingsPage() {
                 },
               ]}
             />
-            <TemplateManager
-              settingKey="contact_email_templates"
-              title="Kontaktdaten-Vorlagen"
-              help="Vorlagen für die Aktion „Kontaktdaten“ (Mail an den Kunden, Stage „Kontaktdaten hinterlegt“)."
-              withSubject
-              defaults={[
-                {
-                  id: "kontaktdaten-standard",
-                  name: "Kontaktdaten Standard",
-                  subject: "Ihre Kontaktdaten bei Sign Selector, {{firma}}",
-                  body: "Hallo {{ansprechpartner}},\n\nvielen Dank für das Gespräch. Wir haben Ihre Kontaktdaten für {{firma}} hinterlegt und melden uns bei Ihnen.\n\nBeste Grüße\n{{caller}}",
-                },
-              ]}
-            />
           </div>
         </TabsContent>
 

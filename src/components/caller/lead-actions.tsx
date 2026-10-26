@@ -29,14 +29,9 @@ const STAGE_NAME: Record<string, string> = {
   waiting_3d: "Logo ausstehend",
   on_hold: "Zukunftsprojekt",
   reference_mail: "Referenzmail",
-  contact_saved: "Kontaktdaten hinterlegt",
 };
-const isMailAction = (k: LeadActionKey | null): k is "reference_mail" | "contact_details" =>
-  k === "reference_mail" || k === "contact_details";
-const TEMPLATE_KEY = {
-  reference_mail: "email_templates",
-  contact_details: "contact_email_templates",
-};
+const isMailAction = (k: LeadActionKey | null): k is "reference_mail" => k === "reference_mail";
+const TEMPLATE_KEY = { reference_mail: "email_templates" };
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
 function parseTemplates(raw: string | null | undefined): Template[] {
@@ -320,7 +315,7 @@ export function LeadActions({
           data: {
             requestId: mailRequest.current ?? crypto.randomUUID(),
             leadId: lead.id,
-            kind: action.key as "reference_mail" | "contact_details",
+            kind: "reference_mail",
             to: mail.to.trim(),
             subject: mail.subject,
             body: mail.body,
