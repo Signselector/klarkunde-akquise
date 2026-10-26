@@ -40,6 +40,10 @@ export type Database = {
           kind: string
           lead_id: string | null
           notes: string | null
+          pd_activity_id: number | null
+          pd_sync_error: string | null
+          pd_sync_state: string
+          pd_synced_at: string | null
           starts_at: string
           title: string | null
           user_id: string | null
@@ -51,6 +55,10 @@ export type Database = {
           kind?: string
           lead_id?: string | null
           notes?: string | null
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           starts_at: string
           title?: string | null
           user_id?: string | null
@@ -62,6 +70,10 @@ export type Database = {
           kind?: string
           lead_id?: string | null
           notes?: string | null
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           starts_at?: string
           title?: string | null
           user_id?: string | null
@@ -156,6 +168,10 @@ export type Database = {
           due_at: string
           id: string
           lead_id: string
+          pd_activity_id: number | null
+          pd_sync_error: string | null
+          pd_sync_state: string
+          pd_synced_at: string | null
           user_id: string | null
           version: number
         }
@@ -166,6 +182,10 @@ export type Database = {
           due_at: string
           id?: string
           lead_id: string
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           user_id?: string | null
           version?: number
         }
@@ -176,6 +196,10 @@ export type Database = {
           due_at?: string
           id?: string
           lead_id?: string
+          pd_activity_id?: number | null
+          pd_sync_error?: string | null
+          pd_sync_state?: string
+          pd_synced_at?: string | null
           user_id?: string | null
           version?: number
         }
@@ -954,6 +978,89 @@ export type Database = {
           },
         ]
       }
+      pd_calendar_queue: {
+        Row: {
+          action: string
+          activity_id: number
+          country: string
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          activity_id: number
+          country: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          activity_id?: number
+          country?: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      pipedrive_activities: {
+        Row: {
+          activity_id: number
+          country: string
+          deal_id: number | null
+          done: boolean
+          due_at: string
+          duration_min: number
+          note: string | null
+          org_name: string | null
+          person_name: string | null
+          subject: string | null
+          type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_id: number
+          country: string
+          deal_id?: number | null
+          done?: boolean
+          due_at: string
+          duration_min?: number
+          note?: string | null
+          org_name?: string | null
+          person_name?: string | null
+          subject?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_id?: number
+          country?: string
+          deal_id?: number | null
+          done?: boolean
+          due_at?: string
+          duration_min?: number
+          note?: string | null
+          org_name?: string | null
+          person_name?: string | null
+          subject?: string | null
+          type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipedrive_activities_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipedrive_stage_mapping: {
         Row: {
           country: string
@@ -998,6 +1105,35 @@ export type Database = {
           report?: Json
         }
         Relationships: []
+      }
+      pipedrive_user_map: {
+        Row: {
+          country: string
+          matched_at: string
+          pipedrive_user_id: number
+          user_id: string
+        }
+        Insert: {
+          country: string
+          matched_at?: string
+          pipedrive_user_id: number
+          user_id: string
+        }
+        Update: {
+          country?: string
+          matched_at?: string
+          pipedrive_user_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pipedrive_user_map_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       points_ledger: {
         Row: {
@@ -1248,6 +1384,20 @@ export type Database = {
       archive_leads: { Args: { p_ids: string[] }; Returns: number }
       archive_open_leads: { Args: never; Returns: number }
       backend_maintenance: { Args: never; Returns: Json }
+      cal_apply_activity: {
+        Args: { p_a: Json; p_country: string; p_user: string }
+        Returns: string
+      }
+      cal_prune: {
+        Args: {
+          p_country: string
+          p_from: string
+          p_keep: number[]
+          p_to: string
+          p_user: string
+        }
+        Returns: number
+      }
       can_access_country: { Args: { _c: string }; Returns: boolean }
       checkpoint_integration: {
         Args: {
