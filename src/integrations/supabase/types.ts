@@ -1498,7 +1498,13 @@ export type Database = {
       upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
     }
     Enums: {
-      app_role: "admin" | "caller" | "fulfilment"
+      app_role:
+        | "admin"
+        | "caller"
+        | "fulfilment"
+        | "recruit"
+        | "veteran"
+        | "manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1626,7 +1632,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "caller", "fulfilment"],
+      app_role: [
+        "admin",
+        "caller",
+        "fulfilment",
+        "recruit",
+        "veteran",
+        "manager",
+      ],
     },
   },
 } as const

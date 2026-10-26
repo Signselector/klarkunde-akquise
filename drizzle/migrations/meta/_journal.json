@@ -106,6 +106,13 @@
       "when": 1793016690137,
       "tag": "0014_crm_history",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1793031031227,
+      "tag": "0015_roles_enum",
+      "breakpoints": true
     }
   ]
 }
