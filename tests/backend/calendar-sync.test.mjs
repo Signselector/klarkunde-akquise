@@ -41,11 +41,11 @@ before(async () => {
 });
 after(() => db.close());
 
-test("everybody sees only their own callbacks and appointments, admins too", async () => {
+test("callbacks are private, appointments are visible to every role of the country", async () => {
   for (const [user, own] of [[anna, 1], [ben, 1], [admin, 0]]) {
     await as(user);
     assert.equal((await q("select 1 from public.callbacks")).length, own);
-    assert.equal((await q("select 1 from public.appointments")).length, own);
+    assert.equal((await q("select 1 from public.appointments")).length, 2);
   }
 });
 
@@ -69,7 +69,7 @@ test("new items wait for the sync; a pulled change moves our own item, foreign o
   assert.equal((await q("select 1 from public.pipedrive_activities")).length, 0, "not visible to others");
 });
 
-test("a callback closed in Pipedrive is not sent back; one closed here is queued", async () => {
+test("a callback closed in Pipedrive is not sent back; callbacks are never queued for Pipedrive", async () => {
   await apply(anna, { id: 900, subject: "Rückruf", type: "call", due_at: new Date(Date.now() + 86400e3).toISOString(), done: true });
   await db.exec("RESET ROLE");
   assert.equal((await q("select done from public.callbacks where id=$1", [cbId]))[0].done, true);
@@ -78,7 +78,7 @@ test("a callback closed in Pipedrive is not sent back; one closed here is queued
   const cb2 = (await q("insert into public.callbacks(lead_id,user_id,due_at,country,pd_activity_id,pd_sync_state) values ($1,$2,now()+interval '9 day','DE',950,'synced') returning id", [lead, anna]))[0].id;
   await q("update public.callbacks set done=true where id=$1", [cb2]);
   const queue = await q("select activity_id,action from public.pd_calendar_queue");
-  assert.deepEqual(queue.map((r) => [Number(r.activity_id), r.action]), [[950, "done"]]);
+  assert.deepEqual(queue, []);
 });
 
 test("a deleted appointment is queued for deletion in Pipedrive", async () => {

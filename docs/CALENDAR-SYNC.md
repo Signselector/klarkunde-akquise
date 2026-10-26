@@ -2,13 +2,13 @@
 
 Migration `drizzle/migrations/0019_calendar_sync.sql`. Tests: `node --test tests/backend/calendar-sync.test.mjs`, `npx vitest run src/test/calendar-sync.test.ts`.
 
-**Regel: Jeder sieht nur seine eigenen Einträge.** Das gilt für Rückrufe, Termine und die gespiegelten Pipedrive-Aktivitäten, auch für Manager und Admins (Zeilen-Policies `user_id = auth.uid()`). Team-Zahlen laufen weiter über die Statistik-Funktionen.
+**Stand ab Migration 0023:** Rückrufe und gespiegelte Pipedrive-Aktivitäten sieht nur der Besitzer. **Termine sieht vorerst jede Rolle für alle Länder, auf die sie Zugriff hat** (Policy `ap read`: `can_access_country(country)`), später wird das eingeschränkt. **Rückrufe werden nicht mehr nach Pipedrive geschrieben** und stehen nicht unter Termine.
 
 ## Was wie abgeglichen wird
 
 | Richtung | Was |
 | --- | --- |
-| Tool → Pipedrive | Rückruf wird eine Aktivität „Anruf“ (30 Min), Termin eine Aktivität „Meeting“ (30 Min), beim Deal des Leads, dem Pipedrive-Benutzer des Callers zugewiesen. Ein Eintrag behält seine Aktivitäts-ID und wird nie doppelt angelegt. |
+| Tool → Pipedrive | Nur Termine: Aktivität „Meeting“ (30 Min), beim Deal des Leads, dem Pipedrive-Benutzer des Callers zugewiesen. Ein Eintrag behält seine Aktivitäts-ID und wird nie doppelt angelegt. |
 | Tool → Pipedrive | Erledigter Rückruf: Aktivität wird erledigt. Gelöschter Termin: Aktivität wird gelöscht (über die Warteschlange `pd_calendar_queue`, übersteht Ausfälle). |
 | Pipedrive → Tool | Verschiebt oder erledigt jemand die Aktivität in Pipedrive, ändert sich der Rückruf oder Termin hier. Aktivitäten, die es nur in Pipedrive gibt, erscheinen im Kalender als „Aus Pipedrive“ (nur lesen). Gelöschte verschwinden wieder. |
 
@@ -41,3 +41,8 @@ Beim ersten Abgleich wird der Pipedrive-Benutzer mit **derselben E-Mail-Adresse*
 * **Rückrufe:** nur für den Caller sichtbar. Gesperrt sind Zeiten, zu denen er selbst schon einen Rückruf, Termin oder eine Pipedrive-Aktivität hat (Fehler `slot_conflict`). Rückrufe verbrauchen keine Termin-Plätze.
 * **Termine-Seite:** zeigt alle Termine, die dem Benutzer gehören oder die er über das Tool gebucht hat (ein Recruit sieht damit, was er für den Manager gebucht hat), plus seine Pipedrive-Einträge. Andere sehen sie nicht.
 * Antworten auf eine Referenzmail legen den Rückruf ohne Slot-Prüfung an, damit die Antwort immer ankommt.
+
+## Regeln ab Migration 0023
+
+* Rückruf: gesperrt, wenn der Caller zu der Zeit schon einen Rückruf hat oder schon 2 eigene Termine bzw. Pipedrive-Einträge. Rückrufe und Termine anderer Benutzer spielen keine Rolle.
+* Bereits früher nach Pipedrive geschriebene Rückruf-Aktivitäten werden nicht gelöscht; neue entstehen nicht mehr.

@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { syncLeadAction } from "@/lib/crm-sync.functions";
 import { sendLeadEmail } from "@/lib/lead-email.functions";
-import { syncMyCalendar } from "@/lib/calendar-sync.functions";
 import { useCountry } from "@/lib/country";
 import { emailErrorMessage, isValidEmail } from "@/lib/lead-email";
 import { crmErrorMessage } from "@/lib/crm-sync";
@@ -107,7 +106,6 @@ export function LeadActions({
   const qc = useQueryClient();
   const sync = useServerFn(syncLeadAction);
   const sendMail = useServerFn(sendLeadEmail);
-  const syncCalendar = useServerFn(syncMyCalendar);
   const country = useCountry();
   const [active, setActive] = useState<LeadActionKey | null>(null);
   const [busy, setBusy] = useState(false);
@@ -306,9 +304,6 @@ export function LeadActions({
       refreshLists();
       void qc.invalidateQueries({ queryKey: ["slots"] });
       onDone();
-      // A new callback or follow-up goes to the user's Pipedrive calendar right away; the scheduled sync repeats it if this fails.
-      if (action.key === "callback" || (action.key === "waiting_3d" && at))
-        void syncCalendar({ data: { country } }).catch(() => undefined);
       if (needs.appointment) {
         void qc.invalidateQueries({ queryKey: ["appointments"] });
         void qc.invalidateQueries({ queryKey: ["calendar-sync"] });

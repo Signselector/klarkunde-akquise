@@ -71,7 +71,7 @@ test("Logo Render: appointment + logo, recruit's appointment goes to the manager
   await as(rec);
   assert.equal((await q("select 1 from public.appointments")).length, 1, "the recruit sees what was booked through the tool");
   await as(other);
-  assert.equal((await q("select 1 from public.appointments")).length, 0, "other callers see nothing");
+  assert.equal((await q("select 1 from public.appointments")).length, 1, "every role sees all appointments of its country");
   await as(mgr);
   assert.equal((await q("select 1 from public.appointments")).length, 1);
 });

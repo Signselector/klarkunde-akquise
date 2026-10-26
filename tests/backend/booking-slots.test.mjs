@@ -110,7 +110,7 @@ test("meetings from Pipedrive count, and a meeting created by the tool counts on
   assert.equal(after.find((x) => new Date(x.slot).getUTCHours() === 14 && new Date(x.slot).getUTCMinutes() === 0).used, 1);
 });
 
-test("callbacks are private and must not collide with the caller's own entries", async () => {
+test("callbacks are private; two own callbacks cannot overlap", async () => {
   const t = at(15, 9);
   await act(rec, leads[3], "callback", { at: t });
   // someone else is not affected and sees nothing of it
@@ -127,8 +127,8 @@ test("callbacks are private and must not collide with the caller's own entries",
   // an own appointment blocks callbacks, a Pipedrive entry of the caller too
   await db.exec("RESET ROLE");
   await q("insert into public.pipedrive_activities(country,activity_id,user_id,due_at,duration_min) values ('DE',55,$1,$2,30)", [rec, at(15, 13)]);
-  await assert.rejects(() => act(rec, leads[4], "callback", { at: at(15, 13) }), /slot_conflict/);
-  const ok = await act(rec, leads[4], "callback", { at: at(15, 14) });
+  // one Pipedrive entry alone does not block a callback; together with a second entry it does
+  const ok = await act(rec, leads[4], "callback", { at: at(15, 13) });
   assert.ok(ok.callback_id);
 });
 
@@ -136,4 +136,19 @@ test("callbacks do not use up appointment capacity", async () => {
   await as(rec);
   const r = await slotsFor("appointment", at(15, 8), at(15, 12));
   assert.ok(!r.some((x) => new Date(x.slot).getUTCHours() === 9));
+});
+
+test("a callback is refused when two own appointments already fill the time; other users' appointments do not matter", async () => {
+  // others' appointments (the earlier tests booked 2 at day 10, 09:00): a callback of a third user there is fine
+  assert.ok((await act(rec, leads[5], "callback", { at: at(10, 9) })).callback_id);
+  // 2 own appointments at the same time (a veteran books for himself and for another lead)
+  await db.exec("RESET ROLE");
+  await q("insert into public.appointments(user_id,lead_id,starts_at,country,booked_by) values ($1,$2,$3,'DE',$1)", [vet, leads[8], at(20, 9)]);
+  await q("insert into public.pipedrive_activities(country,activity_id,user_id,due_at,duration_min) values ('DE',61,$1,$2,30)", [vet, at(20, 9)]);
+  await assert.rejects(() => act(vet, leads[9], "callback", { at: at(20, 9) }), /slot_conflict/);
+  // one own appointment alone does not block a callback
+  await db.exec("RESET ROLE");
+  await q("insert into public.appointments(user_id,lead_id,starts_at,country,booked_by) values ($1,$2,$3,'DE',$1)", [vet, leads[8], at(21, 9)]);
+  const ok = await act(vet, leads[9], "callback", { at: at(21, 9) });
+  assert.ok(ok.callback_id);
 });

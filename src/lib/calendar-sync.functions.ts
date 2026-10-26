@@ -79,16 +79,8 @@ async function databaseStore(userId: string, country: string): Promise<CalendarS
         .upsert({ user_id: userId, country, pipedrive_user_id: pdUserId });
     },
     async pending() {
-      const [cbs, aps] = await Promise.all([
-        db
-          .from("callbacks")
-          .select("id,due_at,pd_activity_id,lead_id,lead:leads(company,contact_name,phone)")
-          .eq("user_id", userId)
-          .eq("country", country)
-          .eq("done", false)
-          .in("pd_sync_state", ["pending", "failed"])
-          .gte("due_at", since)
-          .limit(200),
+      // Callbacks stay private in the tool and are never sent to Pipedrive.
+      const [aps] = await Promise.all([
         db
           .from("appointments")
           .select(
@@ -101,23 +93,12 @@ async function databaseStore(userId: string, country: string): Promise<CalendarS
           .limit(200),
       ]);
       const deals = await dealIds(
-        [...(cbs.data ?? []), ...(aps.data ?? [])]
-          .map((r) => r.lead_id)
-          .filter((v): v is string => !!v),
+        (aps.data ?? []).map((r) => r.lead_id).filter((v): v is string => !!v),
       );
       const who = (
         l: { company: string | null; contact_name: string | null; phone: string | null } | null,
       ) => (l ? [l.contact_name, l.phone].filter(Boolean).join(" · ") || null : null);
       return [
-        ...(cbs.data ?? []).map((c): CalItem => ({
-          kind: "callback",
-          id: c.id,
-          startsAt: c.due_at,
-          subject: `Rückruf: ${c.lead?.company || "Lead"}`,
-          note: who(c.lead),
-          dealId: c.lead_id ? (deals.get(c.lead_id) ?? null) : null,
-          pdActivityId: c.pd_activity_id,
-        })),
         ...(aps.data ?? []).map((a): CalItem => ({
           kind: "appointment",
           id: a.id,
