@@ -1249,6 +1249,10 @@ export type Database = {
       archive_open_leads: { Args: never; Returns: number }
       backend_maintenance: { Args: never; Returns: Json }
       can_access_country: { Args: { _c: string }; Returns: boolean }
+      can_grant_country: {
+        Args: { _country: string; _target: string }
+        Returns: boolean
+      }
       checkpoint_integration: {
         Args: {
           p_external_id: number
@@ -1339,6 +1343,7 @@ export type Database = {
       freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
       get_batch_progress: { Args: never; Returns: Json }
       get_caller_day: { Args: { p_day?: string }; Returns: Json }
+      get_caller_month: { Args: { p_month?: string }; Returns: Json }
       get_caller_performance: {
         Args: {
           p_from: string
@@ -1365,6 +1370,10 @@ export type Database = {
       }
       get_team_metrics: { Args: never; Returns: Json }
       get_weekly_ranking: { Args: { p_week?: string }; Returns: Json }
+      has_admin_rights: {
+        Args: { _country: string; _uid: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1373,6 +1382,7 @@ export type Database = {
         Returns: boolean
       }
       import_duplicates: { Args: { p_batch_id: string }; Returns: Json }
+      is_global_admin: { Args: { _uid: string }; Returns: boolean }
       is_master: { Args: { _uid: string }; Returns: boolean }
       move_lead: {
         Args: {
@@ -1496,6 +1506,7 @@ export type Database = {
         Returns: Json
       }
       upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
+      user_role: { Args: { _uid: string }; Returns: string }
     }
     Enums: {
       app_role:
