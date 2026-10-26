@@ -35,11 +35,20 @@ export type SyncContext = {
   callerName: string;
   stages: Record<string, number>;
   links: Links;
+  /** False while the stage check against Pipedrive has not passed for this country; nothing is sent then. */
+  validated?: boolean;
+  /** Key of the custom deal field that stores the original caller, and the text to store in it. */
+  originFieldKey?: string | null;
+  originLabel?: string;
 };
 export type SyncStore = {
   /** Claims the action for syncing; null when it is already synced or being synced elsewhere. */
   begin(actionId: string): Promise<SyncContext | null>;
   saveLinks(leadId: string, country: string, links: Links): Promise<void>;
+  /** A new deal exists: record it with the original caller and its first stage (history, customer assignment). */
+  dealCreated?(ctx: SyncContext, links: Links): Promise<void>;
+  /** An existing deal was moved by this tool. */
+  stageMoved?(ctx: SyncContext, dealId: number, stageId: number): Promise<void>;
   markStep(actionId: string, step: "file" | "note"): Promise<void>;
   downloadLogo(path: string): Promise<{ bytes: Uint8Array; contentType: string }>;
   finish(actionId: string, state: "synced" | "error", error?: string): Promise<void>;
@@ -94,6 +103,7 @@ export async function syncLeadAction(
   if (!ctx) return { state: "skipped" };
   try {
     const { action, lead, country } = ctx;
+    if (ctx.validated === false) throw new CrmError("stages_not_validated");
     const stageId = action.stage_key ? ctx.stages[action.stage_key] : undefined;
     if (!action.stage_key || !Number.isSafeInteger(stageId) || (stageId ?? 0) < 1)
       throw new CrmError("stage_not_configured");
@@ -115,14 +125,17 @@ export async function syncLeadAction(
     }
     if (links.deal_id) {
       await crm.moveDeal(links.deal_id, stageId!);
+      await store.stageMoved?.(ctx, links.deal_id, stageId!);
     } else {
       links.deal_id = await crm.createDeal({
         title: lead.company?.trim() || lead.contact_name?.trim() || "Neuer Lead",
         person_id: links.person_id,
         ...(links.organization_id ? { org_id: links.organization_id } : {}),
         stage_id: stageId,
+        ...(ctx.originFieldKey && ctx.originLabel ? { [ctx.originFieldKey]: ctx.originLabel } : {}),
       });
       await save();
+      await store.dealCreated?.(ctx, links);
     }
     if (action.note && !action.crm_steps["note"]) {
       await crm.addNote(links.deal_id, noteText(ctx));
@@ -155,6 +168,8 @@ const MESSAGES: Record<string, string> = {
   unauthorized: "Pipedrive hat die Anmeldung abgelehnt. Die Verbindung muss geprüft werden.",
   rate_limited: "Pipedrive ist gerade überlastet. Bitte in einer Minute erneut versuchen.",
   network_error: "Pipedrive war nicht erreichbar. Bitte erneut versuchen.",
+  stages_not_validated:
+    "Die Stage-Zuordnung wurde noch nicht gegen Pipedrive geprüft. Bitte unter Einstellungen → Stage Mapping „Stages prüfen“ ausführen.",
   logo_missing: "Das hochgeladene Logo wurde nicht gefunden.",
   invalid_payload: "Pipedrive hat die Daten abgelehnt.",
   unexpected_error: "Unerwarteter Fehler bei der Übertragung.",

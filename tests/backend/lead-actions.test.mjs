@@ -183,47 +183,85 @@ test("callback needs a future time, is not a CRM stage and replaces older callba
   );
 });
 
-test("contact details change data only; reference mail changes nothing", async () => {
+// A confirmed e-mail is a precondition for the two e-mail actions. Written the way the server writes it.
+const mailFor = async (user, lead, kind, status = "simulated") => {
+  await db.exec("RESET ROLE");
+  const id = randomUUID();
+  await db.query(
+    "insert into public.lead_emails(id,lead_id,created_by,kind,to_email,subject,body,status,request_id) values ($1,$2,$3,$4,'kunde@example.test','Betreff','Text',$5,$6)",
+    [id, lead, user, kind, status, randomUUID()],
+  );
+  await as(user);
+  return id;
+};
+
+test("Kontaktdaten need a confirmed e-mail, then the lead moves on with its own stage", async () => {
   await as(anna);
   const lead = leads[6];
   const before = await row(lead);
   await assert.rejects(
     () => action(lead, before.version, "contact_details", { details: { email: "kaputt" } }),
-    /invalid_email/,
+    /invalid_email|email_not_sent/,
   );
   await assert.rejects(
     () => action(lead, before.version, "contact_details", { details: { status: "x" } }),
     /validation_failed/,
   );
+  await assert.rejects(
+    () => action(lead, before.version, "contact_details", { details: {} }),
+    /email_not_sent/,
+    "no e-mail, no completion",
+  );
+  const failed = await mailFor(anna, lead, "contact_details", "failed");
+  await assert.rejects(
+    () => action(lead, before.version, "contact_details", { details: { email_id: failed } }),
+    /email_not_sent/,
+    "a failed e-mail does not count",
+  );
+  const wrongKind = await mailFor(anna, lead, "reference_mail", "sent");
+  await assert.rejects(
+    () => action(lead, before.version, "contact_details", { details: { email_id: wrongKind } }),
+    /email_not_sent/,
+  );
+  const mail = await mailFor(anna, lead, "contact_details", "sent");
   const saved = await action(lead, before.version, "contact_details", {
-    details: {
-      company: "Neu GmbH",
-      email: " NEU@Example.test ",
-      website: "neu.example",
-      address: "Neuweg 1",
-      city: "Graz",
-    },
+    details: { email_id: mail, company: "Neu GmbH", email: " NEU@Example.test " },
   });
-  assert.equal(saved.stage_key, null);
-  assert.equal(saved.attempts, before.attempts, "editing data is not a call attempt");
+  assert.equal(saved.stage_key, "contact_saved");
+  assert.equal(saved.status, "contact_saved");
+  assert.equal(saved.crm_sync_state, "queued");
   const l = await row(lead);
   assert.equal(l.company, "Neu GmbH");
   assert.equal(l.email, "neu@example.test");
-  assert.equal(l.extra.Website, "neu.example");
-  assert.equal(l.extra.Adresse, "Neuweg 1");
-  assert.equal(l.status, before.status);
+  assert.equal(l.status, "contact_saved");
 });
 
 test("Referenzmail moves the lead on and is queued for the CRM", async () => {
   await as(anna);
   const lead = leads[0];
   const l = await row(lead);
-  const mail = await action(lead, l.version, "reference_mail", {
-    details: { to: "f1@example.test", subject: "Referenzen", template: "t1" },
+  await assert.rejects(
+    () =>
+      action(lead, l.version, "reference_mail", {
+        details: { to: "f1@example.test", subject: "Referenzen", template: "t1" },
+      }),
+    /email_not_sent/,
+  );
+  await as(ben);
+  const foreign = await mailFor(ben, lead, "reference_mail", "sent");
+  await as(anna);
+  await assert.rejects(
+    () => action(lead, l.version, "reference_mail", { details: { email_id: foreign } }),
+    /email_not_sent/,
+    "someone else's e-mail does not count",
+  );
+  const mail = await mailFor(anna, lead, "reference_mail", "simulated");
+  const done = await action(lead, l.version, "reference_mail", {
+    details: { email_id: mail, template: "t1" },
   });
-  assert.equal(mail.status, "reference_mail");
-  assert.equal(mail.stage_key, "reference_mail");
-  assert.equal(mail.crm_sync_state, "queued");
+  assert.equal(done.status, "reference_mail");
+  assert.equal(done.stage_key, "reference_mail");
+  assert.equal(done.crm_sync_state, "queued");
   assert.equal((await row(lead)).status, "reference_mail");
 });
 

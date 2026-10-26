@@ -15,6 +15,7 @@ export const STATUS_LABEL: Record<string, string> = {
   reference_mail: "Referenzmail",
   on_hold: "Zukunftsprojekt",
   waiting_3d: "Logo ausstehend",
+  contact_saved: "Kontaktdaten hinterlegt",
   appointment: "Termin",
   production: "Deal in Produktion",
 };

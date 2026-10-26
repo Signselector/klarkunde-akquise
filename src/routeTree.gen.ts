@@ -26,6 +26,8 @@ import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedMyStatsRouteImport } from './routes/_authenticated/my-stats'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
+import { Route as ApiPipedriveReconcileRouteImport } from './routes/api/pipedrive-reconcile'
+import { Route as ApiPipedriveWebhookRouteImport } from './routes/api/pipedrive-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -112,6 +114,16 @@ const AuthenticatedStatsRoute = AuthenticatedStatsRouteImport.update({
   path: '/stats',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPipedriveReconcileRoute = ApiPipedriveReconcileRouteImport.update({
+  id: '/api/pipedrive-reconcile',
+  path: '/api/pipedrive-reconcile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPipedriveWebhookRoute = ApiPipedriveWebhookRouteImport.update({
+  id: '/api/pipedrive-webhook',
+  path: '/api/pipedrive-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -130,6 +142,8 @@ export interface FileRoutesByFullPath {
   '/my-stats': typeof AuthenticatedMyStatsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
+  '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -148,6 +162,8 @@ export interface FileRoutesByTo {
   '/my-stats': typeof AuthenticatedMyStatsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
+  '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -168,6 +184,8 @@ export interface FileRoutesById {
   '/_authenticated/my-stats': typeof AuthenticatedMyStatsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
+  '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
+  '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -188,6 +206,8 @@ export interface FileRouteTypes {
     | '/my-stats'
     | '/settings'
     | '/stats'
+    | '/api/pipedrive-reconcile'
+    | '/api/pipedrive-webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -206,6 +226,8 @@ export interface FileRouteTypes {
     | '/my-stats'
     | '/settings'
     | '/stats'
+    | '/api/pipedrive-reconcile'
+    | '/api/pipedrive-webhook'
   id:
     | '__root__'
     | '/'
@@ -225,6 +247,8 @@ export interface FileRouteTypes {
     | '/_authenticated/my-stats'
     | '/_authenticated/settings'
     | '/_authenticated/stats'
+    | '/api/pipedrive-reconcile'
+    | '/api/pipedrive-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -232,6 +256,8 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPipedriveReconcileRoute: typeof ApiPipedriveReconcileRoute
+  ApiPipedriveWebhookRoute: typeof ApiPipedriveWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -355,6 +381,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/pipedrive-reconcile': {
+      id: '/api/pipedrive-reconcile'
+      path: '/api/pipedrive-reconcile'
+      fullPath: '/api/pipedrive-reconcile'
+      preLoaderRoute: typeof ApiPipedriveReconcileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/pipedrive-webhook': {
+      id: '/api/pipedrive-webhook'
+      path: '/api/pipedrive-webhook'
+      fullPath: '/api/pipedrive-webhook'
+      preLoaderRoute: typeof ApiPipedriveWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -398,6 +438,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPipedriveReconcileRoute: ApiPipedriveReconcileRoute,
+  ApiPipedriveWebhookRoute: ApiPipedriveWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

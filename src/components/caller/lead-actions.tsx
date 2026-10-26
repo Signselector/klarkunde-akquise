@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { syncLeadAction } from "@/lib/crm-sync.functions";
+import { sendLeadEmail } from "@/lib/lead-email.functions";
+import { emailErrorMessage, isValidEmail } from "@/lib/lead-email";
 import { crmErrorMessage } from "@/lib/crm-sync";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, Tables } from "@/integrations/supabase/types";
@@ -27,6 +29,13 @@ const STAGE_NAME: Record<string, string> = {
   waiting_3d: "Logo ausstehend",
   on_hold: "Zukunftsprojekt",
   reference_mail: "Referenzmail",
+  contact_saved: "Kontaktdaten hinterlegt",
+};
+const isMailAction = (k: LeadActionKey | null): k is "reference_mail" | "contact_details" =>
+  k === "reference_mail" || k === "contact_details";
+const TEMPLATE_KEY = {
+  reference_mail: "email_templates",
+  contact_details: "contact_email_templates",
 };
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
@@ -72,6 +81,7 @@ export function LeadActions({
 }) {
   const qc = useQueryClient();
   const sync = useServerFn(syncLeadAction);
+  const sendMail = useServerFn(sendLeadEmail);
   const [active, setActive] = useState<LeadActionKey | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
@@ -88,15 +98,24 @@ export function LeadActions({
   const uploaded = useRef<string | null>(null);
 
   const [mail, setMail] = useState({ to: lead.email ?? "", subject: "", body: "", template: "" });
+  // Review step and delivery state of the e-mail. The lead is only completed after a confirmed send.
+  const [preview, setPreview] = useState(false);
+  const [mailState, setMailState] = useState<{
+    id: string | null;
+    status: "idle" | "sending" | "sent" | "simulated" | "failed";
+    error: string | null;
+  }>({ id: null, status: "idle", error: null });
+  const mailRequest = useRef<string | null>(null);
 
+  const templateKey = isMailAction(active) ? TEMPLATE_KEY[active] : null;
   const templates = useQuery({
-    enabled: active === "reference_mail",
-    queryKey: ["templates", "email_templates"],
+    enabled: templateKey !== null,
+    queryKey: ["templates", templateKey],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("app_settings")
         .select("value")
-        .eq("key", "email_templates")
+        .eq("key", templateKey ?? "email_templates")
         .maybeSingle();
       if (error) throw error;
       return parseTemplates(data?.value);
@@ -140,7 +159,11 @@ export function LeadActions({
     setDate("");
     setTime("");
     setFile(null);
-    if (action.key === "reference_mail") {
+    if (isMailAction(action.key)) {
+      mailRequest.current = crypto.randomUUID();
+      setPreview(false);
+      setMailState({ id: null, status: "idle", error: null });
+      setMail({ to: lead.email ?? "", subject: "", body: "", template: "" });
       setActive(action.key);
       return;
     }
@@ -187,7 +210,7 @@ export function LeadActions({
     return path;
   }
 
-  async function submit(action: LeadAction) {
+  async function submit(action: LeadAction, emailId?: string) {
     if (busy) return;
     const needs = action.needs;
     if (needs.note === "required" && !note.trim())
@@ -206,14 +229,8 @@ export function LeadActions({
     try {
       const logo = needs.logo && file ? await uploadLogo(file) : undefined;
       let details: Json | undefined;
-      if (action.key === "reference_mail")
-        details = {
-          to: mail.to,
-          subject: mail.subject,
-          template: mail.template || null,
-          channel: "mailto",
-          delivery: "not_confirmed",
-        };
+      if (isMailAction(action.key))
+        details = { email_id: emailId ?? mailState.id ?? "", template: mail.template || null };
       const { data, error } = await supabase.rpc("record_lead_action", {
         p_request_id: requestId.current ?? crypto.randomUUID(),
         p_lead_id: lead.id,
@@ -243,6 +260,7 @@ export function LeadActions({
       });
       requestId.current = null;
       setActive(null);
+      setPreview(false);
       refreshLists();
       onDone();
       if (stage && result.action_id) {
@@ -285,13 +303,43 @@ export function LeadActions({
     }
   }
 
-  function submitMail(action: LeadAction) {
-    if (!mail.to.trim()) return fail("Bitte eine E-Mail-Adresse eintragen.");
-    if (!mail.subject.trim() && !mail.body.trim())
-      return fail("Bitte Betreff oder Text eintragen.");
-    const href = `mailto:${encodeURIComponent(mail.to.trim())}?subject=${encodeURIComponent(mail.subject)}&body=${encodeURIComponent(mail.body)}`;
-    window.open(href, "_self");
-    void submit(action);
+  function reviewMail() {
+    if (!isValidEmail(mail.to.trim())) return fail("Bitte eine gültige E-Mail-Adresse eintragen.");
+    if (!mail.subject.trim() || !mail.body.trim()) return fail("Bitte Betreff und Text eintragen.");
+    setPreview(true);
+  }
+
+  /** Sends through the configured provider; only a confirmed send (or test mode) lets the lead move on. */
+  async function sendAndComplete(action: LeadAction) {
+    if (busy || mailState.status === "sending") return;
+    let emailId = mailState.id;
+    if (mailState.status !== "sent" && mailState.status !== "simulated") {
+      setMailState({ id: mailState.id, status: "sending", error: null });
+      try {
+        const r = await sendMail({
+          data: {
+            requestId: mailRequest.current ?? crypto.randomUUID(),
+            leadId: lead.id,
+            kind: action.key as "reference_mail" | "contact_details",
+            to: mail.to.trim(),
+            subject: mail.subject,
+            body: mail.body,
+            templateId: mail.template || null,
+          },
+        });
+        emailId = r.id;
+        setMailState({ id: r.id, status: r.status as never, error: r.error });
+        if (r.status !== "sent" && r.status !== "simulated") {
+          toast.error(emailErrorMessage(r.error) || "Die E-Mail wurde nicht gesendet.");
+          return;
+        }
+      } catch {
+        setMailState({ id: mailState.id, status: "failed", error: "send_failed" });
+        toast.error(emailErrorMessage("send_failed"));
+        return;
+      }
+    }
+    if (emailId) await submit(action, emailId);
   }
 
   return (
@@ -317,13 +365,13 @@ export function LeadActions({
             onClick={() => open(action)}
             className={`cc-action-button inline-flex items-center gap-2 rounded-[10px] px-4 py-2 text-sm font-medium disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 ${action.color} ${active === action.key ? "ring-2 ring-offset-2 ring-foreground" : ""}`}
           >
-            {action.key === "reference_mail" && <Mail size={16} aria-hidden="true" />}
+            {isMailAction(action.key) && <Mail size={16} aria-hidden="true" />}
             {action.label}
           </button>
         ))}
       </div>
 
-      {current && current.key !== "reference_mail" && (
+      {current && !isMailAction(current.key) && (
         <form
           className="space-y-3 rounded-[10px] border p-3"
           onSubmit={(e) => {
@@ -384,76 +432,132 @@ export function LeadActions({
         </form>
       )}
 
-      {current?.key === "reference_mail" && (
+      {current && isMailAction(current.key) && (
         <form
           className="space-y-2 rounded-[10px] border p-3"
           onSubmit={(e) => {
             e.preventDefault();
-            submitMail(current);
+            if (!preview) reviewMail();
+            else void sendAndComplete(current);
           }}
         >
-          <p className="font-medium">Referenzmail</p>
-          {templates.isLoading && (
-            <p className="text-sm text-muted-foreground">Vorlagen werden geladen …</p>
+          <p className="font-medium">{current.label}: E-Mail</p>
+          {!preview && (
+            <>
+              {templates.isLoading && (
+                <p className="text-sm text-muted-foreground">Vorlagen werden geladen …</p>
+              )}
+              {templates.isError && (
+                <p className="text-sm text-destructive">Vorlagen konnten nicht geladen werden.</p>
+              )}
+              {templates.data && (
+                <label className="block text-sm">
+                  Vorlage
+                  <select
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                    value={mail.template}
+                    onChange={(e) => pickTemplate(e.target.value)}
+                  >
+                    <option value="">
+                      {templates.data.length ? "Vorlage wählen …" : "Keine Vorlagen hinterlegt"}
+                    </option>
+                    {templates.data.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label className="block text-sm">
+                An
+                <Input
+                  type="email"
+                  value={mail.to}
+                  onChange={(e) => setMail({ ...mail, to: e.target.value })}
+                />
+              </label>
+              <label className="block text-sm">
+                Betreff
+                <Input
+                  value={mail.subject}
+                  onChange={(e) => setMail({ ...mail, subject: e.target.value })}
+                />
+              </label>
+              <label className="block text-sm">
+                Text
+                <Textarea
+                  rows={6}
+                  value={mail.body}
+                  onChange={(e) => setMail({ ...mail, body: e.target.value })}
+                />
+              </label>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={busy}>
+                  Vorschau prüfen
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => setActive(null)}
+                >
+                  Abbrechen
+                </Button>
+              </div>
+            </>
           )}
-          {templates.isError && (
-            <p className="text-sm text-destructive">Vorlagen konnten nicht geladen werden.</p>
+          {preview && (
+            <>
+              <div className="space-y-1 rounded-md bg-muted/50 p-3 text-sm" aria-label="Vorschau">
+                <p>
+                  <span className="text-muted-foreground">An: </span>
+                  {mail.to.trim()}
+                </p>
+                <p>
+                  <span className="text-muted-foreground">Betreff: </span>
+                  {mail.subject}
+                </p>
+                <p className="whitespace-pre-wrap pt-2">{mail.body}</p>
+              </div>
+              {mailState.status === "failed" && (
+                <p role="alert" className="text-sm font-medium text-destructive">
+                  {emailErrorMessage(mailState.error)} Der Lead bleibt unter Offene Leads.
+                </p>
+              )}
+              {(mailState.status === "sent" || mailState.status === "simulated") && (
+                <p className="text-sm text-muted-foreground">
+                  {mailState.status === "simulated"
+                    ? "Testmodus: Die Mail wurde nur simuliert."
+                    : "Die Mail wurde gesendet."}{" "}
+                  Der Lead wird abgeschlossen …
+                </p>
+              )}
+              <p className="text-sm text-muted-foreground">
+                Danach wandert der Lead nach Abgeschlossene Leads und ein Deal wird in Pipedrive in
+                der Stage „{STAGE_NAME[current.stageKey ?? ""] ?? ""}“ angelegt.
+              </p>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={busy || mailState.status === "sending"}>
+                  {mailState.status === "sending"
+                    ? "Wird gesendet …"
+                    : mailState.status === "failed"
+                      ? "Erneut senden"
+                      : mailState.id
+                        ? "Lead abschließen"
+                        : "Jetzt senden"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy || mailState.status === "sending"}
+                  onClick={() => setPreview(false)}
+                >
+                  Zurück
+                </Button>
+              </div>
+            </>
           )}
-          {templates.data && (
-            <label className="block text-sm">
-              Vorlage
-              <select
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                value={mail.template}
-                onChange={(e) => pickTemplate(e.target.value)}
-              >
-                <option value="">
-                  {templates.data.length ? "Vorlage wählen …" : "Keine Vorlagen hinterlegt"}
-                </option>
-                {templates.data.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <label className="block text-sm">
-            An
-            <Input
-              type="email"
-              value={mail.to}
-              onChange={(e) => setMail({ ...mail, to: e.target.value })}
-            />
-          </label>
-          <label className="block text-sm">
-            Betreff
-            <Input
-              value={mail.subject}
-              onChange={(e) => setMail({ ...mail, subject: e.target.value })}
-            />
-          </label>
-          <label className="block text-sm">
-            Text
-            <Textarea
-              rows={6}
-              value={mail.body}
-              onChange={(e) => setMail({ ...mail, body: e.target.value })}
-            />
-          </label>
-          <p className="text-sm text-muted-foreground">
-            Die Mail öffnet sich in deinem E-Mail-Programm (ein direkter Versand aus dem Tool ist
-            noch nicht angebunden). Danach wandert der Lead nach Abgeschlossene Leads und ein Deal
-            wird in Pipedrive in der Stage „Referenzmail“ angelegt.
-          </p>
-          <div className="flex gap-2">
-            <Button type="submit" disabled={busy}>
-              Mail öffnen und vermerken
-            </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => setActive(null)}>
-              Abbrechen
-            </Button>
-          </div>
         </form>
       )}
     </section>

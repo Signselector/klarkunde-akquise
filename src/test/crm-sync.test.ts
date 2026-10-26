@@ -149,3 +149,49 @@ describe("helpers", () => {
     expect(crmErrorMessage(null)).toBe("");
   });
 });
+
+describe("syncLeadAction: attribution, history and the validation gate", () => {
+  it("stores the original caller on the new deal and reports the deal and its stage", async () => {
+    const t = setup({ originFieldKey: "orig_key", originLabel: "Anna (u1)", validated: true });
+    const events: string[] = [];
+    let dealPayload: Record<string, unknown> = {};
+    t.crm.createDeal = async (d) => ((dealPayload = d), 103);
+    t.store.dealCreated = async (_c, links) => void events.push(`created:${links.deal_id}`);
+    t.store.stageMoved = async () => void events.push("moved");
+    await syncLeadAction("a1", t.store, t.crm);
+    expect(dealPayload["orig_key"]).toBe("Anna (u1)");
+    expect(events).toEqual(["created:103"]);
+  });
+
+  it("reports a move of an existing deal and never sets the original caller again", async () => {
+    const t = setup(
+      {
+        links: { organization_id: 1, person_id: 2, deal_id: 3 },
+        originFieldKey: "k",
+        originLabel: "x",
+      },
+      { action: "reference_mail", stage_key: "reference_mail", note: null, logo_path: null },
+    );
+    const events: string[] = [];
+    t.store.dealCreated = async () => void events.push("created");
+    t.store.stageMoved = async (_c, deal, stage) => void events.push(`moved:${deal}@${stage}`);
+    await syncLeadAction("a1", t.store, t.crm);
+    expect(events).toEqual(["moved:3@36"]);
+  });
+
+  it("sends nothing while the stage check has not passed", async () => {
+    const t = setup({ validated: false });
+    expect(await syncLeadAction("a1", t.store, t.crm)).toEqual({
+      state: "error",
+      error: "stages_not_validated",
+    });
+    expect(t.calls).toEqual([]);
+    expect(crmErrorMessage("stages_not_validated")).toContain("Stages prüfen");
+  });
+
+  it("a retry after a failed deal creation does not create a second deal", async () => {
+    const t = setup({ links: { organization_id: 1, person_id: 2, deal_id: 3 } });
+    await syncLeadAction("a1", t.store, t.crm);
+    expect(t.calls.filter((c) => c.startsWith("deal:"))).toEqual([]);
+  });
+});

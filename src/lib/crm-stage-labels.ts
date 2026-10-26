@@ -1,0 +1,50 @@
+/** Readable names for the keys of `pipedrive_stage_mapping` and for the history entries. */
+export const STAGE_LABEL: Record<string, string> = {
+  low_q: "3D Low Q",
+  high_q: "3D High Q",
+  waiting_3d: "3D Waiting",
+  on_hold: "Zukünftiges Interesse",
+  future_interest: "Zukünftiges Interesse",
+  reference_mail: "Referenzmail versendet",
+  contact_saved: "Kontaktdaten hinterlegt",
+  animation: "In Bearbeitung",
+  rd_done: "3D fertig",
+  no_show: "No Show",
+  low_chance: "Geringe Chance",
+  maybe_interested: "Vielleicht interessiert",
+  very_interested: "Sehr interessiert",
+  offer: "Angebot erstellen",
+  contract: "Kaufvertrag erstellen",
+  contract_waiting: "Kaufvertrag waiting",
+  won_other_percent: "Gewonnen: Andere Prozente",
+  won_production_planning: "Gewonnen: Produktionsplanung",
+  won_zero_percent: "Gewonnen: 0% Produktion",
+  production: "Deal in Produktion",
+  lost: "Verloren",
+  no_interest: "Kein Interesse",
+};
+export const stageLabel = (key: string | null | undefined) =>
+  !key ? "–" : (STAGE_LABEL[key] ?? (key.startsWith("stage:") ? `Stage ${key.slice(6)}` : key));
+
+/** Titles of the activity timeline. */
+export const ACTIVITY_LABEL: Record<string, string> = {
+  lead_created: "Lead angelegt",
+  first_contact: "Erster Kontakt",
+  not_reached: "Anrufversuch: nicht erreicht",
+  callback: "Rückruf vereinbart",
+  no_interest: "Kein Interesse",
+  on_hold: "Zukunftsprojekt",
+  low_q: "Logo Render",
+  high_q: "Realismus Render",
+  waiting_3d: "Logo ausstehend",
+  reference_mail: "Referenzmail",
+  contact_details: "Kontaktdaten",
+  email_sent: "E-Mail gesendet",
+  logo_uploaded: "Logo hochgeladen",
+  deal_created: "Deal angelegt",
+  stage_change: "Stage geändert",
+  customer_assigned: "Kunde zugeordnet",
+  offer_created: "Angebot erstellt",
+  deal_won: "Deal gewonnen",
+  deal_lost: "Deal verloren",
+};

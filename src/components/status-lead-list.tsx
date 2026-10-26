@@ -3,35 +3,49 @@ import { useCountry } from "@/lib/country";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ACTION_LABEL } from "@/lib/lead-actions";
+import { stageLabel } from "@/lib/crm-stage-labels";
 import { STATUS_LABEL } from "@/lib/leads";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FeedbackState, StatusBadge, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
-import { LeadsTable } from "@/components/caller/leads-table";
 
-/** Order of the categories on "Abgeschlossene Leads". */
-const GROUP_ORDER = [
-  "Rückruf vereinbart",
-  "Logo Render",
-  "Realismus Render",
-  "Logo ausstehend",
-  "Referenzmail",
-  "In Bearbeitung",
-];
-/** Leads that moved on after the call. Kein Interesse, Zukunftsprojekt and Nicht erreicht stay in Offene Leads. */
-const COMPLETED_STATUSES = [
-  "callback",
-  "low_q",
-  "high_q",
-  "waiting_3d",
-  "reference_mail",
-  "in_progress",
-];
-const groupRank = (label: string) => {
-  const i = GROUP_ORDER.indexOf(label);
-  return i === -1 ? GROUP_ORDER.length : i;
+export type CompletedLead = {
+  lead_id: string;
+  company: string | null;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  status: string;
+  origin_caller_name: string | null;
+  action: string | null;
+  crm_stage_key: string | null;
+  deal_id: number | null;
+  deal_status: string | null;
+  sync_state: string | null;
+  completed_at: string | null;
+  last_activity_at: string | null;
+};
+
+const when = (iso: string | null | undefined) =>
+  iso
+    ? new Date(iso).toLocaleString("de-DE", {
+        timeZone: "Europe/Vienna",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "–";
+
+const SYNC_LABEL: Record<string, string> = {
+  pending: "Ausstehend",
+  syncing: "Wird übertragen",
+  synced: "Synchronisiert",
+  failed: "Fehlgeschlagen",
 };
 
 export function StatusLeadList({ userId, title }: { userId: string; title: string }) {
@@ -41,40 +55,58 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
   const [filter, setFilter] = useState("all");
   const query = useQuery({
     queryKey: ["lead-list", userId, country],
-    queryFn: async () => {
-      let q = supabase
+    queryFn: async (): Promise<CompletedLead[]> => {
+      if (backendEnabled) {
+        const { data, error } = await supabase.rpc("get_completed_overview", {
+          p_country: country,
+          p_limit: 300,
+        });
+        if (error) throw error;
+        return (data ?? []) as unknown as CompletedLead[];
+      }
+      const { data, error } = await supabase
         .from("leads")
         .select("*,lead_batches!inner(country)")
         .eq("lead_batches.country", country)
         .eq("last_called_by", userId)
+        .not("status", "in", "(open,callback)")
         .order("last_called_at", { ascending: false })
         .limit(300);
-      if (backendEnabled) q = q.is("archived_at", null);
-      q = q.in("status", COMPLETED_STATUSES);
-      const { data, error } = await q;
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []).map((l) => ({
+        lead_id: l.id,
+        company: l.company,
+        contact_name: l.contact_name,
+        phone: l.phone,
+        email: l.email,
+        status: l.status,
+        origin_caller_name: null,
+        action: l.status,
+        crm_stage_key: null,
+        deal_id: null,
+        deal_status: null,
+        sync_state: null,
+        completed_at: l.last_called_at,
+        last_activity_at: l.last_called_at,
+      }));
     },
   });
-  const resultLabel = (status: string) =>
-    status === "open" ? "Nicht erreicht" : (STATUS_LABEL[status] ?? status);
+  const actionName = (l: CompletedLead) =>
+    ACTION_LABEL[l.action ?? ""] ?? STATUS_LABEL[l.status] ?? l.status;
   const rows = (query.data ?? []).filter(
     (l) =>
       (!search ||
-        [l.company, l.city, l.phone]
+        [l.company, l.contact_name, l.phone, l.email]
           .join(" ")
           .toLocaleLowerCase()
           .includes(search.toLocaleLowerCase())) &&
-      (filter === "all" || resultLabel(l.status) === filter),
-  );
-  const groups = [...new Set(rows.map((l) => resultLabel(l.status)))].sort(
-    (a, b) => groupRank(a) - groupRank(b) || a.localeCompare(b, "de"),
+      (filter === "all" || actionName(l) === filter),
   );
   return (
     <div className="cc-page">
       <PageHeading
         title={title}
-        description="Deine bearbeiteten Leads nach Kategorie: Rückruf vereinbart, Logo Render, Realismus Render, Logo ausstehend, Referenzmail."
+        description="Alle abgeschlossenen Leads mit Aktion, ursprünglichem Caller und aktuellem CRM-Stand. Der Verlauf bleibt erhalten, auch wenn sich der Deal weiterbewegt."
       />
       <Surface
         title="Abgeschlossene Erstkontakte"
@@ -85,22 +117,20 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
             <Input
               className="max-w-sm"
               aria-label="Kontakte suchen"
-              placeholder="Firma, Stadt oder Telefon suchen"
+              placeholder="Firma, Kontakt, Telefon oder E-Mail suchen"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             <select
               className="rounded-md border bg-background px-3 py-2 text-sm"
-              aria-label="Ergebnis filtern"
+              aria-label="Aktion filtern"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
             >
-              <option value="all">Alle Ergebnisse</option>
-              {[...new Set((query.data ?? []).map((l) => resultLabel(l.status)))]
-                .sort()
-                .map((label) => (
-                  <option key={label}>{label}</option>
-                ))}
+              <option value="all">Alle Aktionen</option>
+              {[...new Set((query.data ?? []).map(actionName))].sort().map((label) => (
+                <option key={label}>{label}</option>
+              ))}
             </select>
           </div>
           {query.isLoading ? (
@@ -113,28 +143,84 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
             />
           ) : !rows.length ? (
             <FeedbackState kind="empty" title="Keine passenden Kontakte">
-              Sobald du Kontakte bearbeitet hast, erscheinen sie hier.
+              Sobald du Leads abgeschlossen hast, erscheinen sie hier.
             </FeedbackState>
           ) : (
-            <div className="space-y-5">
-              {groups.map((group) => {
-                const items = rows.filter((l) => resultLabel(l.status) === group);
-                return (
-                  <section key={group} aria-label={group}>
-                    <h2 className="mb-2 font-semibold">
-                      {group} ({items.length})
-                    </h2>
-                    <div className="overflow-hidden rounded-[10px] border">
-                      <LeadsTable
-                        leads={items}
-                        onOpen={setSelected}
-                        resultLabel={() => group}
-                        processed
-                      />
-                    </div>
-                  </section>
-                );
-              })}
+            <div className="overflow-x-auto rounded-[10px] border">
+              <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
+                <thead className="bg-muted/50 text-muted-foreground">
+                  <tr>
+                    {[
+                      "Firma",
+                      "Kontakt",
+                      "Ursprünglicher Caller",
+                      "Aktion",
+                      "CRM-Stage",
+                      "Deal-ID",
+                      "Abgeschlossen",
+                      "Letzte Aktivität",
+                    ].map((h) => (
+                      <th key={h} className="px-3 py-3 font-medium first:px-4">
+                        {h}
+                      </th>
+                    ))}
+                    <th className="sticky right-0 bg-[#faf8f4] px-4 py-3 text-right font-medium">
+                      <span className="sr-only">Aktionen</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {rows.map((l) => (
+                    <tr key={l.lead_id} className="align-top hover:bg-muted/40">
+                      <td className="px-4 py-3 font-medium">{l.company || "Ohne Firmenname"}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex min-w-[11rem] max-w-[18rem] flex-col gap-1">
+                          {l.contact_name && <span className="truncate">{l.contact_name}</span>}
+                          <span className="truncate text-muted-foreground">
+                            {l.phone || "Keine Nummer"}
+                          </span>
+                          {l.email && (
+                            <span className="truncate text-muted-foreground">{l.email}</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">{l.origin_caller_name || "–"}</td>
+                      <td className="px-3 py-3">
+                        <StatusBadge tone="info">{actionName(l)}</StatusBadge>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex flex-col gap-1">
+                          <span>{stageLabel(l.crm_stage_key)}</span>
+                          {l.sync_state && l.sync_state !== "synced" && (
+                            <span className="text-xs text-muted-foreground">
+                              {SYNC_LABEL[l.sync_state] ?? l.sync_state}
+                            </span>
+                          )}
+                          {l.deal_status === "won" && (
+                            <span className="text-xs text-emerald-700">Gewonnen</span>
+                          )}
+                          {l.deal_status === "lost" && (
+                            <span className="text-xs text-destructive">Verloren</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 tabular-nums">{l.deal_id ?? "–"}</td>
+                      <td className="px-3 py-3">{when(l.completed_at)}</td>
+                      <td className="px-3 py-3">{when(l.last_activity_at)}</td>
+                      <td className="cc-sticky-action sticky right-0 px-4 py-3 text-right">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelected(l.lead_id)}
+                          aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
+                        >
+                          Kundenakte
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

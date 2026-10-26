@@ -19,7 +19,7 @@ export type LeadAction = {
   hint: string;
   /** Tailwind classes for the coloured button. */
   color: string;
-  stageKey?: "low_q" | "high_q" | "waiting_3d" | "on_hold" | "reference_mail";
+  stageKey?: "low_q" | "high_q" | "waiting_3d" | "on_hold" | "reference_mail" | "contact_saved";
   /** Needs the form step before it can be confirmed. */
   needs: { note?: "required" | "optional"; logo?: boolean; schedule?: "required" | "optional" };
   /** Shown as a bigger success moment. */
@@ -78,9 +78,17 @@ export const LEAD_ACTIONS: LeadAction[] = [
   {
     key: "reference_mail",
     label: "Referenzmail",
-    hint: "Mail vorbereiten, Lead abschließen",
+    hint: "Mail senden, Lead abschließen",
     color: "bg-[#6366e8] text-white hover:bg-[#5255d6]",
     stageKey: "reference_mail",
+    needs: {},
+  },
+  {
+    key: "contact_details",
+    label: "Kontaktdaten",
+    hint: "Mail senden, Lead abschließen",
+    color: "bg-[#0e9aa7] text-white hover:bg-[#0b8691]",
+    stageKey: "contact_saved",
     needs: {},
   },
   {
@@ -103,6 +111,8 @@ const ERRORS: Record<string, string> = {
   callback_slot_taken:
     "Zu dieser Zeit ist bereits ein Rückruf eingetragen. Bitte wähle eine Minute später.",
   invalid_email: "Die E-Mail-Adresse ist ungültig.",
+  email_not_sent:
+    "Die E-Mail wurde nicht bestätigt versendet. Der Lead wird erst nach erfolgreichem Versand abgeschlossen.",
   stale_lead:
     "Der Lead wurde inzwischen geändert. Die Ansicht wird aktualisiert, bitte erneut versuchen.",
   lead_claimed: "Der Lead wird gerade von jemand anderem bearbeitet.",

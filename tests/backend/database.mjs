@@ -9,8 +9,11 @@ export async function schemaDatabase() {
   for (const f of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
     .filter((x) => x.endsWith(".sql"))
     .sort())
+    // PGlite has no pg_cron: skip only the nightly schedule, the functions are still created.
     await db.exec(
-      await readFile(new URL("../../drizzle/migrations/" + f, import.meta.url), "utf8"),
+      (await readFile(new URL("../../drizzle/migrations/" + f, import.meta.url), "utf8"))
+        .replace(/^CREATE EXTENSION IF NOT EXISTS pg_cron;$/m, "")
+        .replace(/^SELECT cron\.schedule\(.*$/m, ""),
     );
   return db;
 }

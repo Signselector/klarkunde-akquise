@@ -1,3 +1,5 @@
+> Stand 0014: Zuordnung der Listen, E-Mail-Pflicht, Ursprungs-Caller und Verlauf stehen in `docs/CRM-HISTORY.md`.
+
 # Gesprächsergebnis: Aktionen nach dem Telefonat
 
 Migration: `drizzle/migrations/0010_lead_actions.sql`. Tests: `tests/backend/lead-actions.test.mjs`
@@ -15,12 +17,12 @@ Batch des Aufrufers (oder wurde von ihm bearbeitet, oder Admin), kein fremder ak
 | `low_q` (Logo Render) | `low_q` | Abgeschlossene Leads | `low_q` | Notiz, Logo |
 | `high_q` (Realismus Render) | `high_q` | Abgeschlossene Leads | `high_q` | Notiz, Logo |
 | `waiting_3d` (Logo ausstehend) | `waiting_3d` | Abgeschlossene Leads | `waiting_3d` | Notiz |
-| `reference_mail` (Referenzmail) | `reference_mail` | Abgeschlossene Leads | `reference_mail` | – |
-| `callback` (Rückruf) | `callback` | Abgeschlossene Leads | keine (intern) | Datum und Uhrzeit |
-| `no_interest` (Kein Interesse) | `no_interest` | bleibt in Offene Leads | keine, kein Deal | – |
-| `on_hold` (Zukunftsprojekt) | `on_hold` | bleibt in Offene Leads | `on_hold` | Notiz; optional Wiedervorlage (wird ein Rückruf) |
+| `reference_mail` (Referenzmail) | `reference_mail` | Abgeschlossene Leads | `reference_mail` | bestätigte Mail |
+| `callback` (Rückruf) | `callback` | bleibt in Offene Leads (siehe Rückrufe) | keine (intern) | Datum und Uhrzeit |
+| `no_interest` (Kein Interesse) | `no_interest` | Abgeschlossene Leads | keine, kein Deal | – |
+| `on_hold` (Zukunftsprojekt) | `on_hold` | Abgeschlossene Leads | `on_hold` | Notiz; optional Wiedervorlage (wird ein Rückruf) |
 | `not_reached` (Nicht erreicht) | offen, +1 Versuch | bleibt in Offene Leads | keine, kein Deal | – |
-| `contact_details` | unverändert | – | keine | – (in der Oberfläche nicht mehr angeboten, Funktion bleibt) |
+| `contact_details` (Kontaktdaten) | `contact_saved` | Abgeschlossene Leads | `contact_saved` | bestätigte Mail |
 
 - **Rückrufe:** Ein Caller kann pro Minute nur einen offenen Rückruf haben (Datenbank-Trigger auf `callbacks`,
   gilt für jede Funktion; Fehler `callback_slot_taken`). Die Oberfläche warnt vorher.

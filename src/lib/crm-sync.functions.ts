@@ -130,6 +130,18 @@ async function databaseStore(
         .select("mapping")
         .eq("country", country)
         .maybeSingle();
+      const originId = links.data?.origin_caller_id ?? row.user_id;
+      const [validation, field, origin] = await Promise.all([
+        db.from("pipedrive_stage_validation").select("ok").eq("country", country).maybeSingle(),
+        db
+          .from("app_settings")
+          .select("value")
+          .eq("key", `pipedrive_origin_field_${country}`)
+          .maybeSingle(),
+        db.from("profiles").select("display_name").eq("id", originId).maybeSingle(),
+      ]);
+      if (links.data)
+        await db.rpc("crm_set_sync_state", { p_lead: row.lead_id, p_state: "syncing" });
       const ctx: SyncContext = {
         action: { ...row, crm_steps: (row.crm_steps ?? {}) as Record<string, boolean> },
         lead: lead.data as SyncContext["lead"],
@@ -137,6 +149,9 @@ async function databaseStore(
         callerName: profile.data?.display_name ?? "",
         stages: (mapping.data?.mapping ?? {}) as Record<string, number>,
         links: links.data ?? {},
+        validated: validation.data?.ok === true,
+        originFieldKey: field.data?.value?.trim() || null,
+        originLabel: `${origin.data?.display_name ?? "Caller"} (${originId})`,
       };
       return ctx;
     },
@@ -144,6 +159,32 @@ async function databaseStore(
       await db
         .from("lead_crm_links")
         .upsert({ lead_id: leadId, country: c, ...links, updated_at: new Date().toISOString() });
+    },
+    async dealCreated(ctx, links) {
+      await db.rpc("crm_save_links", {
+        p_lead: ctx.lead.id,
+        p_country: ctx.country,
+        p_org: links.organization_id ?? null,
+        p_person: links.person_id ?? null,
+        p_deal: links.deal_id ?? null,
+        p_origin: ctx.action.user_id,
+        p_stage_key: ctx.action.stage_key ?? null,
+        p_actor: ctx.action.user_id,
+      });
+    },
+    async stageMoved(ctx, dealId, stageId) {
+      await db.rpc("crm_apply_stage", {
+        p_country: ctx.country,
+        p_deal_id: dealId,
+        p_stage_id: stageId,
+        p_event_id: `tool:${ctx.action.id}`,
+        p_occurred: new Date().toISOString(),
+        p_source: "cold_caller",
+        p_actor: ctx.action.user_id,
+        p_actor_name: ctx.callerName || null,
+        p_status: null,
+        p_stage_key: ctx.action.stage_key ?? null,
+      });
     },
     async markStep(actionId, step) {
       const { data } = await db
@@ -165,6 +206,16 @@ async function databaseStore(
       };
     },
     async finish(actionId, state, error) {
+      const { data: act } = await db
+        .from("lead_actions")
+        .select("lead_id")
+        .eq("id", actionId)
+        .maybeSingle();
+      if (act)
+        await db.rpc("crm_set_sync_state", {
+          p_lead: act.lead_id,
+          p_state: state === "synced" ? "synced" : "failed",
+        });
       await db
         .from("lead_actions")
         .update({

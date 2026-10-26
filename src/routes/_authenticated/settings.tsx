@@ -98,32 +98,48 @@ function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="email">
-          <TemplateManager
-            settingKey="email_templates"
-            title="E-Mail-Vorlagen"
-            help="Vorlagen für Mails nach dem Gespräch."
-            withSubject
-            defaults={[
-              {
-                id: "standard-ref",
-                name: "Standard ref Mail",
-                subject: "Unser Gespräch, {{firma}}",
-                body: "Hallo {{ansprechpartner}},\n\nvielen Dank für das nette Gespräch.\n\nBeste Grüße\n{{caller}}",
-              },
-              {
-                id: "kontakt",
-                name: "Kontaktmail",
-                subject: "Kontakt Sign Selector",
-                body: "Hallo {{ansprechpartner}},\n\nwie besprochen melde ich mich bei Ihnen.\n\nBeste Grüße\n{{caller}}",
-              },
-              {
-                id: "grundinteresse",
-                name: "Grundinteresse",
-                subject: "Ihr Interesse an Sign Selector",
-                body: "Hallo {{ansprechpartner}},\n\nschön, dass Sie Interesse haben. Gerne senden wir Ihnen mehr Infos für {{firma}}.\n\nBeste Grüße\n{{caller}}",
-              },
-            ]}
-          />
+          <div className="space-y-6">
+            <TemplateManager
+              settingKey="email_templates"
+              title="E-Mail-Vorlagen"
+              help="Vorlagen für Mails nach dem Gespräch."
+              withSubject
+              defaults={[
+                {
+                  id: "standard-ref",
+                  name: "Standard ref Mail",
+                  subject: "Unser Gespräch, {{firma}}",
+                  body: "Hallo {{ansprechpartner}},\n\nvielen Dank für das nette Gespräch.\n\nBeste Grüße\n{{caller}}",
+                },
+                {
+                  id: "kontakt",
+                  name: "Kontaktmail",
+                  subject: "Kontakt Sign Selector",
+                  body: "Hallo {{ansprechpartner}},\n\nwie besprochen melde ich mich bei Ihnen.\n\nBeste Grüße\n{{caller}}",
+                },
+                {
+                  id: "grundinteresse",
+                  name: "Grundinteresse",
+                  subject: "Ihr Interesse an Sign Selector",
+                  body: "Hallo {{ansprechpartner}},\n\nschön, dass Sie Interesse haben. Gerne senden wir Ihnen mehr Infos für {{firma}}.\n\nBeste Grüße\n{{caller}}",
+                },
+              ]}
+            />
+            <TemplateManager
+              settingKey="contact_email_templates"
+              title="Kontaktdaten-Vorlagen"
+              help="Vorlagen für die Aktion „Kontaktdaten“ (Mail an den Kunden, Stage „Kontaktdaten hinterlegt“)."
+              withSubject
+              defaults={[
+                {
+                  id: "kontaktdaten-standard",
+                  name: "Kontaktdaten Standard",
+                  subject: "Ihre Kontaktdaten bei Sign Selector, {{firma}}",
+                  body: "Hallo {{ansprechpartner}},\n\nvielen Dank für das Gespräch. Wir haben Ihre Kontaktdaten für {{firma}} hinterlegt und melden uns bei Ihnen.\n\nBeste Grüße\n{{caller}}",
+                },
+              ]}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="sms">

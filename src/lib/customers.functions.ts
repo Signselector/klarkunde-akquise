@@ -15,7 +15,7 @@ const toInfo = (d: Raw): DealInfo | null =>
       }
     : null;
 
-function gatewayReader(
+export function gatewayReader(
   country: string,
 ): DealReader & { stages(): Promise<{ id: number; name: string; pipeline: string }[]> } {
   const { call } = gatewayClient(country);
@@ -74,87 +74,76 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
     });
     if (!allowed) throw new Error("Für dieses Land hast du keinen Zugriff.");
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-    const actions = await db
-      .from("lead_actions")
-      .select("lead_id,stage_key,created_at")
-      .eq("user_id", context.userId)
-      .not("stage_key", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(2000);
-    const latest = new Map<string, string | null>();
-    for (const a of actions.data ?? [])
-      if (!latest.has(a.lead_id)) latest.set(a.lead_id, a.stage_key);
-    const leadIds = [...latest.keys()];
-    const empty = {
-      country: data.country,
-      deals: [],
-      stageNames: {},
-      error: null,
-      fetchedAt: new Date().toISOString(),
-      truncated: false,
-    };
-    if (!leadIds.length) return empty;
-    // Query in slices of 100 ids so the request URLs stay short.
-    const links: { lead_id: string; deal_id: number | null }[] = [];
-    const leadRows: {
-      id: string;
+    // Every deal this caller originally created, customer or not: a deal only becomes a customer once Pipedrive
+    // moves it into one of the customer stages, so the live stages are applied first.
+    const mine = await db
+      .from("lead_crm_links")
+      .select("deal_id")
+      .eq("country", data.country)
+      .eq("origin_caller_id", context.userId)
+      .not("deal_id", "is", null)
+      .limit(MAX_DEALS);
+    const dealIds = (mine.data ?? []).map((l) => l.deal_id as number);
+    let infos = new Map<number, DealInfo | null>();
+    let error: string | null = null;
+    let stageNames: Record<number, string> = {};
+    if (dealIds.length) {
+      try {
+        const reader = gatewayReader(data.country);
+        infos = await fetchDeals(reader, dealIds);
+        stageNames = Object.fromEntries(
+          (await reader.stages().catch(() => [])).map((s) => [s.id, s.name]),
+        );
+        const hour = new Date().toISOString().slice(0, 13);
+        for (const [id, info] of infos) {
+          if (!info) continue;
+          const status = info.status === "won" || info.status === "lost" ? info.status : null;
+          await db.rpc("crm_apply_stage", {
+            p_country: data.country,
+            p_deal_id: id,
+            p_stage_id: info.stage_id,
+            p_event_id: `view:${id}:${info.stage_id ?? "-"}:${status ?? "-"}:${hour}`,
+            p_occurred: new Date().toISOString(),
+            p_source: "pipedrive",
+            p_actor_name: "Pipedrive (Abgleich)",
+            p_status: status,
+          });
+        }
+      } catch (e) {
+        error = e instanceof CrmError ? e.code : "network_error";
+      }
+    }
+    const { data: rows, error: readError } = await context.supabase.rpc("get_my_customers", {
+      p_country: data.country,
+    });
+    if (readError) throw new Error(readError.message);
+    const list = (rows ?? []) as unknown as {
+      lead_id: string;
+      deal_id: number;
       company: string | null;
       contact_name: string | null;
       email: string | null;
       phone: string | null;
       last_called_at: string | null;
-    }[] = [];
-    for (let i = 0; i < leadIds.length; i += 100) {
-      const slice = leadIds.slice(i, i + 100);
-      const [l, r] = await Promise.all([
-        db
-          .from("lead_crm_links")
-          .select("lead_id,deal_id")
-          .eq("country", data.country)
-          .in("lead_id", slice)
-          .not("deal_id", "is", null),
-        db
-          .from("leads")
-          .select("id,company,contact_name,email,phone,last_called_at")
-          .in("id", slice),
-      ]);
-      links.push(...(l.data ?? []));
-      leadRows.push(...(r.data ?? []));
-    }
-    const leadById = new Map(leadRows.map((l) => [l.id, l]));
-    const own = links.filter((l) => l.deal_id !== null);
-    const truncated = own.length > MAX_DEALS;
-    let infos = new Map<number, DealInfo | null>();
-    let error: string | null = null;
-    let stageNames: Record<number, string> = {};
-    try {
-      const reader = gatewayReader(data.country);
-      infos = await fetchDeals(
-        reader,
-        own.map((l) => l.deal_id as number),
-      );
-      stageNames = Object.fromEntries(
-        (await reader.stages().catch(() => [])).map((s) => [s.id, s.name]),
-      );
-    } catch (e) {
-      error = e instanceof CrmError ? e.code : "network_error";
-    }
+      stage_key: string | null;
+      stage_id: number | null;
+      deal_status: string | null;
+    }[];
     const deals: CustomerDeal[] = [];
-    for (const l of own.slice(0, MAX_DEALS)) {
-      const lead = leadById.get(l.lead_id);
-      const info = infos.get(l.deal_id as number);
+    for (const l of list) {
+      const info = infos.get(l.deal_id);
       if (!error && info === null) continue; // deleted in Pipedrive
       deals.push({
         lead_id: l.lead_id,
-        deal_id: l.deal_id as number,
-        company: lead?.company ?? null,
-        contact_name: lead?.contact_name ?? null,
-        email: lead?.email ?? null,
-        phone: lead?.phone ?? null,
-        last_called_at: lead?.last_called_at ?? null,
-        stage_id: info?.stage_id ?? null,
-        deal_status: info?.status ?? null,
-        local_stage_key: latest.get(l.lead_id) ?? null,
+        deal_id: l.deal_id,
+        company: l.company,
+        contact_name: l.contact_name,
+        email: l.email,
+        phone: l.phone,
+        last_called_at: l.last_called_at,
+        stage_id: info?.stage_id ?? l.stage_id,
+        deal_status: info?.status ?? l.deal_status,
+        local_stage_key: l.stage_key,
         source: error || !info ? "local" : "pipedrive",
       });
     }
@@ -164,6 +153,6 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
       stageNames,
       error,
       fetchedAt: new Date().toISOString(),
-      truncated,
+      truncated: dealIds.length >= MAX_DEALS,
     };
   });

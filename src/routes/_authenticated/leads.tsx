@@ -100,8 +100,8 @@ function LeadsPage() {
       if (backendEnabled) query = query.is("archived_at", null);
       if (onlyMine) query = query.eq("lead_batches.assigned_to", user.id);
       if (batch !== "all") query = query.eq("batch_id", batch);
-      // Still to work on: untouched, not reached, no interest and future projects stay in this list.
-      query = query.in("status", ["open", "no_interest", "on_hold"]);
+      // Still to work on: untouched leads, not reached and scheduled callbacks. Every other outcome is completed.
+      query = query.in("status", ["open", "callback"]);
       const term = q.trim().replace(/[,()%]/g, " ");
       if (term)
         query = query.or(

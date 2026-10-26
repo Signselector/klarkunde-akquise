@@ -1,3 +1,4 @@
+import { ActivityTimeline } from "@/components/caller/activity-timeline";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -249,6 +250,12 @@ export function LeadDialog({
                 ))}
               </ul>
             </div>
+            {backendEnabled && (
+              <div className="cc-detail-section">
+                <h3>Aktivitätsverlauf</h3>
+                <ActivityTimeline leadId={lead.id} />
+              </div>
+            )}
           </>
         )}
       </DialogContent>
