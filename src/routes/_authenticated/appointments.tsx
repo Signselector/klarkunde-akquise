@@ -331,7 +331,7 @@ function AppointmentsPage() {
                           {"booked_by" in e && e.booked_by && e.booked_by !== e.user_id && (
                             <p className="text-xs text-muted-foreground">Gebucht von {nameOf(e.booked_by)}</p>
                           )}
-                          <Select value={e.user_id ?? undefined} onValueChange={(v) => void assign(e.id, v)}>
+                          <Select value={e.user_id ?? ""} onValueChange={(v) => void assign(e.id, v)}>
                             <SelectTrigger className="min-h-9 w-full text-xs" aria-label="Zuständig">
                               <SelectValue placeholder="Zuständig wählen" />
                             </SelectTrigger>
