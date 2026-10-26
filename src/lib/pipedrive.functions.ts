@@ -15,9 +15,8 @@ export const loadPipedriveStages = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
+    const { data: isAdmin } = await context.supabase.rpc("is_global_admin", {
+      _uid: context.userId,
     });
     if (!isAdmin) throw new Error("Nur für Admins.");
     const lovable = process.env["LOVABLE_API_KEY"];

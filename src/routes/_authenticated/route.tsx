@@ -1,5 +1,6 @@
 import { isMasterEmail } from "@/lib/master";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
+import { primaryRole, ROLE_LABEL } from "@/lib/use-admin";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
 import { CountrySwitcher, useCountry } from "@/lib/country";
@@ -67,9 +68,12 @@ function Layout() {
         supabase.from("profiles").select("display_name,active").eq("id", user.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user.id),
       ]);
+      const role = primaryRole((r.data ?? []).map((x) => x.role as string));
       return {
         name: p.data?.display_name ?? user.email,
-        admin: !!r.data?.some((x) => x.role === "admin"),
+        role,
+        admin: role === "admin" || role === "manager",
+        globalAdmin: role === "admin",
         active: p.data?.active !== false,
       };
     },
@@ -225,7 +229,11 @@ function Layout() {
               <div>
                 <strong>{me?.name ?? user.email}</strong>
                 <small>
-                  {me ? (me.admin && !callerView ? "Admin" : "Caller") : "Profil wird geladen …"}
+                  {me
+                    ? me.admin && !callerView
+                      ? ROLE_LABEL[me.role]
+                      : "Caller-Ansicht"
+                    : "Profil wird geladen …"}
                 </small>
               </div>
             </div>

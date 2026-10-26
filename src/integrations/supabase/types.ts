@@ -1374,6 +1374,11 @@ export type Database = {
       }
       import_duplicates: { Args: { p_batch_id: string }; Returns: Json }
       is_master: { Args: { _uid: string }; Returns: boolean }
+      is_global_admin: { Args: { _uid: string }; Returns: boolean }
+      has_admin_rights: { Args: { _country: string; _uid: string }; Returns: boolean }
+      user_role: { Args: { _uid: string }; Returns: string }
+      can_grant_country: { Args: { _country: string; _target: string }; Returns: boolean }
+      get_caller_month: { Args: { p_month?: string }; Returns: Json }
       move_lead: {
         Args: {
           p_batch_id: string
@@ -1498,7 +1503,7 @@ export type Database = {
       upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
     }
     Enums: {
-      app_role: "admin" | "caller" | "fulfilment"
+      app_role: "admin" | "caller" | "fulfilment" | "recruit" | "veteran" | "manager"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1626,7 +1631,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "caller", "fulfilment"],
+      app_role: ["admin", "caller", "fulfilment", "recruit", "veteran", "manager"],
     },
   },
 } as const

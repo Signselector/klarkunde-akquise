@@ -28,6 +28,7 @@ import {
   weekStart,
 } from "@/lib/dashboard";
 import { currentMonth, monthLabel, shiftMonth } from "@/lib/monthly-stats";
+import { useMonthlyCallGoal } from "@/lib/goals";
 import { Button } from "@/components/ui/button";
 
 type Day = {
@@ -73,9 +74,6 @@ function useDay(userId: string) {
     queryFn: async () => (await backendRpc("get_caller_day", {})) as unknown as Day,
   });
 }
-
-/** Daily call target shown in the goal ring. A working target, not a statistic. */
-export const DAILY_CALL_GOAL = 40;
 
 const initials = (name: string) =>
   name
@@ -175,9 +173,19 @@ export function CallerPerformance({
   const q = history.data?.[5];
   const delta = per100Delta(q?.per_100 ?? null, history.data?.[4]?.per_100 ?? null);
   const maxPer100 = Math.max(1, ...(history.data ?? []).map((m) => m.per_100 ?? 0));
+  // Today's calls stay the headline figure; the goal is the month's.
+  const goal = useMonthlyCallGoal();
+  const month = useQuery({
+    queryKey: ["caller-month", userId, VIENNA_TODAY().slice(0, 7)],
+    enabled: backendEnabled,
+    refetchInterval: 30_000,
+    queryFn: async () =>
+      (await backendRpc("get_caller_month", {})) as unknown as { attempts: number },
+  });
   const calls = day.data?.attempts ?? 0;
-  const remaining = Math.max(0, DAILY_CALL_GOAL - calls);
-  const share = Math.min(1, calls / DAILY_CALL_GOAL);
+  const monthCalls = month.data?.attempts ?? 0;
+  const remaining = Math.max(0, goal - monthCalls);
+  const share = Math.min(1, monthCalls / goal);
   const first = (name ?? "").split(/\s+/)[0];
   const teamContext = (what: string) =>
     team.isError
@@ -194,10 +202,10 @@ export function CallerPerformance({
           <h1>
             {first ? `Hallo ${first}!` : "Hallo!"}
             <br />
-            {day.data
+            {month.data
               ? remaining > 0
-                ? `Noch ${remaining} Anrufe bis zum Tagesziel.`
-                : "Tagesziel erreicht. Stark."
+                ? `Noch ${remaining} Anrufe bis zum Monatsziel.`
+                : "Monatsziel erreicht. Stark."
               : "Bereit für gute Gespräche."}
           </h1>
           <p>Deine Leads im Blick. Der nächste Schritt ganz klar.</p>
@@ -222,15 +230,15 @@ export function CallerPerformance({
             </svg>
             <div className="cc-ring-mid">
               <b>{day.data ? calls : "–"}</b>
-              <span>von {DAILY_CALL_GOAL} Anrufen</span>
+              <span>Anrufe heute</span>
             </div>
           </div>
           <div className="cc-goal-text">
-            <h2>Anrufe heute</h2>
+            <h2>Monatsziel</h2>
             <p>
-              {day.isError
-                ? "Tageswert nicht verfügbar"
-                : "Dokumentierte Anrufversuche · Wiener Zeit. Der Tag wechselt um 0:00 Uhr."}
+              {day.isError || month.isError
+                ? "Wert nicht verfügbar"
+                : `${monthCalls} von ${goal} Anrufen im ${monthLabel(currentMonth())} · heute ${calls}. Wiener Zeit, der Tag wechselt um 0:00 Uhr.`}
             </p>
             <div className="cc-meter" aria-hidden="true">
               <i style={{ width: `${Math.round(share * 100)}%` }} />
@@ -238,7 +246,7 @@ export function CallerPerformance({
             <div className="cc-meter-label">
               <span>0</span>
               <span>{Math.round(share * 100)} %</span>
-              <span>{DAILY_CALL_GOAL}</span>
+              <span>{goal}</span>
             </div>
           </div>
         </BentoCard>

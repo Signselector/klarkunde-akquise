@@ -2,6 +2,7 @@ import { DataQuality, PipedriveJobs } from "@/components/backend-status";
 import { TemplateManager } from "@/components/template-manager";
 import { BackupCenter } from "@/components/backup-center";
 import { TestModeCard } from "@/components/TestMode";
+import { MonthlyGoalCard } from "@/components/monthly-goal";
 import { StageMapping } from "@/components/stage-mapping";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
@@ -10,7 +11,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DEFAULT_SCRIPT } from "@/lib/leads";
-import { useIsAdmin } from "@/lib/use-admin";
+import { useRoles } from "@/lib/use-admin";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,7 +23,9 @@ export const Route = createFileRoute("/_authenticated/settings")({
 
 function SettingsPage() {
   const { user } = Route.useRouteContext();
-  const admin = useIsAdmin(user.id);
+  const roles = useRoles(user.id);
+  const admin = roles.isStaff;
+  const globalAdmin = roles.isGlobalAdmin;
   const qc = useQueryClient();
   const [script, setScript] = useState(DEFAULT_SCRIPT);
   const { data: saved } = useQuery({
@@ -47,10 +50,16 @@ function SettingsPage() {
   }
   if (!admin) return <p className="text-muted-foreground">Einstellungen sind nur für Admins.</p>;
   const isMaster = user.email?.toLowerCase() === "office@signselector.com";
+  // Managers get the day-to-day settings; Pipedrive, stages, deduplication and backups are backend and stay with admins.
   const tabs: [string, string][] = [
-    ["pipedrive", "Pipedrive"],
-    ["stages", "Stage Mapping"],
-    ["dedup", "Deduplication"],
+    ...(globalAdmin
+      ? ([
+          ["pipedrive", "Pipedrive"],
+          ["stages", "Stage Mapping"],
+          ["dedup", "Deduplication"],
+        ] as [string, string][])
+      : []),
+    ["goals", "Ziele"],
     ["email", "E-Mail"],
     ["sms", "SMS-Vorlagen"],
     ["script", "Leitfaden / Antwort zuordnen"],
@@ -59,7 +68,7 @@ function SettingsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-[22px] font-semibold">Einstellungen</h1>
-      <Tabs defaultValue="pipedrive" className="space-y-4">
+      <Tabs defaultValue={tabs[0]?.[0] ?? "goals"} className="space-y-4">
         <TabsList className="h-auto max-w-full flex-wrap justify-start gap-1 rounded-full">
           {tabs.map(([value, label]) => (
             <TabsTrigger key={value} value={value} className="rounded-full px-4">
@@ -67,6 +76,14 @@ function SettingsPage() {
             </TabsTrigger>
           ))}
         </TabsList>
+
+        <TabsContent value="goals" className="space-y-4">
+          <SectionHeader
+            title="Ziele"
+            help="Das Monatsziel für Anrufe erscheint im Dashboard jedes Callers."
+          />
+          <MonthlyGoalCard />
+        </TabsContent>
 
         <TabsContent value="pipedrive" className="space-y-4">
           <SectionHeader

@@ -6,7 +6,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useIsAdmin } from "@/lib/use-admin";
+import { useIsAdmin, useIsGlobalAdmin } from "@/lib/use-admin";
 import { StatusBadge } from "@/components/coldcaller/primitives";
 import {
   AlertDialog,
@@ -57,6 +57,7 @@ function Dashboard() {
   const country = useCountry();
   const { user } = Route.useRouteContext();
   const admin = useIsAdmin(user.id);
+  const globalAdmin = useIsGlobalAdmin(user.id);
   // The master admin can switch to the caller view; Pipedrive and data quality stay admin-only.
   const [callerView, setCallerView] = useState(false);
   useEffect(() => {
@@ -361,7 +362,7 @@ function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {backendEnabled && admin && !callerView && <BackendStatus admin={false} />}
+      {backendEnabled && globalAdmin && !callerView && <BackendStatus admin={false} />}
     </div>
   );
 }

@@ -10,9 +10,8 @@ export const deleteAccount = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }) => {
     if (data.userId === context.userId) throw new Error("Du kannst dich nicht selbst löschen.");
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
+    const { data: isAdmin } = await context.supabase.rpc("is_global_admin", {
+      _uid: context.userId,
     });
     if (!isAdmin) throw new Error("Nur Admins dürfen Accounts löschen.");
     const { data: targetMaster } = await context.supabase.rpc("is_master", { _uid: data.userId });

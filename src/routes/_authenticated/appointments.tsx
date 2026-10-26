@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { backendEnabled } from "@/lib/backend";
 import { useCountry } from "@/lib/country";
 import { cn } from "@/lib/utils";
+import { useRoles } from "@/lib/use-admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +65,7 @@ function AppointmentsPage() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const country = useCountry();
+  const roles = useRoles(user.id);
   const [mine, setMine] = useState(false);
   const [filter, setFilter] = useState<Kind | "all">("all");
   const [month, setMonth] = useState(() => {
@@ -130,13 +132,21 @@ function AppointmentsPage() {
             <Switch id="mine" checked={mine} onCheckedChange={setMine} />
             <Label htmlFor="mine">Nur meine</Label>
           </div>
-          <Button className="min-h-11" onClick={() => setShowForm((s) => !s)}>
-            <CalendarPlus /> Termin anlegen
-          </Button>
+          {roles.canBookAppointments ? (
+            <Button className="min-h-11" onClick={() => setShowForm((s) => !s)}>
+              <CalendarPlus /> Termin anlegen
+            </Button>
+          ) : (
+            roles.ready && (
+              <p className="max-w-xs text-sm text-muted-foreground">
+                Termine bucht dein Manager. Als Veteran buchst du sie selbst.
+              </p>
+            )
+          )}
         </div>
       </header>
 
-      {showForm && (
+      {showForm && roles.canBookAppointments && (
         <EventForm
           country={country}
           initialDate={selected}

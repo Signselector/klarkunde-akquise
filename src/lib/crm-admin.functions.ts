@@ -19,14 +19,11 @@ const countryInput = (d: { country: string }) => {
 
 async function requireAdmin(context: {
   supabase: {
-    rpc: (n: "has_role", a: { _user_id: string; _role: "admin" }) => PromiseLike<{ data: unknown }>;
+    rpc: (n: "is_global_admin", a: { _uid: string }) => PromiseLike<{ data: unknown }>;
   };
   userId: string;
 }) {
-  const { data } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
+  const { data } = await context.supabase.rpc("is_global_admin", { _uid: context.userId });
   if (!data) throw new Error("Nur für Admins.");
 }
 
