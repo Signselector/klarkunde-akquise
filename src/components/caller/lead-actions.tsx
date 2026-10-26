@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { syncLeadAction } from "@/lib/crm-sync.functions";
 import { sendLeadEmail } from "@/lib/lead-email.functions";
 import { useCountry } from "@/lib/country";
+import { useRoles } from "@/lib/use-admin";
 import { emailErrorMessage, isValidEmail } from "@/lib/lead-email";
 import { crmErrorMessage } from "@/lib/crm-sync";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +117,8 @@ export function LeadActions({
   const [photo, setPhoto] = useState<File | null>(null);
   const [month, setMonth] = useState("");
   const [doNotCall, setDoNotCall] = useState(false);
+  const [selfAssign, setSelfAssign] = useState(false);
+  const roles = useRoles(userId);
   const [success, setSuccess] = useState<{
     title: string;
     description: string;
@@ -171,6 +174,7 @@ export function LeadActions({
     setPhoto(null);
     setMonth("");
     setDoNotCall(false);
+    setSelfAssign(false);
     setNote("");
     setDate("");
     setTime("");
@@ -264,6 +268,8 @@ export function LeadActions({
       else if (photoPath) details = { photo_path: photoPath };
       else if (needs.month) details = { month };
       else if (needs.doNotCall && doNotCall) details = { do_not_call: true };
+      if (needs.appointment && selfAssign && roles.role === "veteran")
+        details = { ...((details as Record<string, Json> | undefined) ?? {}), self_assign: true };
       const { data, error } = await supabase.rpc("record_lead_action", {
         p_request_id: requestId.current ?? crypto.randomUUID(),
         p_lead_id: lead.id,
@@ -499,6 +505,17 @@ export function LeadActions({
                 }}
               />
             </div>
+          )}
+          {current.needs.appointment && roles.role === "veteran" && (
+            <label className="flex min-h-11 items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={selfAssign}
+                onChange={(e) => setSelfAssign(e.target.checked)}
+              />
+              Mir selbst zuweisen (sonst entscheidet der Manager)
+            </label>
           )}
           {current.needs.appointment && (
             <p className="text-xs text-muted-foreground">
