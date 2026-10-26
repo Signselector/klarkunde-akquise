@@ -24,6 +24,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedMyStatsRouteImport } from './routes/_authenticated/my-stats'
+import { Route as AuthenticatedNoInterestRouteImport } from './routes/_authenticated/no-interest'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
 import { Route as ApiPipedriveReconcileRouteImport } from './routes/api/pipedrive-reconcile'
@@ -104,6 +105,11 @@ const AuthenticatedMyStatsRoute = AuthenticatedMyStatsRouteImport.update({
   path: '/my-stats',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedNoInterestRoute = AuthenticatedNoInterestRouteImport.update({
+  id: '/no-interest',
+  path: '/no-interest',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -140,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/import': typeof AuthenticatedImportRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/my-stats': typeof AuthenticatedMyStatsRoute
+  '/no-interest': typeof AuthenticatedNoInterestRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/import': typeof AuthenticatedImportRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/my-stats': typeof AuthenticatedMyStatsRoute
+  '/no-interest': typeof AuthenticatedNoInterestRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/my-stats': typeof AuthenticatedMyStatsRoute
+  '/_authenticated/no-interest': typeof AuthenticatedNoInterestRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/leads'
     | '/my-stats'
+    | '/no-interest'
     | '/settings'
     | '/stats'
     | '/api/pipedrive-reconcile'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/import'
     | '/leads'
     | '/my-stats'
+    | '/no-interest'
     | '/settings'
     | '/stats'
     | '/api/pipedrive-reconcile'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/_authenticated/import'
     | '/_authenticated/leads'
     | '/_authenticated/my-stats'
+    | '/_authenticated/no-interest'
     | '/_authenticated/settings'
     | '/_authenticated/stats'
     | '/api/pipedrive-reconcile'
@@ -367,6 +379,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMyStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/no-interest': {
+      id: '/_authenticated/no-interest'
+      path: '/no-interest'
+      fullPath: '/no-interest'
+      preLoaderRoute: typeof AuthenticatedNoInterestRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -410,6 +429,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedMyStatsRoute: typeof AuthenticatedMyStatsRoute
+  AuthenticatedNoInterestRoute: typeof AuthenticatedNoInterestRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStatsRoute: typeof AuthenticatedStatsRoute
 }
@@ -426,6 +446,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedMyStatsRoute: AuthenticatedMyStatsRoute,
+  AuthenticatedNoInterestRoute: AuthenticatedNoInterestRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStatsRoute: AuthenticatedStatsRoute,
 }

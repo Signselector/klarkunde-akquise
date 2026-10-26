@@ -34,6 +34,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          booked_by: string | null
           pd_activity_id: number | null
           pd_sync_error: string | null
           pd_sync_state: string
@@ -49,6 +50,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          booked_by?: string | null
           pd_activity_id?: number | null
           pd_sync_error?: string | null
           pd_sync_state?: string
@@ -64,6 +66,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          booked_by?: string | null
           pd_activity_id?: number | null
           pd_sync_error?: string | null
           pd_sync_state?: string
@@ -734,6 +737,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          erased_at: string | null
           archived_at: string | null
           attempts: number
           batch_id: string | null
@@ -751,6 +755,7 @@ export type Database = {
           version: number
         }
         Insert: {
+          erased_at?: string | null
           archived_at?: string | null
           attempts?: number
           batch_id?: string | null
@@ -768,6 +773,7 @@ export type Database = {
           version?: number
         }
         Update: {
+          erased_at?: string | null
           archived_at?: string | null
           attempts?: number
           batch_id?: string | null
@@ -1326,6 +1332,8 @@ export type Database = {
         Args: { p_country: string; p_from: string; p_keep: number[]; p_to: string; p_user: string }
         Returns: number
       }
+      activate_future_projects: { Args: never; Returns: Json }
+      get_no_interest_leads: { Args: { p_country: string }; Returns: Json }
       can_access_country: { Args: { _c: string }; Returns: boolean }
       checkpoint_integration: {
         Args: {

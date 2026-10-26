@@ -40,7 +40,26 @@ export const Route = createFileRoute("/api/pipedrive-reconcile")({
         } catch (e) {
           calendars["error"] = e instanceof Error ? e.message : "failed";
         }
-        return Response.json({ deals: results, calendars });
+        // Zukunftsprojekte whose month has started become deals in the CRM.
+        let activated = 0;
+        try {
+          const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+          const { syncActionAs } = await import("@/lib/crm-sync.functions");
+          const { data: ids } = await db.rpc("activate_future_projects");
+          for (const id of Array.isArray(ids) ? (ids as string[]) : []) {
+            const { data: act } = await db
+              .from("lead_actions")
+              .select("user_id")
+              .eq("id", id)
+              .maybeSingle();
+            if (!act) continue;
+            await syncActionAs(id, act.user_id, true);
+            activated++;
+          }
+        } catch (e) {
+          calendars["futureProjects"] = e instanceof Error ? e.message : "failed";
+        }
+        return Response.json({ deals: results, calendars, futureProjectsActivated: activated });
       },
     },
   },

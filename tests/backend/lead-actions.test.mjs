@@ -95,8 +95,18 @@ test("3D-R-LowQ needs a note and a logo from the caller's own folder", async () 
     () => action(lead, 0, "low_q", { note: "Gespräch", logo: `${ben}/${lead}/logo.png` }),
     /logo_required/,
   );
+  await assert.rejects(
+    () => action(lead, 0, "low_q", { note: "Gespräch", logo: `${anna}/${lead}/logo.png` }),
+    /appointment_required/,
+    "the appointment is mandatory",
+  );
   const id = randomUUID();
-  const args = { id, note: "Will ein einfaches Logo", logo: `${anna}/${lead}/logo.png` };
+  const args = {
+    id,
+    note: "Will ein einfaches Logo",
+    logo: `${anna}/${lead}/logo.png`,
+    at: future(48),
+  };
   const done = await action(lead, 0, "low_q", args);
   assert.equal(done.status, "low_q");
   assert.equal(done.stage_key, "low_q");
@@ -136,24 +146,31 @@ test("only the owner of the batch, earlier editors and admins can act on a lead"
   assert.equal((await action(leads[2], 0, "not_reached")).status, "open");
 });
 
-test("3D-Waiting and On Hold need a note; On Hold may schedule a follow-up", async () => {
+test("Logo ausstehend: note required, callback optional. Zukunftsprojekt: note and month, no CRM deal yet", async () => {
   await as(anna);
   await assert.rejects(() => action(leads[3], 0, "waiting_3d"), /note_required/);
-  assert.equal(
-    (await action(leads[3], 0, "waiting_3d", { note: "Logo kommt per Mail" })).status,
-    "waiting_3d",
-  );
+  const waiting = await action(leads[3], 0, "waiting_3d", { note: "Logo kommt per Mail" });
+  assert.equal(waiting.status, "waiting_3d");
+  assert.equal(waiting.stage_key, "waiting_3d");
+  assert.equal(waiting.callback_id, null, "the callback is optional");
+  const withCb = await action(leads[6], 0, "waiting_3d", { note: "Logo kommt", at: future(30) });
+  assert.ok(withCb.callback_id);
   await assert.rejects(() => action(leads[4], 0, "on_hold"), /note_required/);
   await assert.rejects(
-    () => action(leads[4], 0, "on_hold", { note: "Später", at: "2000-01-01T00:00:00Z" }),
-    /invalid_schedule/,
+    () => action(leads[4], 0, "on_hold", { note: "Später" }),
+    /invalid_month/,
+    "a month is required",
   );
-  const held = await action(leads[4], 0, "on_hold", { note: "Projekt im Frühjahr", at: future() });
+  await assert.rejects(
+    () => action(leads[4], 0, "on_hold", { note: "Später", details: { month: "2000-01" } }),
+    /invalid_month/,
+  );
+  const month = new Date(Date.now() + 95 * 86400e3).toISOString().slice(0, 7);
+  const held = await action(leads[4], 0, "on_hold", { note: "Projekt später", details: { month } });
   assert.equal(held.status, "on_hold");
-  assert.equal(held.stage_key, "on_hold");
-  assert.ok(held.callback_id, "the optional follow-up date becomes a callback");
-  const plain = await action(leads[6], 0, "on_hold", { note: "Irgendwann" });
-  assert.equal(plain.callback_id, null);
+  assert.equal(held.stage_key, null, "no deal until the month has started");
+  assert.equal(held.crm_sync_state, null);
+  assert.equal(held.callback_id, null);
 });
 
 test("callback needs a future time, is not a CRM stage and replaces older callbacks", async () => {
@@ -214,7 +231,7 @@ test("Referenzmail moves the lead on and is queued for the CRM", async () => {
   await assert.rejects(
     () =>
       action(lead, l.version, "reference_mail", {
-        details: { to: "f1@example.test", subject: "Referenzen", template: "t1" },
+        details: { template: "t1" },
       }),
     /email_not_sent/,
   );

@@ -150,6 +150,42 @@ describe("helpers", () => {
   });
 });
 
+describe("syncLeadAction: building photo", () => {
+  it("uploads the building photo as GEBAEUDEFOTO once, next to KONFI_LOGO", async () => {
+    const t = setup(
+      {},
+      { action: "high_q", stage_key: "high_q", details: { photo_path: "u1/l1/abc-haus.JPG" } },
+    );
+    await syncLeadAction("a1", t.store, t.crm);
+    expect(t.calls.filter((c) => c.startsWith("file:"))).toEqual([
+      "file:103:KONFI_LOGO.png",
+      "file:103:GEBAEUDEFOTO.jpg",
+    ]);
+    expect(t.steps).toEqual(["note", "file", "photo"]);
+  });
+  it("does not upload the photo again on a retry", async () => {
+    const t = setup(
+      { links: { organization_id: 1, person_id: 2, deal_id: 3 } },
+      {
+        action: "high_q",
+        stage_key: "high_q",
+        details: { photo_path: "u1/l1/h.jpg" },
+        crm_steps: { note: true, file: true, photo: true },
+      },
+    );
+    await syncLeadAction("a1", t.store, t.crm);
+    expect(t.calls).toEqual(["move:3@9"]);
+  });
+  it("sends a due Zukunftsprojekt as a deal in the on-hold stage without a note", async () => {
+    const t = setup(
+      {},
+      { action: "future_interest_due", stage_key: "on_hold", note: null, logo_path: null },
+    );
+    await syncLeadAction("a1", t.store, t.crm);
+    expect(t.calls).toEqual(["org:Muster GmbH", "person:Max Muster", "deal:Muster GmbH@30"]);
+  });
+});
+
 describe("syncLeadAction: attribution, history and the validation gate", () => {
   it("stores the original caller on the new deal and reports the deal and its stage", async () => {
     const t = setup({ originFieldKey: "orig_key", originLabel: "Anna (u1)", validated: true });

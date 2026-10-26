@@ -29,7 +29,7 @@ const STAGE_NAME: Record<string, string> = {
   low_q: "Logo Render",
   high_q: "Realismus Render",
   waiting_3d: "Logo ausstehend",
-  on_hold: "Zukunftsprojekt",
+  on_hold: "Zukünftiges Interesse",
   reference_mail: "Referenzmail",
 };
 const isMailAction = (k: LeadActionKey | null): k is "reference_mail" => k === "reference_mail";
@@ -49,6 +49,32 @@ function parseTemplates(raw: string | null | undefined): Template[] {
 const fail = (message: string): void => {
   toast.error(message);
 };
+
+const MONTHS = [
+  "Januar",
+  "Februar",
+  "März",
+  "April",
+  "Mai",
+  "Juni",
+  "Juli",
+  "August",
+  "September",
+  "Oktober",
+  "November",
+  "Dezember",
+];
+const monthText = (v: string) =>
+  /^\d{4}-\d{2}$/.test(v) ? `${MONTHS[Number(v.slice(5)) - 1]} ${v.slice(0, 4)}` : v;
+/** The next 36 months, starting with the current one. */
+function monthOptions() {
+  const now = new Date();
+  return Array.from({ length: 36 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return { value, label: monthText(value) };
+  });
+}
 
 function toIso(date: string, time: string) {
   const when = new Date(`${date}T${time || "09:00"}`);
@@ -87,6 +113,9 @@ export function LeadActions({
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [month, setMonth] = useState("");
+  const [doNotCall, setDoNotCall] = useState(false);
   const [success, setSuccess] = useState<{
     title: string;
     description: string;
@@ -95,6 +124,7 @@ export function LeadActions({
   // One request id per attempt: a retry after a lost connection can never record the action twice.
   const requestId = useRef<string | null>(null);
   const uploaded = useRef<string | null>(null);
+  const uploadedPhoto = useRef<string | null>(null);
 
   const [mail, setMail] = useState({ to: lead.email ?? "", subject: "", body: "", template: "" });
   // Review step and delivery state of the e-mail. The lead is only completed after a confirmed send.
@@ -128,7 +158,7 @@ export function LeadActions({
   }, [success]);
 
   const slots = useQuery({
-    enabled: active === "callback" || active === "on_hold",
+    enabled: active === "callback" || active === "waiting_3d",
     queryKey: ["callback-slots", userId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -154,6 +184,10 @@ export function LeadActions({
     if (busy) return;
     requestId.current = crypto.randomUUID();
     uploaded.current = null;
+    uploadedPhoto.current = null;
+    setPhoto(null);
+    setMonth("");
+    setDoNotCall(false);
     setNote("");
     setDate("");
     setTime("");
@@ -167,7 +201,14 @@ export function LeadActions({
       return;
     }
     // Actions without extra inputs are recorded straight away, no confirmation step.
-    if (!action.needs.note && !action.needs.logo && !action.needs.schedule) {
+    if (
+      !action.needs.note &&
+      !action.needs.logo &&
+      !action.needs.schedule &&
+      !action.needs.month &&
+      !action.needs.appointment &&
+      !action.needs.doNotCall
+    ) {
       void submit(action);
       return;
     }
@@ -197,15 +238,15 @@ export function LeadActions({
     }));
   }
 
-  async function uploadLogo(f: File) {
-    if (uploaded.current) return uploaded.current;
+  async function uploadLogo(f: File, target = uploaded) {
+    if (target.current) return target.current;
     const safe = f.name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(-80);
     const path = `${userId}/${lead.id}/${crypto.randomUUID()}-${safe}`;
     const { error } = await supabase.storage
       .from("lead-logos")
       .upload(path, f, f.type ? { contentType: f.type } : {});
     if (error) throw new Error("logo_upload_failed");
-    uploaded.current = path;
+    target.current = path;
     return path;
   }
 
@@ -215,8 +256,12 @@ export function LeadActions({
     if (needs.note === "required" && !note.trim())
       return fail("Bitte eine Gesprächsnotiz eintragen.");
     if (needs.logo && !file) return fail("Bitte das Firmenlogo hochladen.");
-    if (needs.schedule === "required" && !date) return fail("Bitte Datum und Uhrzeit wählen.");
-    if (needs.schedule === "required" && !time) return fail("Bitte eine Uhrzeit wählen.");
+    if (needs.photo && !photo) return fail("Bitte das Gebäudefoto hochladen.");
+    if (needs.month && !month) return fail("Bitte Monat und Jahr wählen.");
+    if ((needs.schedule === "required" || needs.appointment) && !date)
+      return fail("Bitte Datum und Uhrzeit wählen.");
+    if ((needs.schedule === "required" || needs.appointment) && !time)
+      return fail("Bitte eine Uhrzeit wählen.");
     let at: string | null = null;
     if (date) {
       at = toIso(date, time);
@@ -224,12 +269,18 @@ export function LeadActions({
     }
     if (needs.logo && file && file.size > MAX_LOGO_BYTES)
       return fail("Das Logo darf höchstens 5 MB groß sein.");
+    if (needs.photo && photo && photo.size > MAX_LOGO_BYTES)
+      return fail("Das Foto darf höchstens 5 MB groß sein.");
     setBusy(true);
     try {
       const logo = needs.logo && file ? await uploadLogo(file) : undefined;
+      const photoPath = needs.photo && photo ? await uploadLogo(photo, uploadedPhoto) : undefined;
       let details: Json | undefined;
       if (isMailAction(action.key))
         details = { email_id: emailId ?? mailState.id ?? "", template: mail.template || null };
+      else if (photoPath) details = { photo_path: photoPath };
+      else if (needs.month) details = { month };
+      else if (needs.doNotCall && doNotCall) details = { do_not_call: true };
       const { data, error } = await supabase.rpc("record_lead_action", {
         p_request_id: requestId.current ?? crypto.randomUUID(),
         p_lead_id: lead.id,
@@ -244,14 +295,19 @@ export function LeadActions({
       const result = data as unknown as Result & { action_id?: string };
       const stage = result.stage_key ? STAGE_NAME[result.stage_key] : null;
       const special = action.celebration === "special";
+      const erased = (result as { erased?: boolean }).erased === true;
       const plain =
         action.key === "callback"
           ? "Du wirst zur gewählten Zeit erinnert."
           : action.key === "no_interest"
-            ? "Der Lead bleibt unter Offene Leads, kein CRM-Deal."
-            : action.key === "not_reached"
-              ? "Kontaktversuch gespeichert. Der Lead bleibt unter Offene Leads, kein CRM-Deal."
-              : "Gespeichert.";
+            ? erased
+              ? "Der Lead wurde gelöscht und wird nicht mehr angerufen."
+              : "Der Lead ist abgeschlossen und liegt in der Kein-Interesse-Liste."
+            : action.key === "on_hold"
+              ? `Im ${monthText(month)} wird der Lead als Deal „Zukünftiges Interesse“ ins CRM übernommen.`
+              : action.key === "not_reached"
+                ? "Kontaktversuch gespeichert. Der Lead bleibt unter Offene Leads, kein CRM-Deal."
+                : "Gespeichert.";
       setSuccess({
         title: `${ACTION_LABEL[action.key]} gespeichert`,
         description: stage ? `Deal in Pipedrive wird in der Stage „${stage}“ angelegt …` : plain,
@@ -263,8 +319,12 @@ export function LeadActions({
       refreshLists();
       onDone();
       // A new callback or follow-up goes to the user's Pipedrive calendar right away; the scheduled sync repeats it if this fails.
-      if (action.key === "callback" || (action.key === "on_hold" && at))
+      if (action.key === "callback" || (action.key === "waiting_3d" && at))
         void syncCalendar({ data: { country } }).catch(() => undefined);
+      if (needs.appointment) {
+        void qc.invalidateQueries({ queryKey: ["appointments"] });
+        void qc.invalidateQueries({ queryKey: ["calendar-sync"] });
+      }
       if (stage && result.action_id) {
         // The action is saved either way; a failed CRM sync stays visible and can be retried in the history.
         try {
@@ -395,10 +455,48 @@ export function LeadActions({
               />
             </label>
           )}
-          {current.needs.schedule && (
+          {current.needs.photo && (
+            <label className="block text-sm">
+              Gebäudefoto (Bild, max. 5 MB)
+              <Input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(e) => {
+                  uploadedPhoto.current = null;
+                  setPhoto(e.target.files?.[0] ?? null);
+                }}
+              />
+            </label>
+          )}
+          {current.needs.month && (
+            <label className="block text-sm">
+              Wann hat der Kunde Interesse? (Monat und Jahr)
+              <select
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                value={month}
+                onChange={(e) => setMonth(e.target.value)}
+              >
+                <option value="">Monat wählen …</option>
+                {monthOptions().map((m) => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+              <span className="mt-1 block text-xs text-muted-foreground">
+                Sobald dieser Monat beginnt, wird der Lead als Deal in der Stage „Zukünftiges
+                Interesse“ im CRM gespeichert.
+              </span>
+            </label>
+          )}
+          {(current.needs.schedule || current.needs.appointment) && (
             <div className="grid grid-cols-2 gap-2">
               <label className="block text-sm">
-                {current.key === "callback" ? "Rückrufdatum" : "Wiedervorlage (optional)"}
+                {current.needs.appointment
+                  ? "Termin (Datum)"
+                  : current.key === "callback"
+                    ? "Rückrufdatum"
+                    : "Rückruf (optional)"}
                 <Input
                   type="date"
                   value={date}
@@ -407,7 +505,9 @@ export function LeadActions({
                 />
               </label>
               <label className="block text-sm">
-                {current.key === "callback" ? "Uhrzeit" : "Uhrzeit (optional)"}
+                {current.needs.appointment || current.key === "callback"
+                  ? "Uhrzeit"
+                  : "Uhrzeit (optional)"}
                 <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
               </label>
             </div>
@@ -416,6 +516,29 @@ export function LeadActions({
             <p role="alert" className="text-sm font-medium text-destructive">
               Zu dieser Zeit ist bereits ein Rückruf eingetragen. Bitte wähle eine Minute später.
             </p>
+          )}
+          {current.needs.appointment && (
+            <p className="text-xs text-muted-foreground">
+              Der Termin erscheint im Terminkalender und im Pipedrive-Kalender. Bei einem Recruit
+              wird er dem Manager des Landes zugeordnet.
+            </p>
+          )}
+          {current.needs.doNotCall && (
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="mt-1"
+                checked={doNotCall}
+                onChange={(e) => setDoNotCall(e.target.checked)}
+              />
+              <span>
+                Nicht wieder anrufen
+                <span className="block text-xs text-muted-foreground">
+                  Der Lead wird gelöscht. Ohne Haken bleibt er in der Kein-Interesse-Liste der
+                  Admins.
+                </span>
+              </span>
+            </label>
           )}
           {current.needs.note && (
             <label className="block text-sm">

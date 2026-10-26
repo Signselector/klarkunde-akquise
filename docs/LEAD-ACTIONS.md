@@ -1,3 +1,18 @@
+> **Stand Migration 0020** – die Tabelle unten ist durch diese Fassung ersetzt:
+>
+> | Aktion | Eingaben | Folge |
+> | --- | --- | --- |
+> | Logo Render | Notiz, Logo, **Termin** | Termin im Terminkalender (Recruit: beim Manager des Landes, Veteran/Manager/Admin: bei sich) und als Aktivität im Pipedrive-Kalender. Lead → Abgeschlossen, Deal in 3D Low Q, Meine Kunden. |
+> | Realismus Render | Notiz, Logo, **Gebäudefoto**, Termin | Wie oben, Stage 3D High Q. Das Foto geht als `GEBAEUDEFOTO.<endung>` ans Deal, das Logo als `KONFI_LOGO.<endung>`. |
+> | Rückruf | Datum, Uhrzeit | Nur im Rückruf-Kalender (und Pipedrive-Kalender). Lead bleibt in Offene Leads, kein Deal. |
+> | Logo ausstehend | Notiz, Rückruf optional | Lead → Abgeschlossen, Deal in 3D Waiting, Meine Kunden. |
+> | Kein Interesse | Notiz optional, Haken „Nicht wieder anrufen“ | Mit Haken: Lead wird **gelöscht** (Personendaten, Notizen, Mails, Rückrufe gelöscht; die leere Hülle bleibt, damit Statistiken ihre Zahlen behalten). Ohne Haken: Lead → Abgeschlossen und in der Admin-Liste „Kein Interesse“ (Menü, CSV-Download). Kein Deal. |
+> | Zukunftsprojekt | Notiz, **Monat und Jahr** | Lead → Abgeschlossen, zunächst kein Deal. Beginnt der Monat, legt `activate_future_projects()` (im geplanten Abgleich `/api/pipedrive-reconcile`) eine Aktion für den ursprünglichen Caller an und der Deal entsteht in „Zukünftiges Interesse“ (Meine Kunden). |
+> | Nicht erreicht | – | Lead bleibt in Offene Leads, der Caller kann beliebig oft erneut anrufen. |
+> | Referenzmail | bestätigte Mail | Wie bisher (siehe `docs/CRM-HISTORY.md`). |
+>
+> Die Termin-Zuordnung (`appointments.booked_by` = Caller) und die Löschung stehen in `record_lead_action` (0020). Tests: `tests/backend/action-workflows.test.mjs`.
+
 > Stand 0014: Zuordnung der Listen, E-Mail-Pflicht, Ursprungs-Caller und Verlauf stehen in `docs/CRM-HISTORY.md`.
 
 # Gesprächsergebnis: Aktionen nach dem Telefonat

@@ -13,6 +13,8 @@ export type ActionRow = {
   note: string | null;
   stage_key: string | null;
   logo_path: string | null;
+  /** Realismus Render: `photo_path` is the building photo. */
+  details?: Record<string, unknown> | null;
   created_at: string;
   crm_steps: Record<string, boolean>;
 };
@@ -49,7 +51,7 @@ export type SyncStore = {
   dealCreated?(ctx: SyncContext, links: Links): Promise<void>;
   /** An existing deal was moved by this tool. */
   stageMoved?(ctx: SyncContext, dealId: number, stageId: number): Promise<void>;
-  markStep(actionId: string, step: "file" | "note"): Promise<void>;
+  markStep(actionId: string, step: "file" | "note" | "photo"): Promise<void>;
   downloadLogo(path: string): Promise<{ bytes: Uint8Array; contentType: string }>;
   finish(actionId: string, state: "synced" | "error", error?: string): Promise<void>;
 };
@@ -85,6 +87,11 @@ const BY_TYPE: Record<string, string> = {
 export function logoFilename(path: string, contentType: string) {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
   return `KONFI_LOGO.${EXTENSIONS.has(ext) ? ext : (BY_TYPE[contentType] ?? "png")}`;
+}
+
+/** The building photo of a Realismus Render: GEBAEUDEFOTO.<ext>. */
+export function photoFilename(path: string, contentType: string) {
+  return logoFilename(path, contentType).replace(/^KONFI_LOGO/, "GEBAEUDEFOTO");
 }
 
 export function noteText(ctx: SyncContext) {
@@ -150,6 +157,17 @@ export async function syncLeadAction(
         file.contentType,
       );
       await store.markStep(action.id, "file");
+    }
+    const photo = action.details?.["photo_path"];
+    if (typeof photo === "string" && photo && !action.crm_steps["photo"]) {
+      const file = await store.downloadLogo(photo);
+      await crm.uploadFile(
+        links.deal_id,
+        photoFilename(photo, file.contentType),
+        file.bytes,
+        file.contentType,
+      );
+      await store.markStep(action.id, "photo");
     }
     await store.finish(action.id, "synced");
     return { state: "synced" };

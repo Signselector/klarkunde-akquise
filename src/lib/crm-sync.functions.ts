@@ -143,7 +143,13 @@ async function databaseStore(
       if (links.data)
         await db.rpc("crm_set_sync_state", { p_lead: row.lead_id, p_state: "syncing" });
       const ctx: SyncContext = {
-        action: { ...row, crm_steps: (row.crm_steps ?? {}) as Record<string, boolean> },
+        action: {
+          ...row,
+          details: (row.details && typeof row.details === "object" && !Array.isArray(row.details)
+            ? row.details
+            : null) as Record<string, unknown> | null,
+          crm_steps: (row.crm_steps ?? {}) as Record<string, boolean>,
+        },
         lead: lead.data as SyncContext["lead"],
         country,
         callerName: profile.data?.display_name ?? "",
@@ -228,6 +234,65 @@ async function databaseStore(
   };
 }
 
+/**
+ * Sends one recorded action to Pipedrive (or only marks it simulated in test mode). Also pushes the appointment that
+ * a Logo or Realismus Render booked to the calendar of its owner, who may be the manager rather than the caller.
+ * `admin` lets the scheduled job send actions of other users.
+ */
+export async function syncActionAs(actionId: string, userId: string, admin: boolean) {
+  // Test mode (on by default): nothing is sent to Pipedrive, the action is only recorded as simulated.
+  const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+  const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
+  if (config?.test_mode !== false) {
+    await db
+      .from("lead_actions")
+      .update({ crm_sync_state: "simulated", crm_error: null })
+      .eq("id", actionId)
+      .in("crm_sync_state", ["queued", "error", "simulated"]);
+    return { state: "simulated" as const };
+  }
+  const store = await databaseStore(userId, admin);
+  // The CRM client needs the lead's country, which is only known once the store has loaded the action.
+  let crm: Crm | null = null;
+  const lazy: Crm = new Proxy({} as Crm, {
+    get:
+      (_t, prop: keyof Crm) =>
+      (...args: never[]) => {
+        crm ??= gatewayCrm(store.country());
+        return (crm[prop] as (...a: never[]) => unknown)(...args);
+      },
+  });
+  const result = await runSync(actionId, store, lazy);
+  await syncAppointmentOwner(actionId);
+  return result;
+}
+
+async function syncAppointmentOwner(actionId: string) {
+  try {
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { data: act } = await db
+      .from("lead_actions")
+      .select("lead_id,user_id,action")
+      .eq("id", actionId)
+      .maybeSingle();
+    if (!act || !["low_q", "high_q"].includes(act.action)) return;
+    const { data: ap } = await db
+      .from("appointments")
+      .select("user_id,country")
+      .eq("lead_id", act.lead_id)
+      .eq("booked_by", act.user_id)
+      .eq("pd_sync_state", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!ap?.user_id) return;
+    const { syncCalendarForUser } = await import("@/lib/calendar-sync.functions");
+    await syncCalendarForUser(ap.user_id, ap.country);
+  } catch {
+    // The scheduled calendar sync picks it up.
+  }
+}
+
 /** Sends one recorded action to Pipedrive. Safe to call again after an error. */
 export const syncLeadAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -248,27 +313,5 @@ export const syncLeadAction = createServerFn({ method: "POST" })
       .eq("id", data.actionId)
       .maybeSingle();
     if (!own) throw new Error("Aktion nicht gefunden.");
-    // Test mode (on by default): nothing is sent to Pipedrive, the action is only recorded as simulated.
-    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-    const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
-    if (config?.test_mode !== false) {
-      await db
-        .from("lead_actions")
-        .update({ crm_sync_state: "simulated", crm_error: null })
-        .eq("id", data.actionId)
-        .in("crm_sync_state", ["queued", "error", "simulated"]);
-      return { state: "simulated" as const };
-    }
-    const store = await databaseStore(context.userId, !!isAdmin);
-    // The CRM client needs the lead's country, which is only known once the store has loaded the action.
-    let crm: Crm | null = null;
-    const lazy: Crm = new Proxy({} as Crm, {
-      get:
-        (_t, prop: keyof Crm) =>
-        (...args: never[]) => {
-          crm ??= gatewayCrm(store.country());
-          return (crm[prop] as (...a: never[]) => unknown)(...args);
-        },
-    });
-    return runSync(data.actionId, store, lazy);
+    return syncActionAs(data.actionId, context.userId, !!isAdmin);
   });

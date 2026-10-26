@@ -30,6 +30,7 @@ import {
   Settings,
   Upload,
   Users,
+  X,
 } from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
 import {
@@ -130,6 +131,7 @@ function Layout() {
     ? ([
         { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
         { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
+        { to: "/no-interest", label: "Kein Interesse", icon: X },
         ...(isMaster ? [{ to: "/import", label: "Upload", icon: Upload }] : []),
         { to: "/accounts", label: "Accounts", icon: Crown },
         { to: "/settings", label: "Einstellungen", icon: Settings },

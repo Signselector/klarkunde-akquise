@@ -18,9 +18,21 @@ export type LeadAction = {
   hint: string;
   /** Tailwind classes for the coloured button. */
   color: string;
-  stageKey?: "low_q" | "high_q" | "waiting_3d" | "on_hold" | "reference_mail";
+  stageKey?: "low_q" | "high_q" | "waiting_3d" | "reference_mail";
   /** Needs the form step before it can be confirmed. */
-  needs: { note?: "required" | "optional"; logo?: boolean; schedule?: "required" | "optional" };
+  needs: {
+    note?: "required" | "optional";
+    logo?: boolean;
+    /** Realismus Render: photo of the building. */
+    photo?: boolean;
+    /** Logo/Realismus Render: the appointment, which goes to the calendar and the CRM. */
+    appointment?: boolean;
+    schedule?: "required" | "optional";
+    /** Zukunftsprojekt: month and year of the customer's interest. */
+    month?: boolean;
+    /** Kein Interesse: tick box "do not call again". */
+    doNotCall?: boolean;
+  };
   /** Shown as a bigger success moment. */
   celebration?: "normal" | "special";
 };
@@ -29,43 +41,42 @@ export const LEAD_ACTIONS: LeadAction[] = [
   {
     key: "low_q",
     label: "Logo Render",
-    hint: "Einfaches Logo-Rendering",
+    hint: "Termin eintragen und Logo hochladen",
     color: "bg-[#eba03a] text-white hover:bg-[#d98f2c]",
     stageKey: "low_q",
-    needs: { note: "required", logo: true },
+    needs: { note: "required", logo: true, appointment: true },
     celebration: "normal",
   },
   {
     key: "high_q",
     label: "Realismus Render",
-    hint: "Realistisches 3D-Rendering",
+    hint: "Termin, Logo und Gebäudefoto",
     color: "bg-[#4cb687] text-white hover:bg-[#3fa376]",
     stageKey: "high_q",
-    needs: { note: "required", logo: true },
+    needs: { note: "required", logo: true, photo: true, appointment: true },
     celebration: "special",
   },
   {
     key: "waiting_3d",
     label: "Logo ausstehend",
-    hint: "Kunde schickt das Logo noch",
+    hint: "Kunde schickt das Logo noch, Rückruf optional",
     color: "bg-[#111827] text-white hover:bg-[#1f2937]",
     stageKey: "waiting_3d",
-    needs: { note: "required" },
+    needs: { note: "required", schedule: "optional" },
   },
   {
     key: "no_interest",
     label: "Kein Interesse",
-    hint: "Lead abschließen",
+    hint: "Lead abschließen, optional nie wieder anrufen",
     color: "bg-[#e0534f] text-white hover:bg-[#cc4440]",
-    needs: {},
+    needs: { note: "optional", doNotCall: true },
   },
   {
     key: "on_hold",
     label: "Zukunftsprojekt",
-    hint: "Zukünftiges Projekt",
+    hint: "Monat wählen, dann kommt der Lead ins CRM",
     color: "bg-[#a15be8] text-white hover:bg-[#8e49d6]",
-    stageKey: "on_hold",
-    needs: { note: "required", schedule: "optional" },
+    needs: { note: "required", month: true },
   },
   {
     key: "callback",
@@ -95,10 +106,14 @@ export const ACTION_LABEL: Record<string, string> = {
   ...Object.fromEntries(LEAD_ACTIONS.map((a) => [a.key, a.label])),
   // No longer offered; old entries in a lead history keep their name.
   contact_details: "Kontaktdaten (früher)",
+  future_interest_due: "Zukunftsprojekt fällig",
 };
 
 const ERRORS: Record<string, string> = {
   note_required: "Bitte eine Gesprächsnotiz eintragen.",
+  appointment_required: "Bitte einen Termin in der Zukunft eintragen.",
+  photo_required: "Bitte das Gebäudefoto hochladen.",
+  invalid_month: "Bitte einen Monat in der Zukunft wählen.",
   logo_required: "Bitte das Firmenlogo hochladen.",
   invalid_schedule: "Bitte Datum und Uhrzeit in der Zukunft wählen.",
   callback_slot_taken:
