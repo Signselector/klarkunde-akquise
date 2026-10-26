@@ -47,19 +47,20 @@ function ContactLinks({ lead }: { lead: TableLead }) {
         ) : (
           <span className="text-muted-foreground">Keine Nummer</span>
         )}
-        {websiteUrl && (
-          <a
-            className="text-primary"
-            href={websiteUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Website von ${lead.company ?? "Kontakt"}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink size={15} aria-hidden="true" />
-          </a>
-        )}
       </div>
+      {websiteUrl && (
+        <a
+          className="inline-flex max-w-full items-start gap-1 break-words text-sm text-primary hover:underline"
+          href={websiteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Website von ${lead.company ?? "Kontakt"} öffnen`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ExternalLink size={14} aria-hidden="true" className="shrink-0" />
+          {websiteUrl.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "")}
+        </a>
+      )}
     </div>
   );
 }
