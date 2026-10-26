@@ -127,6 +127,13 @@
       "when": 1793031194797,
       "tag": "0017_countries_admin_only",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793031215813,
+      "tag": "0018_remove_contact_details",
+      "breakpoints": true
     }
   ]
 }
