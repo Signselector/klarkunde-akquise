@@ -82,7 +82,7 @@ function AppointmentsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id,starts_at,notes,title,kind,user_id,lead:leads(company,contact_name,phone)")
+        .select("id,starts_at,notes,title,kind,user_id,booked_by,lead:leads(company,contact_name,phone)")
         .eq("country", country)
         .order("starts_at");
       if (error) throw error;
@@ -113,6 +113,32 @@ function AppointmentsPage() {
     return [...own, ...fromPipedrive].sort((p, q) => p.date.getTime() - q.date.getTime());
   }, [data, external, mine, filter, user.id]);
 
+  const team = useQuery({
+    queryKey: ["appointment-team", country],
+    enabled: roles.isStaff,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_countries")
+        .select("user_id,profile:profiles(display_name,email,active)")
+        .eq("country", country);
+      if (error) throw error;
+      const rows = (data ?? [])
+        .filter((r) => r.profile?.active !== false)
+        .map((r) => ({ id: r.user_id, name: r.profile?.display_name || r.profile?.email || "Unbekannt" }));
+      if (!rows.some((r) => r.id === user.id)) rows.unshift({ id: user.id, name: "Ich" });
+      return rows;
+    },
+  });
+  const nameOf = (id: string | null | undefined) =>
+    id === user.id ? "dir" : (team.data?.find((t) => t.id === id)?.name ?? "jemand anderem");
+
+  async function assign(id: string, to: string) {
+    const { error } = await supabase.rpc("assign_appointment", { p_appointment_id: id, p_user_id: to });
+    if (error) { toast.error("Termin konnte nicht zugewiesen werden."); return; }
+    toast.success(to === user.id ? "Du nimmst den Termin selbst wahr." : "Termin zugewiesen. Die Person wird benachrichtigt.");
+    refresh();
+  }
+
   const refresh = () => qc.invalidateQueries({ queryKey: ["appointments"] });
 
   async function remove(id: string) {
@@ -142,7 +168,11 @@ function AppointmentsPage() {
       <header className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <h1 className="text-[22px] font-semibold">Terminkalender</h1>
-          <p className="text-sm text-muted-foreground">Deine Termine für {country}, abgeglichen mit deinem Pipedrive-Kalender.</p>
+          <p className="text-sm text-muted-foreground">
+            {roles.isStaff
+              ? `Alle Termine des Teams für ${country}. Nimm sie selbst wahr oder weise sie zu.`
+              : `Deine Termine für ${country}, abgeglichen mit deinem Pipedrive-Kalender.`}
+          </p>
           <CalendarSyncStatus sync={sync} />
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -163,6 +193,7 @@ function AppointmentsPage() {
       {showForm && roles.canBookAppointments && (
         <EventForm
           country={country}
+          canSelfAssign={roles.role === "veteran"}
           initialDate={selected}
           onCreated={() => {
             setShowForm(false);
@@ -295,6 +326,25 @@ function AppointmentsPage() {
                         </a>
                       )}
                       {e.notes && e.notes !== heading && <p className="mt-1 text-xs text-muted-foreground">{e.notes}</p>}
+                      {roles.isStaff && !("external" in e) && (
+                        <div className="mt-2 space-y-1">
+                          {"booked_by" in e && e.booked_by && e.booked_by !== e.user_id && (
+                            <p className="text-xs text-muted-foreground">Gebucht von {nameOf(e.booked_by)}</p>
+                          )}
+                          <Select value={e.user_id ?? ""} onValueChange={(v) => void assign(e.id, v)}>
+                            <SelectTrigger className="min-h-9 w-full text-xs" aria-label="Zuständig">
+                              <SelectValue placeholder="Zuständig wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(team.data ?? []).map((t) => (
+                                <SelectItem key={t.id} value={t.id}>
+                                  {t.id === user.id ? "Selbst wahrnehmen" : `Zuweisen an ${t.name}`}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
                     {e.user_id === user.id && !("external" in e) && (
                       <AlertDialog>
@@ -330,7 +380,8 @@ function toDateInput(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function EventForm({ country, initialDate, onCreated }: { country: string; initialDate: Date | null; onCreated: () => void }) {
+function EventForm({ country, canSelfAssign, initialDate, onCreated }: { country: string; canSelfAssign: boolean; initialDate: Date | null; onCreated: () => void }) {
+  const [selfAssign, setSelfAssign] = useState(false);
   const [title, setTitle] = useState("");
   const [kind, setKind] = useState<Kind>("presentation");
   const [date, setDate] = useState(initialDate ? toDateInput(initialDate) : "");
@@ -348,6 +399,7 @@ function EventForm({ country, initialDate, onCreated }: { country: string; initi
       p_title: title.trim(),
       p_notes: notes,
       p_country: country,
+      p_self: canSelfAssign && selfAssign,
     });
     setBusy(false);
     if (error) {
@@ -359,7 +411,7 @@ function EventForm({ country, initialDate, onCreated }: { country: string; initi
       void qc.invalidateQueries({ queryKey: ["slots"] });
       return;
     }
-    toast.success("Termin angelegt.");
+    toast.success(canSelfAssign && !selfAssign ? "Termin angelegt und an den Manager übergeben." : "Termin angelegt.");
     void qc.invalidateQueries({ queryKey: ["slots"] });
     onCreated();
   }
@@ -405,6 +457,12 @@ function EventForm({ country, initialDate, onCreated }: { country: string; initi
           <Textarea id="ev-notes" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} rows={2} className="mt-2 resize-none" />
         </div>
       </div>
+      {canSelfAssign && (
+        <label className="mt-4 flex min-h-11 items-center gap-2 text-sm">
+          <input type="checkbox" className="size-4 accent-primary" checked={selfAssign} onChange={(e) => setSelfAssign(e.target.checked)} />
+          Mir selbst zuweisen (sonst entscheidet der Manager)
+        </label>
+      )}
       <Button className="mt-4 min-h-11" disabled={busy} onClick={save}>
         {busy ? "Wird angelegt …" : "Termin speichern"}
       </Button>

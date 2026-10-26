@@ -169,6 +169,13 @@
       "when": 1793035521261,
       "tag": "0023_booking_slots",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793036565668,
+      "tag": "0024_appointment_assignment",
+      "breakpoints": true
     }
   ]
 }
