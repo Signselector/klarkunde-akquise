@@ -2,6 +2,7 @@ import { DataQuality, PipedriveJobs } from "@/components/backend-status";
 import { TemplateManager } from "@/components/template-manager";
 import { BackupCenter } from "@/components/backup-center";
 import { TestModeCard } from "@/components/TestMode";
+import { TestBatchPurge } from "@/components/test-batch-purge";
 import { MonthlyGoalCard } from "@/components/monthly-goal";
 import { StageMapping } from "@/components/stage-mapping";
 import { backendEnabled } from "@/lib/backend";
@@ -91,6 +92,7 @@ function SettingsPage() {
             help="Verbindung, Testmodus und Übertragungen für DE und AT. Die API-Zugänge liegen serverseitig und werden nicht in der Datenbank gespeichert."
           />
           <TestModeCard />
+          {globalAdmin && <TestBatchPurge />}
           {backendEnabled && <PipedriveJobs admin={admin} />}
         </TabsContent>
 
