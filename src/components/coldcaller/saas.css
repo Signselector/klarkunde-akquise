@@ -1127,14 +1127,48 @@ tr:hover > .cc-sticky-action {
   background: #faf8f4;
 }
 
-/* Collapsible sidebar: the toggle sits in the header, collapsed shows S, icons, avatar and sign-out */
+/* Collapsible sidebar. Icons keep their x position, labels fade, the rail width eases. */
+:root {
+  --cc-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --cc-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --cc-rail: 300ms;
+}
+.cc-app .group.peer > div:nth-child(-n + 2) {
+  transition-duration: var(--cc-rail);
+  transition-timing-function: var(--cc-ease-in-out);
+}
+.cc-app [data-sidebar="sidebar"] {
+  overflow: hidden;
+}
 .cc-app .cc-sidebar-header {
   position: relative;
+  min-height: 132px;
+  padding: 24px 12px 12px;
+}
+.cc-app .cc-brand-content {
+  display: block;
+  width: 180px;
+  overflow: hidden;
+  transition: width var(--cc-rail) var(--cc-ease-in-out);
+}
+.cc-app .cc-brand-content img {
+  max-width: none;
+  width: 180px;
+}
+.cc-app .cc-brand small {
+  white-space: nowrap;
+  transition: opacity 180ms var(--cc-ease-out);
+}
+.cc-app [data-collapsible="icon"] .cc-brand-content {
+  width: 58px;
+}
+.cc-app [data-collapsible="icon"] .cc-brand small {
+  opacity: 0;
 }
 .cc-collapse {
   position: absolute;
   top: 24px;
-  right: 14px;
+  right: 24px;
   width: 32px;
   height: 32px;
   min-height: 32px !important;
@@ -1144,7 +1178,10 @@ tr:hover > .cc-sticky-action {
   border: 1px solid rgb(255 255 255 / 14%);
   background: rgb(255 255 255 / 6%);
   color: #f1efec;
-  transition: background-color 150ms;
+  transform: translate(10px, 0);
+  transition:
+    transform var(--cc-rail) var(--cc-ease-in-out),
+    background-color 150ms;
 }
 .cc-collapse:hover {
   background: rgb(255 255 255 / 14%);
@@ -1153,77 +1190,113 @@ tr:hover > .cc-sticky-action {
   width: 16px;
   height: 16px;
 }
-.cc-app [data-collapsible="icon"] .cc-sidebar-header {
-  padding: 22px 0 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-}
-.cc-app [data-collapsible="icon"] .cc-brand-content {
-  display: block;
-  width: 46px;
-  overflow: hidden;
-}
-.cc-app [data-collapsible="icon"] .cc-brand-content img {
-  max-width: none;
-}
-.cc-app [data-collapsible="icon"] .cc-brand small {
-  display: none;
-}
 .cc-app [data-collapsible="icon"] .cc-collapse {
-  position: static;
+  transform: translate(0, 66px);
 }
-.cc-app [data-collapsible="icon"] [data-sidebar="content"] {
-  padding-inline: 0;
-  align-items: center;
+
+/* Nav rows: same left edge in both states, labels fade out */
+.cc-app [data-sidebar="content"] {
+  padding-inline: 12px;
+}
+.cc-app .cc-nav-link[data-sidebar="menu-button"] {
+  width: 100%;
+  padding: 0 0 0 17px;
 }
 .cc-app [data-collapsible="icon"] .cc-nav-link[data-sidebar="menu-button"] {
-  width: 48px !important;
+  width: 100% !important;
   height: 46px !important;
-  padding: 0 !important;
-  justify-content: center;
-  margin-inline: auto;
+  padding: 0 0 0 17px !important;
+}
+.cc-app .cc-nav-link > span,
+.cc-app .cc-nav-badge,
+.cc-app .cc-admin-toggle > span,
+.cc-app .cc-admin-chevron {
+  white-space: nowrap;
+  transition: opacity 200ms var(--cc-ease-out) 80ms;
 }
 .cc-app [data-collapsible="icon"] .cc-nav-link > span,
-.cc-app [data-collapsible="icon"] .cc-nav-badge {
-  display: none;
-}
-.cc-app [data-collapsible="icon"] .cc-nav-link {
-  position: relative;
-}
+.cc-app [data-collapsible="icon"] .cc-nav-badge,
 .cc-app [data-collapsible="icon"] .cc-admin-toggle > span,
 .cc-app [data-collapsible="icon"] .cc-admin-chevron {
-  display: none;
+  opacity: 0;
+  transition-delay: 0s;
+  transition-duration: 120ms;
+  pointer-events: none;
 }
-.cc-app [data-collapsible="icon"] .cc-admin-toggle {
-  width: 48px;
-  padding: 0;
-  justify-content: center;
-  margin-inline: auto;
+.cc-app .cc-admin-toggle {
+  padding: 0 0 0 17px;
+  gap: 14px;
 }
-.cc-app [data-collapsible="icon"] .cc-sidebar-footer {
-  padding: 12px 0 18px;
-  align-items: center;
+
+/* Footer: blocks shrink away, the avatar and sign-out icon stay in place */
+.cc-app .cc-sidebar-footer {
+  padding: 12px;
+}
+.cc-sidebar-tools,
+.cc-level {
+  max-height: 220px;
+  overflow: hidden;
+  transition:
+    max-height var(--cc-rail) var(--cc-ease-in-out),
+    opacity 200ms var(--cc-ease-out) 80ms,
+    margin var(--cc-rail) var(--cc-ease-in-out);
 }
 .cc-app [data-collapsible="icon"] .cc-sidebar-tools,
-.cc-app [data-collapsible="icon"] .cc-level,
-.cc-app [data-collapsible="icon"] .cc-user > div {
-  display: none;
+.cc-app [data-collapsible="icon"] .cc-level {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  transition-delay: 0s;
+  pointer-events: none;
+}
+.cc-app .cc-profile {
+  transition:
+    padding var(--cc-rail) var(--cc-ease-in-out),
+    background-color var(--cc-rail),
+    border-color var(--cc-rail),
+    gap var(--cc-rail) var(--cc-ease-in-out);
 }
 .cc-app [data-collapsible="icon"] .cc-profile {
-  background: none;
-  border: 0;
-  padding: 0;
+  background: transparent;
+  border-color: transparent;
+  padding: 14px 7px;
+  gap: 0;
 }
-.cc-app [data-collapsible="icon"] .cc-sidebar-footer .cc-user {
-  justify-content: center;
+.cc-app .cc-user > div {
+  max-width: 180px;
+  white-space: nowrap;
+  transition:
+    max-width var(--cc-rail) var(--cc-ease-in-out),
+    opacity 180ms var(--cc-ease-out) 80ms;
 }
-.cc-app [data-collapsible="icon"] .cc-signout {
-  width: 48px;
-  padding: 0;
-  justify-content: center;
+.cc-app [data-collapsible="icon"] .cc-user > div {
+  max-width: 0;
+  opacity: 0;
+  transition-delay: 0s;
+}
+.cc-app .cc-signout {
+  justify-content: flex-start;
+  padding: 0 0 0 17px;
+  width: 100%;
+}
+.cc-app .cc-signout > span {
+  white-space: nowrap;
+  transition: opacity 200ms var(--cc-ease-out) 80ms;
 }
 .cc-app [data-collapsible="icon"] .cc-signout > span {
-  display: none;
+  opacity: 0;
+  transition-delay: 0s;
+}
+.cc-app [data-collapsible="icon"] .cc-admin-body {
+  grid-template-rows: 0fr;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cc-rail: 1ms;
+  }
+  .cc-app .cc-nav-link > span,
+  .cc-app .cc-brand small {
+    transition-duration: 120ms;
+  }
 }
