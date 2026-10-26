@@ -271,19 +271,21 @@ function NavigationItem({
 }) {
   const { isMobile, setOpenMobile } = useSidebar();
   return (
-    <SidebarMenuButton asChild isActive={active} size="lg" className="cc-nav-link">
-      <Link
-        to={to}
-        title={label}
-        onClick={() => {
-          if (isMobile) setOpenMobile(false);
-        }}
-      >
-        <Icon aria-hidden="true" />
-        <span>{label}</span>
-        {badge > 0 && <b className="cc-nav-badge">{badge}</b>}
-      </Link>
-    </SidebarMenuButton>
+    <Link
+      to={to}
+      title={label}
+      data-sidebar="menu-button"
+      data-active={active}
+      aria-current={active ? "page" : undefined}
+      className="cc-nav-link flex w-full items-center overflow-hidden text-left text-sm outline-none"
+      onClick={() => {
+        if (isMobile) setOpenMobile(false);
+      }}
+    >
+      <Icon aria-hidden="true" />
+      <span>{label}</span>
+      {badge > 0 && <b className="cc-nav-badge">{badge}</b>}
+    </Link>
   );
 }
 

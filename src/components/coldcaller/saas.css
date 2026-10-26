@@ -1160,15 +1160,15 @@ tr:hover > .cc-sticky-action {
   transition: opacity 180ms var(--cc-ease-out);
 }
 .cc-app [data-collapsible="icon"] .cc-brand-content {
-  width: 58px;
+  width: 56px;
 }
 .cc-app [data-collapsible="icon"] .cc-brand small {
   opacity: 0;
 }
 .cc-collapse {
   position: absolute;
-  top: 24px;
-  right: 24px;
+  top: 46px;
+  right: 23px;
   width: 32px;
   height: 32px;
   min-height: 32px !important;
@@ -1191,7 +1191,7 @@ tr:hover > .cc-sticky-action {
   height: 16px;
 }
 .cc-app [data-collapsible="icon"] .cc-collapse {
-  transform: translate(0, 66px);
+  transform: translate(0, 44px);
 }
 
 /* Nav rows: same left edge in both states, labels fade out */
@@ -1201,11 +1201,6 @@ tr:hover > .cc-sticky-action {
 .cc-app .cc-nav-link[data-sidebar="menu-button"] {
   width: 100%;
   padding: 0 0 0 17px;
-}
-.cc-app [data-collapsible="icon"] .cc-nav-link[data-sidebar="menu-button"] {
-  width: 100% !important;
-  height: 46px !important;
-  padding: 0 0 0 17px !important;
 }
 .cc-app .cc-nav-link > span,
 .cc-app .cc-nav-badge,
@@ -1276,7 +1271,7 @@ tr:hover > .cc-sticky-action {
 }
 .cc-app .cc-signout {
   justify-content: flex-start;
-  padding: 0 0 0 17px;
+  padding: 0 0 0 16px;
   width: 100%;
 }
 .cc-app .cc-signout > span {
