@@ -1126,3 +1126,104 @@
 tr:hover > .cc-sticky-action {
   background: #faf8f4;
 }
+
+/* Collapsible sidebar: the toggle sits in the header, collapsed shows S, icons, avatar and sign-out */
+.cc-app .cc-sidebar-header {
+  position: relative;
+}
+.cc-collapse {
+  position: absolute;
+  top: 24px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  min-height: 32px !important;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  background: rgb(255 255 255 / 6%);
+  color: #f1efec;
+  transition: background-color 150ms;
+}
+.cc-collapse:hover {
+  background: rgb(255 255 255 / 14%);
+}
+.cc-collapse svg {
+  width: 16px;
+  height: 16px;
+}
+.cc-app [data-collapsible="icon"] .cc-sidebar-header {
+  padding: 22px 0 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.cc-app [data-collapsible="icon"] .cc-brand-content {
+  display: block;
+  width: 46px;
+  overflow: hidden;
+}
+.cc-app [data-collapsible="icon"] .cc-brand-content img {
+  max-width: none;
+}
+.cc-app [data-collapsible="icon"] .cc-brand small {
+  display: none;
+}
+.cc-app [data-collapsible="icon"] .cc-collapse {
+  position: static;
+}
+.cc-app [data-collapsible="icon"] [data-sidebar="content"] {
+  padding-inline: 0;
+  align-items: center;
+}
+.cc-app [data-collapsible="icon"] .cc-nav-link[data-sidebar="menu-button"] {
+  width: 48px !important;
+  height: 46px !important;
+  padding: 0 !important;
+  justify-content: center;
+  margin-inline: auto;
+}
+.cc-app [data-collapsible="icon"] .cc-nav-link > span,
+.cc-app [data-collapsible="icon"] .cc-nav-badge {
+  display: none;
+}
+.cc-app [data-collapsible="icon"] .cc-nav-link {
+  position: relative;
+}
+.cc-app [data-collapsible="icon"] .cc-admin-toggle > span,
+.cc-app [data-collapsible="icon"] .cc-admin-chevron {
+  display: none;
+}
+.cc-app [data-collapsible="icon"] .cc-admin-toggle {
+  width: 48px;
+  padding: 0;
+  justify-content: center;
+  margin-inline: auto;
+}
+.cc-app [data-collapsible="icon"] .cc-sidebar-footer {
+  padding: 12px 0 18px;
+  align-items: center;
+}
+.cc-app [data-collapsible="icon"] .cc-sidebar-tools,
+.cc-app [data-collapsible="icon"] .cc-level,
+.cc-app [data-collapsible="icon"] .cc-user > div {
+  display: none;
+}
+.cc-app [data-collapsible="icon"] .cc-profile {
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.cc-app [data-collapsible="icon"] .cc-sidebar-footer .cc-user {
+  justify-content: center;
+}
+.cc-app [data-collapsible="icon"] .cc-signout {
+  width: 48px;
+  padding: 0;
+  justify-content: center;
+}
+.cc-app [data-collapsible="icon"] .cc-signout > span {
+  display: none;
+}

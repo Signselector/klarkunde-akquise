@@ -20,6 +20,7 @@ import {
   CalendarDays,
   ChartNoAxesColumn,
   CircleCheck,
+  ChevronLeft,
   ChevronRight,
   Crown,
   LogOut,
@@ -145,12 +146,13 @@ function Layout() {
   return (
     <SidebarProvider
       className="cc-theme cc-app"
-      style={{ "--sidebar-width": "17rem" } as CSSProperties}
+      defaultOpen={readSidebarOpen()}
+      style={{ "--sidebar-width": "17rem", "--sidebar-width-icon": "5rem" } as CSSProperties}
     >
       <a href="#arbeitsbereich" className="cc-skip-link">
         Zum Arbeitsbereich
       </a>
-      <Sidebar>
+      <Sidebar collapsible="icon">
         <SidebarHeader className="cc-sidebar-header">
           <Link
             to="/dashboard"
@@ -159,6 +161,7 @@ function Layout() {
           >
             <Brand inverse />
           </Link>
+          <SidebarCollapseButton />
         </SidebarHeader>
         <SidebarContent className="px-3 pb-4">
           <p className="cc-nav-caption">Dein Arbeitsplatz</p>
@@ -230,7 +233,7 @@ function Layout() {
           </div>
           <Button variant="ghost" className="cc-signout" onClick={signOut}>
             <LogOut size={18} />
-            Abmelden
+            <span>Abmelden</span>
           </Button>
         </SidebarFooter>
       </Sidebar>
@@ -271,6 +274,7 @@ function NavigationItem({
     <SidebarMenuButton asChild isActive={active} size="lg" className="cc-nav-link">
       <Link
         to={to}
+        title={label}
         onClick={() => {
           if (isMobile) setOpenMobile(false);
         }}
@@ -308,5 +312,31 @@ function LevelCard() {
         {fmt(coins)} Coins
       </div>
     </div>
+  );
+}
+
+/** The sidebar remembers its state in the cookie the sidebar component already writes. */
+function readSidebarOpen() {
+  try {
+    return !/(?:^|;\s*)sidebar_state=false/.test(document.cookie);
+  } catch {
+    return true;
+  }
+}
+
+function SidebarCollapseButton() {
+  const { state, toggleSidebar, isMobile } = useSidebar();
+  if (isMobile) return null;
+  const collapsed = state === "collapsed";
+  return (
+    <button
+      type="button"
+      className="cc-collapse"
+      onClick={toggleSidebar}
+      aria-label={collapsed ? "Seitenleiste ausklappen" : "Seitenleiste einklappen"}
+      title={collapsed ? "Seitenleiste ausklappen" : "Seitenleiste einklappen"}
+    >
+      {collapsed ? <ChevronRight aria-hidden="true" /> : <ChevronLeft aria-hidden="true" />}
+    </button>
   );
 }
