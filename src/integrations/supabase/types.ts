@@ -1527,14 +1527,6 @@ export type Database = {
         Returns: Json
       }
       get_team_metrics: { Args: never; Returns: Json }
-      get_slot_availability: {
-        Args: { p_country: string; p_from: string; p_to: string; p_kind: string; p_lead?: string }
-        Returns: Json
-      }
-      cal_replace_busy: {
-        Args: { p_country: string; p_from: string; p_to: string; p_rows: Json }
-        Returns: number
-      }
       get_unanswered_reference_leads: {
         Args: { p_country: string }
         Returns: Json
