@@ -4,7 +4,7 @@ import { backendEnabled, backendRpc } from "@/lib/backend";
 import { BackendStatus } from "@/components/backend-status";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useIsAdmin } from "@/lib/use-admin";
 import { StatusBadge } from "@/components/coldcaller/primitives";
@@ -57,6 +57,14 @@ function Dashboard() {
   const country = useCountry();
   const { user } = Route.useRouteContext();
   const admin = useIsAdmin(user.id);
+  // The master admin can switch to the caller view; Pipedrive and data quality stay admin-only.
+  const [callerView, setCallerView] = useState(false);
+  useEffect(() => {
+    const sync = () => setCallerView(localStorage.getItem("cc-caller-view") === "1");
+    sync();
+    window.addEventListener("cc-caller-view", sync);
+    return () => window.removeEventListener("cc-caller-view", sync);
+  }, []);
   const qc = useQueryClient();
   const me = useQuery({
     queryKey: ["me", user.id],
@@ -353,7 +361,7 @@ function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {backendEnabled && <BackendStatus admin={false} />}
+      {backendEnabled && admin && !callerView && <BackendStatus admin={false} />}
     </div>
   );
 }
