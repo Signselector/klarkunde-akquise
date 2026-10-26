@@ -34,6 +34,7 @@ export type Database = {
       }
       appointments: {
         Row: {
+          booked_by: string | null
           country: string
           created_at: string
           id: string
@@ -49,6 +50,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          booked_by?: string | null
           country?: string
           created_at?: string
           id?: string
@@ -64,6 +66,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          booked_by?: string | null
           country?: string
           created_at?: string
           id?: string
@@ -742,6 +745,7 @@ export type Database = {
           contact_name: string | null
           created_at: string
           email: string | null
+          erased_at: string | null
           extra: Json
           id: string
           last_called_at: string | null
@@ -759,6 +763,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           email?: string | null
+          erased_at?: string | null
           extra?: Json
           id?: string
           last_called_at?: string | null
@@ -776,6 +781,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string
           email?: string | null
+          erased_at?: string | null
           extra?: Json
           id?: string
           last_called_at?: string | null
@@ -1381,6 +1387,7 @@ export type Database = {
         Args: { p_kind: string; p_lead_id: string; p_reason: string }
         Returns: undefined
       }
+      activate_future_projects: { Args: never; Returns: Json }
       archive_leads: { Args: { p_ids: string[] }; Returns: number }
       archive_open_leads: { Args: never; Returns: number }
       backend_maintenance: { Args: never; Returns: Json }
@@ -1510,6 +1517,7 @@ export type Database = {
       }
       get_monthly_quality: { Args: { p_month?: string }; Returns: Json }
       get_my_customers: { Args: { p_country: string }; Returns: Json }
+      get_no_interest_leads: { Args: { p_country: string }; Returns: Json }
       get_quality_issues: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
