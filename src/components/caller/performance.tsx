@@ -174,7 +174,7 @@ export function CallerPerformance({
   const t = team.data;
   const q = history.data?.[5];
   const delta = per100Delta(q?.per_100 ?? null, history.data?.[4]?.per_100 ?? null);
-  const maxQualified = Math.max(1, ...(history.data ?? []).map((m) => m.qualified ?? 0));
+  const maxPer100 = Math.max(1, ...(history.data ?? []).map((m) => m.per_100 ?? 0));
   const calls = day.data?.attempts ?? 0;
   const remaining = Math.max(0, DAILY_CALL_GOAL - calls);
   const share = Math.min(1, calls / DAILY_CALL_GOAL);
@@ -245,30 +245,33 @@ export function CallerPerformance({
 
         <BentoCard
           className="cc-b-avg"
-          title="Eingebrachte Leads"
-          meta={
-            t
-              ? monthLabel({
-                  year: Number(t.period.slice(0, 4)),
-                  month: Number(t.period.slice(5, 7)),
-                })
-              : undefined
-          }
-          help="Anzahl der von dir eingebrachten Leads laut Team-Management-Tool. Ein erneuter Abgleich ersetzt den Wert, er wird nie addiert."
+          title="Ø Leads pro 100"
+          meta={q ? monthLabel(last) : undefined}
+          help="Qualifizierte Leads (Logo Render und Realismus Render, jeder Lead einmal) pro 100 bearbeiteten Leads des letzten abgeschlossenen Monats. Das Ergebnis wird am Monatsende gespeichert."
           index={1}
         >
           <div className="cc-big">
-            {t?.leads_contributed != null ? formatNumber(t.leads_contributed) : "–"}
-            <small>Leads</small>
+            {q?.per_100 != null ? formatPer100(q.per_100) : "–"}
+            <small>Leads / 100</small>
           </div>
-          <p className="cc-big-note">{teamContext("Von dir eingebracht")}</p>
+          <p className="cc-big-note">
+            {history.isError
+              ? "Monatswert nicht verfügbar"
+              : q
+                ? q.per_100 === null
+                  ? `Keine bearbeiteten Leads im ${monthLabel(last)}`
+                  : delta
+                    ? `${delta} zum Vormonat`
+                    : "Letzter abgeschlossener Monat"
+                : "Wird berechnet …"}
+          </p>
           <div className="cc-bars" aria-hidden="true">
             {(history.data ?? months.map(() => null)).map((m, k) => (
               <i
                 key={k}
                 className={k === 5 ? "hi" : ""}
                 style={{
-                  height: `${m?.qualified ? Math.max(6, Math.round((m.qualified / maxQualified) * 100)) : 6}%`,
+                  height: `${m?.per_100 ? Math.max(6, Math.round((m.per_100 / maxPer100) * 100)) : 6}%`,
                   animationDelay: `${300 + k * 60}ms`,
                 }}
               />
@@ -279,7 +282,6 @@ export function CallerPerformance({
               <span key={`${m.year}-${m.month}`}>{monthLabel(m).slice(0, 3)}</span>
             ))}
           </div>
-          <p className="cc-bars-caption">Balken: von dir qualifizierte Leads je Monat</p>
         </BentoCard>
 
         <div className="cc-b-kpis">
@@ -294,20 +296,12 @@ export function CallerPerformance({
           </BentoCard>
           <BentoCard
             className="cc-mini"
-            title="Ø Leads pro 100"
-            help="Qualifizierte Leads (Logo Render und Realismus Render, jeder Lead einmal) pro 100 bearbeiteten Leads des letzten abgeschlossenen Monats. Das Ergebnis wird am Monatsende gespeichert."
+            title="Eingebrachte Leads"
+            help="Anzahl der von dir eingebrachten Leads laut Team-Management-Tool. Ein erneuter Abgleich ersetzt den Wert, er wird nie addiert."
             index={3}
           >
-            <b>{q?.per_100 != null ? formatPer100(q.per_100) : "–"}</b>
-            <em>
-              {history.isError
-                ? "Monatswert nicht verfügbar"
-                : q
-                  ? q.per_100 === null
-                    ? `Keine bearbeiteten Leads im ${monthLabel(last)}`
-                    : `Leads / 100 · ${monthLabel(last)}${delta ? ` · ${delta} zum Vormonat` : ""}`
-                  : "Wird berechnet …"}
-            </em>
+            <b>{t?.leads_contributed != null ? formatNumber(t.leads_contributed) : "–"}</b>
+            <em>{teamContext("Von dir eingebracht")}</em>
           </BentoCard>
         </div>
 
