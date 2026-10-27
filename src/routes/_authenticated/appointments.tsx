@@ -193,7 +193,7 @@ function AppointmentsPage() {
               <SelectTrigger className="min-h-11 w-[320px] max-w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Termine</SelectItem>
-                <SelectItem value="tool">Nur über das Cold Caller Tool angelegte</SelectItem>
+                <SelectItem value="tool">Fulfilment</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">

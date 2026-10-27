@@ -54,5 +54,5 @@ Rückrufe haben ein 15-Minuten-Raster (:00, :15, :30, :45) und belegen 15 Minute
 ## Vorlaufzeit und Anzeige (Migration 0027)
 
 * Termine (nicht Rückrufe): für alle Rollen frühestens in 3 Tagen (Wiener Tageszählung, `appointment_too_soon`; Migration 0028).
-* Termine können nicht mehr von Hand angelegt werden; sie entstehen über die Gesprächsergebnisse Logo Render und Realismus Render. Die Termine-Seite hat einen Filter „Alle Termine“ / „Nur über das Cold Caller Tool angelegte“.
+* Termine können nicht mehr von Hand angelegt werden; sie entstehen über die Gesprächsergebnisse Logo Render und Realismus Render. Die Termine-Seite hat einen Filter „Alle Termine“ / „Fulfilment“ (nur über das Cold Caller Tool gebuchte).
 * Rückrufe: keine Buttons „Erledigt“ und „Anrufen“ mehr in der Liste, nur noch „Kundenakte öffnen“.
