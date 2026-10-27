@@ -9,7 +9,6 @@ export function Brand({ inverse = false }: { inverse?: boolean }) {
         alt="Sign Selector"
         decoding="async"
       />
-      <small>Cold Caller · Team-Akquise</small>
     </span>
   );
 }

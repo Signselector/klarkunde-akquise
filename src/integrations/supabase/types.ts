@@ -1587,7 +1587,6 @@ export type Database = {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
       }
-      get_future_projects_leads: { Args: { p_country: string }; Returns: Json }
       get_slot_availability: {
         Args: {
           p_country: string
