@@ -1,4 +1,4 @@
-import { calendarStatus, STATUS_DOT } from "@/lib/calendar-status";
+import { appointmentDotClass } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
 import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
 import { SlotPicker } from "@/components/booking/slot-picker";
@@ -51,13 +51,13 @@ export const Route = createFileRoute("/_authenticated/appointments")({
 });
 
 const KINDS = {
-  discovery: { label: "Erstgespräch", dot: "bg-primary" },
-  presentation: { label: "Präsentation / Demo", dot: "bg-chart-1" },
-  closing: { label: "Angebot / Abschluss", dot: "bg-chart-5" },
-  onsite: { label: "Vor-Ort / Aufmaß", dot: "bg-chart-4" },
-  followup: { label: "Follow-up", dot: "bg-chart-2" },
-  internal: { label: "Intern / Coaching", dot: "bg-chart-3" },
-  other: { label: "Sonstiges", dot: "bg-muted-foreground" },
+  discovery: { label: "Erstgespräch" },
+  presentation: { label: "Präsentation / Demo" },
+  closing: { label: "Angebot / Abschluss" },
+  onsite: { label: "Vor-Ort / Aufmaß" },
+  followup: { label: "Follow-up" },
+  internal: { label: "Intern / Coaching" },
+  other: { label: "Sonstiges" },
 } as const;
 type Kind = keyof typeof KINDS;
 const kindOf = (k: string | null | undefined): Kind => (k && k in KINDS ? (k as Kind) : "other");
@@ -145,17 +145,6 @@ function AppointmentsPage() {
     // The appointment moves to the calendar of its new owner in Pipedrive right away.
     void pushNow({ data: { appointmentId: id } }).catch(() => undefined);
   }
-
-  // Appointments have no "done" flag: one that already took place counts as done (grey). Pipedrive-only entries
-  // are loaded only while open; one in the past is overdue (red).
-  const dotOf = (e: { date: Date; external?: true }) =>
-    STATUS_DOT[
-      "external" in e && e.external
-        ? calendarStatus(e.date, false)
-        : e.date < new Date()
-          ? "done"
-          : "upcoming"
-    ];
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["appointments"] });
 
@@ -276,7 +265,7 @@ function AppointmentsPage() {
                   {items.length > 0 && (
                     <span className="flex items-center gap-0.5">
                       {items.slice(0, 3).map((e) => (
-                        <span key={e.id} className={cn("size-1.5 rounded-full", dotOf(e))} />
+                        <span key={e.id} className={cn("size-1.5 rounded-full", appointmentDotClass(e.date))} />
                       ))}
                       {items.length > 3 && <span className="text-[9px] text-muted-foreground">+{items.length - 3}</span>}
                     </span>
@@ -298,13 +287,10 @@ function AppointmentsPage() {
             </Select>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <span className={cn("size-2 rounded-full", STATUS_DOT.upcoming)} /> Geplant
+                <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(Date.now() + 1)))} /> Geplant
               </span>
               <span className="flex items-center gap-1">
-                <span className={cn("size-2 rounded-full", STATUS_DOT.overdue)} /> Überfällig
-              </span>
-              <span className="flex items-center gap-1">
-                <span className={cn("size-2 rounded-full", STATUS_DOT.done)} /> Vergangen
+                <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(0)))} /> Vergangen
               </span>
             </div>
           </div>
@@ -329,7 +315,7 @@ function AppointmentsPage() {
                 const heading = e.title ?? e.lead?.company ?? e.notes ?? "Termin";
                 return (
                   <div key={e.id} className="flex items-start gap-3 rounded-md border p-3">
-                    <span className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", dotOf(e))} />
+                    <span className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", appointmentDotClass(e.date))} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold">{heading}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
