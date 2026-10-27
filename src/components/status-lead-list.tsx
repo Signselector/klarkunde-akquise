@@ -229,6 +229,8 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
         leadId={selected}
         userId={userId}
         admin={false}
+        leadIds={rows.map((l) => l.lead_id)}
+        onNavigate={setSelected}
         onClose={() => setSelected(null)}
       />
     </div>

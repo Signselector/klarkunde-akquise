@@ -102,7 +102,8 @@ export function LeadActions({
   lead: Tables<"leads">;
   userId: string;
   callerName: string;
-  onDone: () => void;
+  /** Called after a change. `summary` is set once, right after an outcome was saved. */
+  onDone: (summary?: string) => void;
 }) {
   const qc = useQueryClient();
   const sync = useServerFn(syncLeadAction);
@@ -187,18 +188,7 @@ export function LeadActions({
       setActive(action.key);
       return;
     }
-    // Actions without extra inputs are recorded straight away, no confirmation step.
-    if (
-      !action.needs.note &&
-      !action.needs.logo &&
-      !action.needs.schedule &&
-      !action.needs.month &&
-      !action.needs.appointment &&
-      !action.needs.doNotCall
-    ) {
-      void submit(action);
-      return;
-    }
+    // Every outcome has to be confirmed with the button below the form.
     setActive(action.key);
   }
 
@@ -309,7 +299,7 @@ export function LeadActions({
       setPreview(false);
       refreshLists();
       void qc.invalidateQueries({ queryKey: ["slots"] });
-      onDone();
+      onDone(`${ACTION_LABEL[action.key]} gespeichert`);
       if (needs.appointment) {
         void qc.invalidateQueries({ queryKey: ["appointments"] });
         void qc.invalidateQueries({ queryKey: ["calendar-sync"] });
@@ -405,7 +395,7 @@ export function LeadActions({
           {...(success.special ? { emphasis: true } : {})}
         />
       )}
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {LEAD_ACTIONS.map((action) => (
           <button
             key={action.key}
@@ -414,7 +404,7 @@ export function LeadActions({
             disabled={busy}
             aria-pressed={active === action.key}
             onClick={() => open(action)}
-            className={`cc-action-button inline-flex items-center gap-2 rounded-[10px] px-4 py-2 text-sm font-medium disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 ${action.color} ${active === action.key ? "ring-2 ring-offset-2 ring-foreground" : ""}`}
+            className={`cc-action-button inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border px-2 py-2 text-[13px] font-medium transition-colors disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 ${active === action.key ? "border-[#2b2f36] bg-[#2b2f36] text-white" : "border-border bg-white text-foreground hover:border-[#2b2f36] hover:bg-[#2b2f36] hover:text-white"}`}
           >
             {isMailAction(action.key) && <Mail size={16} aria-hidden="true" />}
             {action.label}
@@ -516,12 +506,6 @@ export function LeadActions({
               />
               Mir selbst zuweisen (sonst entscheidet der Manager)
             </label>
-          )}
-          {current.needs.appointment && (
-            <p className="text-xs text-muted-foreground">
-              Der Termin erscheint im Terminkalender und im Pipedrive-Kalender. Er geht an den Manager
-              des Landes, der ihn selbst wahrnimmt oder jemandem zuweist.
-            </p>
           )}
           {current.needs.doNotCall && (
             <label className="flex items-start gap-2 text-sm">

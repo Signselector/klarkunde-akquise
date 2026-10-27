@@ -1,5 +1,5 @@
-import { ActivityTimeline } from "@/components/caller/activity-timeline";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,11 +9,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { syncLeadAction } from "@/lib/crm-sync.functions";
 import { crmErrorMessage } from "@/lib/crm-sync";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
 import { LeadContact } from "@/components/coldcaller/workspace-parts";
 import { LeadActions } from "@/components/caller/lead-actions";
 import { ACTION_LABEL } from "@/lib/lead-actions";
+import { ChevronLeft, ChevronRight } from "@/components/coldcaller/icons";
 import {
   Dialog,
   DialogContent,
@@ -25,19 +25,23 @@ export function LeadDialog({
   leadId,
   userId,
   onClose,
+  leadIds,
+  onNavigate,
 }: {
   leadId: string | null;
   userId: string;
   /** Kept for the callers; the dialog no longer offers admin-only actions. */
   admin?: boolean;
   onClose: () => void;
+  /** Leads of the list the dialog was opened from, in display order. Enables the arrows and "next lead" after saving. */
+  leadIds?: string[];
+  onNavigate?: (id: string) => void;
 }) {
   const qc = useQueryClient();
-  const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const note = leadId ? (drafts[leadId] ?? "") : "";
-  const setNote = (value: string) => {
-    if (leadId) setDrafts((current) => ({ ...current, [leadId]: value }));
-  };
+  const index = leadId && leadIds ? leadIds.indexOf(leadId) : -1;
+  const previousId = index > 0 ? (leadIds?.[index - 1] ?? null) : null;
+  const nextId = index >= 0 ? (leadIds?.[index + 1] ?? null) : null;
+  const canNavigate = !!onNavigate && index >= 0;
   const { data, isLoading, isError, refetch } = useQuery({
     enabled: !!leadId,
     queryKey: ["lead-detail", leadId],
@@ -104,17 +108,14 @@ export function LeadDialog({
     qc.invalidateQueries({ queryKey: ["lead-list"] });
   };
 
-  async function addNote() {
-    if (!note.trim() || !leadId) return;
-    const { error } = await supabase
-      .from("lead_notes")
-      .insert({ lead_id: leadId, user_id: userId, body: note.trim() });
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setNote("");
+  /** After an outcome was saved the dialog moves on to the next lead of the list (or the previous one at the end). */
+  function afterAction(summary?: string) {
     refresh();
+    if (!summary || !canNavigate) return;
+    const target = nextId ?? previousId;
+    if (!target) return;
+    toast.success(summary);
+    onNavigate?.(target);
   }
   async function reopen() {
     if (!lead) return;
@@ -123,7 +124,7 @@ export function LeadDialog({
           p_request_id: crypto.randomUUID(),
           p_lead_id: lead.id,
           p_expected_version: lead.version,
-          p_reason: note.trim() || "Manuell wieder geöffnet",
+          p_reason: "Manuell wieder geöffnet",
         })
       : supabase.from("leads").update({ status: "open" }).eq("id", lead.id));
     if (error) {
@@ -137,12 +138,13 @@ export function LeadDialog({
     toast.success("Lead wieder geöffnet.");
     refresh();
   }
+  const open = !!leadId;
   return (
     <Dialog open={!!leadId} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="cc-theme cc-detail-dialog">
         <DialogHeader>
           <DialogTitle>{lead?.company || "Lead-Details"}</DialogTitle>
-          <DialogDescription>Kontaktdaten, Notizen und bisherige Bearbeitung.</DialogDescription>
+          <DialogDescription>Kontaktdaten und Gesprächsergebnis.</DialogDescription>
         </DialogHeader>
         {isLoading && <FeedbackState kind="loading" title="Kundenakte wird geladen" />}
         {isError && (
@@ -172,8 +174,7 @@ export function LeadDialog({
                 extra={(lead.extra ?? {}) as Record<string, unknown>}
               />
               <p>
-                <StatusBadge tone="info">{STATUS_LABEL[lead.status] ?? lead.status}</StatusBadge> ·
-                Versuche: {lead.attempts}
+                <StatusBadge tone="info">{STATUS_LABEL[lead.status] ?? lead.status}</StatusBadge>
               </p>
             </div>
             {backendEnabled && (
@@ -182,7 +183,7 @@ export function LeadDialog({
                 lead={lead}
                 userId={userId}
                 callerName={callerName.data ?? ""}
-                onDone={refresh}
+                onDone={afterAction}
               />
             )}
             <div className="flex flex-wrap gap-2">
@@ -191,28 +192,6 @@ export function LeadDialog({
                   Wieder öffnen
                 </Button>
               )}
-            </div>
-            <div className="cc-detail-section">
-              <label htmlFor="lead-note" className="cc-field-label">
-                Notizen
-              </label>
-              <Textarea
-                id="lead-note"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Neue Notiz …"
-              />
-              <Button size="sm" onClick={addNote} disabled={!note.trim()}>
-                Notiz speichern
-              </Button>
-              {data?.notes.map((n) => (
-                <p key={n.id} className="cc-note-item">
-                  <time dateTime={n.created_at}>
-                    {new Date(n.created_at).toLocaleString("de-DE")}
-                  </time>
-                  {n.body}
-                </p>
-              ))}
             </div>
             <div className="cc-detail-section">
               <h3>Verlauf</h3>
@@ -250,15 +229,65 @@ export function LeadDialog({
                 ))}
               </ul>
             </div>
-            {backendEnabled && (
-              <div className="cc-detail-section">
-                <h3>Aktivitätsverlauf</h3>
-                <ActivityTimeline leadId={lead.id} />
-              </div>
-            )}
           </>
         )}
       </DialogContent>
+      {open && canNavigate && (
+        <LeadArrows
+          previous={previousId}
+          next={nextId}
+          position={index + 1}
+          total={leadIds?.length ?? 0}
+          onNavigate={(id) => onNavigate?.(id)}
+        />
+      )}
     </Dialog>
+  );
+}
+
+/**
+ * Arrows left and right of the dialog to go to the previous or next lead of the list. Rendered outside the dialog
+ * (its content scrolls), so they are portaled to the page and stay clickable although the dialog is modal.
+ */
+function LeadArrows({
+  previous,
+  next,
+  position,
+  total,
+  onNavigate,
+}: {
+  previous: string | null;
+  next: string | null;
+  position: number;
+  total: number;
+  onNavigate: (id: string) => void;
+}) {
+  if (typeof document === "undefined") return null;
+  const base =
+    "pointer-events-auto fixed z-[60] grid size-12 place-items-center rounded-full border bg-white text-foreground shadow-lg transition-colors hover:bg-[#2b2f36] hover:text-white disabled:pointer-events-none disabled:opacity-30 max-sm:bottom-3 sm:top-1/2 sm:-translate-y-1/2";
+  return createPortal(
+    <>
+      <button
+        type="button"
+        aria-label={`Vorheriger Lead (${position} von ${total})`}
+        title="Vorheriger Lead"
+        disabled={!previous}
+        onClick={() => previous && onNavigate(previous)}
+        className={`${base} max-sm:left-3 sm:left-[max(8px,calc(50%-325px-64px))]`}
+      >
+        <ChevronLeft size={22} aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label={`Nächster Lead (${position} von ${total})`}
+        title="Nächster Lead"
+        disabled={!next}
+        onClick={() => next && onNavigate(next)}
+        className={`${base} max-sm:right-3 sm:right-[max(8px,calc(50%-325px-64px))]`}
+      >
+        <ChevronRight size={22} aria-hidden="true" />
+      </button>
+    </>,
+    document.body,
   );
 }

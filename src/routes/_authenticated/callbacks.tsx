@@ -227,7 +227,14 @@ function CallbacksPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <LeadDialog leadId={leadId} userId={user.id} admin={false} onClose={() => setLeadId(null)} />
+      <LeadDialog
+        leadId={leadId}
+        userId={user.id}
+        admin={false}
+        leadIds={(data ?? []).map((c) => c.lead?.id).filter((id): id is string => !!id)}
+        onNavigate={setLeadId}
+        onClose={() => setLeadId(null)}
+      />
     </div>
   );
 }

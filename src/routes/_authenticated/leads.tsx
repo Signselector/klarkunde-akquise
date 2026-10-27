@@ -214,7 +214,13 @@ function LeadsPage() {
           </p>
         )}
       </Surface>
-      <LeadDialog leadId={openId} userId={user.id} onClose={() => setOpenId(null)} />
+      <LeadDialog
+        leadId={openId}
+        userId={user.id}
+        leadIds={(leads ?? []).map((l) => l.id)}
+        onNavigate={setOpenId}
+        onClose={() => setOpenId(null)}
+      />
     </div>
   );
 }

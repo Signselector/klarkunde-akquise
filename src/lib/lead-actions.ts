@@ -37,12 +37,15 @@ export type LeadAction = {
   celebration?: "normal" | "special";
 };
 
+/** All outcome buttons look the same: white, anthracite on hover. */
+const ACTION_BUTTON = "bg-white text-foreground hover:bg-[#2b2f36] hover:text-white";
+
 export const LEAD_ACTIONS: LeadAction[] = [
   {
     key: "low_q",
     label: "Logo Render",
     hint: "Termin eintragen und Logo hochladen",
-    color: "bg-[#eba03a] text-white hover:bg-[#d98f2c]",
+    color: ACTION_BUTTON,
     stageKey: "low_q",
     needs: { note: "required", logo: true, appointment: true },
     celebration: "normal",
@@ -51,7 +54,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
     key: "high_q",
     label: "Realismus Render",
     hint: "Termin, Logo und Gebäudefoto",
-    color: "bg-[#4cb687] text-white hover:bg-[#3fa376]",
+    color: ACTION_BUTTON,
     stageKey: "high_q",
     needs: { note: "required", logo: true, photo: true, appointment: true },
     celebration: "special",
@@ -60,7 +63,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
     key: "waiting_3d",
     label: "Logo ausstehend",
     hint: "Kunde schickt das Logo noch, Rückruf optional",
-    color: "bg-[#111827] text-white hover:bg-[#1f2937]",
+    color: ACTION_BUTTON,
     stageKey: "waiting_3d",
     needs: { note: "required", schedule: "optional" },
   },
@@ -68,35 +71,35 @@ export const LEAD_ACTIONS: LeadAction[] = [
     key: "no_interest",
     label: "Kein Interesse",
     hint: "Lead abschließen, optional nie wieder anrufen",
-    color: "bg-[#e0534f] text-white hover:bg-[#cc4440]",
+    color: ACTION_BUTTON,
     needs: { note: "optional", doNotCall: true },
   },
   {
     key: "on_hold",
     label: "Zukunftsprojekt",
     hint: "Monat wählen, dann kommt der Lead ins CRM",
-    color: "bg-[#a15be8] text-white hover:bg-[#8e49d6]",
+    color: ACTION_BUTTON,
     needs: { note: "required", month: true },
   },
   {
     key: "callback",
     label: "Rückruf",
     hint: "Neuen Anruf vereinbaren",
-    color: "bg-[#e4b53a] text-white hover:bg-[#d1a32c]",
+    color: ACTION_BUTTON,
     needs: { note: "optional", schedule: "required" },
   },
   {
     key: "reference_mail",
     label: "Referenzmail",
     hint: "Mail senden, Lead abschließen",
-    color: "bg-[#6366e8] text-white hover:bg-[#5255d6]",
+    color: ACTION_BUTTON,
     needs: {},
   },
   {
     key: "not_reached",
     label: "Nicht erreicht",
     hint: "Kontaktversuch speichern",
-    color: "bg-[#ec7f36] text-white hover:bg-[#d96f28]",
+    color: ACTION_BUTTON,
     needs: {},
   },
 ];
@@ -119,7 +122,8 @@ const ERRORS: Record<string, string> = {
     "Zu dieser Zeit ist bereits ein Rückruf eingetragen. Bitte wähle eine Minute später.",
   slot_full:
     "Dieser Zeitpunkt ist inzwischen ausgebucht (maximal 2 Termine gleichzeitig). Bitte wähle eine andere Zeit.",
-  slot_conflict: "Zu dieser Zeit hast du schon einen Termin oder Rückruf. Bitte wähle eine andere Zeit.",
+  slot_conflict:
+    "Zu dieser Zeit hast du schon einen Termin oder Rückruf. Bitte wähle eine andere Zeit.",
   invalid_email: "Die E-Mail-Adresse ist ungültig.",
   email_not_sent:
     "Die E-Mail wurde nicht bestätigt versendet. Der Lead wird erst nach erfolgreichem Versand abgeschlossen.",
