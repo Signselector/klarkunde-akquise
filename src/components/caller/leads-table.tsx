@@ -162,9 +162,6 @@ export function LeadsTable({
                 {processed ? "Ergebnis" : "Status"}
               </th>
               {processed && <th className="px-2 py-3 font-medium">Bearbeitet</th>}
-              <th className="sticky right-0 bg-[#faf8f4] px-4 py-3 text-right font-medium">
-                <span className="sr-only">Aktionen</span>
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -181,29 +178,29 @@ export function LeadsTable({
                 <td className="px-2 py-4">
                   <Address lead={l} />
                 </td>
-                <td className="min-w-[10rem] px-2 py-4 text-center">
-                  <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
-                  {l.attempts > 0 && (
-                    <span className="mt-1 block text-xs text-muted-foreground">
-                      {l.attempts} {l.attempts === 1 ? "Versuch" : "Versuche"}
-                    </span>
-                  )}
+                <td className="min-w-[10rem] px-4 py-4">
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
+                    {l.attempts > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        {l.attempts} {l.attempts === 1 ? "Versuch" : "Versuche"}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="cc-record-btn"
+                      onClick={() => onOpen(l.id)}
+                      aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
+                    >
+                      Kundenakte
+                    </button>
+                  </div>
                 </td>
                 {processed && (
                   <td className="whitespace-nowrap px-2 py-4 text-muted-foreground">
                     {l.last_called_at ? dateFormat.format(new Date(l.last_called_at)) : "–"}
                   </td>
                 )}
-                <td className="cc-sticky-action sticky right-0 px-4 py-4 text-right">
-                  <button
-                    type="button"
-                    className="cc-record-btn"
-                    onClick={() => onOpen(l.id)}
-                    aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
-                  >
-                    Kundenakte
-                  </button>
-                </td>
               </tr>
             ))}
           </tbody>

@@ -140,7 +140,16 @@ export function LeadDialog({
   return (
     <Dialog open={!!leadId} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="cc-theme cc-detail-dialog">
-        <DialogHeader>
+        {lead && (
+          <div className="absolute right-14 top-5">
+            <StatusBadge tone="info">
+              {lead.status === "open" && lead.attempts > 0
+                ? "Nicht erreicht"
+                : (STATUS_LABEL[lead.status] ?? lead.status)}
+            </StatusBadge>
+          </div>
+        )}
+        <DialogHeader className="pr-32">
           <DialogTitle>{lead?.company || "Lead-Details"}</DialogTitle>
           <DialogDescription>Kontaktdaten und Gesprächsergebnis.</DialogDescription>
         </DialogHeader>
@@ -178,9 +187,6 @@ export function LeadDialog({
                   onSaved={refresh}
                 />
               )}
-              <p>
-                <StatusBadge tone="info">{STATUS_LABEL[lead.status] ?? lead.status}</StatusBadge>
-              </p>
             </div>
             {backendEnabled && (
               <LeadActions
