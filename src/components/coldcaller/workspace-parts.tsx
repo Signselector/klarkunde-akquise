@@ -131,7 +131,12 @@ export function LeadContact({
         <span>
           <small>Website</small>
           {website && websiteUrl ? (
-            <a href={websiteUrl} target="_blank" rel="noreferrer" className="min-w-0 truncate">
+            <a
+              href={websiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-w-0 truncate"
+            >
               {website[1]}
               <ExternalLink size={13} />
             </a>
