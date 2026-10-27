@@ -551,7 +551,7 @@
 }
 .cc-detail-dialog {
   width: calc(100vw - 32px);
-  max-width: 650px;
+  max-width: 760px;
   border-radius: 16px;
   padding: 24px;
   max-height: calc(100dvh - 32px);
@@ -1123,4 +1123,48 @@
   .cc-record-btn:active {
     transform: none;
   }
+}
+
+/* Kundenakte: contact cards with black values. */
+.cc-detail-dialog .cc-contact-grid {
+  gap: 12px;
+  padding: 0;
+  border-block: 0;
+}
+.cc-detail-dialog .cc-contact-grid > div {
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: oklch(0.96 0.006 80);
+  border: 1px solid var(--cc-border);
+  border-radius: 14px;
+}
+.cc-detail-dialog .cc-contact-grid > div > svg {
+  width: 24px;
+  height: 24px;
+  margin-top: 0;
+  color: var(--cc-ink, #1b1b1f);
+}
+.cc-detail-dialog .cc-contact-grid a,
+.cc-detail-dialog .cc-contact-grid a.cc-phone-number {
+  color: var(--cc-ink, #1b1b1f);
+}
+.cc-detail-dialog .cc-contact-grid a:hover {
+  text-decoration: underline;
+}
+.cc-detail-dialog .cc-contact-grid a.cc-phone-number {
+  font-size: 17px;
+}
+.cc-detail-dialog .cc-outcome-btn {
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 14px;
+  font-size: 14px;
+  line-height: 1.15;
+  text-align: left;
+  white-space: normal;
+}
+.cc-detail-dialog .cc-outcome-btn > svg {
+  flex-shrink: 0;
 }

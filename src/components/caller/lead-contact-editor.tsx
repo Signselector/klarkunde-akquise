@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
+import { Pencil } from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -70,11 +71,13 @@ export function LeadContactEditor({
         type="button"
         size="sm"
         variant="outline"
+        className="gap-2.5 bg-white px-4 shadow-sm"
         onClick={() => {
           setForm(initial());
           setEditing(true);
         }}
       >
+        <Pencil size={18} aria-hidden="true" />
         Kundendaten bearbeiten
       </Button>
     );

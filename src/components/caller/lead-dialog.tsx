@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
 import { LeadContact } from "@/components/coldcaller/workspace-parts";
 import { LeadActions } from "@/components/caller/lead-actions";
+import { Building2 } from "@/components/coldcaller/icons";
 import { LeadContactEditor } from "@/components/caller/lead-contact-editor";
 import { ACTION_LABEL } from "@/lib/lead-actions";
 import {
@@ -150,8 +151,18 @@ export function LeadDialog({
           </div>
         )}
         <DialogHeader className="pr-32">
-          <DialogTitle>{lead?.company || "Lead-Details"}</DialogTitle>
-          <DialogDescription>Kontaktdaten und Gesprächsergebnis.</DialogDescription>
+          <div className="flex items-center gap-4">
+            <span
+              className="grid size-14 shrink-0 place-items-center rounded-2xl bg-black/5"
+              aria-hidden="true"
+            >
+              <Building2 size={28} />
+            </span>
+            <div className="min-w-0">
+              <DialogTitle>{lead?.company || "Lead-Details"}</DialogTitle>
+              <DialogDescription>Kontaktdaten und Gesprächsergebnis.</DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
         {isLoading && <FeedbackState kind="loading" title="Kundenakte wird geladen" />}
         {isError && (

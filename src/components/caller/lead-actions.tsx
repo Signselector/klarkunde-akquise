@@ -18,7 +18,19 @@ import {
   type LeadAction,
   type LeadActionKey,
 } from "@/lib/lead-actions";
-import { Mail } from "@/components/coldcaller/icons";
+import { Calendar, Clock } from "lucide-react";
+import { Box, ImageIcon, Mail, Phone, PhoneMissed, X } from "@/components/coldcaller/icons";
+
+const ACTION_ICON: Record<string, typeof Mail> = {
+  low_q: ImageIcon,
+  high_q: Box,
+  waiting_3d: Clock,
+  no_interest: X,
+  on_hold: Calendar,
+  callback: Phone,
+  reference_mail: Mail,
+  not_reached: PhoneMissed,
+};
 import { SuccessBanner } from "@/components/coldcaller/success-banner";
 import { SlotPicker } from "@/components/booking/slot-picker";
 import { dateValue, timeValue } from "@/lib/booking-slots";
@@ -385,7 +397,10 @@ export function LeadActions({
 
   return (
     <section className="cc-detail-section space-y-3" aria-labelledby="lead-actions-title">
-      <h3 id="lead-actions-title">Gesprächsergebnis</h3>
+      <h3 id="lead-actions-title" className="flex items-center gap-3 text-lg">
+        <Phone size={22} aria-hidden="true" className="text-primary" />
+        Gesprächsergebnis
+      </h3>
       {success && (
         <SuccessBanner
           title={success.title}
@@ -406,8 +421,11 @@ export function LeadActions({
             onClick={() => open(action)}
             className="cc-outcome-btn"
           >
-            {isMailAction(action.key) && <Mail size={16} aria-hidden="true" />}
-            {action.label}
+            {(() => {
+              const Icon = ACTION_ICON[action.key];
+              return Icon ? <Icon size={22} aria-hidden="true" /> : null;
+            })()}
+            <span>{action.label}</span>
           </button>
         ))}
       </div>
