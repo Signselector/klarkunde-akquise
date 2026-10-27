@@ -286,3 +286,22 @@ export const refreshBookingSlots = createServerFn({ method: "POST" })
     if (!allowed) throw new Error("Für dieses Land hast du keinen Zugriff.");
     return refreshBusy(data.country);
   });
+
+/** Sends an appointment to the Pipedrive calendar of its current owner right away, e.g. after it was handed to someone. */
+export const pushAppointmentNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { appointmentId: string }) => {
+    if (!d || typeof d.appointmentId !== "string" || !/^[0-9a-f-]{36}$/i.test(d.appointmentId))
+      throw new Error("invalid");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    // RLS: only appointments the user may see.
+    const { data: ap } = await context.supabase
+      .from("appointments")
+      .select("user_id,country")
+      .eq("id", data.appointmentId)
+      .maybeSingle();
+    if (!ap?.user_id || !ap.country) throw new Error("Termin nicht gefunden.");
+    return syncCalendarForUser(ap.user_id, ap.country);
+  });

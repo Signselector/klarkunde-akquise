@@ -21,11 +21,41 @@ export function AppointmentNotifier({ userId }: { userId: string }) {
     },
   });
 
+  // Live: a new notification or any change of an appointment shows up at once, without waiting for the next poll.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`appointments-${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "appointment_notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        () => void qc.invalidateQueries({ queryKey: ["appointment-notifications", userId] }),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "appointments" }, () => {
+        void qc.invalidateQueries({ queryKey: ["appointments"] });
+        void qc.invalidateQueries({ queryKey: ["slots"] });
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [qc, userId]);
+
   useEffect(() => {
     if (!data?.length) return;
     for (const n of data) {
       const when = n.appointment
-        ? new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(n.appointment.starts_at))
+        ? new Intl.DateTimeFormat("de-DE", {
+            weekday: "short",
+            day: "2-digit",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          }).format(new Date(n.appointment.starts_at))
         : "";
       toast.info("Neuer Termin für dich", {
         description: [n.appointment?.title, when].filter(Boolean).join(" · "),
@@ -35,7 +65,10 @@ export function AppointmentNotifier({ userId }: { userId: string }) {
     void supabase
       .from("appointment_notifications")
       .update({ read_at: new Date().toISOString() })
-      .in("id", data.map((n) => n.id))
+      .in(
+        "id",
+        data.map((n) => n.id),
+      )
       .then(() => {
         void qc.invalidateQueries({ queryKey: ["appointment-notifications", userId] });
         void qc.invalidateQueries({ queryKey: ["appointments"] });

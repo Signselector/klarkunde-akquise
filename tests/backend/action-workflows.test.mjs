@@ -69,17 +69,20 @@ test("Logo Render: appointment + logo, recruit's appointment goes to the manager
   assert.equal(ap.country, "DE");
   assert.equal(ap.pd_sync_state, "pending", "waits for the Pipedrive calendar sync");
   await as(rec);
-  assert.equal((await q("select 1 from public.appointments")).length, 1, "the recruit sees what was booked through the tool");
+  assert.equal((await q("select 1 from public.appointments")).length, 0, "the caller does not see it, only managers and up");
   await as(other);
-  assert.equal((await q("select 1 from public.appointments")).length, 1, "every role sees all appointments of its country");
+  assert.equal((await q("select 1 from public.appointments")).length, 0);
   await as(mgr);
   assert.equal((await q("select 1 from public.appointments")).length, 1);
 });
 
-test("a veteran's appointment stays with the veteran", async () => {
+test("a veteran's appointment goes to the manager unless the veteran takes it", async () => {
   const l = leads[8];
   const r = await act(vet, l, "low_q", { note: "n", logo: `${vet}/${l}/l.png`, at: future(24) });
-  assert.equal(r.appointment_owner, vet);
+  assert.equal(r.appointment_owner, mgr);
+  const l2 = leads[9];
+  const own = await act(vet, l2, "low_q", { note: "n", logo: `${vet}/${l2}/l.png`, at: future(26), details: { self_assign: true } });
+  assert.equal(own.appointment_owner, vet);
 });
 
 test("Realismus Render additionally needs the building photo", async () => {

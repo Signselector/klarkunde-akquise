@@ -1,3 +1,5 @@
+import { useServerFn } from "@tanstack/react-start";
+import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
 import { SlotPicker } from "@/components/booking/slot-picker";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -67,6 +69,7 @@ function AppointmentsPage() {
   const qc = useQueryClient();
   const country = useCountry();
   const roles = useRoles(user.id);
+  const pushNow = useServerFn(pushAppointmentNow);
   const { sync, external } = useCalendarSync(user.id, country);
   const [mine] = useState(false);
   const [filter, setFilter] = useState<Kind | "all">("all");
@@ -79,6 +82,7 @@ function AppointmentsPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["appointments", country],
+    refetchInterval: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointments")
@@ -135,8 +139,10 @@ function AppointmentsPage() {
   async function assign(id: string, to: string) {
     const { error } = await supabase.rpc("assign_appointment", { p_appointment_id: id, p_user_id: to });
     if (error) { toast.error("Termin konnte nicht zugewiesen werden."); return; }
-    toast.success(to === user.id ? "Du nimmst den Termin selbst wahr." : "Termin zugewiesen. Die Person wird benachrichtigt.");
+    toast.success(to === user.id ? "Du nimmst den Termin selbst wahr." : "Termin zugewiesen. Die Person wird sofort benachrichtigt.");
     refresh();
+    // The appointment moves to the calendar of its new owner in Pipedrive right away.
+    void pushNow({ data: { appointmentId: id } }).catch(() => undefined);
   }
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["appointments"] });

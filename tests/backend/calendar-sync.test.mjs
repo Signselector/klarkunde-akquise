@@ -41,11 +41,11 @@ before(async () => {
 });
 after(() => db.close());
 
-test("callbacks are private, appointments are visible to every role of the country", async () => {
+test("callbacks are private; appointments only for the owner and for managers and up", async () => {
   for (const [user, own] of [[anna, 1], [ben, 1], [admin, 0]]) {
     await as(user);
     assert.equal((await q("select 1 from public.callbacks")).length, own);
-    assert.equal((await q("select 1 from public.appointments")).length, 2);
+    assert.equal((await q("select 1 from public.appointments")).length, user === admin ? 2 : 1);
   }
 });
 

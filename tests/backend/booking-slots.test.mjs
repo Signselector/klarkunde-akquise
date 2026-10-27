@@ -152,3 +152,22 @@ test("a callback is refused when two own appointments already fill the time; oth
   const ok = await act(vet, leads[9], "callback", { at: at(21, 9) });
   assert.ok(ok.callback_id);
 });
+
+test("assigning an appointment moves it to the new person, re-queues it for Pipedrive and notifies", async () => {
+  const l = leads[6];
+  const r = await act(rec, l, "low_q", { note: "n", logo: logo(rec, l), at: at(30, 9) });
+  await db.exec("RESET ROLE");
+  await q("update public.appointments set pd_sync_state='synced',pd_activity_id=4711 where id=$1", [r.appointment_id]);
+  await as(mgr);
+  await q("select public.assign_appointment($1,$2)", [r.appointment_id, vet]);
+  await db.exec("RESET ROLE");
+  const ap = (await q("select user_id,pd_sync_state,pd_activity_id from public.appointments where id=$1", [r.appointment_id]))[0];
+  assert.equal(ap.user_id, vet);
+  assert.equal(ap.pd_sync_state, "pending");
+  assert.equal(Number(ap.pd_activity_id), 4711, "the Pipedrive activity is moved, not duplicated");
+  await as(vet);
+  assert.equal((await q("select 1 from public.appointment_notifications where appointment_id=$1", [r.appointment_id])).length, 1);
+  assert.equal((await q("select 1 from public.appointments where id=$1", [r.appointment_id])).length, 1);
+  await as(rec);
+  await assert.rejects(() => q("select public.assign_appointment($1,$2)", [r.appointment_id, rec]), /forbidden/);
+});
