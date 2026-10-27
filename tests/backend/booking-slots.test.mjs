@@ -118,7 +118,9 @@ test("callbacks are private; two own callbacks cannot overlap", async () => {
   assert.deepEqual(await slotsFor("callback", at(15, 8), at(15, 12)), []);
   await act(vet, leads[9], "callback", { at: t });
   // the same caller cannot book another callback in an overlapping window
-  await assert.rejects(() => act(rec, leads[4], "callback", { at: at(15, 9, 20) }), /slot_conflict/);
+  await assert.rejects(() => act(rec, leads[4], "callback", { at: at(15, 9, 10) }), /slot_conflict/);
+  // the next quarter hour is free: a callback occupies 15 minutes only
+  assert.ok((await act(rec, leads[4], "callback", { at: at(15, 9, 15) })).callback_id);
   const mine = await (async () => { await as(rec); return slotsFor("callback", at(15, 8), at(15, 12)); })();
   assert.ok(mine.some((x) => new Date(x.slot).getUTCHours() === 9 && x.used === 1 && x.capacity === 1));
   // rescheduling the same lead is not a collision with itself
@@ -127,9 +129,11 @@ test("callbacks are private; two own callbacks cannot overlap", async () => {
   // an own appointment blocks callbacks, a Pipedrive entry of the caller too
   await db.exec("RESET ROLE");
   await q("insert into public.pipedrive_activities(country,activity_id,user_id,due_at,duration_min) values ('DE',55,$1,$2,30)", [rec, at(15, 13)]);
-  // one Pipedrive entry alone does not block a callback; together with a second entry it does
-  const ok = await act(rec, leads[4], "callback", { at: at(15, 13) });
-  assert.ok(ok.callback_id);
+  // an open Pipedrive entry blocks the callback slots it covers (13:00-13:30), 12:45 and 13:30 stay free
+  await assert.rejects(() => act(rec, leads[5], "callback", { at: at(15, 13) }), /slot_conflict/);
+  await assert.rejects(() => act(rec, leads[5], "callback", { at: at(15, 13, 15) }), /slot_conflict/);
+  assert.ok((await act(rec, leads[5], "callback", { at: at(15, 12, 45) })).callback_id);
+  assert.ok((await act(rec, leads[6], "callback", { at: at(15, 13, 30) })).callback_id);
 });
 
 test("callbacks do not use up appointment capacity", async () => {
@@ -138,19 +142,23 @@ test("callbacks do not use up appointment capacity", async () => {
   assert.ok(!r.some((x) => new Date(x.slot).getUTCHours() === 9));
 });
 
-test("a callback is refused when two own appointments already fill the time; other users' appointments do not matter", async () => {
+test("callbacks grid: 15 minutes, an own appointment (30 min) blocks two callback slots; others' appointments do not matter", async () => {
   // others' appointments (the earlier tests booked 2 at day 10, 09:00): a callback of a third user there is fine
   assert.ok((await act(rec, leads[5], "callback", { at: at(10, 9) })).callback_id);
-  // 2 own appointments at the same time (a veteran books for himself and for another lead)
+  // an own appointment 15:30-16:00 blocks the callback slots 15:30 and 15:45; 15:15 and 16:00 stay free
   await db.exec("RESET ROLE");
-  await q("insert into public.appointments(user_id,lead_id,starts_at,country,booked_by) values ($1,$2,$3,'DE',$1)", [vet, leads[8], at(20, 9)]);
-  await q("insert into public.pipedrive_activities(country,activity_id,user_id,due_at,duration_min) values ('DE',61,$1,$2,30)", [vet, at(20, 9)]);
-  await assert.rejects(() => act(vet, leads[9], "callback", { at: at(20, 9) }), /slot_conflict/);
-  // one own appointment alone does not block a callback
-  await db.exec("RESET ROLE");
-  await q("insert into public.appointments(user_id,lead_id,starts_at,country,booked_by) values ($1,$2,$3,'DE',$1)", [vet, leads[8], at(21, 9)]);
-  const ok = await act(vet, leads[9], "callback", { at: at(21, 9) });
-  assert.ok(ok.callback_id);
+  await q("insert into public.appointments(user_id,lead_id,starts_at,country,booked_by) values ($1,$2,$3,'DE',$1)", [vet, leads[8], at(20, 15, 30)]);
+  await as(vet);
+  const blocked = (await slotsFor("callback", at(20, 15), at(20, 17))).map((x) => new Date(x.slot).toISOString());
+  assert.deepEqual(blocked, [at(20, 15, 30), at(20, 15, 45)]);
+  await assert.rejects(() => act(vet, leads[9], "callback", { at: at(20, 15, 30) }), /slot_conflict/);
+  await assert.rejects(() => act(vet, leads[9], "callback", { at: at(20, 15, 45) }), /slot_conflict/);
+  assert.ok((await act(vet, leads[9], "callback", { at: at(20, 15, 15) })).callback_id);
+  assert.ok((await act(vet, leads[8], "callback", { at: at(20, 16) })).callback_id);
+  // appointments stay on the 30-minute grid: the availability steps are 30 minutes apart
+  await as(other);
+  const steps = (await slotsFor("appointment", at(10, 8), at(10, 12))).map((x) => new Date(x.slot).getUTCMinutes());
+  assert.ok(steps.every((m) => m === 0 || m === 30));
 });
 
 test("assigning an appointment moves it to the new person, re-queues it for Pipedrive and notifies", async () => {

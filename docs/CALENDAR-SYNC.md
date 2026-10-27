@@ -46,3 +46,7 @@ Beim ersten Abgleich wird der Pipedrive-Benutzer mit **derselben E-Mail-Adresse*
 
 * Rückruf: gesperrt, wenn der Caller zu der Zeit schon einen Rückruf hat oder schon 2 eigene Termine bzw. Pipedrive-Einträge. Rückrufe und Termine anderer Benutzer spielen keine Rolle.
 * Bereits früher nach Pipedrive geschriebene Rückruf-Aktivitäten werden nicht gelöscht; neue entstehen nicht mehr.
+
+## Rückruf-Raster (Migration 0027)
+
+Rückrufe haben ein 15-Minuten-Raster (:00, :15, :30, :45) und belegen 15 Minuten. Termine bleiben im 30-Minuten-Raster. Ein Rückruf ist gesperrt, sobald der Caller im selben Fenster schon etwas hat: einen anderen Rückruf (15 Min), einen Termin (30 Min) oder eine offene Pipedrive-Aktivität (echte Dauer, mindestens 15 Min). Beispiel: Termin 15:30–16:00 sperrt die Rückruf-Slots 15:30 und 15:45, 15:15 und 16:00 bleiben frei. Diese Regel ersetzt die frühere aus 0023 (mit der Ausnahme „ein Termin allein blockiert nicht“).

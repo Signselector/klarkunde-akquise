@@ -6,8 +6,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { refreshBookingSlots } from "@/lib/calendar-sync.functions";
 import {
   APPOINTMENT_CAPACITY,
-  SLOT_MINUTES,
   daySlots,
+  slotDurationMinutes,
   slotState,
   toAvailabilityMap,
   type Availability,
@@ -88,7 +88,7 @@ export function SlotPicker({
   // Until the free/busy list is there every slot is locked, so nobody picks a time that is already taken.
   const loading = availability.isPending && !availability.isError;
   const used = useMemo(() => toAvailabilityMap(availability.data), [availability.data]);
-  const slots = useMemo(() => (day ? daySlots(day) : []), [day]);
+  const slots = useMemo(() => (day ? daySlots(day, kind) : []), [day, kind]);
   const chosen = value ? new Date(value).getTime() : null;
 
   // A slot that became full while it was selected is deselected.
@@ -99,7 +99,7 @@ export function SlotPicker({
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const end = chosen !== null ? new Date(chosen + SLOT_MINUTES * 60_000) : null;
+  const end = chosen !== null ? new Date(chosen + slotDurationMinutes(kind) * 60_000) : null;
 
   return (
     <div className="space-y-3 rounded-[10px] border p-3" data-slot-picker={kind}>
@@ -124,7 +124,7 @@ export function SlotPicker({
           </p>
           {day && (
             <div
-              className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-6"
+              className="grid grid-cols-4 gap-1.5 sm:grid-cols-6 md:grid-cols-8"
               role="listbox"
               aria-label="Uhrzeit wählen"
               aria-busy={availability.isFetching}
@@ -179,8 +179,8 @@ export function SlotPicker({
       </div>
       <p className="text-xs text-muted-foreground">
         {kind === "appointment"
-          ? `Ein Termin dauert ${SLOT_MINUTES} Minuten, gleichzeitig sind höchstens ${APPOINTMENT_CAPACITY} möglich. Ein Punkt markiert einen Zeitpunkt, an dem schon ein Termin liegt.`
-          : `Ein Rückruf belegt ${SLOT_MINUTES} Minuten und ist nur für dich sichtbar. Zeiten, zu denen du schon einen Termin oder Rückruf hast, sind gesperrt.`}
+          ? `Ein Termin dauert ${slotDurationMinutes("appointment")} Minuten, gleichzeitig sind höchstens ${APPOINTMENT_CAPACITY} möglich. Ein Punkt markiert einen Zeitpunkt, an dem schon ein Termin liegt.`
+          : `Ein Rückruf belegt ${slotDurationMinutes("callback")} Minuten und ist nur für dich sichtbar. Zeiten, zu denen du bereits einen Termin oder Rückruf hast, sind gesperrt.`}
       </p>
       <div className="flex items-center justify-between gap-2 text-sm">
         <span aria-live="polite">

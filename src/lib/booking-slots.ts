@@ -1,5 +1,8 @@
 /** Slots of the booking calendar: 30 minutes each, at most 2 appointments at the same time. */
-export const SLOT_MINUTES = 30;
+export const APPOINTMENT_SLOT_MINUTES = 30;
+export const CALLBACK_SLOT_MINUTES = 15;
+/** Appointment length; kept under its old name for the appointment pages. */
+export const SLOT_MINUTES = APPOINTMENT_SLOT_MINUTES;
 export const APPOINTMENT_CAPACITY = 2;
 export const FIRST_SLOT_HOUR = 8;
 export const LAST_SLOT_HOUR = 18; // the last slot starts at 18:30 and ends at 19:00
@@ -7,11 +10,15 @@ export const LAST_SLOT_HOUR = 18; // the last slot starts at 18:30 and ends at 1
 export type Availability = { slot: string; used: number; capacity: number };
 export type SlotKind = "appointment" | "callback";
 
-/** All slot start times of one day (local time). */
-export function daySlots(day: Date): Date[] {
+export const slotDurationMinutes = (kind: SlotKind) =>
+  kind === "callback" ? CALLBACK_SLOT_MINUTES : APPOINTMENT_SLOT_MINUTES;
+
+/** All slot start times of one day (local time): every 15 minutes for callbacks, every 30 for appointments. */
+export function daySlots(day: Date, kind: SlotKind = "appointment"): Date[] {
+  const minutes = kind === "callback" ? [0, 15, 30, 45] : [0, 30];
   const out: Date[] = [];
   for (let h = FIRST_SLOT_HOUR; h <= LAST_SLOT_HOUR; h++)
-    for (const m of [0, 30])
+    for (const m of minutes)
       out.push(new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m));
   return out;
 }
