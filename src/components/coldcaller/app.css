@@ -1168,3 +1168,12 @@
 .cc-detail-dialog .cc-outcome-btn > svg {
   flex-shrink: 0;
 }
+.cc-detail-dialog > button.absolute {
+  min-height: 0;
+  height: 32px;
+  width: 32px;
+  display: grid;
+  place-items: center;
+  top: 16px;
+  right: 16px;
+}
