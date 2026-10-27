@@ -1,3 +1,4 @@
+import { WeekCalendar, inWeek, sameDay, startOfWeek, type WeekEntry } from "@/components/caller/week-calendar";
 import { appointmentDotClass } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
 import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
@@ -5,7 +6,7 @@ import { SlotPicker } from "@/components/booking/slot-picker";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarPlus, ChevronLeft, ChevronRight, Phone, Trash2 } from "lucide-react";
+import { CalendarPlus, Phone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { backendEnabled } from "@/lib/backend";
@@ -62,8 +63,6 @@ const KINDS = {
 type Kind = keyof typeof KINDS;
 const kindOf = (k: string | null | undefined): Kind => (k && k in KINDS ? (k as Kind) : "other");
 
-const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 function AppointmentsPage() {
   const { user } = Route.useRouteContext();
@@ -74,10 +73,7 @@ function AppointmentsPage() {
   const { sync, external } = useCalendarSync(user.id, country);
   const [mine] = useState(false);
   const [filter, setFilter] = useState<Kind | "all">("all");
-  const [month, setMonth] = useState(() => {
-    const n = new Date();
-    return new Date(n.getFullYear(), n.getMonth(), 1);
-  });
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [selected, setSelected] = useState<Date | null>(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -157,18 +153,16 @@ function AppointmentsPage() {
     refresh();
   }
 
-  const y = month.getFullYear();
-  const m = month.getMonth();
-  const offset = (new Date(y, m, 1).getDay() + 6) % 7;
-  const days = new Date(y, m + 1, 0).getDate();
-  const cells: (Date | null)[] = [
-    ...Array<null>(offset).fill(null),
-    ...Array.from({ length: days }, (_, i) => new Date(y, m, i + 1)),
-  ];
-  const today = new Date();
-  const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const ofDay = (d: Date) => events.filter((e) => sameDay(e.date, d));
-  const list = selected ? ofDay(selected) : events.filter((e) => e.date >= startToday).slice(0, 15);
+  const weekEntries: WeekEntry[] = events.map((e) => ({
+    id: e.id,
+    at: e.date,
+    title: e.title ?? e.lead?.company ?? e.notes ?? "Termin",
+    dot: appointmentDotClass(e.date),
+  }));
+  // Details: everything of the shown week, or only the chosen day.
+  const list = events.filter((e) =>
+    selected && inWeek(selected, weekStart) ? sameDay(e.date, selected) : inWeek(e.date, weekStart),
+  );
 
   return (
     <div className="space-y-5">
@@ -212,69 +206,25 @@ function AppointmentsPage() {
 
       {isError && <p className="text-destructive">Termine konnten nicht geladen werden.</p>}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
-        <section className="rounded-lg border bg-card p-4 sm:p-5" aria-label="Monatsansicht">
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" size="icon" aria-label="Vorheriger Monat" onClick={() => setMonth(new Date(y, m - 1, 1))}>
-              <ChevronLeft />
-            </Button>
-            <div className="flex items-center gap-2">
-              <h2 className="font-semibold capitalize">
-                {new Intl.DateTimeFormat("de-DE", { month: "long", year: "numeric" }).format(month)}
-              </h2>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setMonth(new Date(today.getFullYear(), today.getMonth(), 1));
-                  setSelected(today);
-                }}
-              >
-                Heute
-              </Button>
-            </div>
-            <Button variant="ghost" size="icon" aria-label="Nächster Monat" onClick={() => setMonth(new Date(y, m + 1, 1))}>
-              <ChevronRight />
-            </Button>
-          </div>
-          <div className="mt-4 grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase text-muted-foreground">
-            {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((d) => (
-              <span key={d} className="py-1">{d}</span>
-            ))}
-          </div>
-          <div className={cn("mt-1 grid grid-cols-7 gap-1", isLoading && "animate-pulse opacity-60")}>
-            {cells.map((day, i) => {
-              if (!day) return <div key={`e${i}`} />;
-              const items = ofDay(day);
-              const isToday = sameDay(day, today);
-              const isSel = selected != null && sameDay(day, selected);
-              return (
-                <button
-                  key={day.toISOString()}
-                  type="button"
-                  onClick={() => setSelected(isSel ? null : day)}
-                  className={cn(
-                    "flex min-h-12 flex-col items-center gap-1 rounded-md border border-transparent p-1.5 text-sm transition-colors hover:border-primary/40 sm:min-h-16",
-                    isSel && "border-primary bg-accent/40",
-                    isToday && !isSel && "border-border bg-secondary",
-                  )}
-                >
-                  <span className={cn("grid size-7 place-items-center rounded-full", isToday && "bg-primary font-bold text-primary-foreground")}>
-                    {day.getDate()}
-                  </span>
-                  {items.length > 0 && (
-                    <span className="flex items-center gap-0.5">
-                      {items.slice(0, 3).map((e) => (
-                        <span key={e.id} className={cn("size-1.5 rounded-full", appointmentDotClass(e.date))} />
-                      ))}
-                      {items.length > 3 && <span className="text-[9px] text-muted-foreground">+{items.length - 3}</span>}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
+      <div className="grid gap-4">
+        <WeekCalendar
+          ariaLabel="Wochenansicht"
+          entries={weekEntries}
+          weekStart={weekStart}
+          onWeekChange={setWeekStart}
+          selected={selected}
+          onSelect={setSelected}
+          loading={isLoading}
+          {...(roles.canBookAppointments
+            ? {
+                onAddForDay: (day: Date) => {
+                  setSelected(day);
+                  setShowForm(true);
+                },
+              }
+            : {})}
+          footer={
+          <div className="flex flex-wrap items-center gap-3">
             <Label className="text-xs">Terminart</Label>
             <Select value={filter} onValueChange={(v) => setFilter(v as Kind | "all")}>
               <SelectTrigger className="min-h-11 w-[220px]"><SelectValue /></SelectTrigger>
@@ -294,14 +244,15 @@ function AppointmentsPage() {
               </span>
             </div>
           </div>
-        </section>
+          }
+        />
 
         <aside className="rounded-lg border bg-card p-5" aria-label="Terminliste">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">
-              {selected
+              {selected && inWeek(selected, weekStart)
                 ? new Intl.DateTimeFormat("de-DE", { weekday: "long", day: "2-digit", month: "long" }).format(selected)
-                : "Kommende Termine"}
+                : "Termine der Woche"}
             </h2>
             {selected && (
               <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>Alle anzeigen</Button>

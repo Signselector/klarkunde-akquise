@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { MonthCalendar, sameDay } from "@/components/caller/month-calendar";
+import { WeekCalendar, inWeek, sameDay, startOfWeek } from "@/components/caller/week-calendar";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
@@ -33,6 +33,7 @@ function CallbacksPage() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const [day, setDay] = useState<Date | null>(null);
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [leadId, setLeadId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
@@ -77,24 +78,31 @@ function CallbacksPage() {
 
   const now = new Date();
   const isToday = (d: Date) => sameDay(d, now);
-  const visible = (data ?? []).filter((c) => !day || sameDay(new Date(c.due_at), day));
-  const markersOf = (d: Date) => [
-    ...(data ?? [])
-      .filter((c) => sameDay(new Date(c.due_at), d))
-      .map((c) => {
-        return { id: c.id, dot: STATUS_DOT[calendarStatus(c.due_at, c.done, now)] };
-      }),
-  ];
+  // Calendar and list show the chosen week; a chosen day narrows the list to that day.
+  const weekRows = (data ?? []).filter((c) => inWeek(new Date(c.due_at), weekStart));
+  const visible = weekRows.filter((c) => !day || sameDay(new Date(c.due_at), day));
+  const weekEntries = weekRows.map((c) => ({
+    id: c.id,
+    at: new Date(c.due_at),
+    title: c.lead?.company || "Rückruf",
+    dot: STATUS_DOT[calendarStatus(c.due_at, c.done, now)],
+  }));
+  // Overdue callbacks of earlier weeks would otherwise be out of sight.
+  const earlierOverdue = (data ?? []).filter(
+    (c) => new Date(c.due_at) < weekStart && new Date(c.due_at) < now,
+  );
   return (
     <div className="cc-page">
       <PageHeading
         title="Rückrufe"
         description="Deine vereinbarten Gespräche. Fällige Rückrufe erscheinen zusätzlich als Erinnerung."
       />
-      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
-        <MonthCalendar
+      <div className="grid items-start gap-5">
+        <WeekCalendar
           ariaLabel="Rückrufkalender"
-          markersOf={markersOf}
+          entries={weekEntries}
+          weekStart={weekStart}
+          onWeekChange={setWeekStart}
           selected={day}
           onSelect={setDay}
           loading={isLoading}
@@ -111,7 +119,19 @@ function CallbacksPage() {
               </span>
               {day && (
                 <Button size="sm" variant="outline" onClick={() => setDay(null)}>
-                  Alle Rückrufe anzeigen
+                  Ganze Woche anzeigen
+                </Button>
+              )}
+              {earlierOverdue.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setDay(null);
+                    setWeekStart(startOfWeek(new Date(earlierOverdue[0]!.due_at)));
+                  }}
+                >
+                  {earlierOverdue.length} überfällig in früheren Wochen
                 </Button>
               )}
               <div className="w-full">
@@ -136,11 +156,11 @@ function CallbacksPage() {
             {data && visible.length === 0 && (
               <FeedbackState
                 kind="empty"
-                title={day ? "Keine Rückrufe an diesem Tag" : "Keine offenen Rückrufe"}
+                title={day ? "Keine Rückrufe an diesem Tag" : "Keine Rückrufe in dieser Woche"}
               >
                 {day
-                  ? "Wähle einen anderen Tag oder zeige alle Rückrufe an."
-                  : "Vereinbarte Rückrufe erscheinen hier."}
+                  ? "Wähle einen anderen Tag oder zeige die ganze Woche an."
+                  : "Blättere zu einer anderen Woche. Vereinbarte Rückrufe erscheinen hier."}
               </FeedbackState>
             )}
             <div className="space-y-2">
