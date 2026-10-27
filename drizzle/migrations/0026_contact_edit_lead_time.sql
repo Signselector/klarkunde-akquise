@@ -1,6 +1,3 @@
--- 1. Callers correct the customer data in the Kundenakte: company, contact, phone, e-mail, city, website, address.
---    Website and address live in leads.extra (imported columns); an existing key is reused, otherwise 'website' / 'adresse'.
---    Only the owner of the batch, the last caller or an admin of the country may change a lead.
 CREATE OR REPLACE FUNCTION public.update_lead_contact(p_lead_id uuid,p_expected_version integer,p_contact jsonb) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); l public.leads%ROWTYPE; bt public.lead_batches%ROWTYPE; r jsonb; ex jsonb; k text; v text;
 BEGIN
@@ -42,7 +39,6 @@ BEGIN
  RETURN r;
 END $$;
 
--- 2. Appointments (everything except callbacks) can be booked at the earliest for the day after tomorrow (Vienna time).
 CREATE OR REPLACE FUNCTION app_private.trg_appointment_lead_time() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path='' AS $$
 BEGIN
  IF NEW.starts_at IS NULL OR coalesce(current_setting('app.skip_slot_check',true),'')='1' THEN RETURN NEW; END IF;
@@ -53,3 +49,6 @@ BEGIN
 END $$;
 DROP TRIGGER IF EXISTS appointment_lead_time ON public.appointments;
 CREATE TRIGGER appointment_lead_time BEFORE INSERT ON public.appointments FOR EACH ROW EXECUTE FUNCTION app_private.trg_appointment_lead_time();
+
+REVOKE ALL ON FUNCTION public.update_lead_contact(uuid,integer,jsonb) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.update_lead_contact(uuid,integer,jsonb) TO authenticated;

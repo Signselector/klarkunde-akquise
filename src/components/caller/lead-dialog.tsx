@@ -142,7 +142,7 @@ export function LeadDialog({
     <Dialog open={!!leadId} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="cc-theme cc-detail-dialog">
         {lead && (
-          <div className="absolute right-14 top-5">
+          <div className="absolute right-14 top-4 flex h-8 items-center">
             <StatusBadge tone="info">
               {lead.status === "open" && lead.attempts > 0
                 ? "Nicht erreicht"
