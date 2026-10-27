@@ -1,3 +1,4 @@
+import { calendarStatus, STATUS_DOT } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
 import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
 import { SlotPicker } from "@/components/booking/slot-picker";
@@ -145,6 +146,17 @@ function AppointmentsPage() {
     void pushNow({ data: { appointmentId: id } }).catch(() => undefined);
   }
 
+  // Appointments have no "done" flag: one that already took place counts as done (grey). Pipedrive-only entries
+  // are loaded only while open; one in the past is overdue (red).
+  const dotOf = (e: { date: Date; external?: true }) =>
+    STATUS_DOT[
+      "external" in e && e.external
+        ? calendarStatus(e.date, false)
+        : e.date < new Date()
+          ? "done"
+          : "upcoming"
+    ];
+
   const refresh = () => qc.invalidateQueries({ queryKey: ["appointments"] });
 
   async function remove(id: string) {
@@ -264,7 +276,7 @@ function AppointmentsPage() {
                   {items.length > 0 && (
                     <span className="flex items-center gap-0.5">
                       {items.slice(0, 3).map((e) => (
-                        <span key={e.id} className={cn("size-1.5 rounded-full", KINDS[e.k].dot)} />
+                        <span key={e.id} className={cn("size-1.5 rounded-full", dotOf(e))} />
                       ))}
                       {items.length > 3 && <span className="text-[9px] text-muted-foreground">+{items.length - 3}</span>}
                     </span>
@@ -285,11 +297,15 @@ function AppointmentsPage() {
               </SelectContent>
             </Select>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-              {Object.entries(KINDS).map(([v, k]) => (
-                <span key={v} className="flex items-center gap-1">
-                  <span className={cn("size-2 rounded-full", k.dot)} /> {k.label}
-                </span>
-              ))}
+              <span className="flex items-center gap-1">
+                <span className={cn("size-2 rounded-full", STATUS_DOT.upcoming)} /> Geplant
+              </span>
+              <span className="flex items-center gap-1">
+                <span className={cn("size-2 rounded-full", STATUS_DOT.overdue)} /> Überfällig
+              </span>
+              <span className="flex items-center gap-1">
+                <span className={cn("size-2 rounded-full", STATUS_DOT.done)} /> Vergangen
+              </span>
             </div>
           </div>
         </section>
@@ -313,7 +329,7 @@ function AppointmentsPage() {
                 const heading = e.title ?? e.lead?.company ?? e.notes ?? "Termin";
                 return (
                   <div key={e.id} className="flex items-start gap-3 rounded-md border p-3">
-                    <span className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", KINDS[e.k].dot)} />
+                    <span className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", dotOf(e))} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold">{heading}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">

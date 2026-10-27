@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { calendarStatus, STATUS_DOT } from "@/lib/calendar-status";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -75,17 +76,13 @@ function CallbacksPage() {
   }
 
   const now = new Date();
-  const visible = (data ?? []).filter((c) => !day || sameDay(new Date(c.due_at), day));
   const isToday = (d: Date) => sameDay(d, now);
+  const visible = (data ?? []).filter((c) => !day || sameDay(new Date(c.due_at), day));
   const markersOf = (d: Date) => [
     ...(data ?? [])
       .filter((c) => sameDay(new Date(c.due_at), d))
       .map((c) => {
-        const due = new Date(c.due_at);
-        return {
-          id: c.id,
-          dot: due < now ? "bg-destructive" : isToday(due) ? "bg-primary" : "bg-chart-2",
-        };
+        return { id: c.id, dot: STATUS_DOT[calendarStatus(c.due_at, c.done, now)] };
       }),
   ];
   return (
@@ -104,13 +101,10 @@ function CallbacksPage() {
           footer={
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <span className="size-2 rounded-full bg-destructive" /> Überfällig
+                <span className={`size-2 rounded-full ${STATUS_DOT.overdue}`} /> Überfällig
               </span>
               <span className="flex items-center gap-1">
-                <span className="size-2 rounded-full bg-primary" /> Heute
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="size-2 rounded-full bg-chart-2" /> Geplant
+                <span className={`size-2 rounded-full ${STATUS_DOT.upcoming}`} /> Geplant
               </span>
               <span className="flex items-center gap-1">
                 <span className="size-2 rounded-full bg-chart-4" /> Aus Pipedrive
@@ -165,6 +159,10 @@ function CallbacksPage() {
                         {[c.lead?.contact_name, c.lead?.phone].filter(Boolean).join(" · ")}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 text-sm">
+                        <span
+                          className={`size-2 shrink-0 rounded-full ${STATUS_DOT[calendarStatus(c.due_at, c.done, now)]}`}
+                          aria-hidden="true"
+                        />
                         <span>{due.toLocaleString("de-DE")}</span>
                         {overdue ? (
                           <Badge variant="destructive">Überfällig</Badge>
