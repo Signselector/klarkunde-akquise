@@ -122,7 +122,8 @@ const ERRORS: Record<string, string> = {
     "Zu dieser Zeit ist bereits ein Rückruf eingetragen. Bitte wähle eine Minute später.",
   slot_full:
     "Dieser Zeitpunkt ist inzwischen ausgebucht (maximal 2 Termine gleichzeitig). Bitte wähle eine andere Zeit.",
-  appointment_too_soon: "Termine können frühestens für übermorgen gebucht werden.",
+  appointment_too_soon:
+    "Der Termin liegt zu früh. Caller können Termine frühestens in 3 Tagen buchen, Manager in 2 Tagen.",
   slot_conflict:
     "Zu dieser Zeit hast du schon einen Termin oder Rückruf. Bitte wähle eine andere Zeit.",
   invalid_email: "Die E-Mail-Adresse ist ungültig.",

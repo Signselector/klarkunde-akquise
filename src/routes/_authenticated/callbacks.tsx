@@ -1,25 +1,13 @@
 import { useState } from "react";
 import { calendarStatus, STATUS_DOT } from "@/lib/calendar-status";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { WeekCalendar, inWeek, sameDay, startOfWeek } from "@/components/caller/week-calendar";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
-import { backendEnabled } from "@/lib/backend";
 import { useCountry } from "@/lib/country";
 import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,12 +19,9 @@ export const Route = createFileRoute("/_authenticated/callbacks")({
 
 function CallbacksPage() {
   const { user } = Route.useRouteContext();
-  const qc = useQueryClient();
   const [day, setDay] = useState<Date | null>(null);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [leadId, setLeadId] = useState<string | null>(null);
-  const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [finishing, setFinishing] = useState(false);
   const country = useCountry();
   const { sync } = useCalendarSync(user.id, country);
   const { data, isLoading, isError, refetch } = useQuery({
@@ -54,27 +39,6 @@ function CallbacksPage() {
       return data ?? [];
     },
   });
-
-  async function done(id: string) {
-    if (finishing) return;
-    setFinishing(true);
-    const { error } = await (backendEnabled
-      ? supabase.rpc("complete_callback", {
-          p_request_id: crypto.randomUUID(),
-          p_callback_id: id,
-          p_expected_version: data?.find((c) => c.id === id)?.version ?? -1,
-        })
-      : supabase.from("callbacks").update({ done: true }).eq("id", id));
-    setFinishing(false);
-    setConfirmId(null);
-    if (error) {
-      toast.error(error.message);
-      qc.invalidateQueries({ queryKey: ["callbacks"] });
-      return;
-    }
-    toast.success("Rückruf als erledigt markiert.");
-    qc.invalidateQueries({ queryKey: ["callbacks"] });
-  }
 
   const now = new Date();
   const isToday = (d: Date) => sameDay(d, now);
@@ -113,9 +77,6 @@ function CallbacksPage() {
               </span>
               <span className="flex items-center gap-1">
                 <span className={`size-2 rounded-full ${STATUS_DOT.upcoming}`} /> Geplant
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="size-2 rounded-full bg-chart-4" /> Aus Pipedrive
               </span>
               {day && (
                 <Button size="sm" variant="outline" onClick={() => setDay(null)}>
@@ -192,21 +153,13 @@ function CallbacksPage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
+                      <button
+                        type="button"
+                        className="cc-record-btn"
                         onClick={() => setLeadId(c.lead?.id ?? null)}
                       >
                         Kundenakte öffnen
-                      </Button>
-                      {c.lead?.phone && (
-                        <Button asChild size="sm">
-                          <a href={`tel:${c.lead.phone}`}>Anrufen</a>
-                        </Button>
-                      )}
-                      <Button size="sm" variant="outline" onClick={() => setConfirmId(c.id)}>
-                        Erledigt
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 );
@@ -222,29 +175,6 @@ function CallbacksPage() {
           </div>
         </Surface>
       </div>
-      <AlertDialog open={!!confirmId} onOpenChange={(o) => !o && !finishing && setConfirmId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Rückruf ohne Ergebnis erledigen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Der Rückruf verschwindet aus der Liste. Das Gesprächsergebnis wird dadurch nicht
-              erfasst. Trage es dafür im Anrufablauf ein.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={finishing}>Abbrechen</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={finishing}
-              onClick={(e) => {
-                e.preventDefault();
-                if (confirmId) void done(confirmId);
-              }}
-            >
-              Nur erledigen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
       <LeadDialog
         leadId={leadId}
         userId={user.id}

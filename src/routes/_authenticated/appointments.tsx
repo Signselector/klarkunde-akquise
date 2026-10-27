@@ -2,11 +2,10 @@ import { WeekCalendar, inWeek, sameDay, startOfWeek, type WeekEntry } from "@/co
 import { appointmentDotClass } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
 import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
-import { SlotPicker } from "@/components/booking/slot-picker";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarPlus, Phone, Trash2 } from "lucide-react";
+import { Phone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { backendEnabled } from "@/lib/backend";
@@ -15,9 +14,7 @@ import { cn } from "@/lib/utils";
 import { useRoles } from "@/lib/use-admin";
 import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -72,10 +69,10 @@ function AppointmentsPage() {
   const pushNow = useServerFn(pushAppointmentNow);
   const { sync, external } = useCalendarSync(user.id, country);
   const [mine] = useState(false);
-  const [filter, setFilter] = useState<Kind | "all">("all");
+  // "all": tool appointments and Pipedrive entries. "tool": only what was booked through the Cold Caller tool.
+  const [filter, setFilter] = useState<"all" | "tool">("all");
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [selected, setSelected] = useState<Date | null>(null);
-  const [showForm, setShowForm] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["appointments", country],
@@ -93,11 +90,11 @@ function AppointmentsPage() {
 
   const events = useMemo(() => {
     const own = (data ?? [])
-      .filter((a) => (!mine || a.user_id === user.id) && (filter === "all" || kindOf(a.kind) === filter))
+      .filter((a) => !mine || a.user_id === user.id)
       .map((a) => ({ ...a, date: new Date(a.starts_at), k: kindOf(a.kind) }));
     // Entries that exist only in the user's Pipedrive calendar.
     const fromPipedrive =
-      filter === "all" || filter === "other"
+      filter === "all"
         ? external.map((x) => ({
             id: `pd-${x.activity_id}`,
             starts_at: x.due_at,
@@ -176,33 +173,7 @@ function AppointmentsPage() {
           </p>
           <CalendarSyncStatus sync={sync} />
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          {roles.canBookAppointments ? (
-            <Button className="min-h-11" onClick={() => setShowForm((s) => !s)}>
-              <CalendarPlus /> Termin anlegen
-            </Button>
-          ) : (
-            roles.ready && (
-              <p className="max-w-xs text-sm text-muted-foreground">
-                Termine bucht dein Manager. Als Senior Caller buchst du sie selbst.
-              </p>
-            )
-          )}
-        </div>
       </header>
-
-      {showForm && roles.canBookAppointments && (
-        <EventForm
-          country={country}
-          canSelfAssign={roles.role === "veteran"}
-          initialDate={selected}
-          onCreated={() => {
-            setShowForm(false);
-            refresh();
-            void sync.refetch();
-          }}
-        />
-      )}
 
       {isError && <p className="text-destructive">Termine konnten nicht geladen werden.</p>}
 
@@ -215,24 +186,14 @@ function AppointmentsPage() {
           selected={selected}
           onSelect={setSelected}
           loading={isLoading}
-          {...(roles.canBookAppointments
-            ? {
-                onAddForDay: (day: Date) => {
-                  setSelected(day);
-                  setShowForm(true);
-                },
-              }
-            : {})}
           footer={
           <div className="flex flex-wrap items-center gap-3">
-            <Label className="text-xs">Terminart</Label>
-            <Select value={filter} onValueChange={(v) => setFilter(v as Kind | "all")}>
-              <SelectTrigger className="min-h-11 w-[220px]"><SelectValue /></SelectTrigger>
+            <Label className="text-xs">Anzeigen</Label>
+            <Select value={filter} onValueChange={(v) => setFilter(v as "all" | "tool")}>
+              <SelectTrigger className="min-h-11 w-[320px] max-w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Alle Terminarten</SelectItem>
-                {Object.entries(KINDS).map(([v, k]) => (
-                  <SelectItem key={v} value={v}>{k.label}</SelectItem>
-                ))}
+                <SelectItem value="all">Alle Termine</SelectItem>
+                <SelectItem value="tool">Nur über das Cold Caller Tool angelegte</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -337,96 +298,4 @@ function AppointmentsPage() {
 
 function toDateInput(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function EventForm({ country, canSelfAssign, initialDate, onCreated }: { country: string; canSelfAssign: boolean; initialDate: Date | null; onCreated: () => void }) {
-  const [selfAssign, setSelfAssign] = useState(false);
-  const [title, setTitle] = useState("");
-  const [kind, setKind] = useState<Kind>("presentation");
-  const [date, setDate] = useState(initialDate ? toDateInput(initialDate) : "");
-  const [time, setTime] = useState("");
-  const [notes, setNotes] = useState("");
-  const [busy, setBusy] = useState(false);
-  const qc = useQueryClient();
-
-  async function save() {
-    if (!title.trim() || !date || !time) { toast.error("Bitte Titel, Datum und Uhrzeit angeben."); return; }
-    setBusy(true);
-    const { error } = await supabase.rpc("save_calendar_appointment", {
-      p_starts_at: new Date(`${date}T${time}:00`).toISOString(),
-      p_kind: kind,
-      p_title: title.trim(),
-      p_notes: notes,
-      p_country: country,
-      p_self: canSelfAssign && selfAssign,
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(
-        error.message.includes("slot_full")
-          ? "Dieser Zeitpunkt ist ausgebucht (maximal 2 Termine gleichzeitig). Bitte wähle eine andere Zeit."
-          : error.message.includes("appointment_too_soon")
-            ? "Termine können frühestens für übermorgen gebucht werden."
-            : "Termin konnte nicht angelegt werden.",
-      );
-      void qc.invalidateQueries({ queryKey: ["slots"] });
-      return;
-    }
-    toast.success(canSelfAssign && !selfAssign ? "Termin angelegt und an den Manager übergeben." : "Termin angelegt.");
-    void qc.invalidateQueries({ queryKey: ["slots"] });
-    onCreated();
-  }
-
-  return (
-    <section className="rounded-lg border border-primary/30 bg-card p-5" aria-label="Neuer Termin">
-      <h2 className="font-semibold">Neuer Termin</h2>
-      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <Label htmlFor="ev-title">Titel</Label>
-          <Input id="ev-title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={120} className="mt-2 min-h-11" placeholder="z. B. Demo Leuchtwerbung bei Muster GmbH" />
-        </div>
-        <div>
-          <Label>Terminart</Label>
-          <Select value={kind} onValueChange={(v) => setKind(v as Kind)}>
-            <SelectTrigger className="mt-2 min-h-11"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {Object.entries(KINDS).map(([v, k]) => (
-                <SelectItem key={v} value={v}>{k.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="md:col-span-2 lg:col-span-3">
-          <Label>Datum und Uhrzeit</Label>
-          <div className="mt-2">
-            <SlotPicker
-              kind="appointment"
-              country={country}
-              initialDay={initialDate}
-              value={date && time ? new Date(`${date}T${time}`).toISOString() : null}
-              onChange={(iso) => {
-                if (!iso) { setDate(""); setTime(""); return; }
-                const d = new Date(iso);
-                setDate(toDateInput(d));
-                setTime(`${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`);
-              }}
-            />
-          </div>
-        </div>
-        <div className="md:col-span-2 lg:col-span-3">
-          <Label htmlFor="ev-notes">Notizen (optional)</Label>
-          <Textarea id="ev-notes" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={500} rows={2} className="mt-2 resize-none" />
-        </div>
-      </div>
-      {canSelfAssign && (
-        <label className="mt-4 flex min-h-11 items-center gap-2 text-sm">
-          <input type="checkbox" className="size-4 accent-primary" checked={selfAssign} onChange={(e) => setSelfAssign(e.target.checked)} />
-          Mir selbst zuweisen (sonst entscheidet der Manager)
-        </label>
-      )}
-      <Button className="mt-4 min-h-11" disabled={busy} onClick={save}>
-        {busy ? "Wird angelegt …" : "Termin speichern"}
-      </Button>
-    </section>
-  );
 }

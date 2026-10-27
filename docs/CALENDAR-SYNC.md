@@ -50,3 +50,9 @@ Beim ersten Abgleich wird der Pipedrive-Benutzer mit **derselben E-Mail-Adresse*
 ## Rückruf-Raster (Migration 0027)
 
 Rückrufe haben ein 15-Minuten-Raster (:00, :15, :30, :45) und belegen 15 Minuten. Termine bleiben im 30-Minuten-Raster. Ein Rückruf ist gesperrt, sobald der Caller im selben Fenster schon etwas hat: einen anderen Rückruf (15 Min), einen Termin (30 Min) oder eine offene Pipedrive-Aktivität (echte Dauer, mindestens 15 Min). Beispiel: Termin 15:30–16:00 sperrt die Rückruf-Slots 15:30 und 15:45, 15:15 und 16:00 bleiben frei. Diese Regel ersetzt die frühere aus 0023 (mit der Ausnahme „ein Termin allein blockiert nicht“).
+
+## Vorlaufzeit und Anzeige (Migration 0027)
+
+* Termine (nicht Rückrufe): Caller (Recruit, Senior Caller) können sie frühestens in 3 Tagen anlegen, Manager und Admins in 2 Tagen (Wiener Tageszählung, `appointment_too_soon`).
+* Termine können nicht mehr von Hand angelegt werden; sie entstehen über die Gesprächsergebnisse Logo Render und Realismus Render. Die Termine-Seite hat einen Filter „Alle Termine“ / „Nur über das Cold Caller Tool angelegte“.
+* Rückrufe: keine Buttons „Erledigt“ und „Anrufen“ mehr in der Liste, nur noch „Kundenakte öffnen“.

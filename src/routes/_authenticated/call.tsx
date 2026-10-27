@@ -1,5 +1,6 @@
 import { SlotPicker } from "@/components/booking/slot-picker";
-import { dateValue, timeValue } from "@/lib/booking-slots";
+import { appointmentLeadDays, dateValue, timeValue } from "@/lib/booking-slots";
+import { useRoles } from "@/lib/use-admin";
 import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc, type LeadClaim } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
@@ -41,6 +42,7 @@ type Outcome = "not_reached" | "no_interest" | "callback" | "appointment" | "pro
 function CallPage() {
   const country = useCountry();
   const { user } = Route.useRouteContext();
+  const roles = useRoles(user.id);
   const qc = useQueryClient();
   const [drafts, setDrafts] = useState<
     Record<string, { note: string; when: string; pending: Outcome | null }>
@@ -402,6 +404,7 @@ function CallPage() {
                 <SlotPicker
                   kind={pending === "appointment" ? "appointment" : "callback"}
                   country={country}
+                  minLeadDays={appointmentLeadDays(roles.isStaff)}
                   {...(lead ? { leadId: lead.id } : {})}
                   disabled={busy}
                   value={when ? new Date(when).toISOString() : null}

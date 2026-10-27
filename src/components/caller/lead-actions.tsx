@@ -33,7 +33,7 @@ const ACTION_ICON: Record<string, typeof Mail> = {
 };
 import { SuccessBanner } from "@/components/coldcaller/success-banner";
 import { SlotPicker } from "@/components/booking/slot-picker";
-import { dateValue, timeValue } from "@/lib/booking-slots";
+import { appointmentLeadDays, dateValue, timeValue } from "@/lib/booking-slots";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -499,6 +499,7 @@ export function LeadActions({
                 kind={current.needs.appointment ? "appointment" : "callback"}
                 country={country}
                 leadId={lead.id}
+                minLeadDays={appointmentLeadDays(roles.isStaff)}
                 value={chosen}
                 optional={current.needs.schedule === "optional"}
                 onChange={(iso) => {
