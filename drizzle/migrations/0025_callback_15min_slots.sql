@@ -1,7 +1,3 @@
--- Callbacks use a 15-minute grid and occupy 15 minutes; appointments stay at 30 minutes.
--- A callback is refused when the caller already has anything in that window: another callback (15 min),
--- an appointment (30 min) or an open Pipedrive activity (its real duration, at least 15 min).
-
 CREATE OR REPLACE FUNCTION app_private.own_load(_user uuid,_country text,_start timestamptz,_end timestamptz,_except_lead uuid) RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path='' AS $$
  SELECT CASE WHEN
       EXISTS(SELECT 1 FROM public.callbacks c WHERE c.user_id=_user AND NOT c.done AND c.lead_id IS DISTINCT FROM _except_lead

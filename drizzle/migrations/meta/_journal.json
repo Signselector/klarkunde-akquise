@@ -176,6 +176,13 @@
       "when": 1793036565668,
       "tag": "0024_appointment_assignment",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793113033880,
+      "tag": "0025_callback_15min_slots",
+      "breakpoints": true
     }
   ]
 }
