@@ -27,7 +27,12 @@ function FutureProjectsPage() {
     enabled: staff,
     queryKey: ["future-projects", country],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_future_projects_leads", { p_country: country });
+      // Function added in migration 0029; generated types may lag behind.
+      const rpc = supabase.rpc as unknown as (
+        fn: string,
+        args: Record<string, unknown>,
+      ) => Promise<{ data: unknown; error: Error | null }>;
+      const { data, error } = await rpc("get_future_projects_leads", { p_country: country });
       if (error) throw error;
       return (data ?? []) as unknown as FutureProjectLead[];
     },
