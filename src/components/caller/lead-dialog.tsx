@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
 import { LeadContact } from "@/components/coldcaller/workspace-parts";
 import { LeadActions } from "@/components/caller/lead-actions";
+import { LeadContactEditor } from "@/components/caller/lead-contact-editor";
 import { ACTION_LABEL } from "@/lib/lead-actions";
 import {
   Dialog,
@@ -170,6 +171,13 @@ export function LeadDialog({
                 city={lead.city}
                 extra={(lead.extra ?? {}) as Record<string, unknown>}
               />
+              {backendEnabled && (
+                <LeadContactEditor
+                  key={`${lead.id}-${lead.version}`}
+                  lead={lead}
+                  onSaved={refresh}
+                />
+              )}
               <p>
                 <StatusBadge tone="info">{STATUS_LABEL[lead.status] ?? lead.status}</StatusBadge>
               </p>

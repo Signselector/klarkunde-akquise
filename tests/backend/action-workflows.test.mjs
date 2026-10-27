@@ -57,7 +57,7 @@ after(() => db.close());
 
 test("Logo Render: appointment + logo, recruit's appointment goes to the manager, lead is completed", async () => {
   const l = leads[0];
-  const r = await act(rec, l, "low_q", { note: "n", logo: `${rec}/${l}/logo.png`, at: future(48) });
+  const r = await act(rec, l, "low_q", { note: "n", logo: `${rec}/${l}/logo.png`, at: future(96) });
   assert.equal(r.stage_key, "low_q");
   assert.equal(r.status, "low_q");
   assert.equal(r.appointment_owner, mgr);
@@ -78,16 +78,16 @@ test("Logo Render: appointment + logo, recruit's appointment goes to the manager
 
 test("a veteran's appointment goes to the manager unless the veteran takes it", async () => {
   const l = leads[8];
-  const r = await act(vet, l, "low_q", { note: "n", logo: `${vet}/${l}/l.png`, at: future(24) });
+  const r = await act(vet, l, "low_q", { note: "n", logo: `${vet}/${l}/l.png`, at: future(72) });
   assert.equal(r.appointment_owner, mgr);
   const l2 = leads[9];
-  const own = await act(vet, l2, "low_q", { note: "n", logo: `${vet}/${l2}/l.png`, at: future(26), details: { self_assign: true } });
+  const own = await act(vet, l2, "low_q", { note: "n", logo: `${vet}/${l2}/l.png`, at: future(74), details: { self_assign: true } });
   assert.equal(own.appointment_owner, vet);
 });
 
 test("Realismus Render additionally needs the building photo", async () => {
   const l = leads[1];
-  const base = { note: "n", logo: `${rec}/${l}/logo.png`, at: future(24) };
+  const base = { note: "n", logo: `${rec}/${l}/logo.png`, at: future(72) };
   await assert.rejects(() => act(rec, l, "high_q", base), /photo_required/);
   await assert.rejects(() => act(rec, l, "high_q", { ...base, details: { photo_path: `${other}/${l}/x.jpg` } }), /photo_required/);
   const r = await act(rec, l, "high_q", { ...base, details: { photo_path: `${rec}/${l}/haus.jpg` } });

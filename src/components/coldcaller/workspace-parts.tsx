@@ -126,22 +126,22 @@ export function LeadContact({
           {email ? <a href={`mailto:${email}`}>{email}</a> : <span>–</span>}
         </span>
       </div>
-      {website && (
-        <div>
-          <Building2 aria-hidden="true" />
-          <span>
-            <small>Website</small>
-            {websiteUrl ? (
-              <a href={websiteUrl} target="_blank" rel="noopener noreferrer">
-                {website[1]}
-                <ExternalLink size={13} />
-              </a>
-            ) : (
-              <span>{website[1]}</span>
-            )}
-          </span>
-        </div>
-      )}
+      <div>
+        <Building2 aria-hidden="true" />
+        <span>
+          <small>Website</small>
+          {website && websiteUrl ? (
+            <a href={websiteUrl} target="_blank" rel="noreferrer" className="min-w-0 truncate">
+              {website[1]}
+              <ExternalLink size={13} />
+            </a>
+          ) : website ? (
+            <span>{website[1]}</span>
+          ) : (
+            <span className="text-muted-foreground">Keine Website</span>
+          )}
+        </span>
+      </div>
     </div>
   );
 }

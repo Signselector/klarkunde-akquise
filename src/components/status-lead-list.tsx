@@ -208,14 +208,14 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
                       <td className="px-3 py-3">{when(l.completed_at)}</td>
                       <td className="px-3 py-3">{when(l.last_activity_at)}</td>
                       <td className="cc-sticky-action sticky right-0 px-4 py-3 text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
+                        <button
+                          type="button"
+                          className="cc-record-btn"
                           onClick={() => setSelected(l.lead_id)}
                           aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
                         >
                           Kundenakte
-                        </Button>
+                        </button>
                       </td>
                     </tr>
                   ))}

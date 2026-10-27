@@ -105,7 +105,7 @@ test("3D-R-LowQ needs a note and a logo from the caller's own folder", async () 
     id,
     note: "Will ein einfaches Logo",
     logo: `${anna}/${lead}/logo.png`,
-    at: future(48),
+    at: future(96),
   };
   const done = await action(lead, 0, "low_q", args);
   assert.equal(done.status, "low_q");

@@ -323,11 +323,11 @@ test("performance: qualified leads count once per lead, deals and wins per origi
   )[0].id;
   await q("insert into public.leads(batch_id,company) select $1,'B'||g from generate_series(1,3) g", [bl]);
   const bleads = (await q("select id from public.leads where batch_id=$1 order by company", [bl])).map((r) => r.id);
-  await act(ben, bleads[0], "low_q", { note: "n", logo: `${ben}/${bleads[0]}/a.png`, at: future(24) });
+  await act(ben, bleads[0], "low_q", { note: "n", logo: `${ben}/${bleads[0]}/a.png`, at: future(72) });
   await act(ben, bleads[0], "high_q", {
     note: "n",
     logo: `${ben}/${bleads[0]}/b.png`,
-    at: future(30),
+    at: future(100),
     details: { photo_path: `${ben}/${bleads[0]}/haus.jpg` },
   });
   await act(ben, bleads[1], "not_reached");

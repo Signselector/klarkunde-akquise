@@ -179,3 +179,32 @@ test("assigning an appointment moves it to the new person, re-queues it for Pipe
   await as(rec);
   await assert.rejects(() => q("select public.assign_appointment($1,$2)", [r.appointment_id, rec]), /forbidden/);
 });
+
+test("appointments are bookable at the earliest the day after tomorrow; callbacks are not affected", async () => {
+  const l = leads[7];
+  await assert.rejects(() => act(rec, l, "low_q", { note: "n", logo: logo(rec, l), at: at(1, 9) }), /appointment_too_soon/);
+  await assert.rejects(() => act(rec, l, "low_q", { note: "n", logo: logo(rec, l), at: at(0, 23) }), /appointment_too_soon|appointment_required/);
+  assert.ok((await act(rec, l, "low_q", { note: "n", logo: logo(rec, l), at: at(3, 9) })).appointment_id);
+});
+
+const contact = async (user, lead, patch) => {
+  await as(user);
+  const v = (await q("select version from public.leads where id=$1", [lead]))[0].version;
+  return (await q("select public.update_lead_contact($1,$2,$3::jsonb) r", [lead, v, JSON.stringify(patch)]))[0].r;
+};
+
+test("callers edit the customer data of their own leads, website and address land in the imported columns", async () => {
+  const l = leads[2];
+  await db.exec("RESET ROLE");
+  await q("update public.leads set extra=$2::jsonb where id=$1", [l, JSON.stringify({ Website: "alt.example", Adresse: "Alte Str. 1", Branche: "Bau" })]);
+  const r = await contact(rec, l, { contact_name: " Eva Neu ", phone: "+49 30 1", email: "Eva@Neu.Example", website: "neu.example", address: "Neue Str. 2", city: "Berlin" });
+  assert.equal(r.contact_name, "Eva Neu");
+  assert.equal(r.email, "eva@neu.example");
+  assert.deepEqual(r.extra, { Website: "neu.example", Adresse: "Neue Str. 2", Branche: "Bau" }, "existing keys are reused, others stay");
+  const cleared = await contact(rec, l, { website: "" });
+  assert.equal("Website" in cleared.extra, false);
+  await assert.rejects(() => contact(rec, l, { email: "kaputt" }), /invalid_email/);
+  await assert.rejects(() => contact(rec, l, { status: "open" }), /invalid_contact/);
+  await assert.rejects(() => contact(other, l, { phone: "1" }), /not_your_lead/);
+  assert.ok((await contact(mgr, l, { city: "Köln" })).city === "Köln", "admins of the country may edit");
+});

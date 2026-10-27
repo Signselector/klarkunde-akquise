@@ -51,8 +51,6 @@ function GlobeIcon() {
 
 /** Name, phone and website stacked with even spacing; each stays on one line and is shortened with … if needed. */
 function ContactLinks({ lead }: { lead: TableLead }) {
-  const { websiteUrl } = parseLeadLinks(lead.extra as Record<string, unknown>, lead.city);
-  const site = websiteUrl?.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
   const row = "flex min-w-0 items-center gap-2 text-sm leading-5";
   return (
     <div className="flex min-w-[11rem] max-w-[18rem] flex-col gap-1.5">
@@ -69,33 +67,47 @@ function ContactLinks({ lead }: { lead: TableLead }) {
       ) : (
         <span className={`${row} text-muted-foreground`}>Keine Nummer</span>
       )}
-      {websiteUrl && (
+      {lead.email && (
         <a
           className={`${row} text-primary hover:underline`}
-          href={websiteUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={websiteUrl}
-          aria-label={`Website von ${lead.company ?? "Kontakt"} öffnen`}
+          href={`mailto:${lead.email}`}
+          title={lead.email}
           onClick={(e) => e.stopPropagation()}
         >
-          <GlobeIcon />
-          <span className="truncate">{site}</span>
+          <Mail size={14} aria-hidden="true" className="shrink-0" />
+          <span className="truncate">{lead.email}</span>
         </a>
       )}
     </div>
   );
 }
 
-function EmailLink({ lead }: { lead: TableLead }) {
-  if (!lead.email) return <span className="text-muted-foreground">-</span>;
+/** Website of the company as a link that opens in a new tab; a quiet placeholder when there is none. */
+function WebsiteLink({ lead }: { lead: TableLead }) {
+  const { websiteUrl } = parseLeadLinks(lead.extra as Record<string, unknown>, lead.city);
+  const site = websiteUrl?.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "");
+  const row = "inline-flex max-w-[14rem] min-w-0 items-center gap-1.5 text-sm leading-5";
+  if (!websiteUrl)
+    return (
+      <span className={`${row} text-muted-foreground`}>
+        <span className="opacity-50">
+          <GlobeIcon />
+        </span>
+        Keine Website
+      </span>
+    );
   return (
     <a
-      className="text-primary hover:underline"
-      href={`mailto:${lead.email}`}
+      className={`${row} text-primary hover:underline`}
+      href={websiteUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={websiteUrl}
+      aria-label={`Website von ${lead.company ?? "Kontakt"} öffnen`}
       onClick={(e) => e.stopPropagation()}
     >
-      {lead.email}
+      <GlobeIcon />
+      <span className="truncate">{site}</span>
     </a>
   );
 }
@@ -143,10 +155,12 @@ export function LeadsTable({
             <tr>
               <th className="px-4 py-3 font-medium">Firma</th>
               <th className="px-2 py-3 font-medium">Kontakt</th>
-              <th className="px-2 py-3 font-medium">E-Mail</th>
+              <th className="px-2 py-3 font-medium">Website</th>
               <th className="px-2 py-3 font-medium">Stadt</th>
               <th className="px-2 py-3 font-medium">Adresse</th>
-              <th className="px-2 py-3 font-medium">{processed ? "Ergebnis" : "Status"}</th>
+              <th className="px-2 py-3 text-center font-medium">
+                {processed ? "Ergebnis" : "Status"}
+              </th>
               {processed && <th className="px-2 py-3 font-medium">Bearbeitet</th>}
               <th className="sticky right-0 bg-[#faf8f4] px-4 py-3 text-right font-medium">
                 <span className="sr-only">Aktionen</span>
@@ -161,13 +175,13 @@ export function LeadsTable({
                   <ContactLinks lead={l} />
                 </td>
                 <td className="px-2 py-4">
-                  <EmailLink lead={l} />
+                  <WebsiteLink lead={l} />
                 </td>
                 <td className="px-2 py-4">{l.city || "–"}</td>
                 <td className="px-2 py-4">
                   <Address lead={l} />
                 </td>
-                <td className="px-2 py-4">
+                <td className="min-w-[10rem] px-2 py-4 text-center">
                   <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
                   {l.attempts > 0 && (
                     <span className="mt-1 block text-xs text-muted-foreground">
@@ -183,7 +197,7 @@ export function LeadsTable({
                 <td className="cc-sticky-action sticky right-0 px-4 py-4 text-right">
                   <button
                     type="button"
-                    className="rounded-[10px] border px-2 py-1.5 text-sm hover:bg-muted focus-visible:outline-2"
+                    className="cc-record-btn"
                     onClick={() => onOpen(l.id)}
                     aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
                   >
@@ -203,10 +217,7 @@ export function LeadsTable({
               <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
             </div>
             <ContactLinks lead={l} />
-            <p className="text-sm break-all">
-              <span className="text-muted-foreground">E-Mail: </span>
-              <EmailLink lead={l} />
-            </p>
+            <WebsiteLink lead={l} />
             {(l.city || l.last_called_at) && (
               <p className="text-sm text-muted-foreground">
                 {[
@@ -220,7 +231,7 @@ export function LeadsTable({
             <Address lead={l} />
             <button
               type="button"
-              className="rounded-[10px] border px-3 py-1.5 text-sm hover:bg-muted focus-visible:outline-2"
+              className="cc-record-btn"
               onClick={() => onOpen(l.id)}
               aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
             >

@@ -414,7 +414,9 @@ function EventForm({ country, canSelfAssign, initialDate, onCreated }: { country
       toast.error(
         error.message.includes("slot_full")
           ? "Dieser Zeitpunkt ist ausgebucht (maximal 2 Termine gleichzeitig). Bitte wähle eine andere Zeit."
-          : "Termin konnte nicht angelegt werden.",
+          : error.message.includes("appointment_too_soon")
+            ? "Termine können frühestens für übermorgen gebucht werden."
+            : "Termin konnte nicht angelegt werden.",
       );
       void qc.invalidateQueries({ queryKey: ["slots"] });
       return;

@@ -4,6 +4,8 @@ export const CALLBACK_SLOT_MINUTES = 15;
 /** Appointment length; kept under its old name for the appointment pages. */
 export const SLOT_MINUTES = APPOINTMENT_SLOT_MINUTES;
 export const APPOINTMENT_CAPACITY = 2;
+/** Appointments can be booked at the earliest this many days ahead (callbacks have no such limit). */
+export const MIN_APPOINTMENT_LEAD_DAYS = 2;
 export const FIRST_SLOT_HOUR = 8;
 export const LAST_SLOT_HOUR = 18; // the last slot starts at 18:30 and ends at 19:00
 

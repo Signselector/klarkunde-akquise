@@ -6,6 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { refreshBookingSlots } from "@/lib/calendar-sync.functions";
 import {
   APPOINTMENT_CAPACITY,
+  MIN_APPOINTMENT_LEAD_DAYS,
   daySlots,
   slotDurationMinutes,
   slotState,
@@ -97,8 +98,10 @@ export function SlotPicker({
     if (slotState(new Date(chosen), used).state === "full") onChange(null);
   }, [chosen, used, availability.data, onChange]);
 
+  // Appointments (not callbacks) can be booked at the earliest for the day after tomorrow.
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  if (kind === "appointment") today.setDate(today.getDate() + MIN_APPOINTMENT_LEAD_DAYS);
   const end = chosen !== null ? new Date(chosen + slotDurationMinutes(kind) * 60_000) : null;
 
   return (
@@ -179,7 +182,7 @@ export function SlotPicker({
       </div>
       <p className="text-xs text-muted-foreground">
         {kind === "appointment"
-          ? `Ein Termin dauert ${slotDurationMinutes("appointment")} Minuten, gleichzeitig sind höchstens ${APPOINTMENT_CAPACITY} möglich. Ein Punkt markiert einen Zeitpunkt, an dem schon ein Termin liegt.`
+          ? `Ein Termin dauert ${slotDurationMinutes("appointment")} Minuten, gleichzeitig sind höchstens ${APPOINTMENT_CAPACITY} möglich. Termine sind frühestens in ${MIN_APPOINTMENT_LEAD_DAYS} Tagen buchbar. Ein Punkt markiert einen Zeitpunkt, an dem schon ein Termin liegt.`
           : `Ein Rückruf belegt ${slotDurationMinutes("callback")} Minuten und ist nur für dich sichtbar. Zeiten, zu denen du bereits einen Termin oder Rückruf hast, sind gesperrt.`}
       </p>
       <div className="flex items-center justify-between gap-2 text-sm">
