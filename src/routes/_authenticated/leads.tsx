@@ -5,7 +5,7 @@ import { STATUS_LABEL } from "@/lib/leads";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ function LeadsPage() {
   const qc = useQueryClient();
   const [q, setQ] = useState("");
   const [batch, setBatch] = useState("all");
+  const [status, setStatus] = useState("all");
   const [openId, setOpenId] = useState<string | null>(null);
   useEffect(() => {
     setBatch("all");
@@ -112,7 +113,28 @@ function LeadsPage() {
       return { rows: data ?? [], total: count ?? data?.length ?? 0 };
     },
   });
-  const leads = result?.rows;
+  // Leads with a scheduled callback sit at the bottom of the list; the others keep their order.
+  const sorted = useMemo(() => {
+    const rows = result?.rows ?? [];
+    return [
+      ...rows.filter((l) => l.status !== "callback"),
+      ...rows.filter((l) => l.status === "callback"),
+    ];
+  }, [result?.rows]);
+  const labelOf = (l: { status: string; attempts: number }) =>
+    l.status === "open" && l.attempts > 0 ? "Nicht erreicht" : (STATUS_LABEL[l.status] ?? l.status);
+  // Only statuses that occur in the loaded list are offered as filter.
+  const statusOptions = useMemo(() => {
+    const present = new Set(sorted.map(labelOf));
+    return ["Offen", "Nicht erreicht", "Rückruf vereinbart"].filter((s) => present.has(s));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sorted]);
+  useEffect(() => {
+    if (status !== "all" && result && !statusOptions.includes(status)) setStatus("all");
+  }, [status, statusOptions, result]);
+  const leads = result
+    ? sorted.filter((l) => status === "all" || labelOf(l) === status)
+    : undefined;
 
   return (
     <div className="cc-page">
@@ -153,6 +175,19 @@ function LeadsPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="cc-filter-select" aria-label="Status filtern">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Status</SelectItem>
+              {statusOptions.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="cc-list-caption flex flex-wrap items-center justify-between gap-3">
           <span>
@@ -187,6 +222,7 @@ function LeadsPage() {
                 onClick={() => {
                   setQ("");
                   setBatch("all");
+                  setStatus("all");
                 }}
               >
                 Filter zurücksetzen
@@ -198,15 +234,7 @@ function LeadsPage() {
               : "Passe deine Suche oder die Filter an."}
           </FeedbackState>
         ) : (
-          <LeadsTable
-            leads={leads ?? []}
-            onOpen={setOpenId}
-            resultLabel={(l) =>
-              l.status === "open" && l.attempts > 0
-                ? "Nicht erreicht"
-                : (STATUS_LABEL[l.status] ?? l.status)
-            }
-          />
+          <LeadsTable leads={leads ?? []} onOpen={setOpenId} resultLabel={labelOf} />
         )}
         {leads && leads.length === 300 && (
           <p className="cc-list-caption pt-4">

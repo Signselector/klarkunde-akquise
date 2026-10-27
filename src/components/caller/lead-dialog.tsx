@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { createPortal } from "react-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +12,6 @@ import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
 import { LeadContact } from "@/components/coldcaller/workspace-parts";
 import { LeadActions } from "@/components/caller/lead-actions";
 import { ACTION_LABEL } from "@/lib/lead-actions";
-import { ChevronLeft, ChevronRight } from "@/components/coldcaller/icons";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +31,7 @@ export function LeadDialog({
   /** Kept for the callers; the dialog no longer offers admin-only actions. */
   admin?: boolean;
   onClose: () => void;
-  /** Leads of the list the dialog was opened from, in display order. Enables the arrows and "next lead" after saving. */
+  /** Leads of the list the dialog was opened from, in display order. After saving an outcome the dialog moves on to the next one. */
   leadIds?: string[];
   onNavigate?: (id: string) => void;
 }) {
@@ -138,7 +136,6 @@ export function LeadDialog({
     toast.success("Lead wieder geöffnet.");
     refresh();
   }
-  const open = !!leadId;
   return (
     <Dialog open={!!leadId} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="cc-theme cc-detail-dialog">
@@ -232,62 +229,6 @@ export function LeadDialog({
           </>
         )}
       </DialogContent>
-      {open && canNavigate && (
-        <LeadArrows
-          previous={previousId}
-          next={nextId}
-          position={index + 1}
-          total={leadIds?.length ?? 0}
-          onNavigate={(id) => onNavigate?.(id)}
-        />
-      )}
     </Dialog>
-  );
-}
-
-/**
- * Arrows left and right of the dialog to go to the previous or next lead of the list. Rendered outside the dialog
- * (its content scrolls), so they are portaled to the page and stay clickable although the dialog is modal.
- */
-function LeadArrows({
-  previous,
-  next,
-  position,
-  total,
-  onNavigate,
-}: {
-  previous: string | null;
-  next: string | null;
-  position: number;
-  total: number;
-  onNavigate: (id: string) => void;
-}) {
-  if (typeof document === "undefined") return null;
-  const base =
-    "pointer-events-auto fixed z-[60] grid size-12 place-items-center rounded-full border bg-white text-foreground shadow-lg transition-colors hover:bg-[#2b2f36] hover:text-white disabled:pointer-events-none disabled:opacity-30 max-sm:bottom-3 sm:top-1/2 sm:-translate-y-1/2";
-  return createPortal(
-    <>
-      <button
-        type="button"
-        aria-label={`Vorheriger Lead (${position} von ${total})`}
-        title="Vorheriger Lead"
-        disabled={!previous}
-        onClick={() => previous && onNavigate(previous)}
-        className={`${base} max-sm:left-3 sm:left-[max(8px,calc(50%-325px-64px))]`}
-      >
-        <ChevronLeft size={22} aria-hidden="true" />
-      </button>
-      <button
-        type="button"
-        aria-label={`Nächster Lead (${position} von ${total})`}
-        title="Nächster Lead"
-        disabled={!next}
-        onClick={() => next && onNavigate(next)}
-        className={`${base} max-sm:right-3 sm:right-[max(8px,calc(50%-325px-64px))]`}
-      >
-        <ChevronRight size={22} aria-hidden="true" />
-      </button>
-    </>,
-    document.body,
   );
 }

@@ -395,7 +395,7 @@ export function LeadActions({
           {...(success.special ? { emphasis: true } : {})}
         />
       )}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="cc-outcome-grid">
         {LEAD_ACTIONS.map((action) => (
           <button
             key={action.key}
@@ -404,7 +404,7 @@ export function LeadActions({
             disabled={busy}
             aria-pressed={active === action.key}
             onClick={() => open(action)}
-            className={`cc-action-button inline-flex min-h-11 w-full items-center justify-center gap-2 whitespace-nowrap rounded-[10px] border px-2 py-2 text-[13px] font-medium transition-colors disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 ${active === action.key ? "border-[#2b2f36] bg-[#2b2f36] text-white" : "border-border bg-white text-foreground hover:border-[#2b2f36] hover:bg-[#2b2f36] hover:text-white"}`}
+            className="cc-outcome-btn"
           >
             {isMailAction(action.key) && <Mail size={16} aria-hidden="true" />}
             {action.label}
