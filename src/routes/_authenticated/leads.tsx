@@ -113,13 +113,12 @@ function LeadsPage() {
       return { rows: data ?? [], total: count ?? data?.length ?? 0 };
     },
   });
-  // Leads with a scheduled callback sit at the bottom of the list; the others keep their order.
+  // Untouched leads first, then not reached, then scheduled callbacks at the very bottom. Order within a group is kept.
   const sorted = useMemo(() => {
+    const rank = (l: { status: string; attempts: number }) =>
+      l.status === "callback" ? 2 : l.status === "open" && l.attempts > 0 ? 1 : 0;
     const rows = result?.rows ?? [];
-    return [
-      ...rows.filter((l) => l.status !== "callback"),
-      ...rows.filter((l) => l.status === "callback"),
-    ];
+    return [0, 1, 2].flatMap((r) => rows.filter((l) => rank(l) === r));
   }, [result?.rows]);
   const labelOf = (l: { status: string; attempts: number }) =>
     l.status === "open" && l.attempts > 0 ? "Nicht erreicht" : (STATUS_LABEL[l.status] ?? l.status);
