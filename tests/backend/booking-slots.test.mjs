@@ -212,3 +212,21 @@ test("callers edit the customer data of their own leads, website and address lan
   await assert.rejects(() => contact(other, l, { phone: "1" }), /not_your_lead/);
   assert.ok((await contact(mgr, l, { city: "Köln" })).city === "Köln", "admins of the country may edit");
 });
+
+test("admin list of Zukunftsprojekte: sorted by target month, only for staff", async () => {
+  const mk = (i, month) => act(rec, leads[i], "on_hold", { note: "später " + month, details: { month } });
+  const m1 = new Date(); m1.setUTCMonth(m1.getUTCMonth() + 3);
+  const m2 = new Date(); m2.setUTCMonth(m2.getUTCMonth() + 1);
+  const ym = (d) => d.toISOString().slice(0, 7);
+  await mk(3, ym(m1));
+  await mk(4, ym(m2));
+  await as(mgr);
+  const list = (await q("select public.get_future_projects_leads('DE') r"))[0].r;
+  const rows = list.filter((x) => x.note?.startsWith("später"));
+  assert.deepEqual(rows.map((x) => x.target_month), [ym(m2), ym(m1)], "earliest month first");
+  assert.ok(rows[0].caller && rows[0].batch && rows[0].created_at);
+  await as(rec);
+  await assert.rejects(() => q("select public.get_future_projects_leads('DE')"), /forbidden/);
+  await as(mgr);
+  await assert.rejects(() => q("select public.get_future_projects_leads('AT')"), /forbidden/);
+});

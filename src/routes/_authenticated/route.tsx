@@ -134,6 +134,7 @@ function Layout() {
         { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
         { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
         { to: "/no-interest", label: "Kein Interesse", icon: X },
+        { to: "/future-projects", label: "Zukunftsprojekte", icon: CalendarDays },
         { to: "/reference-unanswered", label: "Referenzmail offen", icon: Mail },
         ...(isMaster ? [{ to: "/import", label: "Upload", icon: Upload }] : []),
         { to: "/accounts", label: "Accounts", icon: Crown },

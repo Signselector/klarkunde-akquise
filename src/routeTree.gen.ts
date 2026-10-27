@@ -21,6 +21,7 @@ import { Route as AuthenticatedCompletedRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCustomersRouteImport } from './routes/_authenticated/customers'
 import { Route as AuthenticatedDailyStatsRouteImport } from './routes/_authenticated/daily-stats'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFutureProjectsRouteImport } from './routes/_authenticated/future-projects'
 import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated/import'
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedMyStatsRouteImport } from './routes/_authenticated/my-stats'
@@ -92,6 +93,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFutureProjectsRoute =
+  AuthenticatedFutureProjectsRouteImport.update({
+    id: '/future-projects',
+    path: '/future-projects',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedImportRoute = AuthenticatedImportRouteImport.update({
   id: '/import',
   path: '/import',
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/customers': typeof AuthenticatedCustomersRoute
   '/daily-stats': typeof AuthenticatedDailyStatsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/future-projects': typeof AuthenticatedFutureProjectsRoute
   '/import': typeof AuthenticatedImportRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/my-stats': typeof AuthenticatedMyStatsRoute
@@ -179,6 +187,7 @@ export interface FileRoutesByTo {
   '/customers': typeof AuthenticatedCustomersRoute
   '/daily-stats': typeof AuthenticatedDailyStatsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/future-projects': typeof AuthenticatedFutureProjectsRoute
   '/import': typeof AuthenticatedImportRoute
   '/leads': typeof AuthenticatedLeadsRoute
   '/my-stats': typeof AuthenticatedMyStatsRoute
@@ -204,6 +213,7 @@ export interface FileRoutesById {
   '/_authenticated/customers': typeof AuthenticatedCustomersRoute
   '/_authenticated/daily-stats': typeof AuthenticatedDailyStatsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/future-projects': typeof AuthenticatedFutureProjectsRoute
   '/_authenticated/import': typeof AuthenticatedImportRoute
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/my-stats': typeof AuthenticatedMyStatsRoute
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/daily-stats'
     | '/dashboard'
+    | '/future-projects'
     | '/import'
     | '/leads'
     | '/my-stats'
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | '/customers'
     | '/daily-stats'
     | '/dashboard'
+    | '/future-projects'
     | '/import'
     | '/leads'
     | '/my-stats'
@@ -276,6 +288,7 @@ export interface FileRouteTypes {
     | '/_authenticated/customers'
     | '/_authenticated/daily-stats'
     | '/_authenticated/dashboard'
+    | '/_authenticated/future-projects'
     | '/_authenticated/import'
     | '/_authenticated/leads'
     | '/_authenticated/my-stats'
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/future-projects': {
+      id: '/_authenticated/future-projects'
+      path: '/future-projects'
+      fullPath: '/future-projects'
+      preLoaderRoute: typeof AuthenticatedFutureProjectsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/import': {
       id: '/_authenticated/import'
       path: '/import'
@@ -466,6 +486,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCustomersRoute: typeof AuthenticatedCustomersRoute
   AuthenticatedDailyStatsRoute: typeof AuthenticatedDailyStatsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFutureProjectsRoute: typeof AuthenticatedFutureProjectsRoute
   AuthenticatedImportRoute: typeof AuthenticatedImportRoute
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedMyStatsRoute: typeof AuthenticatedMyStatsRoute
@@ -484,6 +505,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCustomersRoute: AuthenticatedCustomersRoute,
   AuthenticatedDailyStatsRoute: AuthenticatedDailyStatsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFutureProjectsRoute: AuthenticatedFutureProjectsRoute,
   AuthenticatedImportRoute: AuthenticatedImportRoute,
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedMyStatsRoute: AuthenticatedMyStatsRoute,

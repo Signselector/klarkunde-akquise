@@ -100,3 +100,7 @@ Nicht getestet gegen echtes Pipedrive: die Gateway-Pfade `/deals?ids=…`, `/dea
 - **Keine Antwort nach 3 Monaten:** Der Lead erscheint für Admins/Manager im Menü „Referenzmail offen“. Die Liste ist als CSV herunterladbar,
   jede Zeile beginnt mit der Caller-ID des ursprünglichen Callers.
 - Einrichtung: den eingehenden Mailverkehr des Absenders (Antworten an `EMAIL_FROM`) an `/api/mail-reply` weiterleiten (z. B. Inbound-Webhook des Mail-Providers).
+
+## Admin-Liste „Zukunftsprojekte“ (Migration 0029)
+
+Menü „Zukunftsprojekte“ für Admins und Manager (`/future-projects`, Funktion `get_future_projects_leads(p_country)`): alle Leads mit Status `on_hold`, sortiert nach Zielmonat, mit Caller, Batch, Notiz und Erfassungsdatum, als CSV herunterladbar. Der Lead bleibt in der Liste, auch nachdem der Deal „Zukünftiges Interesse“ angelegt wurde, solange er den Status Zukunftsprojekt hat.
