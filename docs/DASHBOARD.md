@@ -56,7 +56,7 @@ und erneuter Übernahme gleich. Übernehmen ist atomar (`claim_batch`). Freigebe
 
 ## Rollen
 
-Es gibt weiterhin nur `admin`, `caller` und `fulfilment`. Recruit und Veteran sind Caller, Manager und Admin sind Admins.
+Es gibt weiterhin nur `admin` und `caller`. Recruit und Veteran sind Caller, Manager und Admin sind Admins.
 Rollen wurden nicht geändert. Callern zeigt das Dashboard nur eigene Zahlen, die Rangliste zeigt Namen und Punkte aller.
 Teamstatistiken stehen weiter in der Admin-Ansicht („Statistiken“).
 

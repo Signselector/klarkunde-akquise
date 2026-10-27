@@ -67,7 +67,7 @@ Batch des Aufrufers (oder wurde von ihm bearbeitet, oder Admin), kein fremder ak
    Pipedrive-Benutzer gibt es nicht.
 3. **E-Mail-Versand.** Es gibt keine Versand-Integration. Die Referenzmail öffnet das E-Mail-Programm
    (`mailto:`); ein Versand aus dem Tool und der Beleg im CRM brauchen einen Mail-Connector.
-4. **Rollen Recruit / Veteran / Manager** existieren nicht (nur `admin`, `caller`, `fulfilment`). Die Aktionen stehen
+4. **Rollen Recruit / Veteran / Manager** existieren nicht (nur `admin`, `caller`). Die Aktionen stehen
    Callern und Admins offen; Stage-Bearbeitung für Veteranen und Fulfillment-Zuweisungen sind nicht gebaut.
 5. **Coins/Punkte.** Es werden keine vergeben. Eine spätere Vergabe sollte an `lead_actions.id` hängen.
 

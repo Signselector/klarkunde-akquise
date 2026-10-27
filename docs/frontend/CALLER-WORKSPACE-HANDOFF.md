@@ -14,7 +14,7 @@ Implemented in the live authenticated routes, using the existing Signselector th
 1. Claim a specific selected lead/callback atomically, with conflict handling and lease renewal. claim_next_lead(country) cannot target a row; all result entry therefore continues through the existing call queue. Do not bypass reservations with direct updates.
 2. Outcomes for in Bearbeitung / Zukunftsprojekt / Logo ausstehend and their validated CRM mapping. Current record_call_outcome accepts not_reached, no_interest, callback, appointment and production only.
 3. Customer deal read model: CRM stage ID, stage label, actual owner, sync state, authoritative allowed transitions and required note validation. The new country stage-mapping table supplies configuration only, not customer stage data or transition permissions.
-4. Recruit / Veteran / Manager role definitions and server-enforced ownership/transition checks. Existing generated role enum is admin/caller/fulfilment. Frontend must not approximate access by role-name ranking.
+4. Recruit / Veteran / Manager role definitions and server-enforced ownership/transition checks. The role enum is admin/caller/recruit/veteran/manager. Frontend must not approximate access by role-name ranking.
 5. All three authoritative won-stage IDs per country for Andere Prozente / Produktionsplanung / 0% Anzahlung. Do not guess from production configuration.
 6. Quality metric, attributed lead count, agreed average definition, weekly caller ranking, points/reward approval. Include explicit date range and country scope. No frontend scoring formula.
 

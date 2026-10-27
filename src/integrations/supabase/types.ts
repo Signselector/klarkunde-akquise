@@ -1729,10 +1729,6 @@ export type Database = {
         Args: { p_active: boolean; p_user_id: string }
         Returns: undefined
       }
-      set_user_fulfilment: {
-        Args: { p_on: boolean; p_user_id: string }
-        Returns: undefined
-      }
       set_user_role: {
         Args: {
           p_role: Database["public"]["Enums"]["app_role"]
@@ -1751,7 +1747,6 @@ export type Database = {
       app_role:
         | "admin"
         | "caller"
-        | "fulfilment"
         | "recruit"
         | "veteran"
         | "manager"
@@ -1885,7 +1880,6 @@ export const Constants = {
       app_role: [
         "admin",
         "caller",
-        "fulfilment",
         "recruit",
         "veteran",
         "manager",

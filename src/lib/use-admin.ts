@@ -30,7 +30,6 @@ export function useRoles(userId: string) {
   return {
     ready: data !== undefined,
     role,
-    fulfilment: !!data?.includes("fulfilment"),
     /** Admin or manager: may administer (managers only in their own country, enforced by the database). */
     isStaff: role === "admin" || role === "manager",
     /** Real admin: backend, integrations and every country. */

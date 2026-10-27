@@ -62,7 +62,6 @@ export const Trash2 = lineIcon(Glyph.Trash2, "delete");
 export const Eye = lineIcon(Glyph.Eye, "view");
 export const KeyRound = lineIcon(Glyph.KeyRound, "password");
 export const Power = lineIcon(Glyph.Power, "activation");
-export const Wrench = lineIcon(Glyph.Wrench, "fulfilment");
 export const ArrowRight = lineIcon(Glyph.ArrowRight, "continue");
 export const ChevronRight = lineIcon(Glyph.ChevronRight, "expand");
 export const ExternalLink = lineIcon(Glyph.ExternalLink, "external-link");

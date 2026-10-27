@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Eye, KeyRound, Power, Shield, Trash2, Wrench } from "@/components/coldcaller/icons";
+import { Eye, KeyRound, Power, Shield, Trash2 } from "@/components/coldcaller/icons";
 import { supabase } from "@/integrations/supabase/client";
 import { primaryRole, ROLE_LABEL, useRoles, type RoleName } from "@/lib/use-admin";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,6 @@ function AccountsPage() {
         role: primaryRole(
           (r.data ?? []).filter((x) => x.user_id === u.id).map((x) => x.role as string),
         ),
-        fulfilment: has(u.id, "fulfilment"),
         countries: (c.data ?? []).filter((x) => x.user_id === u.id).map((x) => x.country),
       }));
     },
@@ -83,16 +82,6 @@ function AccountsPage() {
     toast.success("Rolle geändert.");
     refresh();
     qc.invalidateQueries({ queryKey: ["roles"] });
-  }
-
-  async function toggleFulfilment(id: string, on: boolean) {
-    const { error } = await supabase.rpc("set_user_fulfilment", { p_user_id: id, p_on: on });
-    if (error) {
-      toast.error("Fulfilment konnte nicht geändert werden.");
-      return;
-    }
-    toast.success(on ? "Fulfilment aktiviert." : "Fulfilment entfernt.");
-    refresh();
   }
 
   async function resetPassword(email: string | null) {
@@ -167,12 +156,6 @@ function AccountsPage() {
                         ? "👑 Admin"
                         : ROLE_LABEL[u.role]}
                   </Badge>
-                  {u.fulfilment && (
-                    <Badge variant="outline" className="rounded-full">
-                      <Wrench size={12} />
-                      Fulfilment
-                    </Badge>
-                  )}
                 </span>
                 <Badge
                   variant={u.active ? "outline" : "destructive"}
@@ -238,14 +221,6 @@ function AccountsPage() {
                           {u.role === "recruit" ? "Zu Senior Caller" : "Zu Caller"}
                         </Button>
                       )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => toggleFulfilment(u.id, !u.fulfilment)}
-                    >
-                      <Wrench size={16} />
-                      {u.fulfilment ? "Fulfilment entfernen" : "Fulfilment"}
-                    </Button>
                     <Button size="sm" variant="outline" onClick={() => resetPassword(u.email)}>
                       <KeyRound size={16} />
                       Passwort

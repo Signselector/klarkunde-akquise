@@ -7,8 +7,7 @@ import { randomUUID } from "node:crypto";
 const db = new PGlite();
 const admin = randomUUID(),
   anna = randomUUID(),
-  ben = randomUUID(),
-  fulfil = randomUUID();
+  ben = randomUUID();
 const q = async (sql, args = []) => (await db.query(sql, args)).rows;
 const rpc = async (name, args = []) =>
   (
@@ -40,14 +39,13 @@ before(async () => {
     await db.exec(sql);
   }
   await db.query(
-    "insert into auth.users values ($1,'admin@example.test','{\"display_name\":\"Admin\"}'),($2,'anna@example.test','{\"display_name\":\"Anna\"}'),($3,'ben@example.test','{\"display_name\":\"Ben\"}'),($4,'fulfil@example.test','{\"display_name\":\"Fulfilment\"}')",
-    [admin, anna, ben, fulfil],
+    "insert into auth.users values ($1,'admin@example.test','{\"display_name\":\"Admin\"}'),($2,'anna@example.test','{\"display_name\":\"Anna\"}'),($3,'ben@example.test','{\"display_name\":\"Ben\"}')",
+    [admin, anna, ben],
   );
   await db.query("update public.user_roles set role='admin' where user_id=$1", [admin]);
-  await db.query("update public.user_roles set role='fulfilment' where user_id=$1", [fulfil]);
   await db.query(
-    "insert into public.user_countries(user_id,country) values ($1,'DE'),($2,'DE'),($3,'DE'),($4,'DE') on conflict do nothing",
-    [admin, anna, ben, fulfil],
+    "insert into public.user_countries(user_id,country) values ($1,'DE'),($2,'DE'),($3,'DE') on conflict do nothing",
+    [admin, anna, ben],
   );
   batch = (
     await q(
@@ -246,8 +244,6 @@ test("history is append only and readable only by involved users", async () => {
     (await q("select 1 from public.lead_activity where lead_id=$1", [lead])).length > 3,
     "origin caller reads the timeline",
   );
-  await as(fulfil);
-  assert.ok((await q("select 1 from public.lead_activity where lead_id=$1", [lead])).length > 3);
   await as(ben);
   assert.equal((await q("select 1 from public.lead_activity where lead_id=$1", [lead])).length, 0);
   // Removing a lead for good may still cascade.

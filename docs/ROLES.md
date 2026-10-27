@@ -6,10 +6,10 @@ Migrationen: `0015_roles_enum.sql` (neue Enum-Werte), danach `0016_roles.sql` un
 | --- | --- | --- |
 | **Recruit** | Caller. Jeder neue Account startet hier. | Anrufen, Aktionen, eigene Batches. Bucht **keine** Termine (die liegen beim Manager). |
 | **Veteran** | Caller | Wie Recruit, plus Termine für sich selbst einbuchen. |
-| **Manager** | Geschäftsführung | Admin-Rechte im eigenen Land: Accounts der Caller des Landes (deaktivieren, Fulfilment), Recruit → Veteran, Batches zuweisen und freigeben, Statistiken, Vorlagen, Leitfaden, Monatsziel, Leads einsehen und bearbeiten. **Kein** Backend. |
+| **Manager** | Geschäftsführung | Admin-Rechte im eigenen Land: Accounts der Caller des Landes (deaktivieren), Recruit → Veteran, Batches zuweisen und freigeben, Statistiken, Vorlagen, Leitfaden, Monatsziel, Leads einsehen und bearbeiten. **Kein** Backend. |
 | **Admin** | | Alles, in allen Ländern: Rollen vergeben (auch Manager und Admin), Länder, Backend, Integrationen, Stage Mapping, Test-Modus, Backups (Backups nur der Master-Admin), Accounts löschen. |
 
-Fulfilment bleibt ein zusätzlicher Schalter (Account kann Fulfilment sein und zugleich eine der Rollen oben haben).
+Die frühere Zusatzrolle „Fulfilment“ gibt es nicht mehr (Migration 0026).
 
 ## Wie es technisch gilt
 
@@ -18,7 +18,7 @@ Fulfilment bleibt ein zusätzlicher Schalter (Account kann Fulfilment sein und z
 * Land: `has_admin_rights(uid, land)` ist für Admins immer wahr, für Manager nur in den Ländern, die ihnen freigeschaltet sind. Damit prüfen Lead-Aktionen, Batch-Freigabe und -Zuweisung. Admins sehen alle Länder (`can_access_country`).
 * Rollen ändern (`set_user_role`): Admin jede Rolle (nicht den Master, nie den letzten Admin). Manager nur Recruit ↔ Veteran, nur für Caller, mit denen er ein Land teilt.
 * Länder festlegen: **nur der Admin** (Migration 0017). Ein Manager arbeitet nur in den ihm zugewiesenen Ländern und kann weder Länder vergeben noch entziehen. Caller ohne Land kann er erst verwalten, wenn der Admin ein gemeinsames Land gesetzt hat.
-* Deaktivieren und Fulfilment (`set_user_active`, `set_user_fulfilment`): Admin, oder Manager für Caller des eigenen Landes.
+* Deaktivieren (`set_user_active`): Admin, oder Manager für Caller des eigenen Landes.
 * Termine: `save_calendar_appointment` und `create_appointment` weisen Recruits ab (`appointment_forbidden`). Veteran, Manager und Admin buchen auf sich selbst.
 
 ## Oberfläche
