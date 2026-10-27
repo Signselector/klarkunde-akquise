@@ -180,18 +180,15 @@ test("assigning an appointment moves it to the new person, re-queues it for Pipe
   await assert.rejects(() => q("select public.assign_appointment($1,$2)", [r.appointment_id, rec]), /forbidden/);
 });
 
-test("appointments: callers need 3 days of lead time, managers 2; callbacks are not affected", async () => {
+test("appointments need 3 days of lead time for everybody; callbacks are not affected", async () => {
   const l = leads[7];
   await assert.rejects(() => act(rec, l, "low_q", { note: "n", logo: logo(rec, l), at: at(1, 9) }), /appointment_too_soon/);
-  // the day after tomorrow is too early for a caller ...
   await assert.rejects(() => act(rec, l, "low_q", { note: "n", logo: logo(rec, l), at: at(2, 9) }), /appointment_too_soon/);
-  // ... three days ahead is fine
   assert.ok((await act(rec, l, "low_q", { note: "n", logo: logo(rec, l), at: at(4, 9) })).appointment_id);
-  // a manager booking for himself may start the day after tomorrow
+  // managers too
   await as(mgr);
-  const id = (await q("select public.save_calendar_appointment($1,'other','Intern',null,'DE',null,false) id", [at(2, 14)]))[0].id;
-  assert.ok(id);
-  await assert.rejects(() => q("select public.save_calendar_appointment($1,'other','Intern',null,'DE',null,false)", [at(1, 14)]), /appointment_too_soon/);
+  await assert.rejects(() => q("select public.save_calendar_appointment($1,'other','Intern',null,'DE',null,false)", [at(2, 14)]), /appointment_too_soon/);
+  assert.ok((await q("select public.save_calendar_appointment($1,'other','Intern',null,'DE',null,false) id", [at(4, 14)]))[0].id);
 });
 
 const contact = async (user, lead, patch) => {
