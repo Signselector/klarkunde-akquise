@@ -27,7 +27,7 @@ function ProfilePage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name")
+        .select("display_name,avatar_url")
         .eq("id", user.id)
         .maybeSingle();
       return data;
@@ -40,6 +40,52 @@ function ProfilePage() {
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [busy, setBusy] = useState(false);
+
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  async function changeAvatar(file: File | undefined) {
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
+      toast.error("Bitte ein JPG-, PNG- oder WebP-Bild wählen.");
+      return;
+    }
+    setAvatarBusy(true);
+    try {
+      const blob = await squareJpeg(file, 256);
+      const path = `${user.id}/avatar.jpg`;
+      const up = await supabase.storage
+        .from("avatars")
+        .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+      if (up.error) throw up.error;
+      const url = `${supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl}?v=${Date.now()}`;
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("id", user.id);
+      if (error) throw error;
+      toast.success("Profilbild gespeichert.");
+      qc.invalidateQueries({ queryKey: ["me", user.id] });
+      qc.invalidateQueries({ queryKey: ["profile", user.id] });
+    } catch {
+      toast.error("Profilbild konnte nicht gespeichert werden.");
+    } finally {
+      setAvatarBusy(false);
+    }
+  }
+  async function removeAvatar() {
+    setAvatarBusy(true);
+    await supabase.storage.from("avatars").remove([`${user.id}/avatar.jpg`]);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ avatar_url: null })
+      .eq("id", user.id);
+    setAvatarBusy(false);
+    if (error) {
+      toast.error("Profilbild konnte nicht entfernt werden.");
+      return;
+    }
+    qc.invalidateQueries({ queryKey: ["me", user.id] });
+    qc.invalidateQueries({ queryKey: ["profile", user.id] });
+  }
 
   async function saveName(e: React.FormEvent) {
     e.preventDefault();
@@ -112,6 +158,40 @@ function ProfilePage() {
           Rolle und Länder legen Manager bzw. Admins fest.
         </p>
       </section>
+      <section className="flex items-center gap-4 rounded-lg border bg-card p-4">
+        <span className="cc-avatar" style={{ width: 72, height: 72, fontSize: 22, flex: "none" }}>
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt={name} className="h-full w-full object-cover" />
+          ) : (
+            (name || user.email || "?").slice(0, 2).toUpperCase()
+          )}
+        </span>
+        <div className="grid gap-2">
+          <h2 className="font-semibold">Profilbild</h2>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm" disabled={avatarBusy}>
+              <label className="cursor-pointer">
+                {avatarBusy ? "Lädt …" : "Bild hochladen"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  disabled={avatarBusy}
+                  onChange={(e) => {
+                    void changeAvatar(e.target.files?.[0]);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            </Button>
+            {profile?.avatar_url && (
+              <Button variant="ghost" size="sm" disabled={avatarBusy} onClick={removeAvatar}>
+                Entfernen
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
       <form onSubmit={saveName} className="space-y-3 rounded-lg border bg-card p-4">
         <h2 className="font-semibold">Anzeigename</h2>
         <div className="grid gap-1.5">
@@ -158,5 +238,21 @@ function ProfilePage() {
         </Button>
       </form>
     </div>
+  );
+}
+
+/** Center-crops to a square and re-encodes as JPEG, so uploads stay small whatever the original was. */
+async function squareJpeg(file: File, size: number): Promise<Blob> {
+  const bmp = await createImageBitmap(file);
+  const side = Math.min(bmp.width, bmp.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("canvas");
+  ctx.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, size, size);
+  bmp.close();
+  return new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("encode"))), "image/jpeg", 0.88),
   );
 }

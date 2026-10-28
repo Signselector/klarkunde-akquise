@@ -69,12 +69,13 @@ function Layout() {
     queryKey: ["me", user.id],
     queryFn: async () => {
       const [p, r] = await Promise.all([
-        supabase.from("profiles").select("display_name,active").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("display_name,active,avatar_url").eq("id", user.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user.id),
       ]);
       const role = primaryRole((r.data ?? []).map((x) => x.role as string));
       return {
         name: p.data?.display_name ?? user.email,
+        avatarUrl: p.data?.avatar_url ?? null,
         role,
         admin: role === "admin" || role === "manager",
         globalAdmin: role === "admin" || isMasterEmail(user.email),
@@ -267,6 +268,7 @@ function Layout() {
           <div className="cc-profile">
             <ProfileCard
               active={location.pathname === "/profile"}
+              avatarUrl={me?.avatarUrl}
               initials={(me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase()}
               name={me?.name ?? user.email ?? ""}
               subtitle={
@@ -307,11 +309,13 @@ function Layout() {
 
 function ProfileCard({
   active,
+  avatarUrl,
   initials,
   name,
   subtitle,
 }: {
   active: boolean;
+  avatarUrl?: string | null | undefined;
   initials: string;
   name: string;
   subtitle: string;
@@ -329,7 +333,13 @@ function ProfileCard({
         if (isMobile) setOpenMobile(false);
       }}
     >
-      <span className="cc-avatar">{initials}</span>
+      <span className="cc-avatar">
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          initials
+        )}
+      </span>
       <div>
         <strong>{name}</strong>
         <small>{subtitle}</small>
