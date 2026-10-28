@@ -72,7 +72,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
       !term ||
       [d.company, d.contact_name, d.phone, d.email].join(" ").toLocaleLowerCase().includes(term),
   );
-  const placed = placeDeals(deals, mapping.data ?? {});
+  const placed = placeDeals(deals, mapping.data ?? {}, country);
   const stageNames = customers.data?.stageNames ?? {};
   const fetchedAt = customers.data ? new Date(customers.data.fetchedAt) : null;
   const loading = customers.isLoading || mapping.isLoading;
