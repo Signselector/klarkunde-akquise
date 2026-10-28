@@ -69,8 +69,8 @@ function AppointmentsPage() {
   const pushNow = useServerFn(pushAppointmentNow);
   const { sync, external } = useCalendarSync(user.id, country);
   const [mine] = useState(false);
-  // "all": tool appointments and Pipedrive entries. "tool": only what was booked through the Cold Caller tool.
-  const [filter, setFilter] = useState<"all" | "tool">("all");
+  // "all": everything, "tool": booked through the Cold Caller tool, "pipedrive": entries that exist in Pipedrive only.
+  const [filter, setFilter] = useState<"all" | "tool" | "pipedrive">("all");
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [selected, setSelected] = useState<Date | null>(null);
 
@@ -90,11 +90,11 @@ function AppointmentsPage() {
 
   const events = useMemo(() => {
     const own = (data ?? [])
-      .filter((a) => !mine || a.user_id === user.id)
+      .filter((a) => (!mine || a.user_id === user.id) && filter !== "pipedrive")
       .map((a) => ({ ...a, date: new Date(a.starts_at), k: kindOf(a.kind) }));
     // Entries that exist only in the user's Pipedrive calendar.
     const fromPipedrive =
-      filter === "all"
+      filter !== "tool"
         ? external.map((x) => ({
             id: `pd-${x.activity_id}`,
             starts_at: x.due_at,
@@ -189,11 +189,12 @@ function AppointmentsPage() {
           footer={
           <div className="flex flex-wrap items-center gap-3">
             <Label className="text-xs">Anzeigen</Label>
-            <Select value={filter} onValueChange={(v) => setFilter(v as "all" | "tool")}>
+            <Select value={filter} onValueChange={(v) => setFilter(v as "all" | "tool" | "pipedrive")}>
               <SelectTrigger className="min-h-11 w-[320px] max-w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Termine</SelectItem>
-                <SelectItem value="tool">Fulfilment</SelectItem>
+                <SelectItem value="tool">Cold Caller Tool</SelectItem>
+                <SelectItem value="pipedrive">Pipedrive</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -235,7 +236,7 @@ function AppointmentsPage() {
                       <p className="text-sm font-semibold">
                         {heading}
                         {"external" in e && e.external && (
-                          <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">Pipedrive</span>
+                          <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-800">Pipedrive</span>
                         )}
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">

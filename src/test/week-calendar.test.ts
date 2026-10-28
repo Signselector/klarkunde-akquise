@@ -23,10 +23,10 @@ describe("week helpers", () => {
 
 describe("appointmentDotClass", () => {
   const now = new Date(2026, 9, 28, 12);
-  it("is green for tool appointments, yellow for Pipedrive ones, grey once started", () => {
+  it("is green for tool appointments, orange for Pipedrive ones, grey once started", () => {
     const later = new Date(2026, 10, 3, 9);
     expect(appointmentDotClass(later, false, now)).toContain("bg-emerald-500");
-    expect(appointmentDotClass(later, true, now)).toContain("bg-amber-400");
+    expect(appointmentDotClass(later, true, now)).toContain("bg-orange-500");
     expect(appointmentDotClass(new Date(2026, 9, 1), true, now)).toBe("bg-muted-foreground/40");
     expect(appointmentDotClass(new Date(2026, 9, 1), false, now)).toBe("bg-muted-foreground/40");
   });
