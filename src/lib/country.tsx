@@ -35,6 +35,12 @@ export function useAllowedCountries() {
     // The list differs while a manager views the app as an employee.
     queryKey: ["my-countries", getViewAs()?.id ?? null],
     queryFn: async () => {
+      const view = getViewAs();
+      if (view) {
+        // Read the employee's own country rows directly: works whether or not the database function is aware of views.
+        const { data } = await supabase.from("user_countries").select("country").eq("user_id", view.id);
+        return (data ?? []).map((r) => r.country).filter(isCountry);
+      }
       const { data } = await supabase.rpc("my_countries");
       return ((data as string[] | null) ?? []).filter(isCountry);
     },
