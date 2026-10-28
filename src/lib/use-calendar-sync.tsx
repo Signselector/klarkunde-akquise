@@ -46,7 +46,7 @@ export function useCalendarSync(userId: string, country: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pipedrive_activities")
-        .select("activity_id,subject,type,due_at,duration_min,deal_id,person_name,org_name")
+        .select("activity_id,user_id,subject,type,due_at,duration_min,deal_id,person_name,org_name")
         .eq("country", country)
         .eq("done", false)
         .order("due_at")
