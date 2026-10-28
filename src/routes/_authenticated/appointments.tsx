@@ -90,7 +90,8 @@ function AppointmentsPage() {
 
   const events = useMemo(() => {
     const own = (data ?? [])
-      .filter((a) => (!mine || a.user_id === user.id) && filter !== "pipedrive")
+      // Callers and Senior Callers only ever see appointments assigned to them (also enforced by the database).
+      .filter((a) => (!mine && roles.isStaff ? true : a.user_id === user.id) && filter !== "pipedrive")
       .map((a) => ({ ...a, date: new Date(a.starts_at), k: kindOf(a.kind) }));
     // Entries that exist only in the user's Pipedrive calendar.
     const fromPipedrive =
@@ -109,7 +110,7 @@ function AppointmentsPage() {
           }))
         : [];
     return [...own, ...fromPipedrive].sort((p, q) => p.date.getTime() - q.date.getTime());
-  }, [data, external, mine, filter, user.id]);
+  }, [data, external, mine, filter, user.id, roles.isStaff]);
 
   const team = useQuery({
     queryKey: ["appointment-team", country],

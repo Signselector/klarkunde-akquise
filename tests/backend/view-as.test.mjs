@@ -78,3 +78,23 @@ test("view_as: personal stats answer for the viewed employee", async () => {
   const own = (await q("select public.get_caller_month() r"))[0].r;
   assert.deepEqual(viewed, own);
 });
+
+test("view_as: dashboard numbers and appointments are those of the viewed employee", async () => {
+  await db.exec("RESET ROLE");
+  const lead = (await q("select id from public.leads limit 1"))[0].id;
+  await db.query("insert into public.status_changes(lead_id,user_id,new_status) values($1,$2,'no_interest'),($1,$2,'not_reached')", [lead, rec]);
+  await as(mgrAT);
+  assert.equal((await q("select (public.get_caller_day()->>'attempts')::int n"))[0].n, 0);
+  await as(mgrAT, rec);
+  assert.equal((await q("select (public.get_caller_day()->>'attempts')::int n"))[0].n, 2);
+
+  await db.exec("RESET ROLE");
+  await db.query("insert into public.appointments(lead_id,user_id,country,starts_at,booked_by) values($1,$2,'AT',now()+interval '5 days',$3),($1,$4,'AT',now()+interval '6 days',$3)", [lead, rec, mgrAT, mgr2]);
+  await as(mgrAT);
+  assert.equal((await q("select count(*)::int n from public.appointments"))[0].n, 2, "manager sees all");
+  await as(mgrAT, rec);
+  const seen = await q("select user_id from public.appointments");
+  assert.deepEqual(seen.map((r) => r.user_id), [rec], "viewed caller sees only the own");
+  await as(rec);
+  assert.equal((await q("select count(*)::int n from public.appointments"))[0].n, 1);
+});
