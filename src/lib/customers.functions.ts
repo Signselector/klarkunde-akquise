@@ -83,7 +83,8 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
       .eq("origin_caller_id", context.userId)
       .not("deal_id", "is", null)
       .limit(MAX_DEALS);
-    const dealIds = (mine.data ?? []).map((l) => l.deal_id as number);
+    // Negative deal IDs are simulated demo deals: never looked up in Pipedrive, shown with their local stage.
+    const dealIds = (mine.data ?? []).map((l) => l.deal_id as number).filter((id) => id > 0);
     let infos = new Map<number, DealInfo | null>();
     let error: string | null = null;
     let stageNames: Record<number, string> = {};
