@@ -1700,7 +1700,6 @@ export type Database = {
         Returns: boolean
       }
       heartbeat: { Args: never; Returns: undefined }
-      view_as_target: { Args: never; Returns: string }
       import_duplicates: { Args: { p_batch_id: string }; Returns: Json }
       is_global_admin: { Args: { _uid: string }; Returns: boolean }
       is_master: { Args: { _uid: string }; Returns: boolean }
@@ -1861,6 +1860,7 @@ export type Database = {
       }
       upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
       user_role: { Args: { _uid: string }; Returns: string }
+      view_as_target: { Args: never; Returns: string }
     }
     Enums: {
       app_role:
