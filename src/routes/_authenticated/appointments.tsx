@@ -154,7 +154,7 @@ function AppointmentsPage() {
     id: e.id,
     at: e.date,
     title: e.title ?? e.lead?.company ?? e.notes ?? "Termin",
-    dot: appointmentDotClass(e.date),
+    dot: appointmentDotClass(e.date, "external" in e && !!e.external),
   }));
   // Details: everything of the shown week, or only the chosen day.
   const list = events.filter((e) =>
@@ -198,7 +198,10 @@ function AppointmentsPage() {
             </Select>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(Date.now() + 1)))} /> Geplant
+                <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(Date.now() + 1)))} /> Aus Tool geplant
+              </span>
+              <span className="flex items-center gap-1">
+                <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(Date.now() + 1), true))} /> Aus Pipedrive
               </span>
               <span className="flex items-center gap-1">
                 <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(0)))} /> Vergangen
@@ -227,9 +230,14 @@ function AppointmentsPage() {
                 const heading = e.title ?? e.lead?.company ?? e.notes ?? "Termin";
                 return (
                   <div key={e.id} className="flex items-start gap-3 rounded-md border p-3">
-                    <span className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", appointmentDotClass(e.date))} />
+                    <span className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", appointmentDotClass(e.date, "external" in e && !!e.external))} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold">{heading}</p>
+                      <p className="text-sm font-semibold">
+                        {heading}
+                        {"external" in e && e.external && (
+                          <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800">Pipedrive</span>
+                        )}
+                      </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {KINDS[e.k].label} ·{" "}
                         {new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(e.date)}

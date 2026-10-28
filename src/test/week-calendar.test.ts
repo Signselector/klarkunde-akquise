@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { appointmentDotClass } from "@/lib/calendar-status";
 import { addDays, inWeek, isoWeek, startOfWeek, weekTitle } from "@/components/caller/week-calendar";
 
 describe("week helpers", () => {
@@ -17,5 +18,16 @@ describe("week helpers", () => {
   });
   it("titles the week with number and range", () => {
     expect(weekTitle(new Date(2026, 9, 26))).toMatch(/^KW 44 · 26\. Okt.* – 01\. Nov\.? 2026$/);
+  });
+});
+
+describe("appointmentDotClass", () => {
+  const now = new Date(2026, 9, 28, 12);
+  it("is green for tool appointments, yellow for Pipedrive ones, grey once started", () => {
+    const later = new Date(2026, 10, 3, 9);
+    expect(appointmentDotClass(later, false, now)).toContain("bg-emerald-500");
+    expect(appointmentDotClass(later, true, now)).toContain("bg-amber-400");
+    expect(appointmentDotClass(new Date(2026, 9, 1), true, now)).toBe("bg-muted-foreground/40");
+    expect(appointmentDotClass(new Date(2026, 9, 1), false, now)).toBe("bg-muted-foreground/40");
   });
 });

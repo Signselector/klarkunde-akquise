@@ -8,6 +8,7 @@ import { stageLabel } from "@/lib/crm-stage-labels";
 import { STATUS_LABEL } from "@/lib/leads";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useRoles } from "@/lib/use-admin";
 import { FeedbackState, StatusBadge, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
@@ -52,6 +53,9 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
   const country = useCountry();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
+  // Only managers and admins may open the customer file of a completed lead.
+  const roles = useRoles(userId);
+  const canOpen = roles.isStaff;
   const [filter, setFilter] = useState("all");
   const query = useQuery({
     queryKey: ["lead-list", userId, country],
@@ -164,9 +168,11 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
                         {h}
                       </th>
                     ))}
-                    <th className="sticky right-0 bg-[#faf8f4] px-4 py-3 text-right font-medium">
-                      <span className="sr-only">Aktionen</span>
-                    </th>
+                    {canOpen && (
+                      <th className="sticky right-0 bg-[#faf8f4] px-4 py-3 text-right font-medium">
+                        <span className="sr-only">Aktionen</span>
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -207,16 +213,18 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
                       <td className="px-3 py-3 tabular-nums">{l.deal_id ?? "–"}</td>
                       <td className="px-3 py-3">{when(l.completed_at)}</td>
                       <td className="px-3 py-3">{when(l.last_activity_at)}</td>
-                      <td className="cc-sticky-action sticky right-0 px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          className="cc-record-btn"
-                          onClick={() => setSelected(l.lead_id)}
-                          aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
-                        >
-                          Kundenakte
-                        </button>
-                      </td>
+                      {canOpen && (
+                        <td className="cc-sticky-action sticky right-0 px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            className="cc-record-btn"
+                            onClick={() => setSelected(l.lead_id)}
+                            aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
+                          >
+                            Kundenakte
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -225,14 +233,16 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
           )}
         </div>
       </Surface>
-      <LeadDialog
-        leadId={selected}
-        userId={userId}
-        admin={false}
-        leadIds={rows.map((l) => l.lead_id)}
-        onNavigate={setSelected}
-        onClose={() => setSelected(null)}
-      />
+      {canOpen && (
+        <LeadDialog
+          leadId={selected}
+          userId={userId}
+          admin={false}
+          leadIds={rows.map((l) => l.lead_id)}
+          onNavigate={setSelected}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
 }
