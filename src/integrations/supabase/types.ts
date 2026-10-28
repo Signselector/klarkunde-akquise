@@ -1580,6 +1580,7 @@ export type Database = {
         Args: { p_from: string; p_scope?: string; p_to: string }
         Returns: Json
       }
+      get_future_projects_leads: { Args: { p_country: string }; Returns: Json }
       get_monthly_quality: { Args: { p_month?: string }; Returns: Json }
       get_my_customers: { Args: { p_country: string }; Returns: Json }
       get_no_interest_leads: { Args: { p_country: string }; Returns: Json }
