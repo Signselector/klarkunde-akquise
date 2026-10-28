@@ -199,10 +199,10 @@ function AppointmentsPage() {
             </Select>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
-                <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(Date.now() + 1)))} /> Aus Tool geplant
+                <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(Date.now() + 1)))} /> Cold Caller Tool
               </span>
               <span className="flex items-center gap-1">
-                <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(Date.now() + 1), true))} /> Aus Pipedrive
+                <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(Date.now() + 1), true))} /> Pipedrive
               </span>
               <span className="flex items-center gap-1">
                 <span className={cn("size-2 rounded-full", appointmentDotClass(new Date(0)))} /> Vergangen
