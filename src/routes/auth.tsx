@@ -71,7 +71,6 @@ function AuthPage() {
             konzentrieren kannst.
           </p>
         </div>
-        <small>Dein Arbeitsplatz für die Team-Akquise.</small>
       </aside>
       <div className="cc-auth-form-wrap">
         <form onSubmit={submit} className="cc-auth-form">
