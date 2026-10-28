@@ -95,12 +95,13 @@ function ProfilePage() {
       return;
     }
     setBusy(true);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .update({ display_name: value })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select("id");
     setBusy(false);
-    if (error) {
+    if (error || !data?.length) {
       toast.error("Name konnte nicht gespeichert werden.");
       return;
     }
