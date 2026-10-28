@@ -1177,3 +1177,75 @@
   top: 16px;
   right: 16px;
 }
+
+/* Royal-Blue-Akzente: Kundenakte & Unterseiten */
+.cc-detail-dialog {
+  border-top: 4px solid var(--cc-accent);
+}
+.cc-detail-avatar {
+  background: var(--cc-accent-soft);
+  color: var(--cc-accent);
+  border: 1px solid var(--cc-accent-border);
+}
+.cc-detail-dialog .cc-contact-grid > div {
+  background: var(--cc-accent-soft);
+  border-color: var(--cc-accent-border);
+}
+.cc-detail-dialog .cc-contact-grid > div > svg,
+.cc-detail-dialog .cc-contact-grid a,
+.cc-detail-dialog .cc-contact-grid a.cc-phone-number {
+  color: var(--cc-accent-dark);
+}
+.cc-detail-section h3 {
+  color: var(--cc-ink);
+}
+.cc-detail-section h3 svg {
+  color: var(--cc-accent);
+}
+.cc-outcome-btn > svg {
+  color: var(--cc-accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cc-outcome-btn:hover:not(:disabled) {
+    color: var(--cc-accent-dark);
+    background: var(--cc-accent-soft);
+    border-color: var(--cc-accent-light);
+  }
+}
+.cc-outcome-btn[aria-pressed="true"] {
+  color: #fff;
+  background: var(--cc-accent);
+  border-color: var(--cc-accent);
+}
+.cc-outcome-btn[aria-pressed="true"] > svg {
+  color: #fff;
+}
+.cc-history {
+  border-left-color: var(--cc-accent-light);
+}
+.cc-history li {
+  position: relative;
+}
+.cc-history li::before {
+  content: "";
+  position: absolute;
+  left: -21px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--cc-accent);
+}
+.cc-theme h1 {
+  background-image: linear-gradient(var(--cc-accent), var(--cc-accent));
+  background-size: 40px 3px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  padding-bottom: 8px;
+}
+.cc-theme table thead th {
+  color: var(--cc-accent-dark);
+}
+.cc-theme table tbody tr:hover {
+  background: var(--cc-accent-soft);
+}

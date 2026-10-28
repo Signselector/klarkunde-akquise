@@ -153,7 +153,7 @@ export function LeadDialog({
         <DialogHeader className="pr-32">
           <div className="flex items-center gap-4">
             <span
-              className="grid size-14 shrink-0 place-items-center rounded-2xl bg-black/5"
+              className="cc-detail-avatar grid size-14 shrink-0 place-items-center rounded-2xl"
               aria-hidden="true"
             >
               <Building2 size={28} />
