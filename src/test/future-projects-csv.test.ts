@@ -3,6 +3,7 @@ import { futureProjectsCsv, monthLabel, type FutureProjectLead } from "@/lib/fut
 
 const row: FutureProjectLead = {
   lead_id: "1",
+  country: "DE",
   company: "Muster; GmbH",
   contact_name: null,
   phone: "+49 1",
@@ -23,8 +24,8 @@ describe("future projects csv", () => {
   });
   it("starts with the target month and neutralises formulas", () => {
     const lines = futureProjectsCsv([row]).replace(/^﻿/, "").trim().split("\r\n");
-    expect(lines[0]!.startsWith("Zielmonat;Firma")).toBe(true);
-    expect(lines[1]!.startsWith('03/2027;"Muster; GmbH"')).toBe(true);
+    expect(lines[0]!.startsWith("Land;Zielmonat;Firma")).toBe(true);
+    expect(lines[1]!.startsWith('DE;03/2027;"Muster; GmbH"')).toBe(true);
     expect(lines[1]).toContain("muster.example");
     expect(lines[1]!.endsWith("'=1+1")).toBe(true);
   });

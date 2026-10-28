@@ -4,7 +4,7 @@ import { AppointmentNotifier } from "@/components/appointment-notifier";
 import { primaryRole, ROLE_LABEL } from "@/lib/use-admin";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
-import { CountryBadge, CountrySwitcher, useCountry } from "@/lib/country";
+import { CountryBadge, CountrySwitcher, useAllowedCountries, useCountry } from "@/lib/country";
 import { useEffect, useState, type CSSProperties } from "react";
 import {
   createFileRoute,
@@ -76,7 +76,7 @@ function Layout() {
         name: p.data?.display_name ?? user.email,
         role,
         admin: role === "admin" || role === "manager",
-        globalAdmin: role === "admin",
+        globalAdmin: role === "admin" || isMasterEmail(user.email),
         active: p.data?.active !== false,
       };
     },
@@ -105,6 +105,7 @@ function Layout() {
   }, [me, nav]);
 
   const country = useCountry();
+  const allowed = useAllowedCountries();
   const { data: openCallbacks } = useQuery({
     queryKey: ["callback-count", user.id, country],
     refetchInterval: 60_000,
@@ -135,9 +136,10 @@ function Layout() {
         { to: "/no-interest", label: "Kein Interesse", icon: X },
         { to: "/future-projects", label: "Zukunftsprojekte", icon: CalendarDays },
         { to: "/reference-unanswered", label: "Referenzmail offen", icon: Mail },
-        ...(isMaster ? [{ to: "/import", label: "Upload", icon: Upload }] : []),
+        { to: "/import", label: "Upload", icon: Upload },
         { to: "/accounts", label: "Accounts", icon: Crown },
-        { to: "/settings", label: "Einstellungen", icon: Settings },
+        // Settings (Pipedrive, stages, backups ...) belong to global admins only.
+        ...(me?.globalAdmin ? [{ to: "/settings", label: "Einstellungen", icon: Settings }] : []),
       ] as const)
     : [];
   const adminActive = adminItems.some((i) => i.to === location.pathname);
@@ -150,6 +152,27 @@ function Layout() {
     if (next && (location.pathname === "/accounts" || location.pathname === "/settings")) {
       nav({ to: "/leads" });
     }
+  }
+
+  // A new account without a country sees nothing until an admin assigns one.
+  if (me && !me.globalAdmin && allowed.isFetched && (allowed.data ?? []).length === 0) {
+    return (
+      <main className="cc-theme grid min-h-dvh place-items-center bg-background p-6">
+        <section className="grid max-w-md justify-items-center gap-4 rounded-2xl border bg-card p-8 text-center shadow-sm" aria-labelledby="waiting-title">
+          <Brand />
+          <h1 id="waiting-title" className="text-xl font-semibold">
+            Account wartet auf Freischaltung
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Dir wurde noch kein Land (Deutschland, Österreich oder Niederlande) zugewiesen. Bitte wende dich an deinen
+            Manager oder Administrator, um für deinen Arbeitsbereich freigeschaltet zu werden.
+          </p>
+          <Button onClick={signOut}>
+            <LogOut size={18} /> Abmelden
+          </Button>
+        </section>
+      </main>
+    );
   }
 
   return (

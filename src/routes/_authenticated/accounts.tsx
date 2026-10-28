@@ -48,11 +48,17 @@ function AccountsPage() {
   });
   const isMaster = user.email?.toLowerCase() === MASTER;
   const globalAdmin = me.isGlobalAdmin || isMaster;
-  // A manager only sees accounts of the countries assigned to them (the database enforces it for every change).
+  // A manager sees the accounts that share a country with them, plus new accounts without any country that
+  // still wait to be released. The database enforces the rules for every change.
   const mine = users?.find((u) => u.id === user.id)?.countries ?? [];
   const visibleUsers = globalAdmin
     ? users
-    : users?.filter((u) => u.id === user.id || u.countries.some((c) => mine.includes(c)));
+    : users?.filter(
+        (u) =>
+          u.id === user.id ||
+          u.countries.length === 0 ||
+          u.countries.some((c) => mine.includes(c)),
+      );
   const refresh = () => qc.invalidateQueries({ queryKey: ["users"] });
 
   async function toggleCountry(id: string, code: string, on: boolean) {
@@ -128,8 +134,9 @@ function AccountsPage() {
       <section className="space-y-2 rounded-lg border bg-card p-4">
         <p className="text-sm text-muted-foreground">
           Neue Nutzer registrieren sich selbst und sind zuerst Caller. Sie sehen erst etwas, wenn
-          ihnen ein Land freigeschaltet wird. Nur Admins vergeben Rollen wie Manager und die Länder.
-          Manager arbeiten im ihnen zugewiesenen Land und befördern dort Caller zu Senior Callern.
+          ihnen ein Land freigeschaltet wird. Nur Admins vergeben die Rollen Manager und Admin
+          sowie die Länder. Manager legen für Accounts ihres Landes fest, wer Caller oder Senior
+          Caller ist.
         </p>
         <div className="divide-y">
           {visibleUsers?.map((u) => {
@@ -157,12 +164,19 @@ function AccountsPage() {
                         : ROLE_LABEL[u.role]}
                   </Badge>
                 </span>
-                <Badge
-                  variant={u.active ? "outline" : "destructive"}
-                  className="w-fit rounded-full"
-                >
-                  {u.active ? "Aktiv" : "Deaktiviert"}
-                </Badge>
+                <span className="flex flex-col items-start gap-1">
+                  <Badge
+                    variant={u.active ? "outline" : "destructive"}
+                    className="w-fit rounded-full"
+                  >
+                    {u.active ? "Aktiv" : "Deaktiviert"}
+                  </Badge>
+                  {!u.master && u.role !== "admin" && u.countries.length === 0 && (
+                    <Badge className="w-fit rounded-full border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-100">
+                      Wartet auf Freischaltung (kein Land)
+                    </Badge>
+                  )}
+                </span>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex flex-wrap justify-end gap-2">
                     {u.master

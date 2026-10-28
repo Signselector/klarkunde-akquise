@@ -35,3 +35,16 @@ Die frühere Zusatzrolle „Fulfilment“ gibt es nicht mehr (Migration 0026).
 
 * Die Termine „liegen beim Manager“ ist hier nur als Buchungsrecht umgesetzt: Es gibt keine automatische Zuweisung eines Termins an den Manager des Landes, weil es dafür keine Aktion mehr im Anrufablauf gibt.
 * Manager sehen in Statistiken und Verlauf alles, was Admin-Abfragen liefern; eine Begrenzung der Team-Statistik auf das eigene Land ist nicht gesondert nachgeprüft (Zeilen-Zugriff läuft über `can_access_country`).
+
+## Rechte-Matrix (Migration 0031)
+
+| Bereich | Caller / Senior Caller | Manager | Admin |
+| --- | --- | --- | --- |
+| Admin-Bereich im Menü | nein | ja, ohne Einstellungen | ja |
+| Einstellungen (`/settings`) | nein | nein (Umleitung aufs Dashboard) | ja |
+| Upload (`/import`) | nein | nur eigenes Land (fest) | Zielland frei wählbar (Pflicht) |
+| Kein Interesse, Zukunftsprojekte, Referenzmail offen | nein | nur eigenes Land | Land wählbar oder „Alle Länder“ (Spalte „Land“) |
+| Accounts | nein | Accounts des eigenen Landes und neue Accounts ohne Land; Rollen Caller / Senior Caller | alle Accounts, alle Rollen und Länder, Löschen |
+| Account ohne Land | Sperrschirm „Account wartet auf Freischaltung“ (gilt für alle außer Admins) | | |
+
+Datenbank: `get_no_interest_leads`, `get_future_projects_leads`, `get_unanswered_reference_leads` akzeptieren `'ALL'` nur für Admins. Der Import ist für Manager und Admins; das Zielland setzt `set_import_batch_country` (Manager nur für ihr Land), `confirm_import` prüft das Land des Batches.

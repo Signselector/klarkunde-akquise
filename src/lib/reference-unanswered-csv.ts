@@ -3,6 +3,7 @@ import { cell, pick } from "@/lib/no-interest-csv";
 /** One reference-mail lead without a reply after 3 months. `caller_id` is the original caller. */
 export type UnansweredLead = {
   lead_id: string;
+  country?: string | null;
   company: string | null;
   contact_name: string | null;
   phone: string | null;
@@ -18,6 +19,7 @@ export type UnansweredLead = {
 };
 
 export const UNANSWERED_HEADER = [
+  "Land",
   "Caller-ID",
   "Caller",
   "Firma",
@@ -41,6 +43,7 @@ export function unansweredCsv(rows: UnansweredLead[]) {
   const lines = [
     UNANSWERED_HEADER,
     ...rows.map((r) => [
+      r.country,
       r.caller_id,
       r.caller,
       r.company,

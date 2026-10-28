@@ -3,6 +3,7 @@ import { noInterestCsv, type NoInterestLead } from "@/lib/no-interest-csv";
 
 const row = (over: Partial<NoInterestLead> = {}): NoInterestLead => ({
   lead_id: "1",
+  country: "DE",
   company: "Muster; GmbH",
   contact_name: 'Max "M" Muster',
   phone: "+49 30 123",
@@ -19,10 +20,10 @@ const row = (over: Partial<NoInterestLead> = {}): NoInterestLead => ({
 describe("noInterestCsv", () => {
   it("writes a BOM, a header and escaped cells", () => {
     const csv = noInterestCsv([row()]);
-    expect(csv.startsWith("﻿Firma;Ansprechpartner;")).toBe(true);
+    expect(csv.startsWith("﻿Land;Firma;Ansprechpartner;")).toBe(true);
     const line = csv.split("\r\n")[1]!;
     expect(line).toBe(
-      '"Muster; GmbH";"Max ""M"" Muster";+49 30 123;;Berlin;muster.example;Weg 1;B1;Anna;26.10.2026;zu teuer',
+      'DE;"Muster; GmbH";"Max ""M"" Muster";+49 30 123;;Berlin;muster.example;Weg 1;B1;Anna;26.10.2026;zu teuer',
     );
   });
   it("neutralises formulas but keeps phone numbers", () => {

@@ -3,6 +3,7 @@ import { cell, pick } from "@/lib/no-interest-csv";
 /** One lead that was completed as "Zukunftsprojekt". `target_month` is `YYYY-MM`. */
 export type FutureProjectLead = {
   lead_id: string;
+  country?: string | null;
   company: string | null;
   contact_name: string | null;
   phone: string | null;
@@ -17,6 +18,7 @@ export type FutureProjectLead = {
 };
 
 export const FUTURE_HEADER = [
+  "Land",
   "Zielmonat",
   "Firma",
   "Ansprechpartner",
@@ -45,6 +47,7 @@ export function futureProjectsCsv(rows: FutureProjectLead[]) {
   const lines = [
     FUTURE_HEADER,
     ...rows.map((r) => [
+      r.country,
       monthLabel(r.target_month),
       r.company,
       r.contact_name,

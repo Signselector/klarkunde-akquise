@@ -28,6 +28,7 @@ describe("parseInboundReply", () => {
 describe("unansweredCsv", () => {
   const row: UnansweredLead = {
     lead_id: "1",
+    country: "AT",
     company: "Muster GmbH",
     contact_name: null,
     phone: null,
@@ -43,8 +44,8 @@ describe("unansweredCsv", () => {
   };
   it("starts with the original caller id", () => {
     const lines = unansweredCsv([row]).replace(/^﻿/, "").trim().split("\r\n");
-    expect(lines[0]!.startsWith("Caller-ID;Caller;Firma")).toBe(true);
-    expect(lines[1]!.startsWith("11111111-1111-1111-1111-111111111111;Anna;Muster GmbH")).toBe(
+    expect(lines[0]!.startsWith("Land;Caller-ID;Caller;Firma")).toBe(true);
+    expect(lines[1]!.startsWith("AT;11111111-1111-1111-1111-111111111111;Anna;Muster GmbH")).toBe(
       true,
     );
     expect(lines[1]).toContain("muster.de");

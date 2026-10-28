@@ -2,8 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useCountry } from "@/lib/country";
-import { useIsAdmin } from "@/lib/use-admin";
+import { CountryCell, useListScope } from "@/components/country-scope";
 import { noInterestCsv, type NoInterestLead } from "@/lib/no-interest-csv";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
@@ -20,8 +19,8 @@ const when = (iso: string | null) =>
 
 function NoInterestPage() {
   const { user } = Route.useRouteContext();
-  const staff = useIsAdmin(user.id);
-  const country = useCountry();
+  // Managers: their country. Global admins: a country or all countries.
+  const { scope: country, bar, isStaff: staff, showCountryColumn } = useListScope(user.id, user.email);
   const [search, setSearch] = useState("");
   const q = useQuery({
     enabled: staff,
@@ -59,7 +58,7 @@ function NoInterestPage() {
       />
       <Surface
         title="Kein-Interesse-Leads"
-        description={`${country} · ${q.data?.length ?? 0} Leads`}
+        description={`${country === "ALL" ? "Alle Länder" : country} · ${q.data?.length ?? 0} Leads`}
         action={
           <Button variant="outline" onClick={download} disabled={!rows.length}>
             CSV herunterladen
@@ -67,6 +66,7 @@ function NoInterestPage() {
         }
       >
         <div className="cc-surface-body">
+          {bar}
           <Input
             className="max-w-sm"
             aria-label="Leads suchen"
@@ -93,6 +93,7 @@ function NoInterestPage() {
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
                     {[
+                      ...(showCountryColumn ? ["Land"] : []),
                       "Firma",
                       "Kontakt",
                       "Telefon",
@@ -111,6 +112,15 @@ function NoInterestPage() {
                 <tbody className="divide-y">
                   {rows.map((r) => (
                     <tr key={r.lead_id} className="align-top">
+                      {showCountryColumn && (
+
+                        <td className="px-4 py-3">
+
+                          <CountryCell code={r.country} />
+
+                        </td>
+
+                      )}
                       <td className="px-4 py-3 font-medium">{r.company || "–"}</td>
                       <td className="px-3 py-3">{r.contact_name || "–"}</td>
                       <td className="px-3 py-3">{r.phone || "–"}</td>

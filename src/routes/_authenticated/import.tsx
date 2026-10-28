@@ -1,6 +1,8 @@
 import { isMasterEmail } from "@/lib/master";
 import { FeedbackState } from "@/components/coldcaller/primitives";
-import { COUNTRIES, useCountry } from "@/lib/country";
+import { COUNTRIES, useAllowedCountries, useCountry } from "@/lib/country";
+import { useRoles } from "@/lib/use-admin";
+import { Flag } from "@/components/flag";
 import { backendRpc, jsonObject } from "@/lib/backend";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -32,7 +34,18 @@ const FIELDS = [
 
 function ImportPage() {
   const { user } = Route.useRouteContext();
-  const country = useCountry();
+  const active = useCountry();
+  const roles = useRoles(user.id);
+  const globalAdmin = roles.isGlobalAdmin || isMasterEmail(user.email);
+  const allowed = useAllowedCountries();
+  // Admins choose the target country of every batch; a manager works in the own country (fixed when there is one).
+  const options: string[] = globalAdmin ? COUNTRIES.map((c) => c.code) : (allowed.data ?? []);
+  const [picked, setPicked] = useState<string | null>(null);
+  const country: string | null = globalAdmin
+    ? picked
+    : options.length === 1
+      ? options[0]!
+      : (picked ?? (options.includes(active) ? active : null));
   const nav = useNavigate();
   const [rows, setRows] = useState<string[][]>([]);
   const [map, setMap] = useState<Record<string, number>>({});
@@ -151,7 +164,11 @@ function ImportPage() {
       }
       if (!batchId) return;
       state.batchId = batchId;
-      await supabase.from("lead_batches").update({ country }).eq("id", batchId);
+      const { error: countryError } = await supabase.rpc("set_import_batch_country", {
+        p_batch_id: batchId,
+        p_country: country ?? "",
+      });
+      if (countryError) throw new Error("country_not_allowed");
       const invalid: number[] = [];
       for (let offset = 0; offset < leads.length; offset += 500) {
         const { data: checked, error } = await supabase
@@ -196,6 +213,10 @@ function ImportPage() {
   }
 
   async function confirm() {
+    if (!country) {
+      toast.error("Bitte zuerst das Zielland wählen.");
+      return;
+    }
     if (backendEnabled) return importBackend();
     if (map["phone"] === undefined) {
       toast.error("Bitte die Spalte Telefon zuordnen.");
@@ -244,17 +265,44 @@ function ImportPage() {
     nav({ to: "/dashboard" });
   }
 
-  if (!isMasterEmail(user.email))
+  if (roles.ready && !roles.isStaff && !globalAdmin)
     return (
-      <FeedbackState kind="error" title="Nur für den Master-Admin">
-        Neue Leadbatches kann ausschließlich der Master-Admin hochladen.
+      <FeedbackState kind="error" title="Nur für Manager und Admins">
+        Neue Leadbatches können nur Manager (für ihr Land) und Admins hochladen.
       </FeedbackState>
     );
   return (
     <div className="space-y-6">
       <h1 className="text-[22px] font-semibold">
-        Leads importieren – {COUNTRIES.find((c) => c.code === country)?.label}
+        Leads importieren{country ? ` – ${COUNTRIES.find((c) => c.code === country)?.label}` : ""}
       </h1>
+      <section className="grid gap-2 rounded-lg border bg-card p-4" aria-label="Zielland">
+        <Label htmlFor="target-country">Zielland des Batches{globalAdmin ? " (Pflicht)" : ""}</Label>
+        {!globalAdmin && options.length === 1 ? (
+          <p id="target-country" className="flex items-center gap-2 text-sm font-medium">
+            Zielland: {COUNTRIES.find((c) => c.code === options[0])?.label} <Flag code={options[0]!} size={20} />
+          </p>
+        ) : options.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Dir ist noch kein Land zugewiesen.</p>
+        ) : (
+          <select
+            id="target-country"
+            className="h-10 w-full max-w-xs rounded-md border bg-background px-3 text-sm"
+            value={country ?? ""}
+            onChange={(e) => setPicked(e.target.value || null)}
+          >
+            <option value="">– Land wählen –</option>
+            {options.map((c) => (
+              <option key={c} value={c}>
+                {COUNTRIES.find((x) => x.code === c)?.label}
+              </option>
+            ))}
+          </select>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Alle Leads dieses Uploads gehören zu diesem Land. Es lässt sich danach nicht mehr ändern.
+        </p>
+      </section>
       <p className="text-sm text-muted-foreground">
         Zum Ausprobieren:{" "}
         <a className="underline" href="/test-leads-de.csv" download>
@@ -311,7 +359,7 @@ function ImportPage() {
               .join(" · ")}
           </p>
           {progress !== null && <Progress value={progress} />}
-          <Button onClick={confirm} disabled={progress !== null || !name}>
+          <Button onClick={confirm} disabled={progress !== null || !name || !country}>
             {data.length} Leads importieren – bestätigen
           </Button>
         </div>

@@ -1,6 +1,7 @@
 /** CSV of the "Kein Interesse" leads for download. Semicolon separated with a BOM so German Excel opens it correctly. */
 export type NoInterestLead = {
   lead_id: string;
+  country?: string | null;
   company: string | null;
   contact_name: string | null;
   phone: string | null;
@@ -28,6 +29,7 @@ export const cell = (value: unknown) => {
 };
 
 export const NO_INTEREST_HEADER = [
+  "Land",
   "Firma",
   "Ansprechpartner",
   "Telefon",
@@ -45,6 +47,7 @@ export function noInterestCsv(rows: NoInterestLead[]) {
   const lines = [
     NO_INTEREST_HEADER,
     ...rows.map((r) => [
+      r.country,
       r.company,
       r.contact_name,
       r.phone,

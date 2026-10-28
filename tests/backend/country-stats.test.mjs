@@ -93,3 +93,44 @@ test("country stats: totals, outcomes, team, one employee, only for staff of the
   await assert.rejects(() => rpc(mgr, "AT", f, t, null, "day"), /forbidden/);
   await assert.rejects(() => rpc(mgr, "DE", t, f, null, "day"), /validation_failed/);
 });
+
+test("admin lists: managers only their country, global admins one country or ALL, rows carry the country", async () => {
+  // a Kein-Interesse lead in AT (batch of an AT caller) next to the DE ones
+  await db.exec("RESET ROLE");
+  const at = (await q("insert into public.lead_batches(name,created_by,import_state,country,assigned_to) values ('BAT',$1,'confirmed','AT',$2) returning id", [admin, other]))[0].id;
+  await q("insert into public.user_countries values ($1,'AT') on conflict do nothing", [other]);
+  await q("insert into public.leads(batch_id,company,phone) values ($1,'AT Firma','+43 1')", [at]);
+  const atLead = (await q("select id from public.leads where batch_id=$1", [at]))[0].id;
+  await act(other, atLead, "no_interest", { note: "nein" });
+  await act(rec, leads[3], "no_interest", { note: "nein" });
+  const list = async (user, c) => { await as(user); return (await q("select public.get_no_interest_leads($1) r", [c]))[0].r; };
+  const de = await list(mgr, "DE");
+  assert.ok(de.length >= 1 && de.every((x) => x.country === "DE"));
+  await assert.rejects(() => list(mgr, "ALL"), /forbidden/);
+  await assert.rejects(() => list(mgr, "AT"), /forbidden/);
+  const all = await list(admin, "ALL");
+  assert.deepEqual([...new Set(all.map((x) => x.country))].sort(), ["AT", "DE"]);
+  assert.ok((await list(admin, "AT")).every((x) => x.country === "AT"));
+  for (const fn of ["get_future_projects_leads", "get_unanswered_reference_leads"]) {
+    await as(mgr);
+    await assert.rejects(() => q(`select public.${fn}('ALL')`), /forbidden/);
+    await as(admin);
+    assert.ok(Array.isArray((await q(`select public.${fn}('ALL') r`))[0].r));
+  }
+});
+
+test("import: only staff, target country only for countries the user administers", async () => {
+  await as(rec);
+  await assert.rejects(() => q("select public.preview_import($1,'Batch','[{\"phone\":\"+49 1\"}]'::jsonb)", [randomUUID()]), /forbidden/);
+  await as(mgr);
+  const b = (await q("select public.preview_import($1,'Batch','[{\"phone\":\"+49 5551\"}]'::jsonb) r", [randomUUID()]))[0].r.batch_id;
+  await assert.rejects(() => q("select public.set_import_batch_country($1,'AT')", [b]), /forbidden/);
+  await q("select public.set_import_batch_country($1,'DE')", [b]);
+  await as(admin);
+  const c = (await q("select public.preview_import($1,'Batch AT','[{\"phone\":\"+43 5551\"}]'::jsonb) r", [randomUUID()]))[0].r.batch_id;
+  await q("select public.set_import_batch_country($1,'AT')", [c]);
+  await db.exec("RESET ROLE");
+  assert.equal((await q("select country from public.lead_batches where id=$1", [c]))[0].country, "AT");
+  await as(rec);
+  await assert.rejects(() => q("select public.set_import_batch_country($1,'DE')", [b]), /forbidden/);
+});

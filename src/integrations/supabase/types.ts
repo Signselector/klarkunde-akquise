@@ -1576,6 +1576,7 @@ export type Database = {
         Args: { p_country: string; p_limit?: number }
         Returns: Json
       }
+      set_import_batch_country: { Args: { p_batch_id: string; p_country: string }; Returns: undefined }
       get_country_period_stats: {
         Args: {
           p_bucket?: string

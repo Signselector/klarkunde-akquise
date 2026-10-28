@@ -6,7 +6,8 @@ import { TestBatchPurge } from "@/components/test-batch-purge";
 import { MonthlyGoalCard } from "@/components/monthly-goal";
 import { StageMapping } from "@/components/stage-mapping";
 import { backendEnabled } from "@/lib/backend";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { isMasterEmail } from "@/lib/master";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -25,8 +26,16 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function SettingsPage() {
   const { user } = Route.useRouteContext();
   const roles = useRoles(user.id);
-  const admin = roles.isStaff;
-  const globalAdmin = roles.isGlobalAdmin;
+  const globalAdmin = roles.isGlobalAdmin || isMasterEmail(user.email);
+  const admin = roles.isStaff || globalAdmin;
+  const nav = useNavigate();
+  // Settings are for global admins only; everybody else is sent back to the dashboard.
+  useEffect(() => {
+    if (roles.ready && !globalAdmin) {
+      toast.error("Nur für Administratoren.");
+      void nav({ to: "/dashboard", replace: true });
+    }
+  }, [roles.ready, globalAdmin, nav]);
   const qc = useQueryClient();
   const [script, setScript] = useState(DEFAULT_SCRIPT);
   const { data: saved } = useQuery({
@@ -49,7 +58,7 @@ function SettingsPage() {
     toast.success("Leitfaden gespeichert.");
     qc.invalidateQueries({ queryKey: ["script"] });
   }
-  if (!admin) return <p className="text-muted-foreground">Einstellungen sind nur für Admins.</p>;
+  if (!globalAdmin) return <p className="text-muted-foreground">Einstellungen sind nur für Administratoren.</p>;
   const isMaster = user.email?.toLowerCase() === "office@signselector.com";
   // Managers get the day-to-day settings; Pipedrive, stages, deduplication and backups are backend and stay with admins.
   const tabs: [string, string][] = [
