@@ -663,6 +663,23 @@
   background: #26262b;
   color: white;
 }
+.cc-batch:has(.cc-badge--success) select {
+  background: #18181b;
+  color: #ffffff;
+  border-color: #3a3a40;
+  color-scheme: dark;
+}
+.cc-batch:has(.cc-badge--success) select:hover {
+  background: #26262b;
+}
+.cc-batch:has(.cc-badge--success) select:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+.cc-batch:has(.cc-badge--success) select option {
+  background: #18181b;
+  color: #ffffff;
+}
 
 /* Navigation: a pill with the current area; hover/focus unfolds a panel with three rows over the page */
 .cc-topnav-links {
