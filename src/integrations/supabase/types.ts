@@ -1576,6 +1576,16 @@ export type Database = {
         Args: { p_country: string; p_limit?: number }
         Returns: Json
       }
+      get_country_period_stats: {
+        Args: {
+          p_bucket?: string
+          p_country: string
+          p_from: string
+          p_to: string
+          p_user_id?: string
+        }
+        Returns: Json
+      }
       get_dashboard: {
         Args: { p_from: string; p_scope?: string; p_to: string }
         Returns: Json
