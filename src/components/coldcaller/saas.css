@@ -1399,10 +1399,16 @@ tr:hover > .cc-sticky-action {
     0 12px 32px rgb(37 99 235 / 16%),
     0 2px 6px rgb(15 23 42 / 8%);
 }
+[data-sonner-toast].cc-callback-toast {
+  gap: 12px;
+  align-items: center;
+}
 [data-sonner-toast].cc-callback-toast [data-icon] {
   margin: 0;
-  width: auto;
-  height: auto;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  align-self: flex-start;
 }
 .cc-toast-icon {
   display: grid;
