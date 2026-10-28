@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Dropdown } from "@/components/ui/dropdown";
 
 export const Route = createFileRoute("/_authenticated/import")({
   head: () => ({ meta: [{ title: "Lead-Import – Sign Selector Cold Caller" }] }),
@@ -290,19 +291,16 @@ function ImportPage() {
         ) : options.length === 0 ? (
           <p className="text-sm text-muted-foreground">Dir ist noch kein Land zugewiesen.</p>
         ) : (
-          <select
-            id="target-country"
-            className="h-10 w-full max-w-xs rounded-md border bg-background px-3 text-sm"
+          <Dropdown
+            className="w-full max-w-xs"
+            ariaLabel="Zielland"
             value={country ?? ""}
-            onChange={(e) => setPicked(e.target.value || null)}
-          >
-            <option value="">– Land wählen –</option>
-            {options.map((c) => (
-              <option key={c} value={c}>
-                {COUNTRIES.find((x) => x.code === c)?.label}
-              </option>
-            ))}
-          </select>
+            onChange={(v) => setPicked(v || null)}
+            options={[
+              { value: "", label: "– Land wählen –" },
+              ...options.map((c) => ({ value: c, label: COUNTRIES.find((x) => x.code === c)?.label ?? c })),
+            ]}
+          />
         )}
         <p className="text-xs text-muted-foreground">
           Alle Leads dieses Uploads gehören zu diesem Land. Es lässt sich danach nicht mehr ändern.
@@ -336,24 +334,18 @@ function ImportPage() {
             {FIELDS.map((fl) => (
               <div key={fl.key} className="space-y-1">
                 <Label>{fl.label}</Label>
-                <select
-                  className="h-9 w-full rounded-md border bg-background px-2 text-sm"
-                  value={map[fl.key] ?? ""}
-                  onChange={(e) =>
-                    setMap({
-                      ...map,
-                      [fl.key]:
-                        e.target.value === "" ? (undefined as never) : Number(e.target.value),
-                    })
+                <Dropdown
+                  className="w-full"
+                  ariaLabel={fl.label}
+                  value={map[fl.key] === undefined ? "" : String(map[fl.key])}
+                  onChange={(v) =>
+                    setMap({ ...map, [fl.key]: v === "" ? (undefined as never) : Number(v) })
                   }
-                >
-                  <option value="">– nicht zuordnen –</option>
-                  {headers.map((h, i) => (
-                    <option key={i} value={i}>
-                      {h}
-                    </option>
-                  ))}
-                </select>
+                  options={[
+                    { value: "", label: "– nicht zuordnen –" },
+                    ...headers.map((h, i) => ({ value: String(i), label: h || `Spalte ${i + 1}` })),
+                  ]}
+                />
               </div>
             ))}
           </div>

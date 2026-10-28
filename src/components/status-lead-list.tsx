@@ -12,6 +12,7 @@ import { useRoles } from "@/lib/use-admin";
 import { FeedbackState, StatusBadge, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
+import { Dropdown } from "@/components/ui/dropdown";
 
 export type CompletedLead = {
   lead_id: string;
@@ -125,17 +126,15 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <select
-              className="rounded-md border bg-background px-3 py-2 text-sm"
-              aria-label="Aktion filtern"
+            <Dropdown
+              ariaLabel="Aktion filtern"
               value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              <option value="all">Alle Aktionen</option>
-              {[...new Set((query.data ?? []).map(actionName))].sort().map((label) => (
-                <option key={label}>{label}</option>
-              ))}
-            </select>
+              onChange={setFilter}
+              options={[
+                { value: "all", label: "Alle Aktionen" },
+                ...[...new Set((query.data ?? []).map(actionName))].sort().map((label) => ({ value: label, label })),
+              ]}
+            />
           </div>
           {query.isLoading ? (
             <FeedbackState kind="loading" title="Kontakte werden geladen" />

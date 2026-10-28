@@ -7,6 +7,7 @@ import { AUDIT_ACTIONS, AUDIT_ACTION_LABEL, auditDetail, type AuditAction } from
 import { CountryCell } from "@/components/country-scope";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dropdown } from "@/components/ui/dropdown";
 
 export const Route = createFileRoute("/_authenticated/audit-log")({
   head: () => ({ meta: [{ title: "Aktivitätsprotokoll – Sign Selector Cold Caller" }] }),
@@ -75,7 +76,6 @@ function AuditLogPage() {
     );
   const rows = q.data?.pages.flat() ?? [];
   const fmt = new Intl.DateTimeFormat("de-DE", { dateStyle: "short", timeStyle: "medium" });
-  const selectCls = "min-h-10 rounded-md border bg-background px-2 text-sm";
   return (
     <div className="space-y-4">
       <div>
@@ -88,25 +88,30 @@ function AuditLogPage() {
       <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-card p-3">
         <label className="grid gap-1 text-xs text-muted-foreground">
           Land
-          <select className={selectCls} value={country} onChange={(e) => setCountry(e.target.value)}>
-            <option value="">Alle</option>
-            {["DE", "AT", "NL", "ALL"].map((c) => (
-              <option key={c} value={c}>
-                {c === "ALL" ? "Länderübergreifend" : c}
-              </option>
-            ))}
-          </select>
+          <Dropdown
+            ariaLabel="Land"
+            value={country}
+            onChange={setCountry}
+            options={[
+              { value: "", label: "Alle" },
+              ...["DE", "AT", "NL", "ALL"].map((c) => ({
+                value: c,
+                label: c === "ALL" ? "Länderübergreifend" : c,
+              })),
+            ]}
+          />
         </label>
         <label className="grid gap-1 text-xs text-muted-foreground">
           Aktion
-          <select className={selectCls} value={action} onChange={(e) => setAction(e.target.value)}>
-            <option value="">Alle</option>
-            {AUDIT_ACTIONS.map((a) => (
-              <option key={a} value={a}>
-                {AUDIT_ACTION_LABEL[a]}
-              </option>
-            ))}
-          </select>
+          <Dropdown
+            ariaLabel="Aktion"
+            value={action}
+            onChange={setAction}
+            options={[
+              { value: "", label: "Alle" },
+              ...AUDIT_ACTIONS.map((a) => ({ value: a, label: AUDIT_ACTION_LABEL[a] })),
+            ]}
+          />
         </label>
         <label className="grid gap-1 text-xs text-muted-foreground">
           Benutzer

@@ -37,6 +37,7 @@ import { dateValue, timeValue } from "@/lib/booking-slots";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Dropdown } from "@/components/ui/dropdown";
 
 type Template = { id: string; name: string; subject?: string; body: string };
 const STAGE_NAME: Record<string, string> = {
@@ -468,18 +469,13 @@ export function LeadActions({
           {current.needs.month && (
             <label className="block text-sm">
               Wann hat der Kunde Interesse? (Monat und Jahr)
-              <select
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              <Dropdown
+                className="w-full"
                 value={month}
-                onChange={(e) => setMonth(e.target.value)}
-              >
-                <option value="">Monat wählen …</option>
-                {monthOptions().map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setMonth}
+                placeholder="Monat wählen …"
+                options={monthOptions().map((m) => ({ value: m.value, label: m.label }))}
+              />
               <span className="mt-1 block text-xs text-muted-foreground">
                 Sobald dieser Monat beginnt, wird der Lead als Deal in der Stage „Zukünftiges
                 Interesse“ im CRM gespeichert.
@@ -580,20 +576,13 @@ export function LeadActions({
               {templates.data && (
                 <label className="block text-sm">
                   Vorlage
-                  <select
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                  <Dropdown
+                    className="w-full"
                     value={mail.template}
-                    onChange={(e) => pickTemplate(e.target.value)}
-                  >
-                    <option value="">
-                      {templates.data.length ? "Vorlage wählen …" : "Keine Vorlagen hinterlegt"}
-                    </option>
-                    {templates.data.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={pickTemplate}
+                    placeholder={templates.data.length ? "Vorlage wählen …" : "Keine Vorlagen hinterlegt"}
+                    options={templates.data.map((t) => ({ value: t.id, label: t.name }))}
+                  />
                 </label>
               )}
               <label className="block text-sm">

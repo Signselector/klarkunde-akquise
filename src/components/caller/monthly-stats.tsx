@@ -15,6 +15,7 @@ import {
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
+import { Dropdown } from "@/components/ui/dropdown";
 
 const PAGE = 1000;
 
@@ -87,18 +88,12 @@ export function MonthlyStats({ userId }: { userId: string }) {
             >
               ‹
             </Button>
-            <select
-              className="rounded-md border bg-background px-3 py-2 text-sm"
-              aria-label="Monat wählen"
+            <Dropdown
+              ariaLabel="Monat wählen"
               value={monthValue(ym)}
-              onChange={(e) => setYm(parseMonth(e.target.value))}
-            >
-              {options.map((o) => (
-                <option key={monthValue(o)} value={monthValue(o)}>
-                  {monthLabel(o)}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setYm(parseMonth(v))}
+              options={options.map((o) => ({ value: monthValue(o), label: monthLabel(o) }))}
+            />
             <Button
               variant="outline"
               size="sm"

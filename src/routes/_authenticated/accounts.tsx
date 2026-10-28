@@ -12,6 +12,7 @@ import { Flag } from "@/components/flag";
 import { setViewAs } from "@/lib/view-as";
 import { presenceState } from "@/lib/presence";
 import { deleteAccount } from "@/lib/accounts.functions";
+import { Dropdown } from "@/components/ui/dropdown";
 
 const MASTER = "office@signselector.com";
 
@@ -236,18 +237,16 @@ function AccountsPage() {
                       </Button>
                     )}
                     {!u.master && globalAdmin && (
-                      <select
-                        className="rounded-md border bg-background px-2 py-1.5 text-sm"
-                        aria-label={`Rolle von ${u.display_name ?? "Account"}`}
+                      <Dropdown
+                        className="min-h-9"
+                        ariaLabel={`Rolle von ${u.display_name ?? "Account"}`}
                         value={u.role}
-                        onChange={(e) => setRole(u.id, e.target.value as RoleName)}
-                      >
-                        {(Object.keys(ROLE_LABEL) as RoleName[]).map((r) => (
-                          <option key={r} value={r}>
-                            {ROLE_LABEL[r]}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(v) => setRole(u.id, v as RoleName)}
+                        options={(Object.keys(ROLE_LABEL) as RoleName[]).map((r) => ({
+                          value: r,
+                          label: ROLE_LABEL[r],
+                        }))}
+                      />
                     )}
                     {!u.master &&
                       !globalAdmin &&

@@ -15,8 +15,9 @@ import { Flag } from "@/components/flag";
 import { ChevronLeft, ChevronRight } from "@/components/coldcaller/icons";
 import { FeedbackState } from "@/components/coldcaller/primitives";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { Dropdown } from "@/components/ui/dropdown";
+import { ChoiceButtons } from "@/components/ui/choice-buttons";
 
 type Totals = {
   calls: number;
@@ -193,48 +194,45 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
           </div>
           <label className="ml-auto flex items-center gap-2 text-sm">
             <span className="font-medium">Ebene</span>
-            <select
-              className="min-h-10 rounded-md border bg-background px-3 text-sm"
+            <Dropdown
               value={employee ?? ""}
-              onChange={(e) => setEmployee(e.target.value || null)}
-              aria-label="Gesamtes Land oder Mitarbeiter"
-            >
-              <option value="">Gesamtes Land (alle Mitarbeiter)</option>
-              {team.map((m) => (
-                <option key={m.user_id} value={m.user_id}>
-                  {m.name} · {roleLabel(m.role)}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => setEmployee(v || null)}
+              ariaLabel="Gesamtes Land oder Mitarbeiter"
+              options={[
+                { value: "", label: "Gesamtes Land (alle Mitarbeiter)" },
+                ...team.map((m) => ({ value: m.user_id, label: `${m.name} · ${roleLabel(m.role)}` })),
+              ]}
+            />
           </label>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t pt-3">
-          <Tabs value={mode} onValueChange={(v) => setMode(v as PeriodMode)}>
-            <TabsList>
-              <TabsTrigger value="month">Monatlich</TabsTrigger>
-              <TabsTrigger value="week">Wöchentlich</TabsTrigger>
-              <TabsTrigger value="day">Täglich</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <ChoiceButtons<PeriodMode>
+            ariaLabel="Zeitraum"
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: "month", label: "Monatlich" },
+              { value: "week", label: "Wöchentlich" },
+              { value: "day", label: "Täglich" },
+            ]}
+          />
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" aria-label="Zurück" onClick={() => setAnchor(shiftAnchor(mode, anchor, -1))}>
               <ChevronLeft />
             </Button>
             {mode === "month" ? (
-              <select
-                className="min-h-10 rounded-md border bg-background px-3 text-sm capitalize"
-                aria-label="Monat wählen"
+              <Dropdown
+                className="capitalize"
+                contentClassName="capitalize"
+                ariaLabel="Monat wählen"
                 value={period.start}
-                onChange={(e) => setAnchor(e.target.value)}
-              >
-                {!months.some((m) => m.key === period.start) && <option value={period.start}>{period.label}</option>}
-                {months.map((m) => (
-                  <option key={m.key} value={m.key}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
+                onChange={setAnchor}
+                options={[
+                  ...(months.some((m) => m.key === period.start) ? [] : [{ value: period.start, label: period.label }]),
+                  ...months.map((m) => ({ value: m.key, label: m.label })),
+                ]}
+              />
             ) : mode === "day" ? (
               <input
                 type="date"

@@ -24,6 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { FolderOpen } from "@/components/coldcaller/icons";
 import { FeedbackState, InfoButton, Surface } from "@/components/coldcaller/primitives";
 import { Button } from "@/components/ui/button";
+import { Dropdown } from "@/components/ui/dropdown";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Übersicht – Sign Selector Cold Caller" }] }),
@@ -297,12 +298,17 @@ function Dashboard() {
                         </Button>
                       )}
                       {admin && (
-                        <select
-                          className="rounded-md border bg-background px-2 py-1.5 text-sm"
-                          aria-label={`Batch ${b.name} neu zuweisen`}
+                        <Dropdown
+                          className="min-h-9 text-[13px]"
+                          ariaLabel={`Batch ${b.name} neu zuweisen`}
+                          placeholder="Zuweisen an …"
                           value=""
-                          onChange={(e) => {
-                            const person = people.data?.find((p) => p.id === e.target.value);
+                          options={(people.data ?? []).map((p) => ({
+                            value: p.id,
+                            label: p.display_name ?? "",
+                          }))}
+                          onChange={(v) => {
+                            const person = people.data?.find((p) => p.id === v);
                             if (person)
                               setPending({
                                 batch: row,
@@ -311,14 +317,7 @@ function Dashboard() {
                                 userName: person.display_name ?? "",
                               });
                           }}
-                        >
-                          <option value="">Zuweisen an …</option>
-                          {people.data?.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.display_name}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       )}
                     </div>
                   )}
