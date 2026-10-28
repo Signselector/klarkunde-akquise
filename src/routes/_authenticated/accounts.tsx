@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { COUNTRIES } from "@/lib/country";
 import { Flag } from "@/components/flag";
+import { setViewAs } from "@/lib/view-as";
 import { presenceState } from "@/lib/presence";
 import { deleteAccount } from "@/lib/accounts.functions";
 
@@ -118,10 +119,35 @@ function AccountsPage() {
     }
   }
 
-  function openCallerView() {
-    localStorage.setItem("cc-caller-view", "1");
-    window.dispatchEvent(new Event("cc-caller-view"));
-    nav({ to: "/leads" });
+  const router = useRouter();
+  /** Own account: the plain caller view. Anyone else: the app exactly as that employee sees it (read only). */
+  async function openView(u: {
+    id: string;
+    display_name: string | null;
+    email: string | null;
+    role: string;
+    countries: string[];
+  }) {
+    if (u.id === user.id) {
+      localStorage.setItem("cc-caller-view", "1");
+      window.dispatchEvent(new Event("cc-caller-view"));
+      nav({ to: "/leads" });
+      return;
+    }
+    const name = u.display_name || u.email || "Mitarbeiter";
+    setViewAs({ id: u.id, name, email: u.email, role: u.role });
+    // Best effort: the log must never block the view.
+    void supabase
+      .rpc("log_activity", {
+        p_action: "view_as_started",
+        p_country: globalAdmin ? "ALL" : (u.countries.find((c) => mine.includes(c)) ?? mine[0] ?? "ALL"),
+        p_target_type: "user",
+        p_target_id: u.id,
+        p_target_label: name,
+      })
+      .then(() => undefined);
+    await router.invalidate();
+    nav({ to: "/dashboard" });
   }
 
   if (!admin)
@@ -203,10 +229,12 @@ function AccountsPage() {
                         })}
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
-                    <Button size="sm" variant="outline" onClick={openCallerView}>
-                      <Eye size={16} />
-                      Ansicht
-                    </Button>
+                    {(self || globalAdmin || u.role === "recruit" || u.role === "veteran") && (
+                      <Button size="sm" variant="outline" onClick={() => void openView(u)}>
+                        <Eye size={16} />
+                        Ansicht
+                      </Button>
+                    )}
                     {!u.master && globalAdmin && (
                       <select
                         className="rounded-md border bg-background px-2 py-1.5 text-sm"

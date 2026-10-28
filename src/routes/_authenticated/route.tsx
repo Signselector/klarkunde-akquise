@@ -1,4 +1,5 @@
 import { isMasterEmail } from "@/lib/master";
+import { getViewAs, installViewAsGuard, setViewAs } from "@/lib/view-as";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { AppointmentNotifier } from "@/components/appointment-notifier";
 import { primaryRole, ROLE_LABEL } from "@/lib/use-admin";
@@ -13,6 +14,7 @@ import {
   Link,
   useNavigate,
   useLocation,
+  useRouter,
 } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,17 +55,22 @@ import {
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
+    installViewAsGuard();
     const { data } = await supabase.auth.getUser();
     if (!data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+    // "Ansicht als Mitarbeiter": pages work with the viewed employee as `user`; the real user stays in `realUser`.
+    const view = getViewAs();
+    const user = view ? { ...data.user, id: view.id, email: view.email ?? data.user.email } : data.user;
+    return { user, realUser: data.user, viewAs: view };
   },
   component: Layout,
 });
 
 function Layout() {
-  const { user } = Route.useRouteContext();
+  const { user, realUser, viewAs } = Route.useRouteContext();
   const qc = useQueryClient();
   const nav = useNavigate();
+  const router = useRouter();
   const location = useLocation();
   const { data: me } = useQuery({
     queryKey: ["me", user.id],
@@ -85,6 +92,7 @@ function Layout() {
   });
 
   async function signOut() {
+    setViewAs(null);
     // Best effort: a failing log call must never block signing out.
     await Promise.allSettled([
       supabase.rpc("log_activity", { p_action: "user_logout" }),
@@ -101,7 +109,7 @@ function Layout() {
     nav({ to: "/auth", replace: true });
   }
 
-  usePresence(user.id);
+  usePresence(realUser.id);
 
   const isMaster = isMasterEmail(user.email);
   const [callerView, setCallerView] = useState(false);
@@ -113,10 +121,10 @@ function Layout() {
     return () => window.removeEventListener("cc-caller-view", sync);
   }, [isMaster]);
   useEffect(() => {
-    if (me && !me.active) {
+    if (me && !me.active && !viewAs) {
       void supabase.auth.signOut().then(() => nav({ to: "/auth", replace: true }));
     }
-  }, [me, nav]);
+  }, [me, nav, viewAs]);
 
   const country = useCountry();
   const allowed = useAllowedCountries();
@@ -169,8 +177,14 @@ function Layout() {
     }
   }
 
+  async function endViewAs() {
+    setViewAs(null);
+    await router.invalidate();
+    nav({ to: "/accounts" });
+  }
+
   // A new account without a country sees nothing until an admin assigns one.
-  if (me && !me.globalAdmin && allowed.isFetched && (allowed.data ?? []).length === 0) {
+  if (me && !viewAs && !me.globalAdmin && allowed.isFetched && (allowed.data ?? []).length === 0) {
     return (
       <main className="cc-theme grid min-h-dvh place-items-center bg-background p-6">
         <section className="grid max-w-md justify-items-center gap-4 rounded-2xl border bg-card p-8 text-center shadow-sm" aria-labelledby="waiting-title">
@@ -297,9 +311,20 @@ function Layout() {
           </div>
         </header>
         <TestModeBanner />
+        {viewAs && (
+          <div role="status" className="cc-viewas-banner">
+            <span>
+              <strong>Ansicht als {viewAs.name}</strong> ({ROLE_LABEL[viewAs.role as keyof typeof ROLE_LABEL] ?? viewAs.role}) – nur
+              Lesen, es wird nichts gespeichert.
+            </span>
+            <Button size="sm" onClick={() => void endViewAs()}>
+              Ansicht beenden
+            </Button>
+          </div>
+        )}
         <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
-          <CallbackReminder userId={user.id} />
-          <AppointmentNotifier userId={user.id} />
+          {!viewAs && <CallbackReminder userId={user.id} />}
+          {!viewAs && <AppointmentNotifier userId={user.id} />}
           <Outlet />
         </div>
       </SidebarInset>

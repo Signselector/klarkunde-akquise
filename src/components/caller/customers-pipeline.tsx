@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { withViewAsRead } from "@/lib/view-as";
 import { supabase } from "@/integrations/supabase/client";
 import { useCountry } from "@/lib/country";
 import { loadMyCustomers } from "@/lib/customers.functions";
@@ -61,7 +62,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
   });
   const customers = useQuery({
     queryKey: ["customers", country, userId],
-    queryFn: () => load({ data: { country } }),
+    queryFn: () => withViewAsRead(() => load({ data: { country } })),
     staleTime: 2 * 60_000,
     refetchOnWindowFocus: false,
   });

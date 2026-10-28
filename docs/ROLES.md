@@ -55,3 +55,10 @@ Datenbank: `get_no_interest_leads`, `get_future_projects_leads`, `get_unanswered
 - **Aktivitätsprotokoll** (`/audit-log`, nur Manager und Admins): Tabelle `activity_audit_logs`, nur lesbar. Update, Delete und Truncate sind per Trigger gesperrt, es gibt keine Schreibrechte für Clients. Manager sehen nur Einträge ihres Landes, Admins alle.
 - Protokolliert werden Anmeldung/Abmeldung, Batch übernommen/freigegeben/hochgeladen/abgeschlossen/gelöscht, Registrierung, Rollenänderung, Deaktivierung, Account löschen sowie Öffnen und CSV-Export der Admin-Listen. Aktionen von Managern und Admins werden genauso erfasst.
 - Die meisten Einträge schreiben Datenbank-Trigger; Clients dürfen über `log_activity` nur Login, Logout und Listen-Ansicht/-Export melden.
+
+## Ansicht als Mitarbeiter
+
+- Unter `/accounts` öffnet „Ansicht“ bei einem Mitarbeiter die App so, wie dieser sie sieht (Dashboard, Leads, Rückrufe, Termine, Statistik, Meine Kunden). Ein Banner zeigt die Ansicht an, „Ansicht beenden“ führt zurück.
+- Nur lesen: Solange die Ansicht aktiv ist, blockiert der Browser alle Schreibzugriffe. Telefonieren, Kalender-Abgleich und Erinnerungen sind aus.
+- Berechtigung: Der Browser sendet `x-view-as`; die Datenbank (`app_private.view_as_uid()`) prüft es. Admins dürfen jeden ansehen, Manager nur Caller und Senior Caller ihrer Länder. Rückrufe sind sonst privat und werden nur dafür lesbar.
+- Jeder Start einer Ansicht wird im Aktivitätsprotokoll festgehalten („Ansicht als Mitarbeiter“).

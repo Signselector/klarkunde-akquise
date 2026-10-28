@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getViewAs } from "@/lib/view-as";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { backendEnabled } from "@/lib/backend";
@@ -23,7 +24,8 @@ export function useCalendarSync(userId: string, country: string) {
   const qc = useQueryClient();
   const run = useServerFn(syncMyCalendar);
   const sync = useQuery({
-    enabled: backendEnabled,
+    // A manager viewing an employee must not trigger that employee's Pipedrive sync.
+    enabled: backendEnabled && !getViewAs(),
     queryKey: ["calendar-sync", userId, country],
     staleTime: 60_000,
     refetchInterval: 5 * 60_000,

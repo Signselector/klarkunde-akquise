@@ -1,4 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { gatewayClient } from "@/lib/crm-sync.functions";
 import { CrmError } from "@/lib/crm-sync";
@@ -48,6 +51,20 @@ export function gatewayReader(
   };
 }
 
+/** The request's Supabase client, extended with the x-view-as header the browser sent (if any). */
+async function viewAsClient(fallback: SupabaseClient<Database>): Promise<SupabaseClient<Database>> {
+  const headers = getRequest()?.headers;
+  const view = headers?.get("x-view-as");
+  const auth = headers?.get("authorization");
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  if (!view || !auth || !url || !key) return fallback;
+  return createClient<Database>(url, key, {
+    global: { headers: { Authorization: auth, "x-view-as": view } },
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+}
+
 export type MyCustomers = {
   country: string;
   deals: CustomerDeal[];
@@ -73,6 +90,10 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
       _c: data.country,
     });
     if (!allowed) throw new Error("Für dieses Land hast du keinen Zugriff.");
+    // "Ansicht als Mitarbeiter": the database validates the header; a viewer without the right gets themself.
+    const supabase = await viewAsClient(context.supabase);
+    const { data: viewed } = await supabase.rpc("view_as_target");
+    const owner = viewed ?? context.userId;
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     // Every deal this caller originally created, customer or not: a deal only becomes a customer once Pipedrive
     // moves it into one of the customer stages, so the live stages are applied first.
@@ -80,7 +101,7 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
       .from("lead_crm_links")
       .select("deal_id")
       .eq("country", data.country)
-      .eq("origin_caller_id", context.userId)
+      .eq("origin_caller_id", owner)
       .not("deal_id", "is", null)
       .limit(MAX_DEALS);
     // Negative deal IDs are simulated demo deals: never looked up in Pipedrive, shown with their local stage.
@@ -114,7 +135,7 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
         error = e instanceof CrmError ? e.code : "network_error";
       }
     }
-    const { data: rows, error: readError } = await context.supabase.rpc("get_my_customers", {
+    const { data: rows, error: readError } = await supabase.rpc("get_my_customers", {
       p_country: data.country,
     });
     if (readError) throw new Error(readError.message);

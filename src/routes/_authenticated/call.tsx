@@ -39,6 +39,18 @@ export const Route = createFileRoute("/_authenticated/call")({
 type Outcome = "not_reached" | "no_interest" | "callback" | "appointment" | "production";
 
 function CallPage() {
+  const { viewAs } = Route.useRouteContext();
+  // A manager viewing an employee must not claim or work leads in their name.
+  if (viewAs)
+    return (
+      <p className="text-muted-foreground">
+        In der Ansicht als Mitarbeiter kann nicht telefoniert werden. Beende die Ansicht, um selbst Leads zu bearbeiten.
+      </p>
+    );
+  return <CallWorkspace />;
+}
+
+function CallWorkspace() {
   const country = useCountry();
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
