@@ -225,6 +225,13 @@
       "when": 1793218869064,
       "tag": "0031_view_as_appointments",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793219600096,
+      "tag": "0032_pipedrive_activities_view_as",
+      "breakpoints": true
     }
   ]
 }

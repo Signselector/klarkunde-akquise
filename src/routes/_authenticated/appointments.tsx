@@ -96,7 +96,9 @@ function AppointmentsPage() {
     // Entries that exist only in the user's Pipedrive calendar.
     const fromPipedrive =
       filter !== "tool"
-        ? external.map((x) => ({
+        ? external
+            .filter((x) => roles.isStaff || (x as { user_id?: string }).user_id === user.id)
+            .map((x) => ({
             id: `pd-${x.activity_id}`,
             starts_at: x.due_at,
             notes: [x.person_name, x.org_name].filter(Boolean).join(", ") || null,
