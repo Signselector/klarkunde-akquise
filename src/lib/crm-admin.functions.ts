@@ -19,12 +19,12 @@ const countryInput = (d: { country: string }) => {
 
 async function requireAdmin(context: {
   supabase: {
-    rpc: (n: "is_global_admin", a: { _uid: string }) => PromiseLike<{ data: unknown }>;
+    rpc: (n: "is_master", a: { _uid: string }) => PromiseLike<{ data: unknown }>;
   };
   userId: string;
 }) {
-  const { data } = await context.supabase.rpc("is_global_admin", { _uid: context.userId });
-  if (!data) throw new Error("Nur für Admins.");
+  const { data } = await context.supabase.rpc("is_master", { _uid: context.userId });
+  if (!data) throw new Error("Nur für den Master-Admin.");
 }
 
 type RawField = {

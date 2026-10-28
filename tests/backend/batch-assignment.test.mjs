@@ -41,7 +41,7 @@ before(async () => {
     await db.exec(sql);
   }
   await db.query(
-    "insert into auth.users values ($1,'admin@example.test','{\"display_name\":\"Admin\"}'),($2,'anna@example.test','{\"display_name\":\"Anna\"}'),($3,'ben@example.test','{\"display_name\":\"Ben\"}'),($4,'chris@example.test','{\"display_name\":\"Chris\"}')",
+    "insert into auth.users values ($1,'office@signselector.com','{\"display_name\":\"Admin\"}'),($2,'anna@example.test','{\"display_name\":\"Anna\"}'),($3,'ben@example.test','{\"display_name\":\"Ben\"}'),($4,'chris@example.test','{\"display_name\":\"Chris\"}')",
     [admin, anna, ben, chris],
   );
   await db.query("update public.user_roles set role='admin' where user_id=$1", [admin]);

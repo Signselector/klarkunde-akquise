@@ -26,13 +26,14 @@ export const Route = createFileRoute("/_authenticated/settings")({
 function SettingsPage() {
   const { user } = Route.useRouteContext();
   const roles = useRoles(user.id);
-  const globalAdmin = roles.isGlobalAdmin || isMasterEmail(user.email);
-  const admin = roles.isStaff || globalAdmin;
+  // The backend belongs to the master admin only.
+  const globalAdmin = isMasterEmail(user.email);
+  const admin = globalAdmin;
   const nav = useNavigate();
   // Settings are for global admins only; everybody else is sent back to the dashboard.
   useEffect(() => {
     if (roles.ready && !globalAdmin) {
-      toast.error("Nur für Administratoren.");
+      toast.error("Nur für den Master-Admin.");
       void nav({ to: "/dashboard", replace: true });
     }
   }, [roles.ready, globalAdmin, nav]);
@@ -58,7 +59,7 @@ function SettingsPage() {
     toast.success("Leitfaden gespeichert.");
     qc.invalidateQueries({ queryKey: ["script"] });
   }
-  if (!globalAdmin) return <p className="text-muted-foreground">Einstellungen sind nur für Administratoren.</p>;
+  if (!globalAdmin) return <p className="text-muted-foreground">Einstellungen sind nur für den Master-Admin.</p>;
   const isMaster = user.email?.toLowerCase() === "office@signselector.com";
   // Managers get the day-to-day settings; Pipedrive, stages, deduplication and backups are backend and stay with admins.
   const tabs: [string, string][] = [

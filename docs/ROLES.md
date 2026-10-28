@@ -41,10 +41,10 @@ Die frühere Zusatzrolle „Fulfilment“ gibt es nicht mehr (Migration 0026).
 | Bereich | Caller / Senior Caller | Manager | Admin |
 | --- | --- | --- | --- |
 | Admin-Bereich im Menü | nein | ja, ohne Einstellungen | ja |
-| Einstellungen (`/settings`) | nein | nein (Umleitung aufs Dashboard) | ja |
+| Einstellungen / Backend (`/settings`, Pipedrive, Stages, Backups, Testmodus) | nein | nein (Umleitung aufs Dashboard) | **nur der Master-Admin** (Migration 0032) |
 | Upload (`/import`) | nein | nur eigenes Land (fest) | Zielland frei wählbar (Pflicht) |
 | Kein Interesse, Zukunftsprojekte, Referenzmail offen | nein | nur eigenes Land | Land wählbar oder „Alle Länder“ (Spalte „Land“) |
-| Accounts | nein | Accounts des eigenen Landes und neue Accounts ohne Land; Rollen Caller / Senior Caller | alle Accounts, alle Rollen und Länder, Löschen |
+| Accounts | nein | nur Accounts des eigenen Landes (neue Accounts ohne Land sehen nur Admins); Rollen Caller / Senior Caller | alle Accounts, alle Rollen und Länder, Löschen |
 | Account ohne Land | Sperrschirm „Account wartet auf Freischaltung“ (gilt für alle außer Admins) | | |
 
 Datenbank: `get_no_interest_leads`, `get_future_projects_leads`, `get_unanswered_reference_leads` akzeptieren `'ALL'` nur für Admins. Der Import ist für Manager und Admins; das Zielland setzt `set_import_batch_country` (Manager nur für ihr Land), `confirm_import` prüft das Land des Batches.

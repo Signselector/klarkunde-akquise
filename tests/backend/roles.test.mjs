@@ -131,7 +131,7 @@ test("appointments: recruits cannot book, veterans and managers can", async () =
   await assert.rejects(() => q("select public.save_calendar_appointment(now()+interval '3 days','other','x',null,'AT')"), /country_forbidden/);
 });
 
-test("backend stays with the admin: configuration, audit trail, stage mapping", async () => {
+test("backend stays with the master admin: configuration, audit trail, stage mapping", async () => {
   await as(mgrDE);
   assert.equal((await q("select public.has_role($1,'admin') s",[mgrDE]))[0].s, true, "manager counts as staff");
   assert.equal((await q("select public.is_global_admin($1) g",[mgrDE]))[0].g, false);
@@ -140,7 +140,12 @@ test("backend stays with the admin: configuration, audit trail, stage mapping", 
   assert.equal((await q("select 1 from public.audit_events limit 1")).length, 0);
   await assert.rejects(() => q("insert into public.pipedrive_stage_mapping(country,mapping) values ('NL','{}')"), /row-level security/);
   await assert.rejects(() => q("select public.archive_open_leads()"), /forbidden/);
+  // a normal admin has all countries but not the backend
   await as(admin);
+  assert.equal((await q("update public.integration_config set test_mode=false returning 1")).length, 0);
+  assert.equal((await q("select 1 from public.audit_events limit 1")).length, 0);
+  await assert.rejects(() => q("select public.archive_open_leads()"), /forbidden/);
+  await as(master);
   assert.equal((await q("update public.integration_config set test_mode=true returning 1")).length, 1);
 });
 

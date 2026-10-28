@@ -15,10 +15,10 @@ export const loadPipedriveStages = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("is_global_admin", {
+    const { data: isAdmin } = await context.supabase.rpc("is_master", {
       _uid: context.userId,
     });
-    if (!isAdmin) throw new Error("Nur für Admins.");
+    if (!isAdmin) throw new Error("Nur für den Master-Admin.");
     const lovable = process.env["LOVABLE_API_KEY"];
     const conn = process.env[KEY_BY_COUNTRY[data.country] ?? ""];
     if (!lovable || !conn) throw new Error("Pipedrive-Verbindung fehlt.");

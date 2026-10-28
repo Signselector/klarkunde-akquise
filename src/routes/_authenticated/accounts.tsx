@@ -48,17 +48,11 @@ function AccountsPage() {
   });
   const isMaster = user.email?.toLowerCase() === MASTER;
   const globalAdmin = me.isGlobalAdmin || isMaster;
-  // A manager sees the accounts that share a country with them, plus new accounts without any country that
-  // still wait to be released. The database enforces the rules for every change.
+  // A manager only sees accounts that share a country with them; new accounts without a country are for admins.
   const mine = users?.find((u) => u.id === user.id)?.countries ?? [];
   const visibleUsers = globalAdmin
     ? users
-    : users?.filter(
-        (u) =>
-          u.id === user.id ||
-          u.countries.length === 0 ||
-          u.countries.some((c) => mine.includes(c)),
-      );
+    : users?.filter((u) => u.id === user.id || u.countries.some((c) => mine.includes(c)));
   const refresh = () => qc.invalidateQueries({ queryKey: ["users"] });
 
   async function toggleCountry(id: string, code: string, on: boolean) {
@@ -136,7 +130,7 @@ function AccountsPage() {
           Neue Nutzer registrieren sich selbst und sind zuerst Caller. Sie sehen erst etwas, wenn
           ihnen ein Land freigeschaltet wird. Nur Admins vergeben die Rollen Manager und Admin
           sowie die Länder. Manager legen für Accounts ihres Landes fest, wer Caller oder Senior
-          Caller ist.
+          Caller ist. Neue Accounts ohne Land sieht nur ein Admin.
         </p>
         <div className="divide-y">
           {visibleUsers?.map((u) => {

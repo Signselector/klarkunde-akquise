@@ -138,8 +138,8 @@ function Layout() {
         { to: "/reference-unanswered", label: "Referenzmail offen", icon: Mail },
         { to: "/import", label: "Upload", icon: Upload },
         { to: "/accounts", label: "Accounts", icon: Crown },
-        // Settings (Pipedrive, stages, backups ...) belong to global admins only.
-        ...(me?.globalAdmin ? [{ to: "/settings", label: "Einstellungen", icon: Settings }] : []),
+        // Settings are the backend (Pipedrive, stages, backups ...): master admin only.
+        ...(isMaster ? [{ to: "/settings", label: "Einstellungen", icon: Settings }] : []),
       ] as const)
     : [];
   const adminActive = adminItems.some((i) => i.to === location.pathname);
