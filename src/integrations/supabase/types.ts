@@ -1860,6 +1860,7 @@ export type Database = {
       }
       upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
       user_role: { Args: { _uid: string }; Returns: string }
+      view_as_target: { Args: never; Returns: string }
     }
     Enums: {
       app_role:
@@ -1883,6 +1884,7 @@ export type Database = {
         | "user_deactivated"
         | "list_viewed"
         | "list_exported"
+        | "view_as_started"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2032,6 +2034,7 @@ export const Constants = {
         "user_deactivated",
         "list_viewed",
         "list_exported",
+        "view_as_started",
       ],
     },
   },
