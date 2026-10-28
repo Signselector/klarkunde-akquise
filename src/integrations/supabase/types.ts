@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_audit_logs: {
+        Row: {
+          action: Database["public"]["Enums"]["audit_action_type"]
+          actor_email: string
+          actor_id: string | null
+          actor_name: string
+          actor_role: string
+          country: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          target_id: string | null
+          target_label: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["audit_action_type"]
+          actor_email: string
+          actor_id?: string | null
+          actor_name: string
+          actor_role: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_label?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["audit_action_type"]
+          actor_email?: string
+          actor_id?: string | null
+          actor_name?: string
+          actor_role?: string
+          country?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_label?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
@@ -1387,6 +1432,32 @@ export type Database = {
           },
         ]
       }
+      user_presence: {
+        Row: {
+          is_online: boolean
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          is_online?: boolean
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          is_online?: boolean
+          last_seen_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_presence_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -1628,9 +1699,33 @@ export type Database = {
         }
         Returns: boolean
       }
+      heartbeat: { Args: never; Returns: undefined }
       import_duplicates: { Args: { p_batch_id: string }; Returns: Json }
       is_global_admin: { Args: { _uid: string }; Returns: boolean }
       is_master: { Args: { _uid: string }; Returns: boolean }
+      log_activity: {
+        Args: {
+          p_action: Database["public"]["Enums"]["audit_action_type"]
+          p_country?: string
+          p_metadata?: Json
+          p_target_id?: string
+          p_target_label?: string
+          p_target_type?: string
+        }
+        Returns: undefined
+      }
+      log_activity_for: {
+        Args: {
+          p_action: Database["public"]["Enums"]["audit_action_type"]
+          p_actor: string
+          p_country: string
+          p_metadata?: Json
+          p_target_id: string
+          p_target_label: string
+          p_target_type: string
+        }
+        Returns: undefined
+      }
       move_lead: {
         Args: {
           p_batch_id: string
@@ -1743,6 +1838,7 @@ export type Database = {
         }
         Returns: Json
       }
+      set_offline: { Args: never; Returns: undefined }
       set_user_active: {
         Args: { p_active: boolean; p_user_id: string }
         Returns: undefined
@@ -1773,6 +1869,20 @@ export type Database = {
         | "recruit"
         | "veteran"
         | "manager"
+      audit_action_type:
+        | "user_login"
+        | "user_logout"
+        | "batch_completed"
+        | "batch_claimed"
+        | "batch_released"
+        | "batch_uploaded"
+        | "batch_deleted"
+        | "user_registered"
+        | "user_role_changed"
+        | "user_deleted"
+        | "user_deactivated"
+        | "list_viewed"
+        | "list_exported"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1907,6 +2017,21 @@ export const Constants = {
         "recruit",
         "veteran",
         "manager",
+      ],
+      audit_action_type: [
+        "user_login",
+        "user_logout",
+        "batch_completed",
+        "batch_claimed",
+        "batch_released",
+        "batch_uploaded",
+        "batch_deleted",
+        "user_registered",
+        "user_role_changed",
+        "user_deleted",
+        "user_deactivated",
+        "list_viewed",
+        "list_exported",
       ],
     },
   },

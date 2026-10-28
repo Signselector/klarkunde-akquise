@@ -204,6 +204,13 @@
       "when": 1793216503441,
       "tag": "0028_profile_avatar",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793216702005,
+      "tag": "0029_presence_and_activity_log",
+      "breakpoints": true
     }
   ]
 }
