@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { backendRpc } from "@/lib/backend";
 import { supabase } from "@/integrations/supabase/client";
+import { ChevronDown, ChevronUp } from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
 const STATUS: Record<string, string> = {
   pending: "Wartet",
@@ -107,19 +108,59 @@ export function DataQuality() {
         acknowledged_reason: string | null;
       }[],
   });
+  // Collapsed by default so the dashboard stays compact; the badge shows how many hints are open.
+  const [isOpen, setIsOpen] = useState(false);
+  const open = (quality.data ?? []).filter((q) => !q.acknowledged_reason).length;
   return (
-    <section className="space-y-2 rounded-lg border p-4">
-      <h2 className="font-semibold">Datenqualität</h2>
-      {quality.isError && <p>Qualitätshinweise konnten nicht geladen werden.</p>}
-      {quality.data?.length === 0 && <p>Keine offenen Qualitätshinweise.</p>}
-      {quality.data?.map((q) => (
-        <p key={q.lead_id + q.kind}>
-          <a className="underline" href={`/leads?lead=${q.lead_id}`}>
-            {q.company}: {QUALITY[q.kind] ?? q.kind}
-          </a>
-          {q.acknowledged_reason && ` · ${q.acknowledged_reason}`}
-        </p>
-      ))}
+    <section className="rounded-lg border">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 p-4 text-left"
+        aria-expanded={isOpen}
+        aria-controls="data-quality-body"
+        onClick={() => setIsOpen((o) => !o)}
+      >
+        <span className="flex items-center gap-2">
+          <h2 className="font-semibold">Datenqualität</h2>
+          {quality.isError ? (
+            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+              nicht geladen
+            </span>
+          ) : quality.data ? (
+            <span
+              className={
+                open > 0
+                  ? "rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900"
+                  : "rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-900"
+              }
+            >
+              {open > 0 ? `${open} ${open === 1 ? "Hinweis" : "Hinweise"}` : "Alles in Ordnung"}
+            </span>
+          ) : null}
+        </span>
+        {isOpen ? (
+          <ChevronUp size={18} aria-hidden="true" />
+        ) : (
+          <ChevronDown size={18} aria-hidden="true" />
+        )}
+        <span className="sr-only">
+          {isOpen ? "Datenqualität einklappen" : "Datenqualität ausklappen"}
+        </span>
+      </button>
+      {isOpen && (
+        <div id="data-quality-body" className="space-y-2 border-t p-4">
+          {quality.isError && <p>Qualitätshinweise konnten nicht geladen werden.</p>}
+          {quality.data?.length === 0 && <p>Keine offenen Qualitätshinweise.</p>}
+          {quality.data?.map((q) => (
+            <p key={q.lead_id + q.kind}>
+              <a className="underline" href={`/leads?lead=${q.lead_id}`}>
+                {q.company}: {QUALITY[q.kind] ?? q.kind}
+              </a>
+              {q.acknowledged_reason && ` · ${q.acknowledged_reason}`}
+            </p>
+          ))}
+        </div>
+      )}
     </section>
   );
 }

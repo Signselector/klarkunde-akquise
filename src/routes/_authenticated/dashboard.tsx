@@ -1,7 +1,7 @@
 import { CallerPerformance } from "@/components/caller/performance";
 import { useCountry } from "@/lib/country";
 import { backendEnabled, backendRpc } from "@/lib/backend";
-import { BackendStatus } from "@/components/backend-status";
+import { DataQuality, PipedriveJobs } from "@/components/backend-status";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -58,7 +58,7 @@ function Dashboard() {
   const country = useCountry();
   const { user } = Route.useRouteContext();
   const admin = useIsAdmin(user.id);
-  // Pipedrive transfers and data quality are backend: master admin only.
+  // Pipedrive transfers are backend: master admin only.
   const globalAdmin = isMasterEmail(user.email);
   // The master admin can switch to the caller view; Pipedrive and data quality stay admin-only.
   const [callerView, setCallerView] = useState(false);
@@ -364,7 +364,9 @@ function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      {backendEnabled && globalAdmin && !callerView && <BackendStatus admin={false} />}
+      {/* Pipedrive transfers are backend (master admin). Data quality is for managers and above, collapsed by default. */}
+      {backendEnabled && globalAdmin && !callerView && <PipedriveJobs admin={false} />}
+      {backendEnabled && admin && !callerView && <DataQuality />}
     </div>
   );
 }

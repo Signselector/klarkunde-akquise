@@ -134,3 +134,17 @@ test("import: only staff, target country only for countries the user administers
   await as(rec);
   await assert.rejects(() => q("select public.set_import_batch_country($1,'DE')", [b]), /forbidden/);
 });
+
+test("data quality hints: staff only, only leads of the administered countries", async () => {
+  await db.exec("RESET ROLE");
+  const bt = (await q("select id from public.lead_batches where country='AT' limit 1"))[0].id;
+  await q("insert into public.leads(batch_id,company,phone) values ($1,'AT ohne Nummer',NULL)", [bt]);
+  await q("insert into public.leads(batch_id,company,phone) values ($1,'DE ohne Nummer',NULL)", [(await q("select id from public.lead_batches where country='DE' limit 1"))[0].id]);
+  const hints = async (u) => { await as(u); return (await q("select public.get_quality_issues() r"))[0].r; };
+  await assert.rejects(() => hints(rec), /forbidden/);
+  const m = await hints(mgr);
+  assert.ok(m.some((x) => x.company === "DE ohne Nummer"));
+  assert.ok(!m.some((x) => x.company === "AT ohne Nummer"), "no hints of other countries");
+  const all = await hints(admin);
+  assert.ok(all.some((x) => x.company === "AT ohne Nummer") && all.some((x) => x.company === "DE ohne Nummer"));
+});
