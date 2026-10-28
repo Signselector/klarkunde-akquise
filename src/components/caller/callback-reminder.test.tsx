@@ -2,7 +2,7 @@ import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { CallbackReminder } from "./callback-reminder";
 const fixture = vi.hoisted(() => ({
-  toast: Object.assign(vi.fn(), { warning: vi.fn(), dismiss: vi.fn() }),
+  toast: Object.assign(vi.fn(), { dismiss: vi.fn() }),
   navigate: vi.fn(),
   path: "/dashboard",
   rows: [
@@ -28,8 +28,8 @@ afterEach(() => {
 it("shows one persistent toast per due callback and links to the callbacks page", () => {
   const view = render(<CallbackReminder userId="caller" />);
   view.rerender(<CallbackReminder userId="caller" />);
-  expect(fixture.toast.warning).toHaveBeenCalledTimes(1);
-  const [title, options] = fixture.toast.warning.mock.calls[0]!;
+  expect(fixture.toast).toHaveBeenCalledTimes(1);
+  const [title, options] = fixture.toast.mock.calls[0]!;
   expect(title).toBe("Rückruf fällig");
   expect(options.id).toBe("callback-callback-1");
   expect(options.duration).toBe(Infinity);
@@ -42,6 +42,6 @@ it("shows one persistent toast per due callback and links to the callbacks page"
 it("shows nothing on the callbacks page and closes existing reminders", () => {
   fixture.path = "/callbacks";
   render(<CallbackReminder userId="caller" />);
-  expect(fixture.toast.warning).not.toHaveBeenCalled();
+  expect(fixture.toast).not.toHaveBeenCalled();
   expect(fixture.toast.dismiss).toHaveBeenCalledWith("callback-callback-1");
 });

@@ -45,9 +45,14 @@ export function CallbackReminder({ userId }: { userId: string }) {
       const time = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" }).format(
         new Date(callback.due_at),
       );
-      toast.warning("Rückruf fällig", {
+      toast("Rückruf fällig", {
         id: toastId,
-        icon: <PhoneCall className="h-4 w-4" />,
+        icon: (
+          <span className="cc-toast-icon">
+            <PhoneCall className="h-4 w-4" aria-hidden="true" />
+          </span>
+        ),
+        className: "cc-callback-toast",
         description: `${lead.company || "Rückruf"} · geplant für ${time} Uhr`,
         duration: Infinity,
         closeButton: true,

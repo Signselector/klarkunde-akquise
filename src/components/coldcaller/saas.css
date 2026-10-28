@@ -1383,3 +1383,63 @@ tr:hover > .cc-sticky-action {
 .cc-app [data-collapsible="icon"] .cc-country-badge {
   display: flex;
 }
+
+/* Callback reminder toast (rendered in a portal, so not scoped to .cc-app). */
+[data-sonner-toast].cc-callback-toast {
+  --cc-blue: #2563eb;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px 16px 20px;
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #dbe5fb;
+  border-left: 4px solid var(--cc-blue);
+  border-radius: 14px;
+  box-shadow:
+    0 12px 32px rgb(37 99 235 / 16%),
+    0 2px 6px rgb(15 23 42 / 8%);
+}
+[data-sonner-toast].cc-callback-toast [data-icon] {
+  margin: 0;
+  width: auto;
+  height: auto;
+}
+.cc-toast-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #eaf1ff;
+  color: var(--cc-blue, #2563eb);
+}
+[data-sonner-toast].cc-callback-toast [data-title] {
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 15px;
+}
+[data-sonner-toast].cc-callback-toast [data-description] {
+  color: #475569;
+  font-size: 13.5px;
+}
+[data-sonner-toast].cc-callback-toast [data-button] {
+  background: var(--cc-blue);
+  color: #fff;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: background 150ms ease;
+}
+[data-sonner-toast].cc-callback-toast [data-button]:hover {
+  background: #1d4ed8;
+}
+[data-sonner-toast].cc-callback-toast [data-close-button] {
+  background: #fff;
+  color: #475569;
+  border: 1px solid #dbe5fb;
+}
+[data-sonner-toast].cc-callback-toast [data-close-button]:hover {
+  background: #eaf1ff;
+  color: var(--cc-blue);
+}
