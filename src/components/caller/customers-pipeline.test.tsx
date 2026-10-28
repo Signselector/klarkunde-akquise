@@ -69,7 +69,7 @@ it("shows deals in the column of their Pipedrive stage and the other stages sepa
   expect(within(other).getByText("Firma 3")).toBeTruthy();
   expect(within(other).getByText("Unbekannte Stage")).toBeTruthy();
   // Columns without a configured stage say so instead of guessing one.
-  const noShow = screen.getByRole("region", { name: "No Show" });
+  const noShow = screen.getByRole("region", { name: "Termin nicht wahrgenommen" });
   expect(within(noShow).getByText(/Stage nicht zugeordnet/)).toBeTruthy();
   expect(screen.queryByRole("alert")).toBeNull();
 });
