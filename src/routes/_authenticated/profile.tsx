@@ -37,6 +37,7 @@ function ProfilePage() {
   useEffect(() => {
     if (profile) setName(profile.display_name ?? "");
   }, [profile]);
+  const [currentPw, setCurrentPw] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [busy, setBusy] = useState(false);
@@ -113,6 +114,10 @@ function ProfilePage() {
 
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
+    if (!currentPw) {
+      toast.error("Bitte gib dein aktuelles Passwort ein.");
+      return;
+    }
     if (pw.length < 8) {
       toast.error("Das Passwort braucht mindestens 8 Zeichen.");
       return;
@@ -122,12 +127,22 @@ function ProfilePage() {
       return;
     }
     setBusy(true);
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: user.email ?? "",
+      password: currentPw,
+    });
+    if (authError) {
+      setBusy(false);
+      toast.error("Das aktuelle Passwort ist falsch.");
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ password: pw });
     setBusy(false);
     if (error) {
       toast.error("Passwort konnte nicht geändert werden.");
       return;
     }
+    setCurrentPw("");
     setPw("");
     setPw2("");
     toast.success("Passwort geändert.");
@@ -215,6 +230,16 @@ function ProfilePage() {
       <form onSubmit={savePassword} className="space-y-3 rounded-lg border bg-card p-4">
         <h2 className="font-semibold">Passwort ändern</h2>
         <div className="grid gap-1.5">
+          <Label htmlFor="profile-current-pw">Aktuelles Passwort</Label>
+          <Input
+            id="profile-current-pw"
+            type="password"
+            value={currentPw}
+            onChange={(e) => setCurrentPw(e.target.value)}
+            autoComplete="current-password"
+          />
+        </div>
+        <div className="grid gap-1.5">
           <Label htmlFor="profile-pw">Neues Passwort</Label>
           <Input
             id="profile-pw"
@@ -234,7 +259,7 @@ function ProfilePage() {
             autoComplete="new-password"
           />
         </div>
-        <Button type="submit" disabled={busy || !pw}>
+        <Button type="submit" disabled={busy || !pw || !currentPw}>
           Passwort ändern
         </Button>
       </form>
