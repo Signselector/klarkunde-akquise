@@ -27,6 +27,7 @@ import { Route as AuthenticatedImportRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedMyStatsRouteImport } from './routes/_authenticated/my-stats'
 import { Route as AuthenticatedNoInterestRouteImport } from './routes/_authenticated/no-interest'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedReferenceUnansweredRouteImport } from './routes/_authenticated/reference-unanswered'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
@@ -125,6 +126,11 @@ const AuthenticatedNoInterestRoute = AuthenticatedNoInterestRouteImport.update({
   path: '/no-interest',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedReferenceUnansweredRoute =
   AuthenticatedReferenceUnansweredRouteImport.update({
     id: '/reference-unanswered',
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AuthenticatedLeadsRoute
   '/my-stats': typeof AuthenticatedMyStatsRoute
   '/no-interest': typeof AuthenticatedNoInterestRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/reference-unanswered': typeof AuthenticatedReferenceUnansweredRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/leads': typeof AuthenticatedLeadsRoute
   '/my-stats': typeof AuthenticatedMyStatsRoute
   '/no-interest': typeof AuthenticatedNoInterestRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/reference-unanswered': typeof AuthenticatedReferenceUnansweredRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/my-stats': typeof AuthenticatedMyStatsRoute
   '/_authenticated/no-interest': typeof AuthenticatedNoInterestRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/reference-unanswered': typeof AuthenticatedReferenceUnansweredRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/my-stats'
     | '/no-interest'
+    | '/profile'
     | '/reference-unanswered'
     | '/settings'
     | '/stats'
@@ -279,6 +289,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/my-stats'
     | '/no-interest'
+    | '/profile'
     | '/reference-unanswered'
     | '/settings'
     | '/stats'
@@ -305,6 +316,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leads'
     | '/_authenticated/my-stats'
     | '/_authenticated/no-interest'
+    | '/_authenticated/profile'
     | '/_authenticated/reference-unanswered'
     | '/_authenticated/settings'
     | '/_authenticated/stats'
@@ -451,6 +463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNoInterestRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/reference-unanswered': {
       id: '/_authenticated/reference-unanswered'
       path: '/reference-unanswered'
@@ -511,6 +530,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLeadsRoute: typeof AuthenticatedLeadsRoute
   AuthenticatedMyStatsRoute: typeof AuthenticatedMyStatsRoute
   AuthenticatedNoInterestRoute: typeof AuthenticatedNoInterestRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedReferenceUnansweredRoute: typeof AuthenticatedReferenceUnansweredRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStatsRoute: typeof AuthenticatedStatsRoute
@@ -531,6 +551,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLeadsRoute: AuthenticatedLeadsRoute,
   AuthenticatedMyStatsRoute: AuthenticatedMyStatsRoute,
   AuthenticatedNoInterestRoute: AuthenticatedNoInterestRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedReferenceUnansweredRoute: AuthenticatedReferenceUnansweredRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStatsRoute: AuthenticatedStatsRoute,

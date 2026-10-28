@@ -265,21 +265,18 @@ function Layout() {
             <CountrySwitcher />
           </div>
           <div className="cc-profile">
-            <div className="cc-user">
-              <span className="cc-avatar">
-                {(me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase()}
-              </span>
-              <div>
-                <strong>{me?.name ?? user.email}</strong>
-                <small>
-                  {me
-                    ? me.admin && !callerView
-                      ? ROLE_LABEL[me.role]
-                      : "Caller-Ansicht"
-                    : "Profil wird geladen …"}
-                </small>
-              </div>
-            </div>
+            <ProfileCard
+              active={location.pathname === "/profile"}
+              initials={(me?.name ?? user.email ?? "?").slice(0, 2).toUpperCase()}
+              name={me?.name ?? user.email ?? ""}
+              subtitle={
+                me
+                  ? me.admin && !callerView
+                    ? ROLE_LABEL[me.role]
+                    : "Caller-Ansicht"
+                  : "Profil wird geladen …"
+              }
+            />
             <LevelCard />
           </div>
           <Button variant="ghost" className="cc-signout" onClick={signOut}>
@@ -305,6 +302,39 @@ function Layout() {
         </div>
       </SidebarInset>
     </SidebarProvider>
+  );
+}
+
+function ProfileCard({
+  active,
+  initials,
+  name,
+  subtitle,
+}: {
+  active: boolean;
+  initials: string;
+  name: string;
+  subtitle: string;
+}) {
+  const { isMobile, setOpenMobile } = useSidebar();
+  return (
+    <Link
+      to="/profile"
+      className="cc-user"
+      title="Mein Profil & Einstellungen"
+      aria-label="Mein Profil und Einstellungen öffnen"
+      data-active={active}
+      aria-current={active ? "page" : undefined}
+      onClick={() => {
+        if (isMobile) setOpenMobile(false);
+      }}
+    >
+      <span className="cc-avatar">{initials}</span>
+      <div>
+        <strong>{name}</strong>
+        <small>{subtitle}</small>
+      </div>
+    </Link>
   );
 }
 
