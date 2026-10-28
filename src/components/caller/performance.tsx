@@ -186,7 +186,7 @@ export function CallerPerformance({
   const monthCalls = month.data?.attempts ?? 0;
   const remaining = Math.max(0, goal - monthCalls);
   const share = Math.min(1, monthCalls / goal);
-  const first = (name ?? "").split(/\s+/)[0];
+  const first = (name ?? "").trim();
   const teamContext = (what: string) =>
     team.isError
       ? "Team Management nicht erreichbar"
