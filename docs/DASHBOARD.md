@@ -64,3 +64,10 @@ Teamstatistiken stehen weiter in der Admin-Ansicht („Statistiken“).
 
 Solange `integration_config.test_mode` an ist (Standard), sendet die Übertragung von Gesprächsergebnissen **nichts** an
 Pipedrive: Die Aktion bekommt den Zustand `simulated`. Das Dashboard löst keine CRM-Aktionen aus.
+
+## Statistik-Cockpit (Migration 0030)
+
+Menü „Statistik“ (`/stats`, nur Admins und Manager; `/daily-stats` leitet dorthin um). Erst das Land wählen, dann „Gesamtes Land“ oder einen Mitarbeiter, dann Monatlich, Wöchentlich oder Täglich mit freier Navigation. Zahlen aus `get_country_period_stats(p_country, p_from, p_to, p_user_id, p_bucket)`, Tage, Wochen und Monate in Wiener Zeit, strikt je Land.
+
+* Gespräche: erfasste Gesprächsergebnisse (status_changes) von Leads des Landes. Erreicht: alle außer „Nicht erreicht“.
+* Termine: im Zeitraum über das Tool angelegte Termine (zählt beim Buchenden). Deals: Logo Render, Realismus Render, Logo ausstehend, Zukunftsprojekt.

@@ -1,12 +1,59 @@
-import { backendEnabled, backendRpc } from "@/lib/backend";
-import { useIsAdmin } from "@/lib/use-admin";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { COUNTRIES, isCountry, useAllowedCountries, useCountry, type Country } from "@/lib/country";
+import { ROLE_LABEL, useRoles, type RoleName } from "@/lib/use-admin";
 import { STATUS_LABEL } from "@/lib/leads";
+import {
+  monthOptions,
+  periodOf,
+  shiftAnchor,
+  todayKey,
+  type PeriodMode,
+} from "@/lib/stats-period";
+import { Flag } from "@/components/flag";
+import { ChevronLeft, ChevronRight } from "@/components/coldcaller/icons";
+import { FeedbackState } from "@/components/coldcaller/primitives";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
-const WEEKDAYS = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+type Totals = {
+  calls: number;
+  reached: number;
+  reach_rate: number | null;
+  appointments: number;
+  appointment_rate: number | null;
+  deals: number;
+};
+type TeamRow = {
+  user_id: string;
+  name: string;
+  role: RoleName;
+  calls: number;
+  reached: number;
+  appointments: number;
+  deals: number;
+};
+type Stats = {
+  totals: Totals;
+  by_outcome: Record<string, number>;
+  timeline: { bucket: string; calls: number; reached: number }[];
+  team: TeamRow[] | null;
+};
+
+const OUTCOMES = [
+  "low_q",
+  "high_q",
+  "waiting_3d",
+  "on_hold",
+  "reference_mail",
+  "callback",
+  "not_reached",
+  "no_interest",
+] as const;
+const pct = (v: number | null) => (v === null ? "–" : `${String(v).replace(".", ",")} %`);
+const roleLabel = (r: string) => ROLE_LABEL[(r === "caller" ? "recruit" : r) as RoleName] ?? r;
 
 function Bars({ items }: { items: { label: string; value: number }[] }) {
   const max = Math.max(1, ...items.map((i) => i.value));
@@ -14,12 +61,9 @@ function Bars({ items }: { items: { label: string; value: number }[] }) {
     <div className="space-y-1.5">
       {items.map((i) => (
         <div key={i.label} className="flex items-center gap-2 text-sm">
-          <span className="w-28 shrink-0 text-muted-foreground">{i.label}</span>
+          <span className="w-36 shrink-0 text-muted-foreground">{i.label}</span>
           <div className="h-5 flex-1 rounded bg-muted">
-            <div
-              className="h-5 rounded bg-primary"
-              style={{ width: `${(i.value / max) * 100}%` }}
-            />
+            <div className="h-5 rounded bg-primary" style={{ width: `${(i.value / max) * 100}%` }} />
           </div>
           <span className="w-8 text-right tabular-nums">{i.value}</span>
         </div>
@@ -28,147 +72,272 @@ function Bars({ items }: { items: { label: string; value: number }[] }) {
   );
 }
 
-export type StatsMode = "overview" | "daily";
-
-export function StatsView({
-  userId,
-  mode,
-  title,
-}: {
-  userId: string;
-  mode: StatsMode;
-  title: string;
-}) {
-  const admin = useIsAdmin(userId);
-  const [scope, setScope] = useState<"mine" | "all">("mine");
-  const [range, setRange] = useState<"today" | "30">(mode === "daily" ? "today" : "30");
-  type Summary = {
-    attempts: number;
-    reached: number;
-    appointments: number;
-    production: number;
-    not_reached: number;
-    no_interest: number;
-    callback: number;
-    daily: { day: string; attempts: number }[];
-  };
-  const effectiveScope = backendEnabled && !admin ? "mine" : scope;
-  const summary = useQuery({
-    queryKey: ["stats-summary", userId, effectiveScope, range],
-    enabled: backendEnabled,
-    queryFn: async () => {
-      const today = new Intl.DateTimeFormat("sv-SE", {
-        timeZone: "Europe/Vienna",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(new Date());
-      const from = new Date(today + "T12:00:00Z");
-      if (range !== "today") from.setUTCDate(from.getUTCDate() - 29);
-      return (await backendRpc("get_dashboard", {
-        p_from: from.toISOString().slice(0, 10),
-        p_to: today,
-        p_scope: effectiveScope === "all" ? "team" : "mine",
-      })) as Summary;
-    },
-  });
-  const { data } = useQuery({
-    queryKey: ["stats", scope, range],
-    enabled: !backendEnabled,
-    queryFn: async () => {
-      const from = new Date();
-      if (range === "today") from.setHours(0, 0, 0, 0);
-      else from.setDate(from.getDate() - 30);
-      let sc = supabase
-        .from("status_changes")
-        .select("new_status,created_at,user_id")
-        .gte("created_at", from.toISOString())
-        .limit(5000);
-      if (scope === "mine") sc = sc.eq("user_id", userId);
-      const [changes, total, open] = await Promise.all([
-        sc,
-        supabase.from("leads").select("id", { count: "exact", head: true }),
-        supabase.from("leads").select("id", { count: "exact", head: true }).eq("status", "open"),
-      ]);
-      return { changes: changes.data ?? [], total: total.count ?? 0, open: open.count ?? 0 };
-    },
-  });
-  const ch = data?.changes ?? [];
-  const calls = backendEnabled ? (summary.data?.attempts ?? 0) : ch.length;
-  const count = (s: string) =>
-    backendEnabled
-      ? Number(summary.data?.[(s === "appointment" ? "appointments" : s) as keyof Summary] ?? 0)
-      : ch.filter((c) => c.new_status === s).length;
-  const reached = calls - count("not_reached") - count("open");
-  const byStatus = ["not_reached", "no_interest", "callback", "appointment", "production"].map(
-    (s) => ({ label: STATUS_LABEL[s] ?? s, value: count(s) }),
+/** Vertical bars over time: days of a month, the seven days of a week, or the hours of a day. */
+function Timeline({ points }: { points: { label: string; value: number; title: string }[] }) {
+  const max = Math.max(1, ...points.map((p) => p.value));
+  return (
+    <div className="flex h-44 items-end gap-1" role="img" aria-label="Gespräche im zeitlichen Verlauf">
+      {points.map((p) => (
+        <div key={p.title} className="flex h-full min-w-0 flex-1 flex-col justify-end text-center" title={p.title}>
+          <span className="text-[10px] tabular-nums text-muted-foreground">{p.value || ""}</span>
+          <div
+            className={cn("w-full rounded-t", p.value ? "bg-primary" : "bg-muted")}
+            style={{ height: `${Math.max(p.value ? 6 : 2, (p.value / max) * 100)}%` }}
+          />
+          <span className="mt-1 truncate text-[10px] text-muted-foreground">{p.label}</span>
+        </div>
+      ))}
+    </div>
   );
-  const byDay = WEEKDAYS.map((label, d) => ({
-    label,
-    value: backendEnabled
-      ? (summary.data?.daily ?? [])
-          .filter((x) => new Date(x.day + "T12:00:00Z").getUTCDay() === d)
-          .reduce((sum, x) => sum + x.attempts, 0)
-      : ch.filter((c) => new Date(c.created_at).getDay() === d).length,
-  }));
-  const tiles = [
-    ["Anrufe", calls],
-    ["Erreicht", reached],
-    ["Termine", count("appointment")],
-    ["Terminquote", calls ? `${Math.round((count("appointment") / calls) * 100)} %` : "–"],
-    ...(!backendEnabled
-      ? [
-          ["Offene Leads", data?.open ?? 0],
-          ["Leads gesamt", data?.total ?? 0],
-        ]
-      : []),
+}
+
+const weekdayShort = new Intl.DateTimeFormat("de-DE", { weekday: "short", timeZone: "UTC" });
+
+/**
+ * Statistics cockpit for admins and managers: pick the country, then the whole country or one employee, then
+ * month, week or day with free navigation. All figures come from `get_country_period_stats` (Vienna time).
+ */
+export function StatsView({ userId, title = "Statistik" }: { userId: string; title?: string }) {
+  const roles = useRoles(userId);
+  const activeCountry = useCountry();
+  const allowed = useAllowedCountries();
+  const countries = COUNTRIES.filter((c) => (allowed.data ?? []).includes(c.code));
+  const [country, setCountry] = useState<Country>(activeCountry);
+  const [employee, setEmployee] = useState<string | null>(null);
+  const [mode, setMode] = useState<PeriodMode>("month");
+  const [anchor, setAnchor] = useState(() => todayKey());
+
+  // The first allowed country is used when the remembered one is not available to this user.
+  useEffect(() => {
+    if (countries.length && !countries.some((c) => c.code === country)) setCountry(countries[0]!.code);
+  }, [countries, country]);
+  useEffect(() => setEmployee(null), [country]);
+
+  const period = useMemo(() => periodOf(mode, anchor), [mode, anchor]);
+  const run = async (user: string | null) => {
+    const { data, error } = await supabase.rpc("get_country_period_stats", {
+      p_country: country,
+      p_from: period.from,
+      p_to: period.to,
+      p_bucket: period.bucket,
+      ...(user ? { p_user_id: user } : {}),
+    });
+    if (error) throw error;
+    return data as unknown as Stats;
+  };
+  const enabled = roles.isStaff && isCountry(country);
+  const overall = useQuery({
+    enabled,
+    queryKey: ["country-stats", country, period.from, period.to, null],
+    queryFn: () => run(null),
+  });
+  const single = useQuery({
+    enabled: enabled && !!employee,
+    queryKey: ["country-stats", country, period.from, period.to, employee],
+    queryFn: () => run(employee),
+  });
+  const team = overall.data?.team ?? [];
+  const data = employee ? single.data : overall.data;
+  const loading = employee ? single.isLoading : overall.isLoading;
+  const failed = employee ? single.isError : overall.isError;
+  const today = todayKey();
+
+  if (roles.ready && !roles.isStaff)
+    return <p className="text-muted-foreground">Die Statistik ist nur für Admins und Manager.</p>;
+
+  const timeline =
+    data?.timeline.map((p) => {
+      if (mode === "day") return { label: `${p.bucket}`, value: p.calls, title: `${p.bucket}:00 Uhr · ${p.calls} Gespräche` };
+      const d = new Date(`${p.bucket}T12:00:00Z`);
+      return {
+        label: mode === "week" ? weekdayShort.format(d).replace(".", "") : String(d.getUTCDate()),
+        value: p.calls,
+        title: `${p.bucket} · ${p.calls} Gespräche`,
+      };
+    }) ?? [];
+  // A day shows the working hours; calls outside them are counted separately.
+  const shown = mode === "day" ? timeline.filter((p) => Number(p.label) >= 8 && Number(p.label) <= 18) : timeline;
+  const outside = mode === "day" ? timeline.reduce((s, p) => s + p.value, 0) - shown.reduce((s, p) => s + p.value, 0) : 0;
+  const months = monthOptions(today);
+  const t = data?.totals;
+  const tiles: [string, string | number, string?][] = [
+    ["Gespräche", t?.calls ?? 0],
+    ["Erreicht", t?.reached ?? 0, `Quote ${pct(t?.reach_rate ?? null)}`],
+    ["Termine", t?.appointments ?? 0, `Quote ${pct(t?.appointment_rate ?? null)}`],
+    ["Pipedrive Deals", t?.deals ?? 0],
   ];
-  if (backendEnabled && summary.isError) return <p>Statistik konnte nicht geladen werden.</p>;
+
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-[22px] font-semibold">{title}</h1>
-        <div className="flex gap-2">
-          {(!backendEnabled || admin) && (
-            <Tabs value={scope} onValueChange={(v) => setScope(v as "mine" | "all")}>
-              <TabsList>
-                <TabsTrigger value="mine">Meine</TabsTrigger>
-                <TabsTrigger value="all">Team</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
-          {mode === "overview" && (
-            <Tabs value={range} onValueChange={(v) => setRange(v as "today" | "30")}>
-              <TabsList>
-                <TabsTrigger value="today">Heute</TabsTrigger>
-                <TabsTrigger value="30">30 Tage</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          )}
+      <h1 className="text-[22px] font-semibold">{title}</h1>
+
+      <section className="space-y-3 rounded-lg border bg-card p-4" aria-label="Auswahl">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-medium">Land</span>
+          <div role="tablist" aria-label="Land wählen" className="flex gap-1.5">
+            {countries.map((c) => (
+              <button
+                key={c.code}
+                type="button"
+                role="tab"
+                aria-selected={country === c.code}
+                onClick={() => setCountry(c.code)}
+                className={cn(
+                  "inline-flex min-h-10 items-center gap-2 rounded-full border px-3 text-sm",
+                  country === c.code ? "border-primary bg-primary/10 font-semibold" : "hover:bg-muted",
+                )}
+              >
+                <Flag code={c.code} size={20} /> {c.code}
+              </button>
+            ))}
+          </div>
+          <label className="ml-auto flex items-center gap-2 text-sm">
+            <span className="font-medium">Ebene</span>
+            <select
+              className="min-h-10 rounded-md border bg-background px-3 text-sm"
+              value={employee ?? ""}
+              onChange={(e) => setEmployee(e.target.value || null)}
+              aria-label="Gesamtes Land oder Mitarbeiter"
+            >
+              <option value="">Gesamtes Land (alle Mitarbeiter)</option>
+              {team.map((m) => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.name} · {roleLabel(m.role)}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-      </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {tiles.map(([l, v]) => (
-          <div key={l as string} className="py-2">
-            <p className="text-sm text-muted-foreground">{l}</p>
-            <p className="text-[28px] font-normal tabular-nums">{v}</p>
+
+        <div className="flex flex-wrap items-center gap-2 border-t pt-3">
+          <Tabs value={mode} onValueChange={(v) => setMode(v as PeriodMode)}>
+            <TabsList>
+              <TabsTrigger value="month">Monatlich</TabsTrigger>
+              <TabsTrigger value="week">Wöchentlich</TabsTrigger>
+              <TabsTrigger value="day">Täglich</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" aria-label="Zurück" onClick={() => setAnchor(shiftAnchor(mode, anchor, -1))}>
+              <ChevronLeft />
+            </Button>
+            {mode === "month" ? (
+              <select
+                className="min-h-10 rounded-md border bg-background px-3 text-sm capitalize"
+                aria-label="Monat wählen"
+                value={period.start}
+                onChange={(e) => setAnchor(e.target.value)}
+              >
+                {!months.some((m) => m.key === period.start) && <option value={period.start}>{period.label}</option>}
+                {months.map((m) => (
+                  <option key={m.key} value={m.key}>
+                    {m.label}
+                  </option>
+                ))}
+              </select>
+            ) : mode === "day" ? (
+              <input
+                type="date"
+                aria-label="Tag wählen"
+                className="min-h-10 rounded-md border bg-background px-3 text-sm"
+                value={period.start}
+                max={today}
+                onChange={(e) => e.target.value && setAnchor(e.target.value)}
+              />
+            ) : (
+              <span className="min-w-56 text-center text-sm font-semibold" aria-live="polite">
+                {period.label}
+              </span>
+            )}
+            <Button variant="ghost" size="icon" aria-label="Weiter" onClick={() => setAnchor(shiftAnchor(mode, anchor, 1))}>
+              <ChevronRight />
+            </Button>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setAnchor(today)}>
+            {mode === "day" ? "Heute" : mode === "week" ? "Diese Woche" : "Dieser Monat"}
+          </Button>
+          {mode === "day" && <span className="text-sm text-muted-foreground">{period.label}</span>}
+        </div>
+      </section>
+
+      {failed && (
+        <FeedbackState
+          kind="error"
+          title="Statistik nicht verfügbar"
+          action={<Button onClick={() => (employee ? single.refetch() : overall.refetch())}>Erneut versuchen</Button>}
+        >
+          Ist die Datenbank-Migration 0030 eingespielt?
+        </FeedbackState>
+      )}
+
+      <div className={cn("grid grid-cols-2 gap-3 lg:grid-cols-4", loading && "animate-pulse opacity-60")}>
+        {tiles.map(([label, value, sub]) => (
+          <div key={label} className="rounded-lg border bg-card p-4">
+            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="text-[30px] font-normal tabular-nums">{value}</p>
+            {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
           </div>
         ))}
       </div>
+
       <div className="grid gap-4 md:grid-cols-2">
-        {
-          <section className="space-y-2 rounded-lg border bg-card p-4">
-            <h2 className="font-semibold">Ergebnisse</h2>
-            <Bars items={byStatus} />
-          </section>
-        }
-        {mode !== "daily" && (
-          <section className="space-y-2 rounded-lg border bg-card p-4">
-            <h2 className="font-semibold">Anrufe pro Wochentag</h2>
-            <Bars items={byDay} />
-          </section>
-        )}
+        <section className="space-y-3 rounded-lg border bg-card p-4">
+          <h2 className="font-semibold">Ergebnisse im Detail</h2>
+          <Bars items={OUTCOMES.map((k) => ({ label: STATUS_LABEL[k] ?? k, value: data?.by_outcome[k] ?? 0 }))} />
+        </section>
+        <section className="space-y-3 rounded-lg border bg-card p-4">
+          <h2 className="font-semibold">
+            {mode === "month" ? "Gespräche pro Tag" : mode === "week" ? "Gespräche pro Wochentag" : "Gespräche pro Stunde"}
+          </h2>
+          <Timeline points={shown} />
+          {outside > 0 && (
+            <p className="text-xs text-muted-foreground">Außerhalb von 08:00–18:59 Uhr: {outside} Gespräche.</p>
+          )}
+        </section>
       </div>
+
+      {!employee && (
+        <section className="rounded-lg border bg-card p-4">
+          <h2 className="mb-3 font-semibold">Mitarbeiter in {country}</h2>
+          {team.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Keine aktiven Mitarbeiter in diesem Land.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
+                <thead className="text-muted-foreground">
+                  <tr>
+                    {["Mitarbeiter", "Rolle", "Gespräche", "Erreicht (Quote)", "Termine", "Deals"].map((h, i) => (
+                      <th key={h} className={cn("px-3 py-2 font-medium", i > 1 && "text-right")}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {[...team]
+                    .sort((a, b) => b.calls - a.calls || a.name.localeCompare(b.name))
+                    .map((m) => (
+                      <tr key={m.user_id}>
+                        <td className="px-3 py-2">
+                          <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={() => setEmployee(m.user_id)}>
+                            {m.name}
+                          </button>
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground">{roleLabel(m.role)}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{m.calls}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">
+                          {m.reached} ({m.calls ? `${Math.round((m.reached / m.calls) * 100)} %` : "–"})
+                        </td>
+                        <td className="px-3 py-2 text-right tabular-nums">{m.appointments}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{m.deals}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

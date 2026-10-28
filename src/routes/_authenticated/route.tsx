@@ -131,8 +131,7 @@ function Layout() {
   // Admin pages live in their own collapsible group so the caller workspace stays calm.
   const adminItems = showAdmin
     ? ([
-        { to: "/stats", label: "Statistiken", icon: ChartNoAxesColumn },
-        { to: "/daily-stats", label: "Tagesstatistik", icon: CalendarDays },
+        { to: "/stats", label: "Statistik", icon: ChartNoAxesColumn },
         { to: "/no-interest", label: "Kein Interesse", icon: X },
         { to: "/future-projects", label: "Zukunftsprojekte", icon: CalendarDays },
         { to: "/reference-unanswered", label: "Referenzmail offen", icon: Mail },
