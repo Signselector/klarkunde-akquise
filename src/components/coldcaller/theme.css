@@ -5,7 +5,11 @@
 .cc-help {
   --cc-ink: #111113;
   --cc-muted: #6b6a70;
-  --cc-accent: #e5242f;
+  --cc-accent: #2563eb;
+  --cc-accent-dark: #1d4ed8;
+  --cc-accent-light: #60a5fa;
+  --cc-accent-soft: #eff6ff;
+  --cc-accent-border: #dbeafe;
   --cc-border: #e8e4dc;
   --cc-ground: #f6f3ee;
   color: var(--cc-ink);
@@ -36,7 +40,7 @@
 .cc-theme :is(button, a, input, textarea, select):focus-visible,
 .cc-dialog :is(button, a):focus-visible,
 .cc-help:focus-visible {
-  outline: 3px solid oklch(0.35566 0.14239 28.694);
+  outline: 3px solid var(--cc-accent);
   outline-offset: 3px;
 }
 .cc-theme h1,
@@ -154,8 +158,8 @@
   color: oklch(0.44442 0.0096 73.639);
 }
 .cc-badge--info {
-  background: oklch(0.93523 0.01418 17.41);
-  color: oklch(0.35566 0.14239 28.694);
+  background: var(--cc-accent-soft);
+  color: var(--cc-accent-dark);
 }
 .cc-badge--success {
   background: oklch(0.94 0.04 160);

@@ -150,7 +150,7 @@
 .cc-metric-icon {
   color: var(--cc-accent);
 }
-/* The monthly average is the hero figure: black card with a red accent */
+/* The monthly average is the hero figure: black card with a blue accent */
 .cc-metrics > .cc-metric:nth-child(3),
 .cc-app .grid > .cc-metric:nth-child(3) {
   background: #0e0e10;
@@ -162,7 +162,7 @@
   color: #a8a6ad;
 }
 .cc-app .grid > .cc-metric:nth-child(3) .cc-metric-icon {
-  color: #ff6b73;
+  color: #60a5fa;
 }
 .cc-app .cc-daytile {
   background: #faf8f4;
@@ -176,8 +176,8 @@
   border-color: #d6d0c4;
 }
 .cc-app .cc-daytile--key {
-  background: #fdebec;
-  border-color: #f6c9cc;
+  background: #eff6ff;
+  border-color: #dbeafe;
 }
 .cc-app .cc-daytile strong {
   font-weight: 800;
@@ -186,14 +186,14 @@
   background: #faf8f4;
 }
 .cc-app .cc-ranking-me {
-  background: #fdebec;
+  background: #eff6ff;
   border-radius: 14px;
 }
 .cc-app .cc-ranking-points {
   font-weight: 800;
 }
 
-/* Buttons: pill black by default, red for the main call to action */
+/* Buttons: pill black by default, blue for the main call to action */
 .cc-button {
   border-radius: 14px;
 }
@@ -206,7 +206,7 @@
 .cc-app .cc-start-actions .cc-button--primary,
 .cc-app .cc-page-actions .cc-button--primary {
   background: var(--cc-accent);
-  box-shadow: 0 8px 18px -8px rgb(229 36 47 / 70%);
+  box-shadow: 0 8px 18px -8px rgb(37 99 235 / 60%);
 }
 
 /* Entry animation, transform/opacity only */
@@ -254,13 +254,13 @@
   }
 }
 
-/* Progress in brand red, calmer inactive navigation */
+/* Progress in brand blue, calmer inactive navigation */
 .cc-batch [role="progressbar"] {
   background: #e6e1d6;
   height: 8px;
 }
 .cc-batch [role="progressbar"] > div {
-  background: linear-gradient(90deg, var(--cc-accent), #ff6b73);
+  background: linear-gradient(90deg, var(--cc-accent), #60a5fa);
   border-radius: 99px;
 }
 .cc-topnav-links .cc-nav-link:not([data-active="true"]) {
@@ -294,7 +294,7 @@
   padding: 13px 20px;
   border-radius: 14px;
   text-decoration: none;
-  box-shadow: 0 8px 18px -8px rgb(229 36 47 / 70%);
+  box-shadow: 0 8px 18px -8px rgb(37 99 235 / 60%);
   transition: transform 150ms;
 }
 .cc-cta:hover {
@@ -419,7 +419,7 @@
 .cc-meter i {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--cc-accent), #ff6b73);
+  background: linear-gradient(90deg, var(--cc-accent), #60a5fa);
   border-radius: 99px;
 }
 .cc-meter-label {
@@ -521,8 +521,8 @@
   font-weight: 600;
 }
 .cc-pill--hot {
-  background: #fdebec;
-  border-color: #f6c9cc;
+  background: #eff6ff;
+  border-color: #dbeafe;
 }
 .cc-pill--hot b {
   color: var(--cc-accent);
@@ -578,7 +578,7 @@
   font-variant-numeric: tabular-nums;
 }
 .cc-rank li.cc-rank-me {
-  background: #fdebec;
+  background: #eff6ff;
   margin: 0 -12px;
   padding: 9px 12px;
   border-radius: 14px;
@@ -875,7 +875,7 @@
   }
 }
 
-/* ---- Sidebar in the new design: flat graphite, red active pill, roomy rows ---- */
+/* ---- Sidebar in the new design: flat graphite, blue active pill, roomy rows ---- */
 .cc-app [data-sidebar="sidebar"],
 [data-sidebar="sidebar"][data-mobile="true"] {
   background-color: #0f0f11;
@@ -918,9 +918,9 @@
 .cc-app .cc-nav-link[data-active="true"],
 [data-mobile="true"] .cc-nav-link[data-active="true"] {
   color: white;
-  background: linear-gradient(135deg, #cf2431, #8d1219);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   border-color: transparent;
-  box-shadow: 0 8px 20px -8px rgb(229 36 47 / 70%);
+  box-shadow: 0 8px 20px -8px rgb(37 99 235 / 60%);
 }
 .cc-nav-badge {
   margin-left: auto;
@@ -928,7 +928,7 @@
   height: 22px;
   padding: 0 6px;
   border-radius: 99px;
-  background: #e5242f;
+  background: #2563eb;
   color: white;
   font-size: 12px;
   font-weight: 700;
@@ -968,7 +968,7 @@
   padding: 14px;
 }
 .cc-app .cc-sidebar-footer .cc-avatar {
-  background: #8d1219;
+  background: #1d4ed8;
   border: 0;
   box-shadow: none;
   color: white;
@@ -1038,7 +1038,7 @@
   color: white;
 }
 .cc-sidebar-tools [role="radio"][aria-checked="true"] {
-  background: linear-gradient(135deg, #cf2431, #8d1219);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   color: white;
 }
 
@@ -1078,7 +1078,7 @@
   height: 100%;
   min-width: 6px;
   border-radius: 99px;
-  background: linear-gradient(90deg, #cf2431, #ff6b73);
+  background: linear-gradient(90deg, #2563eb, #60a5fa);
 }
 .cc-level-coins {
   display: flex;
@@ -1120,11 +1120,11 @@
 }
 .cc-app .cc-nav-link[data-active="true"],
 [data-mobile="true"] .cc-nav-link[data-active="true"] {
-  color: #fff7f5;
-  background: #620b12;
-  border-color: #8d2931;
+  color: white;
+  background: #1d4ed8;
+  border-color: #1e40af;
   box-shadow:
-    inset 0 1px 0 rgb(255 206 206 / 12%),
+    inset 0 1px 0 rgb(219 234 254 / 18%),
     inset 0 -7px 12px rgb(27 0 3 / 25%),
     0 3px 4px rgb(0 0 0 / 38%);
 }
