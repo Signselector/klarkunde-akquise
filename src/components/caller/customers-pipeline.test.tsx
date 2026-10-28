@@ -16,7 +16,6 @@ const fixture = vi.hoisted(() => ({
 vi.mock("@/lib/country", () => ({ useCountry: () => "DE" }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/customers.functions", () => ({ loadMyCustomers: async () => fixture.response }));
-vi.mock("@/components/caller/lead-dialog", () => ({ LeadDialog: () => null }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: () => ({

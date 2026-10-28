@@ -9,7 +9,6 @@ import { placeDeals, type CustomerDeal } from "@/lib/customer-stages";
 import { Mail, Phone } from "@/components/coldcaller/icons";
 import { FeedbackState, StatusBadge, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
-import { LeadDialog } from "@/components/caller/lead-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -19,14 +18,11 @@ function since(iso: string | null) {
   return days === 0 ? "heute" : days === 1 ? "vor 1 Tag" : `vor ${days} Tagen`;
 }
 
-function Card({ deal, onOpen }: { deal: CustomerDeal; onOpen: (id: string) => void }) {
+/** Information only: the card does not open the customer file. */
+function Card({ deal }: { deal: CustomerDeal }) {
   return (
     <li>
-      <button
-        type="button"
-        onClick={() => onOpen(deal.lead_id)}
-        className="cc-card-button w-full space-y-2 rounded-[10px] border bg-card p-3 text-left hover:border-primary focus-visible:outline-2"
-      >
+      <div className="w-full space-y-2 rounded-[10px] border bg-card p-3 text-left">
         <strong className="block break-words">{deal.company || "Ohne Firmenname"}</strong>
         {deal.contact_name && <span className="block text-sm">{deal.contact_name}</span>}
         <span className="flex items-center justify-between text-xs text-muted-foreground">
@@ -36,7 +32,7 @@ function Card({ deal, onOpen }: { deal: CustomerDeal; onOpen: (id: string) => vo
             {deal.email && <Mail size={14} aria-label="E-Mail vorhanden" />}
           </span>
         </span>
-      </button>
+      </div>
     </li>
   );
 }
@@ -50,7 +46,6 @@ export function CustomersPipeline({ userId }: { userId: string }) {
   const country = useCountry();
   const load = useServerFn(loadMyCustomers);
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
 
   const mapping = useQuery({
     queryKey: ["stage-mapping", country],
@@ -169,7 +164,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
                     ) : (
                       <ul className="space-y-2">
                         {items.map((d) => (
-                          <Card key={d.deal_id} deal={d} onOpen={setSelected} />
+                          <Card key={d.deal_id} deal={d} />
                         ))}
                       </ul>
                     )}
@@ -189,7 +184,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
                     <ul className="space-y-2">
                       {placed.other.map((d) => (
                         <div key={d.deal_id} className="space-y-1">
-                          <Card deal={d} onOpen={setSelected} />
+                          <Card deal={d} />
                           <StatusBadge tone="neutral">
                             {d.stage_id !== null && stageNames[d.stage_id]
                               ? stageNames[d.stage_id]
@@ -205,7 +200,6 @@ export function CustomersPipeline({ userId }: { userId: string }) {
           )}
         </div>
       </Surface>
-      <LeadDialog leadId={selected} userId={userId} onClose={() => setSelected(null)} />
     </div>
   );
 }
