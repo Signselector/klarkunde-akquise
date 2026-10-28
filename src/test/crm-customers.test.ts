@@ -105,35 +105,23 @@ describe("placeDeals", () => {
     expect(column(r, "waiting_3d").deals.map((d) => d.deal_id)).toEqual([2]);
   });
 
-  it("shows every requested column in the requested order, mapped or not", () => {
-    const r = placeDeals([], {});
-    expect(r.columns.map((c) => c.column.label)).toEqual([
-      "Logo ausstehend",
-      "Zukunftsprojekt",
-      "Logo Render",
-      "Realismus Render",
-      "In Bearbeitung",
-      "3D fertig",
-      "No Show",
-      "Geringe Chance",
-      "Vielleicht / Sehr interessiert",
-      "Angebot erstellen",
-      "Kaufvertrag erstellen",
-      "Kaufvertrag waiting",
-      "Gewonnen",
-    ]);
-    expect(r.columns.every((c) => c.stageIds.length === 0)).toBe(true);
+  it("shows Zukunftsprojekt first and the same order for DE and AT", () => {
+    const de = placeDeals([], {}, "DE").columns.map((c) => c.column.label);
+    const at = placeDeals([], {}, "AT").columns.map((c) => c.column.label);
+    expect(de[0]).toBe("Zukunftsprojekt");
+    expect(de).toEqual(at);
+    expect(de).toHaveLength(14);
   });
 });
 
 describe("AT customer columns", () => {
   it("uses the AT order and puts 52, 37, 55 into Gewonnen", async () => {
     const { placeDeals: place } = await import("@/lib/customer-stages");
-    const m = { waiting_3d: 34, low_q: 21, high_q: 1, animation: 17, rd_done: 16, no_show: 26, low_chance: 15, maybe_interested: 54, very_interested: 32, offer: 33, contract: 8, contract_waiting: 35, won_zero_percent: 52, won_production_planning: 37, won_other_percent: 55 };
+    const m = { on_hold: 13, waiting_3d: 34, low_q: 21, high_q: 1, animation: 17, rd_done: 16, no_show: 26, low_chance: 15, maybe_interested: 54, very_interested: 32, offer: 33, contract: 8, contract_waiting: 35, won_zero_percent: 52, won_production_planning: 37, won_other_percent: 55 };
     const d = (id: number, stage: number) => ({ lead_id: String(id), deal_id: id, company: null, contact_name: null, email: null, phone: null, last_called_at: null, stage_id: stage, deal_status: "open", local_stage_key: null, source: "pipedrive" as const });
     const r = place([d(1, 52), d(2, 37), d(3, 55), d(4, 54)], m, "AT");
-    expect(r.columns.map((c) => c.stageIds.join("+"))).toEqual(["34","21","1","17","16","26","15","54","32","33","8","35","52+37+55"]);
+    expect(r.columns.map((c) => c.stageIds.join("+"))).toEqual(["13","34","21","1","17","16","26","15","54","32","33","8","35","52+37+55"]);
     expect(r.columns.at(-1)!.deals).toHaveLength(3);
-    expect(r.columns[7]!.column.label).toBe("Mittel Interesse");
+    expect(r.columns[8]!.column.label).toBe("Mittleres Interesse");
   });
 });

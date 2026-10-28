@@ -4,32 +4,9 @@
  */
 export type CustomerColumn = { key: string; label: string; stageKeys: string[] };
 
+/** Same order and wording for DE and AT. */
 export const CUSTOMER_COLUMNS: CustomerColumn[] = [
-  { key: "waiting_3d", label: "Logo ausstehend", stageKeys: ["waiting_3d"] },
   { key: "on_hold", label: "Zukunftsprojekt", stageKeys: ["on_hold"] },
-  { key: "low_q", label: "Logo Render", stageKeys: ["low_q"] },
-  { key: "high_q", label: "Realismus Render", stageKeys: ["high_q"] },
-  { key: "animation", label: "In Bearbeitung", stageKeys: ["animation"] },
-  { key: "rd_done", label: "3D fertig", stageKeys: ["rd_done"] },
-  { key: "no_show", label: "No Show", stageKeys: ["no_show"] },
-  { key: "low_chance", label: "Geringe Chance", stageKeys: ["low_chance"] },
-  {
-    key: "interested",
-    label: "Vielleicht / Sehr interessiert",
-    stageKeys: ["maybe_interested", "very_interested"],
-  },
-  { key: "offer", label: "Angebot erstellen", stageKeys: ["offer"] },
-  { key: "contract", label: "Kaufvertrag erstellen", stageKeys: ["contract"] },
-  { key: "contract_waiting", label: "Kaufvertrag waiting", stageKeys: ["contract_waiting"] },
-  {
-    key: "won",
-    label: "Gewonnen",
-    stageKeys: ["won_other_percent", "won_production_planning", "won_zero_percent", "won_closed"],
-  },
-];
-
-/** Austria: own order and wording, as defined by the AT team. */
-export const CUSTOMER_COLUMNS_AT: CustomerColumn[] = [
   { key: "waiting_3d", label: "Logo ausstehend", stageKeys: ["waiting_3d"] },
   { key: "low_q", label: "Logo Render", stageKeys: ["low_q"] },
   { key: "high_q", label: "Realismus Render", stageKeys: ["high_q"] },
@@ -49,8 +26,9 @@ export const CUSTOMER_COLUMNS_AT: CustomerColumn[] = [
   },
 ];
 
-export const customerColumns = (country?: string) =>
-  country === "AT" ? CUSTOMER_COLUMNS_AT : CUSTOMER_COLUMNS;
+export const CUSTOMER_COLUMNS_AT = CUSTOMER_COLUMNS;
+
+export const customerColumns = (_country?: string) => CUSTOMER_COLUMNS;
 
 export type CustomerDeal = {
   lead_id: string;
