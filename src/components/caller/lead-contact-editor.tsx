@@ -71,7 +71,7 @@ export function LeadContactEditor({
         type="button"
         size="sm"
         variant="outline"
-        className="gap-2.5 bg-white px-4 shadow-sm"
+        className="mt-1 w-full justify-center gap-2.5 bg-white px-4 shadow-sm"
         onClick={() => {
           setForm(initial());
           setEditing(true);
