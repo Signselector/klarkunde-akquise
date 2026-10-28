@@ -1,14 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { PhoneCall } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useCountry } from "@/lib/country";
-import { LeadDialog } from "@/components/caller/lead-dialog";
 
-/** A separate overlay keeps the mounted call form and its note drafts intact. */
+/** Persistent reminder (top right) for due callbacks; one toast per callback, closed by its button or the X. */
 export function CallbackReminder({ userId }: { userId: string }) {
   const country = useCountry();
-  const [leadId, setLeadId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
   const notified = useRef(new Set<string>());
   const query = useQuery({
     queryKey: ["callback-reminders", userId, country],
@@ -28,19 +30,36 @@ export function CallbackReminder({ userId }: { userId: string }) {
     },
   });
   useEffect(() => {
-    for (const callback of query.data ?? []) {
+    const due = query.data ?? [];
+    // Already on the callbacks page: nothing to point at, and earlier reminders are done with.
+    if (location.pathname === "/callbacks") {
+      for (const callback of due) toast.dismiss(`callback-${callback.id}`);
+      return;
+    }
+    for (const callback of due) {
       const key = `${userId}:${callback.id}:${callback.due_at}`;
       if (!callback.lead || notified.current.has(key)) continue;
       notified.current.add(key);
       const lead = callback.lead;
-      toast("Jetzt zurückrufen", {
-        description: lead.company || "Rückruf fällig",
-        duration: 15000,
-        action: { label: "Kundenakte öffnen", onClick: () => setLeadId(lead.id) },
+      const toastId = `callback-${callback.id}`;
+      const time = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" }).format(
+        new Date(callback.due_at),
+      );
+      toast.warning("Rückruf fällig", {
+        id: toastId,
+        icon: <PhoneCall className="h-4 w-4" />,
+        description: `${lead.company || "Rückruf"} · geplant für ${time} Uhr`,
+        duration: Infinity,
+        closeButton: true,
+        action: {
+          label: "Zu den Rückrufen",
+          onClick: () => {
+            toast.dismiss(toastId);
+            void navigate({ to: "/callbacks" });
+          },
+        },
       });
     }
-  }, [query.data, userId]);
-  return (
-    <LeadDialog leadId={leadId} userId={userId} admin={false} onClose={() => setLeadId(null)} />
-  );
+  }, [query.data, userId, location.pathname, navigate]);
+  return null;
 }

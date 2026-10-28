@@ -1,9 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { useState } from "react";
 import { CallbackReminder } from "./callback-reminder";
 const fixture = vi.hoisted(() => ({
-  toast: vi.fn(),
+  toast: Object.assign(vi.fn(), { warning: vi.fn(), dismiss: vi.fn() }),
+  navigate: vi.fn(),
+  path: "/dashboard",
   rows: [
     {
       id: "callback-1",
@@ -13,47 +14,34 @@ const fixture = vi.hoisted(() => ({
   ],
 }));
 vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: fixture.rows }) }));
+vi.mock("@tanstack/react-router", () => ({
+  useNavigate: () => fixture.navigate,
+  useLocation: () => ({ pathname: fixture.path }),
+}));
 vi.mock("@/lib/country", () => ({ useCountry: () => "AT" }));
 vi.mock("sonner", () => ({ toast: fixture.toast }));
-vi.mock("@/components/caller/lead-dialog", () => ({
-  LeadDialog: ({ leadId, onClose }: { leadId: string | null; onClose: () => void }) =>
-    leadId ? (
-      <div role="dialog">
-        <button onClick={onClose}>Schließen</button>
-      </div>
-    ) : null,
-}));
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  fixture.path = "/dashboard";
 });
-it("opens a due reminder above the working draft and notifies once per due time", () => {
-  function Harness() {
-    const [draft, setDraft] = useState("");
-    return (
-      <>
-        <textarea
-          aria-label="Gesprächsnotiz"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-        />
-        <CallbackReminder userId="caller" />
-      </>
-    );
-  }
-  const view = render(<Harness />);
-  fireEvent.change(screen.getByLabelText("Gesprächsnotiz"), {
-    target: { value: "Ungespeicherte Notiz" },
-  });
-  expect(fixture.toast).toHaveBeenCalledTimes(1);
-  const options = fixture.toast.mock.calls[0]![1];
+it("shows one persistent toast per due callback and links to the callbacks page", () => {
+  const view = render(<CallbackReminder userId="caller" />);
+  view.rerender(<CallbackReminder userId="caller" />);
+  expect(fixture.toast.warning).toHaveBeenCalledTimes(1);
+  const [title, options] = fixture.toast.warning.mock.calls[0]!;
+  expect(title).toBe("Rückruf fällig");
+  expect(options.id).toBe("callback-callback-1");
+  expect(options.duration).toBe(Infinity);
+  expect(options.closeButton).toBe(true);
+  expect(options.action.label).toBe("Zu den Rückrufen");
   options.action.onClick();
-  // Flush the reminder state through the same mounted tree.
-  view.rerender(<Harness />);
-  expect(screen.getByRole("dialog")).toBeTruthy();
-  fireEvent.click(screen.getByText("Schließen"));
-  expect((screen.getByLabelText("Gesprächsnotiz") as HTMLTextAreaElement).value).toBe(
-    "Ungespeicherte Notiz",
-  );
-  expect(fixture.toast).toHaveBeenCalledTimes(1);
+  expect(fixture.toast.dismiss).toHaveBeenCalledWith("callback-callback-1");
+  expect(fixture.navigate).toHaveBeenCalledWith({ to: "/callbacks" });
+});
+it("shows nothing on the callbacks page and closes existing reminders", () => {
+  fixture.path = "/callbacks";
+  render(<CallbackReminder userId="caller" />);
+  expect(fixture.toast.warning).not.toHaveBeenCalled();
+  expect(fixture.toast.dismiss).toHaveBeenCalledWith("callback-callback-1");
 });
