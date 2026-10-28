@@ -117,27 +117,6 @@ export function LeadDialog({
     toast.success(summary);
     onNavigate?.(target);
   }
-  async function reopen() {
-    if (!lead) return;
-    const { error } = await (backendEnabled
-      ? supabase.rpc("reopen_lead", {
-          p_request_id: crypto.randomUUID(),
-          p_lead_id: lead.id,
-          p_expected_version: lead.version,
-          p_reason: "Manuell wieder geöffnet",
-        })
-      : supabase.from("leads").update({ status: "open" }).eq("id", lead.id));
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    if (!backendEnabled)
-      await supabase
-        .from("status_changes")
-        .insert({ lead_id: lead.id, user_id: userId, old_status: lead.status, new_status: "open" });
-    toast.success("Lead wieder geöffnet.");
-    refresh();
-  }
   return (
     <Dialog open={!!leadId} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="cc-theme cc-detail-dialog">
@@ -208,13 +187,6 @@ export function LeadDialog({
                 onDone={afterAction}
               />
             )}
-            <div className="flex flex-wrap gap-2">
-              {lead.status !== "open" && (
-                <Button size="sm" onClick={reopen}>
-                  Wieder öffnen
-                </Button>
-              )}
-            </div>
             <div className="cc-detail-section">
               <h3>Verlauf</h3>
               <ul className="cc-history">

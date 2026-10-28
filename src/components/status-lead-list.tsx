@@ -55,7 +55,7 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
   const [selected, setSelected] = useState<string | null>(null);
   // Only managers and admins may open the customer file of a completed lead.
   const roles = useRoles(userId);
-  const canOpen = roles.isStaff;
+  const canOpen = roles.ready && roles.isStaff;
   const [filter, setFilter] = useState("all");
   const query = useQuery({
     queryKey: ["lead-list", userId, country],
@@ -237,7 +237,7 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
         <LeadDialog
           leadId={selected}
           userId={userId}
-          admin={false}
+          admin={roles.isGlobalAdmin}
           leadIds={rows.map((l) => l.lead_id)}
           onNavigate={setSelected}
           onClose={() => setSelected(null)}
