@@ -1700,7 +1700,6 @@ export type Database = {
         Returns: boolean
       }
       heartbeat: { Args: never; Returns: undefined }
-      view_as_target: { Args: never; Returns: string }
       import_duplicates: { Args: { p_batch_id: string }; Returns: Json }
       is_global_admin: { Args: { _uid: string }; Returns: boolean }
       is_master: { Args: { _uid: string }; Returns: boolean }
@@ -1884,7 +1883,6 @@ export type Database = {
         | "user_deactivated"
         | "list_viewed"
         | "list_exported"
-        | "view_as_started"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2034,7 +2032,6 @@ export const Constants = {
         "user_deactivated",
         "list_viewed",
         "list_exported",
-        "view_as_started",
       ],
     },
   },
