@@ -218,6 +218,13 @@
       "when": 1793218856295,
       "tag": "0030_view_as_user",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793218869064,
+      "tag": "0031_view_as_appointments",
+      "breakpoints": true
     }
   ]
 }
