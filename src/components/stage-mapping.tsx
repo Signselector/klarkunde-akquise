@@ -50,6 +50,7 @@ const GROUPS: { title: string; fields: [string, string][] }[] = [
       ["won_other_percent", "Gewonnen: Andere Prozente"],
       ["won_production_planning", "Gewonnen: Produktionsplanung"],
       ["won_zero_percent", "Gewonnen: 0% Produktion"],
+      ["won_closed", "Gewonnen (Deal abgeschlossen)"],
     ],
   },
   {
