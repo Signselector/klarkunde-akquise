@@ -164,7 +164,12 @@ function ImportPage() {
       }
       if (!batchId) return;
       state.batchId = batchId;
-      const { error: countryError } = await supabase.rpc("set_import_batch_country", {
+      const { error: countryError } = await (
+        supabase.rpc as unknown as (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ error: unknown }>
+      )("set_import_batch_country", {
         p_batch_id: batchId,
         p_country: country ?? "",
       });
