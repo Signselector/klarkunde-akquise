@@ -65,7 +65,7 @@ function AuthPage() {
           <span className="cc-auth-mark">
             <Target size={56} strokeWidth={1.5} aria-hidden="true" />
           </span>
-          <h2>Gute Gespräche. Klare Chancen.</h2>
+          <h2>Der erste Eindruck{"\u00a0"}<br />zählt.{"\u00a0"}</h2>
           <p>
             Leads, Rückrufe und Kunden an einem Ort. Damit du dich auf dein nächstes Gespräch
             konzentrieren kannst.
