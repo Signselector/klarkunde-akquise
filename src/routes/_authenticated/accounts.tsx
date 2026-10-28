@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { COUNTRIES } from "@/lib/country";
 import { Flag } from "@/components/flag";
 import { setViewAs } from "@/lib/view-as";
+import { CountryDropdown } from "@/components/country-dropdown";
 import { presenceState } from "@/lib/presence";
 import { deleteAccount } from "@/lib/accounts.functions";
 import { Dropdown } from "@/components/ui/dropdown";
@@ -147,6 +148,7 @@ function AccountsPage() {
         p_target_label: name,
       })
       .then(() => undefined);
+    qc.clear();
     await router.invalidate();
     nav({ to: "/dashboard" });
   }
@@ -177,6 +179,7 @@ function AccountsPage() {
                 </span>
                 <span className="truncate text-sm text-muted-foreground">{u.email}</span>
                 <span className="flex flex-col items-start gap-1">
+                  {(u.master || !globalAdmin) && (
                   <Badge
                     variant={
                       u.master || u.role === "admin" || u.role === "manager"
@@ -191,6 +194,7 @@ function AccountsPage() {
                         ? "👑 Admin"
                         : ROLE_LABEL[u.role]}
                   </Badge>
+                  )}
                 </span>
                 <span className="flex flex-col items-start gap-1">
                   <Badge
@@ -213,21 +217,14 @@ function AccountsPage() {
                             <Flag code={c.code} /> {c.code}
                           </Badge>
                         ))
-                      : COUNTRIES.map((c) => {
-                          const on = u.countries.includes(c.code);
-                          return (
-                            <Button
-                              key={c.code}
-                              size="sm"
-                              variant={on ? "default" : "outline"}
-                              disabled={!globalAdmin}
-                              aria-pressed={on}
-                              onClick={() => toggleCountry(u.id, c.code, !on)}
-                            >
-                              <Flag code={c.code} /> {c.code}
-                            </Button>
-                          );
-                        })}
+                      : (
+                        <CountryDropdown
+                          selected={u.countries}
+                          disabled={!globalAdmin}
+                          label={u.display_name ?? "Account"}
+                          onToggle={(code, on) => toggleCountry(u.id, code, on)}
+                        />
+                      )}
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     {(self || globalAdmin || u.role === "recruit" || u.role === "veteran") && (

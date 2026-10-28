@@ -98,3 +98,12 @@ test("view_as: dashboard numbers and appointments are those of the viewed employ
   await as(rec);
   assert.equal((await q("select count(*)::int n from public.appointments"))[0].n, 1);
 });
+
+test("view_as: the country list is that of the viewed employee", async () => {
+  await as(admin);
+  assert.deepEqual((await q("select public.my_countries() c"))[0].c, ["AT", "DE", "NL"]);
+  await as(admin, rec);
+  assert.deepEqual((await q("select public.my_countries() c"))[0].c, ["AT"]);
+  await as(mgrAT, rec);
+  assert.deepEqual((await q("select public.my_countries() c"))[0].c, ["AT"]);
+});

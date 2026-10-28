@@ -1538,6 +1538,10 @@ tr:hover > .cc-sticky-action {
     0 2px 8px rgb(15 23 42 / 8%);
   transform-origin: var(--radix-select-content-transform-origin);
 }
+.cc-dd-menu {
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+  min-width: 220px;
+}
 .cc-dd-content[data-state="open"] {
   animation: cc-dd-in 180ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
 }

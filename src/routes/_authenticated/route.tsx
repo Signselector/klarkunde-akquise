@@ -179,6 +179,7 @@ function Layout() {
 
   async function endViewAs() {
     setViewAs(null);
+    qc.clear();
     await router.invalidate();
     nav({ to: "/accounts" });
   }

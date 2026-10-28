@@ -1,3 +1,4 @@
+import { getViewAs } from "@/lib/view-as";
 import { useEffect, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +32,8 @@ export function setCountry(c: Country) {
 /** Countries the signed-in user may open (master admin: all). */
 export function useAllowedCountries() {
   return useQuery({
-    queryKey: ["my-countries"],
+    // The list differs while a manager views the app as an employee.
+    queryKey: ["my-countries", getViewAs()?.id ?? null],
     queryFn: async () => {
       const { data } = await supabase.rpc("my_countries");
       return ((data as string[] | null) ?? []).filter(isCountry);
