@@ -1728,6 +1728,10 @@ export type Database = {
         }
         Returns: Json
       }
+      set_import_batch_country: {
+        Args: { p_batch_id: string; p_country: string }
+        Returns: undefined
+      }
       set_offer_status: {
         Args: {
           p_expected_version: number
