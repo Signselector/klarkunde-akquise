@@ -28,6 +28,7 @@ import {
   LogOut,
   FileText,
   LayoutDashboard,
+  ScrollText,
   Settings,
   Upload,
   Users,
@@ -83,11 +84,23 @@ function Layout() {
   });
 
   async function signOut() {
+    // Best effort: a failing log call must never block signing out.
+    await Promise.allSettled([
+      supabase.rpc("log_activity", { p_action: "user_logout" }),
+      supabase.rpc("set_offline"),
+    ]);
+    try {
+      sessionStorage.removeItem("cc-login-logged");
+    } catch {
+      /* ignore */
+    }
     await qc.cancelQueries();
     qc.clear();
     await supabase.auth.signOut();
     nav({ to: "/auth", replace: true });
   }
+
+  usePresence(user.id);
 
   const isMaster = isMasterEmail(user.email);
   const [callerView, setCallerView] = useState(false);
@@ -138,6 +151,7 @@ function Layout() {
         { to: "/reference-unanswered", label: "Referenzmail offen", icon: Mail },
         { to: "/import", label: "Upload", icon: Upload },
         { to: "/accounts", label: "Accounts", icon: Crown },
+        { to: "/audit-log", label: "Aktivitätsprotokoll", icon: ScrollText },
         // Settings are the backend (Pipedrive, stages, backups ...): master admin only.
         ...(isMaster ? [{ to: "/settings", label: "Einstellungen", icon: Settings }] : []),
       ] as const)
@@ -292,6 +306,31 @@ function Layout() {
       </SidebarInset>
     </SidebarProvider>
   );
+}
+
+/** Heartbeat while the tab is visible, plus one login entry per browser session. */
+const HEARTBEAT_MS = 45_000;
+function usePresence(userId: string) {
+  useEffect(() => {
+    const beat = () => {
+      if (document.visibilityState === "visible") void supabase.rpc("heartbeat");
+    };
+    try {
+      if (!sessionStorage.getItem("cc-login-logged")) {
+        sessionStorage.setItem("cc-login-logged", "1");
+        void supabase.rpc("log_activity", { p_action: "user_login" });
+      }
+    } catch {
+      /* sessionStorage can be blocked; presence still works */
+    }
+    beat();
+    const timer = window.setInterval(beat, HEARTBEAT_MS);
+    document.addEventListener("visibilitychange", beat);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", beat);
+    };
+  }, [userId]);
 }
 
 function NavigationItem({

@@ -123,6 +123,35 @@ export type Database = {
           },
         ]
       }
+      activity_audit_logs: {
+        Row: {
+          action: Database["public"]["Enums"]["audit_action_type"]
+          actor_email: string
+          actor_id: string | null
+          actor_name: string
+          actor_role: string
+          country: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          target_id: string | null
+          target_label: string | null
+          target_type: string | null
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          is_online: boolean
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
       audit_events: {
         Row: {
           action: string
@@ -1618,6 +1647,31 @@ export type Database = {
         Args: { _country: string; _uid: string }
         Returns: boolean
       }
+      heartbeat: { Args: never; Returns: undefined }
+      set_offline: { Args: never; Returns: undefined }
+      log_activity: {
+        Args: {
+          p_action: Database["public"]["Enums"]["audit_action_type"]
+          p_country?: string
+          p_metadata?: Json
+          p_target_id?: string
+          p_target_label?: string
+          p_target_type?: string
+        }
+        Returns: undefined
+      }
+      log_activity_for: {
+        Args: {
+          p_action: Database["public"]["Enums"]["audit_action_type"]
+          p_actor: string
+          p_country?: string
+          p_metadata?: Json
+          p_target_id?: string
+          p_target_label?: string
+          p_target_type?: string
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1763,6 +1817,20 @@ export type Database = {
       user_role: { Args: { _uid: string }; Returns: string }
     }
     Enums: {
+      audit_action_type:
+        | "user_login"
+        | "user_logout"
+        | "batch_completed"
+        | "batch_claimed"
+        | "batch_released"
+        | "batch_uploaded"
+        | "batch_deleted"
+        | "user_registered"
+        | "user_role_changed"
+        | "user_deleted"
+        | "user_deactivated"
+        | "list_viewed"
+        | "list_exported"
       app_role:
         | "admin"
         | "caller"
@@ -1897,6 +1965,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      audit_action_type: ["user_login", "user_logout", "batch_completed", "batch_claimed", "batch_released", "batch_uploaded", "batch_deleted", "user_registered", "user_role_changed", "user_deleted", "user_deactivated", "list_viewed", "list_exported"],
       app_role: [
         "admin",
         "caller",

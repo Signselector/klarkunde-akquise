@@ -55,6 +55,7 @@ export const ShieldCheck = lineIcon(Glyph.ShieldCheck, "security");
 export const CircleAlert = lineIcon(Glyph.CircleAlert, "alert");
 export const Clock3 = lineIcon(Glyph.Hourglass, "waiting");
 export const HelpCircle = lineIcon(Glyph.MessageCircleQuestion, "help");
+export const ScrollText = lineIcon(Glyph.ScrollText, "audit-log");
 export const Mail = lineIcon(Glyph.Mail, "email");
 export const ImageIcon = lineIcon(Glyph.Image, "image");
 export const Box = lineIcon(Glyph.Box, "box");

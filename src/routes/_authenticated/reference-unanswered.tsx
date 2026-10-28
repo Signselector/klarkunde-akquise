@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logListExport, useLogListView } from "@/lib/audit";
 import { CountryCell, useListScope } from "@/components/country-scope";
 import { unansweredCsv, type UnansweredLead } from "@/lib/reference-unanswered-csv";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
@@ -21,6 +22,7 @@ function ReferenceUnansweredPage() {
   const { user } = Route.useRouteContext();
   // Managers: their country. Global admins: a country or all countries.
   const { scope: country, bar, isStaff: staff, showCountryColumn } = useListScope(user.id, user.email);
+  useLogListView("reference-unanswered", "Referenzmail offen", country, staff);
   const [search, setSearch] = useState("");
   const q = useQuery({
     enabled: staff,
@@ -44,6 +46,7 @@ function ReferenceUnansweredPage() {
         .includes(search.toLocaleLowerCase()),
   );
   function download() {
+    logListExport("reference-unanswered", "Referenzmail offen", country, rows.length);
     const blob = new Blob([unansweredCsv(rows)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

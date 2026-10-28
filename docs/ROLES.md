@@ -48,3 +48,10 @@ Die frühere Zusatzrolle „Fulfilment“ gibt es nicht mehr (Migration 0026).
 | Account ohne Land | Sperrschirm „Account wartet auf Freischaltung“ (gilt für alle außer Admins) | | |
 
 Datenbank: `get_no_interest_leads`, `get_future_projects_leads`, `get_unanswered_reference_leads` akzeptieren `'ALL'` nur für Admins. Der Import ist für Manager und Admins; das Zielland setzt `set_import_batch_country` (Manager nur für ihr Land), `confirm_import` prüft das Land des Batches.
+
+## Präsenz und Aktivitätsprotokoll
+
+- **Online-Status** (`/accounts`): Jeder angemeldete Browser meldet alle 45 s einen Heartbeat (`heartbeat()`, Tabelle `user_presence`). Online gilt, wer in den letzten 90 s gemeldet hat; sonst „Zuletzt online vor …“. Manager sehen nur Nutzer ihres Landes, Admins alle.
+- **Aktivitätsprotokoll** (`/audit-log`, nur Manager und Admins): Tabelle `activity_audit_logs`, nur lesbar. Update, Delete und Truncate sind per Trigger gesperrt, es gibt keine Schreibrechte für Clients. Manager sehen nur Einträge ihres Landes, Admins alle.
+- Protokolliert werden Anmeldung/Abmeldung, Batch übernommen/freigegeben/hochgeladen/abgeschlossen/gelöscht, Registrierung, Rollenänderung, Deaktivierung, Account löschen sowie Öffnen und CSV-Export der Admin-Listen. Aktionen von Managern und Admins werden genauso erfasst.
+- Die meisten Einträge schreiben Datenbank-Trigger; Clients dürfen über `log_activity` nur Login, Logout und Listen-Ansicht/-Export melden.

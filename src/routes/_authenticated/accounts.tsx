@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { COUNTRIES } from "@/lib/country";
 import { Flag } from "@/components/flag";
+import { presenceState } from "@/lib/presence";
 import { deleteAccount } from "@/lib/accounts.functions";
 
 const MASTER = "office@signselector.com";
@@ -28,11 +29,13 @@ function AccountsPage() {
   const { data: users } = useQuery({
     enabled: admin,
     queryKey: ["users"],
+    refetchInterval: 30_000,
     queryFn: async () => {
-      const [p, r, c] = await Promise.all([
+      const [p, r, c, pr] = await Promise.all([
         supabase.from("profiles").select("id,display_name,email,active"),
         supabase.from("user_roles").select("user_id,role"),
         supabase.from("user_countries").select("user_id,country"),
+        supabase.from("user_presence").select("user_id,last_seen_at"),
       ]);
       const has = (id: string, role: string) =>
         !!r.data?.some((x) => x.user_id === id && x.role === role);
@@ -42,6 +45,7 @@ function AccountsPage() {
         role: primaryRole(
           (r.data ?? []).filter((x) => x.user_id === u.id).map((x) => x.role as string),
         ),
+        lastSeen: pr.data?.find((x) => x.user_id === u.id)?.last_seen_at ?? null,
         countries: (c.data ?? []).filter((x) => x.user_id === u.id).map((x) => x.country),
       }));
     },
@@ -140,7 +144,10 @@ function AccountsPage() {
                 key={u.id}
                 className="grid gap-3 py-4 lg:grid-cols-[1fr_1.4fr_auto_auto_auto] lg:items-center"
               >
-                <span className="font-medium">{u.display_name}</span>
+                <span className="flex flex-col gap-0.5">
+                  <span className="font-medium">{u.display_name}</span>
+                  <PresenceIndicator lastSeen={u.lastSeen} />
+                </span>
                 <span className="truncate text-sm text-muted-foreground">{u.email}</span>
                 <span className="flex flex-col items-start gap-1">
                   <Badge
@@ -263,5 +270,18 @@ function AccountsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function PresenceIndicator({ lastSeen }: { lastSeen: string | null }) {
+  const { online, label } = presenceState(lastSeen);
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span
+        aria-hidden="true"
+        className={`size-2 rounded-full ${online ? "bg-emerald-500" : "bg-slate-400"}`}
+      />
+      <span className={online ? "font-medium text-emerald-700" : undefined}>{label}</span>
+    </span>
   );
 }

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { logListExport, useLogListView } from "@/lib/audit";
 import { CountryCell, useListScope } from "@/components/country-scope";
 import { noInterestCsv, type NoInterestLead } from "@/lib/no-interest-csv";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
@@ -21,6 +22,7 @@ function NoInterestPage() {
   const { user } = Route.useRouteContext();
   // Managers: their country. Global admins: a country or all countries.
   const { scope: country, bar, isStaff: staff, showCountryColumn } = useListScope(user.id, user.email);
+  useLogListView("no-interest", "Kein Interesse", country, staff);
   const [search, setSearch] = useState("");
   const q = useQuery({
     enabled: staff,
@@ -42,6 +44,7 @@ function NoInterestPage() {
         .includes(search.toLocaleLowerCase()),
   );
   function download() {
+    logListExport("no-interest", "Kein Interesse", country, rows.length);
     const blob = new Blob([noInterestCsv(rows)], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
 import { Route as AuthenticatedAppointmentsRouteImport } from './routes/_authenticated/appointments'
+import { Route as AuthenticatedAuditLogRouteImport } from './routes/_authenticated/audit-log'
 import { Route as AuthenticatedCallRouteImport } from './routes/_authenticated/call'
 import { Route as AuthenticatedCallbacksRouteImport } from './routes/_authenticated/callbacks'
 import { Route as AuthenticatedCompletedRouteImport } from './routes/_authenticated/completed'
@@ -63,6 +64,11 @@ const AuthenticatedAppointmentsRoute =
     path: '/appointments',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAuditLogRoute = AuthenticatedAuditLogRouteImport.update({
+  id: '/audit-log',
+  path: '/audit-log',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedCallRoute = AuthenticatedCallRouteImport.update({
   id: '/call',
   path: '/call',
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
+  '/audit-log': typeof AuthenticatedAuditLogRoute
   '/call': typeof AuthenticatedCallRoute
   '/callbacks': typeof AuthenticatedCallbacksRoute
   '/completed': typeof AuthenticatedCompletedRoute
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
+  '/audit-log': typeof AuthenticatedAuditLogRoute
   '/call': typeof AuthenticatedCallRoute
   '/callbacks': typeof AuthenticatedCallbacksRoute
   '/completed': typeof AuthenticatedCompletedRoute
@@ -207,6 +215,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/appointments': typeof AuthenticatedAppointmentsRoute
+  '/_authenticated/audit-log': typeof AuthenticatedAuditLogRoute
   '/_authenticated/call': typeof AuthenticatedCallRoute
   '/_authenticated/callbacks': typeof AuthenticatedCallbacksRoute
   '/_authenticated/completed': typeof AuthenticatedCompletedRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/accounts'
     | '/appointments'
+    | '/audit-log'
     | '/call'
     | '/callbacks'
     | '/completed'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/accounts'
     | '/appointments'
+    | '/audit-log'
     | '/call'
     | '/callbacks'
     | '/completed'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authenticated/accounts'
     | '/_authenticated/appointments'
+    | '/_authenticated/audit-log'
     | '/_authenticated/call'
     | '/_authenticated/callbacks'
     | '/_authenticated/completed'
@@ -353,6 +365,13 @@ declare module '@tanstack/react-router' {
       path: '/appointments'
       fullPath: '/appointments'
       preLoaderRoute: typeof AuthenticatedAppointmentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/audit-log': {
+      id: '/_authenticated/audit-log'
+      path: '/audit-log'
+      fullPath: '/audit-log'
+      preLoaderRoute: typeof AuthenticatedAuditLogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/call': {
@@ -480,6 +499,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
   AuthenticatedAppointmentsRoute: typeof AuthenticatedAppointmentsRoute
+  AuthenticatedAuditLogRoute: typeof AuthenticatedAuditLogRoute
   AuthenticatedCallRoute: typeof AuthenticatedCallRoute
   AuthenticatedCallbacksRoute: typeof AuthenticatedCallbacksRoute
   AuthenticatedCompletedRoute: typeof AuthenticatedCompletedRoute
@@ -499,6 +519,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
   AuthenticatedAppointmentsRoute: AuthenticatedAppointmentsRoute,
+  AuthenticatedAuditLogRoute: AuthenticatedAuditLogRoute,
   AuthenticatedCallRoute: AuthenticatedCallRoute,
   AuthenticatedCallbacksRoute: AuthenticatedCallbacksRoute,
   AuthenticatedCompletedRoute: AuthenticatedCompletedRoute,
