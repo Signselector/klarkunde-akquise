@@ -24,7 +24,7 @@ export const CUSTOMER_COLUMNS: CustomerColumn[] = [
   {
     key: "won",
     label: "Gewonnen",
-    stageKeys: ["won_other_percent", "won_production_planning", "won_zero_percent"],
+    stageKeys: ["won_other_percent", "won_production_planning", "won_zero_percent", "won_closed"],
   },
 ];
 
@@ -37,7 +37,7 @@ export const CUSTOMER_COLUMNS_AT: CustomerColumn[] = [
   { key: "rd_done", label: "Visualisierung fertig", stageKeys: ["rd_done"] },
   { key: "no_show", label: "Termin nicht wahrgenommen", stageKeys: ["no_show"] },
   { key: "low_chance", label: "Wenig Interesse", stageKeys: ["low_chance"] },
-  { key: "maybe_interested", label: "Mittel Interesse", stageKeys: ["maybe_interested"] },
+  { key: "maybe_interested", label: "Mittleres Interesse", stageKeys: ["maybe_interested"] },
   { key: "very_interested", label: "Sehr interessiert", stageKeys: ["very_interested"] },
   { key: "offer", label: "Angebot wird erstellt", stageKeys: ["offer"] },
   { key: "contract", label: "Kaufvertrag wird erstellt", stageKeys: ["contract"] },
@@ -45,7 +45,7 @@ export const CUSTOMER_COLUMNS_AT: CustomerColumn[] = [
   {
     key: "won",
     label: "Gewonnen",
-    stageKeys: ["won_zero_percent", "won_production_planning", "won_other_percent"],
+    stageKeys: ["won_zero_percent", "won_production_planning", "won_other_percent", "won_closed"],
   },
 ];
 
