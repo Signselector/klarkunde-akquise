@@ -1,9 +1,3 @@
--- Statistics cockpit: one country, one period, everybody or one employee. For admins and managers of the country.
---  calls        = recorded call outcomes (status_changes with a call outcome) of leads of the country
---  reached      = calls with any outcome except "not reached"
---  appointments = appointments created through the tool in the period (by the user who booked them)
---  deals        = outcomes Logo Render, Realismus Render, Logo ausstehend, Zukunftsprojekt
---  timeline     = per day (p_bucket 'day') or per hour (p_bucket 'hour') in Vienna time
 CREATE OR REPLACE FUNCTION public.get_country_period_stats(
   p_country text, p_from timestamptz, p_to timestamptz, p_user_id uuid DEFAULT NULL, p_bucket text DEFAULT 'day'
 ) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
@@ -43,16 +37,11 @@ BEGIN
     FROM fev
   ),
   buckets AS (
-    SELECT CASE WHEN p_bucket = 'day' THEN to_char(d, 'YYYY-MM-DD') ELSE lpad(d::text, 2, '0') END AS k, d
-    FROM (
-      SELECT g::date AS d FROM generate_series(
-        (p_from AT TIME ZONE 'Europe/Vienna')::date, ((p_to - interval '1 microsecond') AT TIME ZONE 'Europe/Vienna')::date, interval '1 day') g
-      WHERE p_bucket = 'day'
-      UNION ALL
-      SELECT NULL::date WHERE false
-    ) days
+    SELECT to_char(g::date, 'YYYY-MM-DD') AS k FROM generate_series(
+      (p_from AT TIME ZONE 'Europe/Vienna')::date, ((p_to - interval '1 microsecond') AT TIME ZONE 'Europe/Vienna')::date, interval '1 day') g
+    WHERE p_bucket = 'day'
     UNION ALL
-    SELECT lpad(h::text, 2, '0'), NULL FROM generate_series(0, 23) h WHERE p_bucket = 'hour'
+    SELECT lpad(h::text, 2, '0') FROM generate_series(0, 23) h WHERE p_bucket = 'hour'
   ),
   per AS (
     SELECT CASE WHEN p_bucket = 'day' THEN to_char(created_at AT TIME ZONE 'Europe/Vienna', 'YYYY-MM-DD')
@@ -61,7 +50,7 @@ BEGIN
     FROM fev GROUP BY 1
   ),
   members AS (
-    SELECT p.id, coalesce(p.display_name, p.email, 'Unbekannt') AS name, public.user_role(p.id) AS role
+    SELECT p.id, coalesce(nullif(trim(p.display_name), ''), p.email, 'Unbekannt') AS name, public.user_role(p.id) AS role
     FROM public.profiles p
     WHERE p.active AND (p_user_id IS NULL)
       AND EXISTS (SELECT 1 FROM public.user_countries uc WHERE uc.user_id = p.id AND uc.country = p_country)
