@@ -46,7 +46,7 @@ export const getAuditLocation = createServerFn({ method: "GET" })
       .eq("id", data.id)
       .maybeSingle();
     const ip = row?.request_ip ?? null;
-    let geo: { city?: string; region?: string; country?: string; lat?: number; lon?: number; isp?: string } | null = null;
+    let geo: { city?: string | undefined; region?: string | undefined; country?: string | undefined; lat?: number | undefined; lon?: number | undefined; isp?: string | undefined } | null = null;
     if (ip) {
       try {
         const r = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}`);
