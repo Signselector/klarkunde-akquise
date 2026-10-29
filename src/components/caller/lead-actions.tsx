@@ -53,14 +53,28 @@ const isMailAction = (k: LeadActionKey | null): k is "reference_mail" => k === "
 const TEMPLATE_KEY = { reference_mail: "email_templates" };
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
+const DEFAULT_REFERENCE_TEMPLATE: Template = {
+  id: "default-referenz",
+  name: "Referenzprojekte und Produktionsbilder",
+  subject: "Referenzprojekte und Produktionsbilder – Signselector",
+  body:
+    "Guten Tag {{ansprechpartner}},\n\n" +
+    "vielen Dank für das nette Gespräch. Wie besprochen sende ich Ihnen anbei einige Referenzprojekte und Eindrücke aus unserer Produktion.\n\n" +
+    "Gerne erstellen wir auch für {{firma}} einen unverbindlichen Entwurf. Antworten Sie einfach auf diese E-Mail, wenn Sie Interesse haben.\n\n" +
+    "Mit freundlichen Grüßen\n{{caller}}\nSignselector",
+};
+
 function parseTemplates(raw: string | null | undefined): Template[] {
-  if (!raw) return [];
-  try {
-    const list = JSON.parse(raw);
-    return Array.isArray(list) ? list : [];
-  } catch {
-    return [];
+  let list: Template[] = [];
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) list = parsed;
+    } catch {
+      list = [];
+    }
   }
+  return list.some((t) => /referenz/i.test(t.name)) ? list : [...list, DEFAULT_REFERENCE_TEMPLATE];
 }
 
 const fail = (message: string): void => {

@@ -253,6 +253,13 @@
       "when": 1793285361412,
       "tag": "0035_de_capacity_veteran_assign_stats_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793291188085,
+      "tag": "0036_teammanagement_interfaces",
+      "breakpoints": true
     }
   ]
 }

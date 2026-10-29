@@ -34,9 +34,12 @@ import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/
 import { Route as ApiMailReplyRouteImport } from './routes/api/mail-reply'
 import { Route as ApiPipedriveReconcileRouteImport } from './routes/api/pipedrive-reconcile'
 import { Route as ApiPipedriveWebhookRouteImport } from './routes/api/pipedrive-webhook'
+import { Route as AuthSsoRouteImport } from './routes/auth.sso'
 import { Route as ApiPublicV1TableRouteImport } from './routes/api/public/v1/$table'
 import { Route as ApiPublicV1OnboardEmployeeRouteImport } from './routes/api/public/v1/onboard-employee'
+import { Route as ApiPublicV1PerformanceStatsRouteImport } from './routes/api/public/v1/performance-stats'
 import { Route as ApiPublicV1PingRouteImport } from './routes/api/public/v1/ping'
+import { Route as ApiPublicV1TeamMetricsRouteImport } from './routes/api/public/v1/team-metrics'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -165,6 +168,11 @@ const ApiPipedriveWebhookRoute = ApiPipedriveWebhookRouteImport.update({
   path: '/api/pipedrive-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthSsoRoute = AuthSsoRouteImport.update({
+  id: '/sso',
+  path: '/sso',
+  getParentRoute: () => AuthRoute,
+} as any)
 const ApiPublicV1TableRoute = ApiPublicV1TableRouteImport.update({
   id: '/api/public/v1/$table',
   path: '/api/public/v1/$table',
@@ -176,15 +184,26 @@ const ApiPublicV1OnboardEmployeeRoute =
     path: '/api/public/v1/onboard-employee',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1PerformanceStatsRoute =
+  ApiPublicV1PerformanceStatsRouteImport.update({
+    id: '/api/public/v1/performance-stats',
+    path: '/api/public/v1/performance-stats',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1PingRoute = ApiPublicV1PingRouteImport.update({
   id: '/api/public/v1/ping',
   path: '/api/public/v1/ping',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1TeamMetricsRoute = ApiPublicV1TeamMetricsRouteImport.update({
+  id: '/api/public/v1/team-metrics',
+  path: '/api/public/v1/team-metrics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
@@ -207,13 +226,16 @@ export interface FileRoutesByFullPath {
   '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
+  '/auth/sso': typeof AuthSsoRoute
   '/api/public/v1/$table': typeof ApiPublicV1TableRoute
   '/api/public/v1/onboard-employee': typeof ApiPublicV1OnboardEmployeeRoute
+  '/api/public/v1/performance-stats': typeof ApiPublicV1PerformanceStatsRoute
   '/api/public/v1/ping': typeof ApiPublicV1PingRoute
+  '/api/public/v1/team-metrics': typeof ApiPublicV1TeamMetricsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/accounts': typeof AuthenticatedAccountsRoute
   '/appointments': typeof AuthenticatedAppointmentsRoute
@@ -236,15 +258,18 @@ export interface FileRoutesByTo {
   '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
+  '/auth/sso': typeof AuthSsoRoute
   '/api/public/v1/$table': typeof ApiPublicV1TableRoute
   '/api/public/v1/onboard-employee': typeof ApiPublicV1OnboardEmployeeRoute
+  '/api/public/v1/performance-stats': typeof ApiPublicV1PerformanceStatsRoute
   '/api/public/v1/ping': typeof ApiPublicV1PingRoute
+  '/api/public/v1/team-metrics': typeof ApiPublicV1TeamMetricsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
   '/_authenticated/appointments': typeof AuthenticatedAppointmentsRoute
@@ -267,9 +292,12 @@ export interface FileRoutesById {
   '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
+  '/auth/sso': typeof AuthSsoRoute
   '/api/public/v1/$table': typeof ApiPublicV1TableRoute
   '/api/public/v1/onboard-employee': typeof ApiPublicV1OnboardEmployeeRoute
+  '/api/public/v1/performance-stats': typeof ApiPublicV1PerformanceStatsRoute
   '/api/public/v1/ping': typeof ApiPublicV1PingRoute
+  '/api/public/v1/team-metrics': typeof ApiPublicV1TeamMetricsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -298,9 +326,12 @@ export interface FileRouteTypes {
     | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
+    | '/auth/sso'
     | '/api/public/v1/$table'
     | '/api/public/v1/onboard-employee'
+    | '/api/public/v1/performance-stats'
     | '/api/public/v1/ping'
+    | '/api/public/v1/team-metrics'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -327,9 +358,12 @@ export interface FileRouteTypes {
     | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
+    | '/auth/sso'
     | '/api/public/v1/$table'
     | '/api/public/v1/onboard-employee'
+    | '/api/public/v1/performance-stats'
     | '/api/public/v1/ping'
+    | '/api/public/v1/team-metrics'
   id:
     | '__root__'
     | '/'
@@ -357,22 +391,27 @@ export interface FileRouteTypes {
     | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
+    | '/auth/sso'
     | '/api/public/v1/$table'
     | '/api/public/v1/onboard-employee'
+    | '/api/public/v1/performance-stats'
     | '/api/public/v1/ping'
+    | '/api/public/v1/team-metrics'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiMailReplyRoute: typeof ApiMailReplyRoute
   ApiPipedriveReconcileRoute: typeof ApiPipedriveReconcileRoute
   ApiPipedriveWebhookRoute: typeof ApiPipedriveWebhookRoute
   ApiPublicV1TableRoute: typeof ApiPublicV1TableRoute
   ApiPublicV1OnboardEmployeeRoute: typeof ApiPublicV1OnboardEmployeeRoute
+  ApiPublicV1PerformanceStatsRoute: typeof ApiPublicV1PerformanceStatsRoute
   ApiPublicV1PingRoute: typeof ApiPublicV1PingRoute
+  ApiPublicV1TeamMetricsRoute: typeof ApiPublicV1TeamMetricsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -552,6 +591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPipedriveWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/sso': {
+      id: '/auth/sso'
+      path: '/sso'
+      fullPath: '/auth/sso'
+      preLoaderRoute: typeof AuthSsoRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/api/public/v1/$table': {
       id: '/api/public/v1/$table'
       path: '/api/public/v1/$table'
@@ -566,11 +612,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1OnboardEmployeeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/performance-stats': {
+      id: '/api/public/v1/performance-stats'
+      path: '/api/public/v1/performance-stats'
+      fullPath: '/api/public/v1/performance-stats'
+      preLoaderRoute: typeof ApiPublicV1PerformanceStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/ping': {
       id: '/api/public/v1/ping'
       path: '/api/public/v1/ping'
       fullPath: '/api/public/v1/ping'
       preLoaderRoute: typeof ApiPublicV1PingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/team-metrics': {
+      id: '/api/public/v1/team-metrics'
+      path: '/api/public/v1/team-metrics'
+      fullPath: '/api/public/v1/team-metrics'
+      preLoaderRoute: typeof ApiPublicV1TeamMetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -621,17 +681,29 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthSsoRoute: typeof AuthSsoRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthSsoRoute: AuthSsoRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiMailReplyRoute: ApiMailReplyRoute,
   ApiPipedriveReconcileRoute: ApiPipedriveReconcileRoute,
   ApiPipedriveWebhookRoute: ApiPipedriveWebhookRoute,
   ApiPublicV1TableRoute: ApiPublicV1TableRoute,
   ApiPublicV1OnboardEmployeeRoute: ApiPublicV1OnboardEmployeeRoute,
+  ApiPublicV1PerformanceStatsRoute: ApiPublicV1PerformanceStatsRoute,
   ApiPublicV1PingRoute: ApiPublicV1PingRoute,
+  ApiPublicV1TeamMetricsRoute: ApiPublicV1TeamMetricsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

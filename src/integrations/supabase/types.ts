@@ -1366,6 +1366,21 @@ export type Database = {
           },
         ]
       }
+      sso_nonces: {
+        Row: {
+          nonce: string
+          used_at: string
+        }
+        Insert: {
+          nonce: string
+          used_at?: string
+        }
+        Update: {
+          nonce?: string
+          used_at?: string
+        }
+        Relationships: []
+      }
       status_changes: {
         Row: {
           created_at: string
@@ -1542,6 +1557,10 @@ export type Database = {
         Returns: undefined
       }
       activate_future_projects: { Args: never; Returns: Json }
+      api_performance_stats: {
+        Args: { p_email: string; p_month: string }
+        Returns: Json
+      }
       archive_leads: { Args: { p_ids: string[] }; Returns: number }
       archive_open_leads: { Args: never; Returns: number }
       assign_appointment: {
