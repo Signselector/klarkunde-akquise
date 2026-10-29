@@ -174,7 +174,7 @@ export function LeadActions({
     if (!isMailAction(active) || mail.template || !templates.data?.length) return;
     const t =
       templates.data.find((x) => /referenz/i.test(x.name)) ?? templates.data[0];
-    pickTemplate(t.id);
+    if (t) pickTemplate(t.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, templates.data, mail.template]);
 
