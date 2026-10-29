@@ -107,3 +107,21 @@ test("view_as: the country list is that of the viewed employee", async () => {
   await as(mgrAT, rec);
   assert.deepEqual((await q("select public.my_countries() c"))[0].c, ["AT"]);
 });
+
+test("achievements: a deal entering High Q / Low Q notifies the caller, not for their own action", async () => {
+  await db.exec("RESET ROLE");
+  const batch = (await q("select id from public.lead_batches limit 1"))[0].id;
+  const l = (await q("insert into public.leads(batch_id,company,last_called_by) values($1,'Autohaus X',$2) returning id", [batch, rec]))[0].id;
+  await db.query("select app_private.log_activity($1,'stage_change',null,'pipedrive','waiting_3d','high_q',null,'ev1',null,now(),'Pipedrive')", [l]);
+  await db.query("select app_private.log_activity($1,'stage_change',$2,'cold_caller','high_q','low_q',null,'ev2',null,now(),null)", [l, rec]);
+  await db.query("select app_private.log_activity($1,'stage_change',null,'pipedrive','low_q','waiting_3d',null,'ev3',null,now(),null)", [l]);
+  await as(rec);
+  const mine = await q("select stage_key,company,seen_at from public.achievement_events");
+  assert.deepEqual(mine.map((r) => [r.stage_key, r.company]), [["high_q", "Autohaus X"]]);
+  await as(mgrAT);
+  assert.equal((await q("select count(*)::int n from public.achievement_events"))[0].n, 0);
+  await as(rec);
+  await db.query("update public.achievement_events set seen_at=now()");
+  assert.equal((await q("select count(*)::int n from public.achievement_events where seen_at is null"))[0].n, 0);
+  await assert.rejects(db.query("update public.achievement_events set stage_key='low_q'"));
+});

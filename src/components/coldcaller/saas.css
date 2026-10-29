@@ -1665,3 +1665,143 @@ tr:hover > .cc-sticky-action {
     transition: none;
   }
 }
+
+/* ---- Achievement card + confetti ---- */
+.cc-achievement-wrap {
+  /* Top centre on wide screens (the reminders sit top right), bottom centre on phones. */
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 80;
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+@media (max-width: 640px) {
+  .cc-achievement-wrap {
+    top: auto;
+    bottom: 16px;
+  }
+}
+.cc-achievement {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 44px 16px 16px;
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #dbe5fb;
+  border-radius: 18px;
+  box-shadow:
+    0 18px 44px rgb(37 99 235 / 22%),
+    0 2px 8px rgb(15 23 42 / 10%);
+  transform-origin: top center;
+  animation: cc-achievement-in 280ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+@keyframes cc-achievement-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.96);
+  }
+}
+.cc-achievement-icon {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #eaf1ff;
+  color: #2563eb;
+}
+.cc-achievement--gold .cc-achievement-icon {
+  background: #fff4d6;
+  color: #d97706;
+}
+.cc-achievement-icon > svg {
+  width: 28px;
+  height: 28px;
+  animation: cc-achievement-pop 520ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) 120ms both;
+}
+@keyframes cc-achievement-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-12deg);
+  }
+}
+.cc-achievement-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.cc-achievement-text small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2563eb;
+}
+.cc-achievement--gold .cc-achievement-text small {
+  color: #b45309;
+}
+.cc-achievement-text strong {
+  font-size: 16px;
+}
+.cc-achievement-text span {
+  font-size: 13.5px;
+  color: #475569;
+}
+.cc-achievement-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+.cc-achievement-close svg {
+  width: 16px;
+  height: 16px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cc-achievement-close:hover {
+    background: #eaf1ff;
+  }
+}
+.cc-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.cc-confetti-piece {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: block;
+  border-radius: 2px;
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-achievement {
+    animation: cc-achievement-fade 200ms ease both;
+  }
+  .cc-achievement-icon > svg {
+    animation: none;
+  }
+  @keyframes cc-achievement-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}

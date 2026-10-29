@@ -1,3 +1,4 @@
+import { celebrate } from "@/lib/achievements";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -287,6 +288,13 @@ export function LeadActions({
       const result = data as unknown as Result & { action_id?: string };
       const stage = result.stage_key ? STAGE_NAME[result.stage_key] : null;
       const special = action.celebration === "special";
+      // Logo Render / Realismus Render are the callers' big results: celebrate right after saving.
+      if (action.key === "low_q" || action.key === "high_q")
+        celebrate({
+          title: `${ACTION_LABEL[action.key]} abgeschlossen`,
+          detail: `${lead.company || "Der Lead"} ist jetzt in ${action.key === "high_q" ? "High Q" : "Low Q"}. Stark gemacht!`,
+          tone: action.key === "high_q" ? "gold" : "blue",
+        });
       const erased = (result as { erased?: boolean }).erased === true;
       const plain =
         action.key === "callback"

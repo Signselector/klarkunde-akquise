@@ -1,6 +1,8 @@
 import { isMasterEmail } from "@/lib/master";
 import { getViewAs, installViewAsGuard, setViewAs } from "@/lib/view-as";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
+import { AchievementHost } from "@/components/achievement-host";
+import { AchievementNotifier } from "@/components/achievement-notifier";
 import { AppointmentNotifier } from "@/components/appointment-notifier";
 import { primaryRole, ROLE_LABEL } from "@/lib/use-admin";
 import { Brand } from "@/components/coldcaller/brand";
@@ -326,6 +328,8 @@ function Layout() {
         <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
           {!viewAs && <CallbackReminder userId={user.id} />}
           {!viewAs && <AppointmentNotifier userId={user.id} />}
+          {!viewAs && <AchievementNotifier userId={user.id} />}
+          <AchievementHost />
           <Outlet />
         </div>
       </SidebarInset>
