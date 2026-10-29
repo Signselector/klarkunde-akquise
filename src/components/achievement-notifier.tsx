@@ -4,20 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { celebrate, STAGE_ACHIEVEMENT } from "@/lib/achievements";
 
 /** Celebrates every deal of the user that reached Low Q / High Q in the CRM, once, then marks it as seen. */
+type AchievementRow = { id: string; stage_key: string; company: string | null; created_at: string };
+// The achievement_events table is not in the generated types until its migration is applied; use an untyped handle.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
+
 export function AchievementNotifier({ userId }: { userId: string }) {
   const qc = useQueryClient();
   const { data } = useQuery({
     queryKey: ["achievement-events", userId],
     refetchInterval: 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from("achievement_events")
         .select("id,stage_key,company,created_at")
         .eq("user_id", userId)
         .is("seen_at", null)
         .order("created_at");
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as AchievementRow[];
     },
   });
 
@@ -45,7 +50,7 @@ export function AchievementNotifier({ userId }: { userId: string }) {
         tone: e.stage_key === "high_q" ? "gold" : "blue",
       });
     }
-    void supabase
+    void db
       .from("achievement_events")
       .update({ seen_at: new Date().toISOString() })
       .in("id", data.map((e) => e.id))
