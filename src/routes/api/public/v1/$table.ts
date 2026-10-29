@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/public/v1/$table")({
         const order = url.searchParams.get("order");
         if (order) {
           const [col, dir] = order.split(".");
-          if (/^[a-z_]+$/.test(col)) q = q.order(col, { ascending: dir !== "desc" });
+          if (col && /^[a-z_]+$/.test(col)) q = q.order(col, { ascending: dir !== "desc" });
         }
         const { data, error, count } = await q.range(offset, offset + limit - 1);
         if (error) return json({ error: error.message }, 400);
