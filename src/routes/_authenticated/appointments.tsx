@@ -159,10 +159,17 @@ function AppointmentsPage() {
     title: e.title ?? e.lead?.company ?? e.notes ?? "Termin",
     dot: appointmentDotClass(e.date, "external" in e && !!e.external),
   }));
-  // Details: everything of the shown week, or only the chosen day.
-  const list = events.filter((e) =>
-    selected && inWeek(selected, weekStart) ? sameDay(e.date, selected) : inWeek(e.date, weekStart),
-  );
+  // Details: a chosen day in full. The overview of the week lists everything upcoming plus only the last three past
+  // entries, so finished appointments do not push the coming ones out of sight.
+  const dayChosen = !!selected && inWeek(selected, weekStart);
+  const nowMs = Date.now();
+  const inShownWeek = events.filter((e) => inWeek(e.date, weekStart));
+  const list = dayChosen
+    ? events.filter((e) => sameDay(e.date, selected))
+    : [
+        ...inShownWeek.filter((e) => e.date.getTime() < nowMs).slice(-3),
+        ...inShownWeek.filter((e) => e.date.getTime() >= nowMs),
+      ];
 
   return (
     <div className="space-y-5">
