@@ -9,6 +9,7 @@ export function Brand({ inverse = false }: { inverse?: boolean }) {
         alt="Sign Selector"
         decoding="async"
       />
+      <small className="cc-brand-tagline">COLD CALLER TOOL</small>
     </span>
   );
 }

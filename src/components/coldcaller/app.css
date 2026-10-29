@@ -1249,3 +1249,20 @@
 .cc-theme table tbody tr:hover {
   background: var(--cc-accent-soft);
 }
+
+/* Product line under the wordmark. */
+.cc-brand-content .cc-brand-tagline,
+.cc-app .cc-brand .cc-brand-tagline {
+  margin: 0;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+  color: #2563eb;
+}
+.cc-app .cc-brand .cc-brand-tagline,
+.cc-auth-story .cc-brand-tagline {
+  color: #4f86f7;
+}
