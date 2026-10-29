@@ -120,6 +120,7 @@ export type Database = {
           booked_by: string | null
           country: string
           created_at: string
+          decision_pending: boolean
           id: string
           kind: string
           lead_id: string | null
@@ -136,6 +137,7 @@ export type Database = {
           booked_by?: string | null
           country?: string
           created_at?: string
+          decision_pending?: boolean
           id?: string
           kind?: string
           lead_id?: string | null
@@ -152,6 +154,7 @@ export type Database = {
           booked_by?: string | null
           country?: string
           created_at?: string
+          decision_pending?: boolean
           id?: string
           kind?: string
           lead_id?: string | null
@@ -1842,6 +1845,10 @@ export type Database = {
           p_reason: string
           p_request_id: string
         }
+        Returns: Json
+      }
+      reschedule_appointment: {
+        Args: { p_appointment_id: string; p_starts_at: string }
         Returns: Json
       }
       resolve_integration_review: {
