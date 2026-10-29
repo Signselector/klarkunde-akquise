@@ -292,7 +292,7 @@ export function LeadActions({
       if (action.key === "low_q" || action.key === "high_q")
         celebrate({
           title: `${ACTION_LABEL[action.key]} abgeschlossen`,
-          detail: `${lead.company || "Der Lead"} ist jetzt in ${action.key === "high_q" ? "High Q" : "Low Q"}. Stark gemacht!`,
+          detail: `${lead.company || "Der Lead"} wurde als Deal angelegt. Stark gemacht!`,
           tone: action.key === "high_q" ? "gold" : "blue",
         });
       const erased = (result as { erased?: boolean }).erased === true;

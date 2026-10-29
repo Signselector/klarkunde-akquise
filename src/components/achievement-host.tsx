@@ -3,8 +3,18 @@ import { Trophy, X } from "@/components/coldcaller/icons";
 import { dismissAchievement, useCurrentAchievement } from "@/lib/achievements";
 
 const SHOW_MS = 9000;
-const COLORS = ["#2563eb", "#60a5fa", "#fbbf24", "#f59e0b", "#34d399", "#f472b6", "#ffffff"];
-const PIECES = 42;
+const COLORS = [
+  "#ef4444",
+  "#f97316",
+  "#facc15",
+  "#22c55e",
+  "#14b8a6",
+  "#2563eb",
+  "#8b5cf6",
+  "#ec4899",
+  "#06b6d4",
+];
+const PIECES = 50;
 
 /**
  * Achievement card (top right) with a confetti burst out of its trophy. Rare moment, so it may be a little loud:
@@ -40,8 +50,15 @@ export function AchievementHost() {
           el.animate(
             [
               { transform: "translate(0,0) rotate(0deg) scale(0.6)", opacity: 1 },
-              { transform: `translate(${x}px,${y}px) rotate(${spin / 2}deg) scale(1)`, opacity: 1, offset: 0.55 },
-              { transform: `translate(${x * 1.15}px,${y + 140}px) rotate(${spin}deg) scale(0.9)`, opacity: 0 },
+              {
+                transform: `translate(${x}px,${y}px) rotate(${spin / 2}deg) scale(1)`,
+                opacity: 1,
+                offset: 0.55,
+              },
+              {
+                transform: `translate(${x * 1.15}px,${y + 140}px) rotate(${spin}deg) scale(0.9)`,
+                opacity: 0,
+              },
             ],
             {
               duration: 1100 + Math.random() * 800,
@@ -63,13 +80,17 @@ export function AchievementHost() {
   if (!current) return null;
   return (
     <div className="cc-achievement-wrap" aria-live="polite">
-      <div key={current.id} className={`cc-achievement cc-achievement--${current.tone}`} role="status">
+      <div
+        key={current.id}
+        className={`cc-achievement cc-achievement--${current.tone}`}
+        role="status"
+      >
         <div className="cc-achievement-icon">
           <Trophy aria-hidden="true" />
           <div ref={burst} className="cc-confetti" aria-hidden="true" />
         </div>
         <div className="cc-achievement-text">
-          <small>Errungenschaft freigeschaltet</small>
+          <small>Hervorragende Leistung!</small>
           <strong>{current.title}</strong>
           <span>{current.detail}</span>
         </div>

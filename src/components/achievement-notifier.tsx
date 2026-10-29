@@ -41,7 +41,7 @@ export function AchievementNotifier({ userId }: { userId: string }) {
       const kind = STAGE_ACHIEVEMENT[e.stage_key as keyof typeof STAGE_ACHIEVEMENT] ?? "Qualifizierter Lead";
       celebrate({
         title: `${kind} erreicht`,
-        detail: `${e.company || "Ein Lead von dir"} ist jetzt in ${e.stage_key === "high_q" ? "High Q" : "Low Q"}.`,
+        detail: `${e.company || "Ein Lead von dir"} wurde als Deal angelegt. Stark gemacht!`,
         tone: e.stage_key === "high_q" ? "gold" : "blue",
       });
     }
