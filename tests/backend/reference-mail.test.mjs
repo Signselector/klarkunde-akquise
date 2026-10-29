@@ -145,3 +145,34 @@ test("no reply after 3 months: admin list with the original caller id", async ()
   await as(other);
   await assert.rejects(() => q("select public.get_unanswered_reference_leads('DE')"), /forbidden/);
 });
+
+test("Referenzmail: a callback can be planned right away", async () => {
+  const l = leads[2];
+  const m = await mail(rec, l, "r3@x.test");
+  const at = new Date(Date.now() + 3 * 864e5).toISOString();
+  const r = await act(rec, l, "reference_mail", { details: { email_id: m }, at });
+  assert.ok(r.callback_id, "callback created");
+  assert.equal((await lead(2)).status, "reference_mail");
+  await db.exec("RESET ROLE");
+  const cb = await q("select user_id from public.callbacks where lead_id=$1 and not done", [l]);
+  assert.deepEqual(cb.map((c) => c.user_id), [rec]);
+  const m2 = await mail(rec, leads[3], "r4@x.test");
+  await assert.rejects(act(rec, leads[3], "reference_mail", { details: { email_id: m2 }, at: new Date(Date.now() - 1000).toISOString() }), /invalid_schedule/);
+});
+
+test("Kein Interesse: the unhappy flag is stored; reopen is for managers of the country only", async () => {
+  const l = leads[4];
+  await act(rec, l, "no_interest", { details: { unhappy: true }, note: "Kunde unzufrieden" });
+  await db.exec("RESET ROLE");
+  const a = (await q("select details from public.lead_actions where lead_id=$1", [l]))[0];
+  assert.equal(a.details.unhappy, true);
+  assert.equal((await lead(4)).status, "no_interest");
+  const reopen = async (user) => {
+    await as(user);
+    const v = (await q("select version from public.leads where id=$1", [l]))[0].version;
+    return q("select public.reopen_lead($1,$2,$3,'Zweiter Versuch') r", [randomUUID(), l, v]);
+  };
+  await assert.rejects(reopen(rec), /forbidden/);
+  await reopen(mgr);
+  assert.equal((await lead(4)).status, "open");
+});

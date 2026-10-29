@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logListExport, useLogListView } from "@/lib/audit";
@@ -9,6 +9,16 @@ import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/no-interest")({
   head: () => ({ meta: [{ title: "Kein Interesse – Sign Selector Cold Caller" }] }),
@@ -24,6 +34,51 @@ function NoInterestPage() {
   const { scope: country, bar, isStaff: staff, showCountryColumn } = useListScope(user.id, user.email);
   useLogListView("no-interest", "Kein Interesse", country, staff);
   const [search, setSearch] = useState("");
+  const qc = useQueryClient();
+  const [reopen, setReopen] = useState<NoInterestLead | null>(null);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function confirmReopen() {
+    if (!reopen) return;
+    if (!reason.trim()) {
+      toast.error("Bitte einen Grund eintragen.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data: row, error: readError } = await supabase
+        .from("leads")
+        .select("version")
+        .eq("id", reopen.lead_id)
+        .maybeSingle();
+      if (readError || !row) throw new Error("lead_not_found");
+      const { error } = await supabase.rpc("reopen_lead", {
+        p_request_id: crypto.randomUUID(),
+        p_lead_id: reopen.lead_id,
+        p_expected_version: row.version,
+        p_reason: reason.trim(),
+      });
+      if (error) throw new Error(error.message);
+      toast.success("Der Lead ist wieder unter Offene Leads.");
+      setReopen(null);
+      setReason("");
+      void qc.invalidateQueries({ queryKey: ["no-interest"] });
+      void qc.invalidateQueries({ queryKey: ["leads"] });
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "";
+      toast.error(
+        m.includes("forbidden")
+          ? "Dafür fehlt dir die Berechtigung."
+          : m.includes("stale_lead")
+            ? "Der Lead wurde inzwischen geändert. Bitte die Liste neu laden."
+            : m.includes("lead_claimed")
+              ? "Der Lead wird gerade bearbeitet."
+              : "Der Lead konnte nicht wieder geöffnet werden.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
   const q = useQuery({
     enabled: staff,
     queryKey: ["no-interest", country],
@@ -105,6 +160,7 @@ function NoInterestPage() {
                       "Caller",
                       "Datum",
                       "Notiz",
+                      "",
                     ].map((h) => (
                       <th key={h} className="px-3 py-3 font-medium first:px-4">
                         {h}
@@ -134,6 +190,18 @@ function NoInterestPage() {
                       <td className="max-w-[24rem] truncate px-3 py-3" title={r.note ?? ""}>
                         {r.note || "–"}
                       </td>
+                      <td className="px-3 py-3">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setReason("");
+                            setReopen(r);
+                          }}
+                        >
+                          Wieder öffnen
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -142,6 +210,29 @@ function NoInterestPage() {
           )}
         </div>
       </Surface>
+      <Dialog open={!!reopen} onOpenChange={(o) => !o && !busy && setReopen(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Lead wieder öffnen</DialogTitle>
+            <DialogDescription>
+              {reopen?.company || "Der Lead"} bekommt den normalen Status „offen“ und erscheint wieder unter
+              Offene Leads.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="block text-sm">
+            Grund (Pflicht)
+            <Textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} />
+          </label>
+          <DialogFooter>
+            <Button variant="outline" disabled={busy} onClick={() => setReopen(null)}>
+              Abbrechen
+            </Button>
+            <Button disabled={busy} onClick={() => void confirmReopen()}>
+              {busy ? "Wird geöffnet …" : "Wieder öffnen"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

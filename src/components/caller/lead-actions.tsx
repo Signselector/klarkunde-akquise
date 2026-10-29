@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/ui/reveal";
 import { celebrate } from "@/lib/achievements";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -132,6 +133,7 @@ export function LeadActions({
   const [photo, setPhoto] = useState<File | null>(null);
   const [month, setMonth] = useState("");
   const [doNotCall, setDoNotCall] = useState(false);
+  const [unhappy, setUnhappy] = useState(false);
   const [selfAssign, setSelfAssign] = useState(false);
   const roles = useRoles(userId);
   const [success, setSuccess] = useState<{
@@ -177,6 +179,34 @@ export function LeadActions({
 
   const chosen = date && time ? toIso(date, time) : null;
   const current = LEAD_ACTIONS.find((a) => a.key === active) ?? null;
+  const chosenLabel = chosen
+    ? new Intl.DateTimeFormat("de-DE", {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(chosen))
+    : null;
+  const renderPicker = (kind: "appointment" | "callback", optional: boolean) => (
+    <SlotPicker
+      kind={kind}
+      country={country}
+      leadId={lead.id}
+      value={chosen}
+      optional={optional}
+      onChange={(iso) => {
+        if (!iso) {
+          setDate("");
+          setTime("");
+          return;
+        }
+        const d = new Date(iso);
+        setDate(dateValue(d));
+        setTime(timeValue(d));
+      }}
+    />
+  );
   const reducedMotion =
     typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
@@ -189,6 +219,7 @@ export function LeadActions({
     setPhoto(null);
     setMonth("");
     setDoNotCall(false);
+    setUnhappy(false);
     setSelfAssign(false);
     setNote("");
     setDate("");
@@ -271,15 +302,21 @@ export function LeadActions({
         details = { email_id: emailId ?? mailState.id ?? "", template: mail.template || null };
       else if (photoPath) details = { photo_path: photoPath };
       else if (needs.month) details = { month };
-      else if (needs.doNotCall && doNotCall) details = { do_not_call: true };
+      else if (needs.doNotCall && (doNotCall || unhappy))
+        details = { ...(doNotCall ? { do_not_call: true } : {}), ...(unhappy ? { unhappy: true } : {}) };
       if (needs.appointment && selfAssign && roles.role === "veteran")
         details = { ...((details as Record<string, Json> | undefined) ?? {}), self_assign: true };
+      // "Kunde unzufrieden" travels with the note, so it is visible in the history and the Kein-Interesse list.
+      const noteText =
+        needs.doNotCall && unhappy
+          ? ["Kunde unzufrieden", note.trim()].filter(Boolean).join(": ")
+          : note.trim();
       const { data, error } = await supabase.rpc("record_lead_action", {
         p_request_id: requestId.current ?? crypto.randomUUID(),
         p_lead_id: lead.id,
         p_expected_version: lead.version,
         p_action: action.key,
-        ...(note.trim() ? { p_note: note.trim() } : {}),
+        ...(noteText ? { p_note: noteText } : {}),
         ...(at ? { p_scheduled_at: at } : {}),
         ...(logo ? { p_logo_path: logo } : {}),
         ...(details ? { p_details: details } : {}),
@@ -490,34 +527,19 @@ export function LeadActions({
               </span>
             </label>
           )}
-          {(current.needs.schedule || current.needs.appointment) && (
-            <div className="space-y-1.5">
-              <span className="block text-sm">
-                {current.needs.appointment
-                  ? "Termin"
-                  : current.key === "callback"
-                    ? "Rückruf"
-                    : "Rückruf (optional)"}
-              </span>
-              <SlotPicker
-                kind={current.needs.appointment ? "appointment" : "callback"}
-                country={country}
-                leadId={lead.id}
-                value={chosen}
-                optional={current.needs.schedule === "optional"}
-                onChange={(iso) => {
-                  if (!iso) {
-                    setDate("");
-                    setTime("");
-                    return;
-                  }
-                  const d = new Date(iso);
-                  setDate(dateValue(d));
-                  setTime(timeValue(d));
-                }}
-              />
-            </div>
-          )}
+          {(current.needs.schedule || current.needs.appointment) &&
+            (current.needs.schedule === "optional" ? (
+              <Reveal title="Rückruf (optional)" summary={chosenLabel}>
+                {renderPicker("callback", true)}
+              </Reveal>
+            ) : (
+              <div className="space-y-1.5">
+                <span className="block text-sm">
+                  {current.needs.appointment ? "Termin" : "Rückruf"}
+                </span>
+                {renderPicker(current.needs.appointment ? "appointment" : "callback", false)}
+              </div>
+            ))}
           {current.needs.appointment && roles.role === "veteran" && (
             <label className="flex min-h-11 items-center gap-2 text-sm">
               <input
@@ -530,21 +552,35 @@ export function LeadActions({
             </label>
           )}
           {current.needs.doNotCall && (
-            <label className="flex items-start gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="mt-1"
-                checked={doNotCall}
-                onChange={(e) => setDoNotCall(e.target.checked)}
-              />
-              <span>
-                Nicht wieder anrufen
-                <span className="block text-xs text-muted-foreground">
-                  Der Lead wird gelöscht. Ohne Haken bleibt er in der Kein-Interesse-Liste der
-                  Admins.
+            <div className="space-y-2">
+              <label className="cc-check-card">
+                <input
+                  type="checkbox"
+                  checked={doNotCall}
+                  onChange={(e) => setDoNotCall(e.target.checked)}
+                />
+                <span>
+                  <strong>Nicht wieder anrufen</strong>
+                  <span className="block text-xs text-muted-foreground">
+                    Der Lead wird gelöscht. Ohne Haken bleibt er in der Kein-Interesse-Liste der
+                    Admins.
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+              <label className="cc-check-card">
+                <input
+                  type="checkbox"
+                  checked={unhappy}
+                  onChange={(e) => setUnhappy(e.target.checked)}
+                />
+                <span>
+                  <strong>Kunde unzufrieden</strong>
+                  <span className="block text-xs text-muted-foreground">
+                    Wird in der Notiz vermerkt, damit der Grund später nachvollziehbar ist.
+                  </span>
+                </span>
+              </label>
+            </div>
           )}
           {current.needs.note && (
             <label className="block text-sm">
@@ -616,6 +652,13 @@ export function LeadActions({
                   onChange={(e) => setMail({ ...mail, body: e.target.value })}
                 />
               </label>
+              <Reveal title="Rückruf planen (optional)" summary={chosenLabel}>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Der Lead bleibt abgeschlossen. Zur gewählten Zeit erinnert dich der Rückruf, auch wenn der
+                  Kunde nicht antwortet.
+                </p>
+                {renderPicker("callback", true)}
+              </Reveal>
               <div className="flex gap-2">
                 <Button type="submit" disabled={busy}>
                   Vorschau prüfen
@@ -658,8 +701,8 @@ export function LeadActions({
                 </p>
               )}
               <p className="text-sm text-muted-foreground">
-                Danach wandert der Lead nach Abgeschlossene Leads und ein Deal wird in Pipedrive in
-                der Stage „{STAGE_NAME[current.stageKey ?? ""] ?? ""}“ angelegt.
+                Danach wandert der Lead nach Abgeschlossene Leads. Es wird kein Deal angelegt.
+                {chosenLabel ? ` Rückruf geplant: ${chosenLabel}.` : ""}
               </p>
               <div className="flex gap-2">
                 <Button type="submit" disabled={busy || mailState.status === "sending"}>

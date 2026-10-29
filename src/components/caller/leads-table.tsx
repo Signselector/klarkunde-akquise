@@ -166,7 +166,11 @@ export function LeadsTable({
           </thead>
           <tbody className="divide-y">
             {leads.map((l) => (
-              <tr key={l.id} className="align-top hover:bg-muted/40">
+              <tr
+                key={l.id}
+                className="cc-row-link align-top hover:bg-muted/40"
+                onClick={() => onOpen(l.id)}
+              >
                 <td className="px-4 py-4 font-medium">{l.company || "Ohne Firmenname"}</td>
                 <td className="px-2 py-4">
                   <ContactLinks lead={l} />
@@ -208,7 +212,7 @@ export function LeadsTable({
       </div>
       <ul className="divide-y md:hidden">
         {leads.map((l) => (
-          <li key={l.id} className="space-y-2 px-4 py-4">
+          <li key={l.id} className="cc-row-link space-y-2 px-4 py-4" onClick={() => onOpen(l.id)}>
             <div className="flex items-start justify-between gap-3">
               <strong className="min-w-0 break-words">{l.company || "Ohne Firmenname"}</strong>
               <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>

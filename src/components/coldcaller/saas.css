@@ -1805,3 +1805,128 @@ tr:hover > .cc-sticky-action {
     }
   }
 }
+
+/* ---- Collapsible optional block ---- */
+.cc-reveal {
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  background: var(--background, #fff);
+  transition: border-color 150ms ease;
+}
+.cc-reveal[data-open="true"] {
+  border-color: #93b4f5;
+}
+.cc-reveal-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 16px;
+  background: none;
+  border: 0;
+  border-radius: 14px;
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.cc-reveal-trigger:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+.cc-reveal-title {
+  font-weight: 600;
+}
+.cc-reveal-summary {
+  margin-left: auto;
+  color: #1d4ed8;
+  font-weight: 600;
+  font-size: 13px;
+}
+.cc-reveal-chevron {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-left: auto;
+  opacity: 0.6;
+  transition: transform 220ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.cc-reveal-summary + .cc-reveal-chevron {
+  margin-left: 0;
+}
+.cc-reveal[data-open="true"] .cc-reveal-chevron {
+  transform: rotate(180deg);
+}
+.cc-reveal-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 220ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)),
+    opacity 160ms ease;
+}
+.cc-reveal[data-open="true"] .cc-reveal-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.cc-reveal-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 14px;
+}
+.cc-reveal[data-open="true"] .cc-reveal-inner {
+  padding-bottom: 14px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cc-reveal-trigger:hover {
+    background: #f1f5fd;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-reveal-body,
+  .cc-reveal-chevron {
+    transition: opacity 120ms ease;
+  }
+}
+
+/* Clickable table rows (Offene Leads) */
+.cc-row-link {
+  cursor: pointer;
+}
+
+/* Large tick boxes as cards (Kein Interesse) */
+.cc-check-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 14px;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
+}
+.cc-check-card input {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+.cc-check-card:has(input:checked) {
+  border-color: #2563eb;
+  background: #eaf1ff;
+}
+.cc-check-card:has(input:focus-visible) {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cc-check-card:hover {
+    border-color: #93b4f5;
+  }
+}
