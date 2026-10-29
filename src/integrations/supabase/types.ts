@@ -14,21 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      achievement_events: {
-        Row: {
-          company: string | null
-          created_at: string
-          id: string
-          kind: string
-          lead_id: string | null
-          seen_at: string | null
-          stage_key: string
-          user_id: string
-        }
-        Insert: never
-        Update: { seen_at?: string | null }
-        Relationships: []
-      }
       activity_audit_logs: {
         Row: {
           action: Database["public"]["Enums"]["audit_action_type"]
