@@ -238,7 +238,7 @@ export function CallerPerformance({
             <p>
               {day.isError || month.isError
                 ? "Wert nicht verfügbar"
-                : `${monthCalls} von ${goal} Anrufen im ${monthLabel(currentMonth())} · heute ${calls}. Wiener Zeit, der Tag wechselt um 0:00 Uhr.`}
+                : `${monthCalls} von ${goal} Anrufen im ${monthLabel(currentMonth())}\u00a0`}
             </p>
             <div className="cc-meter" aria-hidden="true">
               <i style={{ width: `${Math.round(share * 100)}%` }} />
