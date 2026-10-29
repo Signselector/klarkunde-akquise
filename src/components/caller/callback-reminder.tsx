@@ -7,6 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCountry } from "@/lib/country";
 
 /** Persistent reminder (top right) for due callbacks; one toast per callback, closed by its button or the X. */
+const REMIND_BEFORE_MS = 5 * 60_000;
+
 export function CallbackReminder({ userId }: { userId: string }) {
   const country = useCountry();
   const navigate = useNavigate();
@@ -22,7 +24,8 @@ export function CallbackReminder({ userId }: { userId: string }) {
         .eq("user_id", userId)
         .eq("country", country)
         .eq("done", false)
-        .lte("due_at", new Date().toISOString())
+        // Reminded five minutes ahead; overdue callbacks stay in the list.
+        .lte("due_at", new Date(Date.now() + REMIND_BEFORE_MS).toISOString())
         .order("due_at")
         .limit(20);
       if (error) throw error;
@@ -45,25 +48,28 @@ export function CallbackReminder({ userId }: { userId: string }) {
       const time = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" }).format(
         new Date(callback.due_at),
       );
-      toast("Rückruf fällig", {
-        id: toastId,
-        icon: (
-          <span className="cc-toast-icon">
-            <PhoneCall className="h-4 w-4" aria-hidden="true" />
-          </span>
-        ),
-        className: "cc-callback-toast",
-        description: `${lead.company || "Rückruf"} · geplant für ${time} Uhr`,
-        duration: Infinity,
-        closeButton: true,
-        action: {
-          label: "Zu den Rückrufen",
-          onClick: () => {
-            toast.dismiss(toastId);
-            void navigate({ to: "/callbacks" });
+      toast(
+        new Date(callback.due_at).getTime() > Date.now() ? "Rückruf in Kürze" : "Rückruf fällig",
+        {
+          id: toastId,
+          icon: (
+            <span className="cc-toast-icon">
+              <PhoneCall className="h-4 w-4" aria-hidden="true" />
+            </span>
+          ),
+          className: "cc-callback-toast",
+          description: `${lead.company || "Rückruf"} · geplant für ${time} Uhr`,
+          duration: Infinity,
+          closeButton: true,
+          action: {
+            label: "Zu den Rückrufen",
+            onClick: () => {
+              toast.dismiss(toastId);
+              void navigate({ to: "/callbacks" });
+            },
           },
         },
-      });
+      );
     }
   }, [query.data, userId, location.pathname, navigate]);
   return null;
