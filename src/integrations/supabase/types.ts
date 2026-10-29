@@ -25,9 +25,11 @@ export type Database = {
           created_at: string
           id: string
           metadata: Json
+          request_ip: string | null
           target_id: string | null
           target_label: string | null
           target_type: string | null
+          user_agent: string | null
         }
         Insert: {
           action: Database["public"]["Enums"]["audit_action_type"]
@@ -39,9 +41,11 @@ export type Database = {
           created_at?: string
           id?: string
           metadata?: Json
+          request_ip?: string | null
           target_id?: string | null
           target_label?: string | null
           target_type?: string | null
+          user_agent?: string | null
         }
         Update: {
           action?: Database["public"]["Enums"]["audit_action_type"]
@@ -53,9 +57,11 @@ export type Database = {
           created_at?: string
           id?: string
           metadata?: Json
+          request_ip?: string | null
           target_id?: string | null
           target_label?: string | null
           target_type?: string | null
+          user_agent?: string | null
         }
         Relationships: []
       }
@@ -333,6 +339,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      external_api_keys: {
+        Row: {
+          id: boolean
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          id?: boolean
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          id?: boolean
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       import_rows: {
         Row: {

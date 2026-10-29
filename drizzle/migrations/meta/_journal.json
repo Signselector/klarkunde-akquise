@@ -232,6 +232,13 @@
       "when": 1793219600096,
       "tag": "0032_pipedrive_activities_view_as",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793269107480,
+      "tag": "0033_api_key_rotation_and_audit_location",
+      "breakpoints": true
     }
   ]
 }
