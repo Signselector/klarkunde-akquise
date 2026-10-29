@@ -169,6 +169,15 @@ export function LeadActions({
     },
   });
 
+  // Referenzmail: pick the fixed template automatically (no form for the caller).
+  useEffect(() => {
+    if (!isMailAction(active) || mail.template || !templates.data?.length) return;
+    const t =
+      templates.data.find((x) => /referenz/i.test(x.name)) ?? templates.data[0];
+    pickTemplate(t.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, templates.data, mail.template]);
+
   useEffect(() => {
     if (!success) return;
     const timer = window.setTimeout(() => setSuccess(null), 8000);
@@ -565,130 +574,60 @@ export function LeadActions({
 
       {current && isMailAction(current.key) && (
         <form
-          className="space-y-2 rounded-[10px] border p-3"
+          className="space-y-3 rounded-[10px] border p-3"
           onSubmit={(e) => {
             e.preventDefault();
-            if (!preview) reviewMail();
-            else void sendAndComplete(current);
+            if (!mail.to.trim()) return void toast.error("Bitte eine E-Mail-Adresse eintragen.");
+            if (!mail.template) return void toast.error("Keine Referenzmail-Vorlage hinterlegt.");
+            void sendAndComplete(current);
           }}
         >
-          <p className="font-medium">{current.label}: E-Mail</p>
-          {!preview && (
-            <>
-              {templates.isLoading && (
-                <p className="text-sm text-muted-foreground">Vorlagen werden geladen …</p>
-              )}
-              {templates.isError && (
-                <p className="text-sm text-destructive">Vorlagen konnten nicht geladen werden.</p>
-              )}
-              {templates.data && (
-                <label className="block text-sm">
-                  Vorlage
-                  <Dropdown
-                    className="w-full"
-                    value={mail.template}
-                    onChange={pickTemplate}
-                    placeholder={templates.data.length ? "Vorlage wählen …" : "Keine Vorlagen hinterlegt"}
-                    options={templates.data.map((t) => ({ value: t.id, label: t.name }))}
-                  />
-                </label>
-              )}
-              <label className="block text-sm">
-                An
-                <Input
-                  type="email"
-                  value={mail.to}
-                  onChange={(e) => setMail({ ...mail, to: e.target.value })}
-                />
-              </label>
-              <label className="block text-sm">
-                Betreff
-                <Input
-                  value={mail.subject}
-                  onChange={(e) => setMail({ ...mail, subject: e.target.value })}
-                />
-              </label>
-              <label className="block text-sm">
-                Text
-                <Textarea
-                  rows={6}
-                  value={mail.body}
-                  onChange={(e) => setMail({ ...mail, body: e.target.value })}
-                />
-              </label>
-              <Reveal title="Rückruf planen (optional)" summary={chosenLabel}>
-                <p className="mb-2 text-xs text-muted-foreground">
-                  Der Lead bleibt abgeschlossen. Zur gewählten Zeit erinnert dich der Rückruf, auch wenn der
-                  Kunde nicht antwortet.
-                </p>
-                {renderPicker("callback", true)}
-              </Reveal>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={busy}>
-                  Vorschau prüfen
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => setActive(null)}
-                >
-                  Abbrechen
-                </Button>
-              </div>
-            </>
+          <p className="font-medium">{current.label}</p>
+          <Reveal title="Rückruf planen (optional)" summary={chosenLabel}>
+            <p className="mb-2 text-xs text-muted-foreground">
+              Der Lead bleibt abgeschlossen. Zur gewählten Zeit erinnert dich der Rückruf, auch wenn der
+              Kunde nicht antwortet.
+            </p>
+            {renderPicker("callback", true)}
+          </Reveal>
+          {lead.email ? (
+            <p className="text-sm">
+              <span className="text-muted-foreground">Mail geht an: </span>
+              {lead.email}
+            </p>
+          ) : (
+            <label className="block text-sm">
+              E-Mail des Kunden
+              <Input
+                type="email"
+                value={mail.to}
+                onChange={(e) => setMail({ ...mail, to: e.target.value })}
+              />
+            </label>
           )}
-          {preview && (
-            <>
-              <div className="space-y-1 rounded-md bg-muted/50 p-3 text-sm" aria-label="Vorschau">
-                <p>
-                  <span className="text-muted-foreground">An: </span>
-                  {mail.to.trim()}
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Betreff: </span>
-                  {mail.subject}
-                </p>
-                <p className="whitespace-pre-wrap pt-2">{mail.body}</p>
-              </div>
-              {mailState.status === "failed" && (
-                <p role="alert" className="text-sm font-medium text-destructive">
-                  {emailErrorMessage(mailState.error)} Der Lead bleibt unter Offene Leads.
-                </p>
-              )}
-              {(mailState.status === "sent" || mailState.status === "simulated") && (
-                <p className="text-sm text-muted-foreground">
-                  {mailState.status === "simulated"
-                    ? "Testmodus: Die Mail wurde nur simuliert."
-                    : "Die Mail wurde gesendet."}{" "}
-                  Der Lead wird abgeschlossen …
-                </p>
-              )}
-              <p className="text-sm text-muted-foreground">
-                Danach wandert der Lead nach Abgeschlossene Leads. Es wird kein Deal angelegt.
-                {chosenLabel ? ` Rückruf geplant: ${chosenLabel}.` : ""}
-              </p>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={busy || mailState.status === "sending"}>
-                  {mailState.status === "sending"
-                    ? "Wird gesendet …"
-                    : mailState.status === "failed"
-                      ? "Erneut senden"
-                      : mailState.id
-                        ? "Lead abschließen"
-                        : "Jetzt senden"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={busy || mailState.status === "sending"}
-                  onClick={() => setPreview(false)}
-                >
-                  Zurück
-                </Button>
-              </div>
-            </>
+          {templates.isLoading && (
+            <p className="text-sm text-muted-foreground">Vorlage wird geladen …</p>
           )}
+          {templates.data && !templates.data.length && (
+            <p className="text-sm text-destructive">Keine Referenzmail-Vorlage hinterlegt.</p>
+          )}
+          {mailState.status === "failed" && (
+            <p role="alert" className="text-sm font-medium text-destructive">
+              {emailErrorMessage(mailState.error)} Der Lead bleibt unter Offene Leads.
+            </p>
+          )}
+          <div className="flex gap-2">
+            <Button type="submit" disabled={busy || mailState.status === "sending" || !mail.template}>
+              {mailState.status === "sending"
+                ? "Wird gesendet …"
+                : mailState.status === "failed"
+                  ? "Erneut senden"
+                  : "Bestätigen & Mail senden"}
+            </Button>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => setActive(null)}>
+              Abbrechen
+            </Button>
+          </div>
         </form>
       )}
     </section>
