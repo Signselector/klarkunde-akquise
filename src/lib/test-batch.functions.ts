@@ -2,11 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { gatewayClient } from "@/lib/crm-sync.functions";
 
-type Objects = { deals: number[]; persons: number[]; orgs: number[]; activities: number[] };
+type Objects = {
+  country: string;
+  deals: number[];
+  persons: number[];
+  orgs: number[];
+  activities: number[];
+};
 
 /**
- * Removes an AT test batch completely: first its deals, persons, organisations and activities in Pipedrive AT,
- * then every trace in the database. Admin only; the database refuses anything that is not an AT batch.
+ * Removes an AT or DE test batch completely: first its deals, persons, organisations and activities in the
+ * Pipedrive account of the batch's country, then every trace in the database. Admin only; the database refuses
+ * any other country.
  */
 export const purgeTestBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -20,7 +27,8 @@ export const purgeTestBatch = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const o = objs as unknown as Objects;
-    const { call } = gatewayClient("AT");
+    if (o.country !== "AT" && o.country !== "DE") throw new Error("Nur AT- und DE-Batches.");
+    const { call } = gatewayClient(o.country);
     const failed: string[] = [];
     let removed = 0;
     const del = async (kind: string, ids: number[]) => {
