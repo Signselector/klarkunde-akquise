@@ -3,7 +3,7 @@
 > | Aktion | Eingaben | Folge |
 > | --- | --- | --- |
 > | Logo Render | Notiz, Logo, **Termin** | Termin im Terminkalender (Recruit: beim Manager des Landes, Veteran/Manager/Admin: bei sich) und als Aktivität im Pipedrive-Kalender. Lead → Abgeschlossen, Deal in 3D Low Q, Meine Kunden. |
-> | Realismus Render | Notiz, Logo, **Gebäudefoto**, Termin | Wie oben, Stage 3D High Q. Das Foto geht als `GEBAEUDEFOTO.<endung>` ans Deal, das Logo als `KONFI_LOGO.<endung>`. |
+> | Realismus Render | Notiz, Logo, **Gebäudefoto**, Termin | Wie oben, Stage 3D High Q. Das Foto geht als `GEBAEUDEFOTO.<endung>` ans Deal, das Logo als `LOGO.<endung>`. |
 > | Rückruf | Datum, Uhrzeit | Nur im Rückruf-Kalender (und Pipedrive-Kalender). Lead bleibt in Offene Leads, kein Deal. |
 > | Logo ausstehend | Notiz, Rückruf optional | Lead → Abgeschlossen, Deal in 3D Waiting, Meine Kunden. |
 > | Kein Interesse | Notiz optional, Haken „Nicht wieder anrufen“ | Mit Haken: Lead wird **gelöscht** (Personendaten, Notizen, Mails, Rückrufe gelöscht; die leere Hülle bleibt, damit Statistiken ihre Zahlen behalten). Ohne Haken: Lead → Abgeschlossen und in der Admin-Liste „Kein Interesse“ (Menü, CSV-Download). Kein Deal. |
@@ -46,7 +46,7 @@ Batch des Aufrufers (oder wurde von ihm bearbeitet, oder Admin), kein fremder ak
 - Aktionen mit Stage-Schlüssel stehen zuerst auf `crm_sync_state = 'queued'`. Direkt danach überträgt die
   Server-Funktion `syncLeadAction` (`src/lib/crm-sync.functions.ts`, Logik in `src/lib/crm-sync.ts`) sie nach Pipedrive:
   Organisation, Person, **Deal in der Stage aus `pipedrive_stage_mapping` des Landes**, die Gesprächsnotiz (mit
-  Mitarbeiter und Zeit) und bei den Render-Aktionen das Logo als **`KONFI_LOGO.<endung>`** am Deal. Es gibt pro Lead
+  Mitarbeiter und Zeit) und bei den Render-Aktionen das Logo als **`LOGO.<endung>`** am Deal. Es gibt pro Lead
   höchstens einen Deal (`lead_crm_links`); weitere Aktionen verschieben ihn nur. Zustände: `queued` → `syncing` →
   `synced` oder `error` (mit `crm_error`, sichtbar im Verlauf, „Erneut übertragen“). Teilschritte (Notiz, Logo)
   werden gemerkt und bei einem Wiederholen nicht doppelt gesendet.
@@ -62,7 +62,7 @@ Batch des Aufrufers (oder wurde von ihm bearbeitet, oder Admin), kein fremder ak
    `reference_mail` eingetragen sein, sonst meldet die Oberfläche „keine Stage zugeordnet“. Es werden nie Stages
    angelegt. Die Aufrufe gehen an die Pfade `/organizations`, `/persons`, `/deals`, `/notes` und `/files` des
    Connector-Gateways; das ist **nicht gegen echtes Pipedrive getestet** (nur mit einem Testdouble). Beim ersten
-   echten Lauf prüfen, ob Deal, Notiz und die Datei `KONFI_LOGO.*` ankommen.
+   echten Lauf prüfen, ob Deal, Notiz und die Datei `LOGO.*` ankommen.
 2. **Deal-Besitzer.** Der Deal gehört dem Konto der API-Verbindung. Eine Zuordnung des Callers zu einem
    Pipedrive-Benutzer gibt es nicht.
 3. **E-Mail-Versand.** Es gibt keine Versand-Integration. Die Referenzmail öffnet das E-Mail-Programm

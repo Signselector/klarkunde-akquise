@@ -64,7 +64,7 @@ function setup(
 }
 
 describe("syncLeadAction", () => {
-  it("creates organization, person and deal in the mapped stage with note and KONFI_LOGO", async () => {
+  it("creates organization, person and deal in the mapped stage with note and LOGO", async () => {
     const t = setup();
     expect(await syncLeadAction("a1", t.store, t.crm)).toEqual({ state: "synced" });
     expect(t.calls).toEqual([
@@ -72,7 +72,7 @@ describe("syncLeadAction", () => {
       "person:Max Muster",
       "deal:Muster GmbH@8",
       expect.stringMatching(/^note:103:.*· Anna\|Möchte ein einfaches Logo$/),
-      "file:103:KONFI_LOGO.png",
+      "file:103:LOGO.png",
     ]);
     expect(t.saved.at(-1)).toEqual({ organization_id: 101, person_id: 102, deal_id: 103 });
     expect(t.steps).toEqual(["note", "file"]);
@@ -139,10 +139,10 @@ describe("syncLeadAction", () => {
 });
 
 describe("helpers", () => {
-  it("names the logo KONFI_LOGO with a safe extension", () => {
-    expect(logoFilename("a/b/c-x.JPG", "image/jpeg")).toBe("KONFI_LOGO.jpg");
-    expect(logoFilename("a/b/c-x", "application/pdf")).toBe("KONFI_LOGO.pdf");
-    expect(logoFilename("a/b/c-x.exe", "text/plain")).toBe("KONFI_LOGO.png");
+  it("names the logo LOGO with a safe extension", () => {
+    expect(logoFilename("a/b/c-x.JPG", "image/jpeg")).toBe("LOGO.jpg");
+    expect(logoFilename("a/b/c-x", "application/pdf")).toBe("LOGO.pdf");
+    expect(logoFilename("a/b/c-x.exe", "text/plain")).toBe("LOGO.png");
   });
   it("explains errors in German", () => {
     expect(crmErrorMessage("stage_not_configured")).toMatch(/Stage/);
@@ -151,14 +151,14 @@ describe("helpers", () => {
 });
 
 describe("syncLeadAction: building photo", () => {
-  it("uploads the building photo as GEBAEUDEFOTO once, next to KONFI_LOGO", async () => {
+  it("uploads the building photo as GEBAEUDEFOTO once, next to LOGO", async () => {
     const t = setup(
       {},
       { action: "high_q", stage_key: "high_q", details: { photo_path: "u1/l1/abc-haus.JPG" } },
     );
     await syncLeadAction("a1", t.store, t.crm);
     expect(t.calls.filter((c) => c.startsWith("file:"))).toEqual([
-      "file:103:KONFI_LOGO.png",
+      "file:103:LOGO.png",
       "file:103:GEBAEUDEFOTO.jpg",
     ]);
     expect(t.steps).toEqual(["note", "file", "photo"]);

@@ -1,6 +1,6 @@
 /**
  * Pushes one recorded lead action to Pipedrive: organization, person and deal in the stage of the action,
- * the call note and (for the render actions) the customer logo as "KONFI_LOGO.<ext>".
+ * the call note and (for the render actions) the customer logo as "LOGO.<ext>".
  *
  * Pure logic with injected dependencies so it can be tested without Pipedrive or a database.
  * Retries are safe: what already exists is remembered (`links`, `steps`), so nothing is created twice.
@@ -83,15 +83,15 @@ const BY_TYPE: Record<string, string> = {
   "application/pdf": "pdf",
 };
 
-/** The file name the logo gets on the deal: KONFI_LOGO.<ext>. */
+/** The file name the logo gets on the deal: LOGO.<ext>. */
 export function logoFilename(path: string, contentType: string) {
   const ext = path.split(".").pop()?.toLowerCase() ?? "";
-  return `KONFI_LOGO.${EXTENSIONS.has(ext) ? ext : (BY_TYPE[contentType] ?? "png")}`;
+  return `LOGO.${EXTENSIONS.has(ext) ? ext : (BY_TYPE[contentType] ?? "png")}`;
 }
 
 /** The building photo of a Realismus Render: GEBAEUDEFOTO.<ext>. */
 export function photoFilename(path: string, contentType: string) {
-  return logoFilename(path, contentType).replace(/^KONFI_LOGO/, "GEBAEUDEFOTO");
+  return logoFilename(path, contentType).replace(/^LOGO/, "GEBAEUDEFOTO");
 }
 
 export function noteText(ctx: SyncContext) {
