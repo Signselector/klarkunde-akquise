@@ -34,6 +34,8 @@ import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/
 import { Route as ApiMailReplyRouteImport } from './routes/api/mail-reply'
 import { Route as ApiPipedriveReconcileRouteImport } from './routes/api/pipedrive-reconcile'
 import { Route as ApiPipedriveWebhookRouteImport } from './routes/api/pipedrive-webhook'
+import { Route as ApiPublicV1TableRouteImport } from './routes/api/public/v1/$table'
+import { Route as ApiPublicV1PingRouteImport } from './routes/api/public/v1/ping'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -162,6 +164,16 @@ const ApiPipedriveWebhookRoute = ApiPipedriveWebhookRouteImport.update({
   path: '/api/pipedrive-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1TableRoute = ApiPublicV1TableRouteImport.update({
+  id: '/api/public/v1/$table',
+  path: '/api/public/v1/$table',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1PingRoute = ApiPublicV1PingRouteImport.update({
+  id: '/api/public/v1/ping',
+  path: '/api/public/v1/ping',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -188,6 +200,8 @@ export interface FileRoutesByFullPath {
   '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
+  '/api/public/v1/$table': typeof ApiPublicV1TableRoute
+  '/api/public/v1/ping': typeof ApiPublicV1PingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -214,6 +228,8 @@ export interface FileRoutesByTo {
   '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
+  '/api/public/v1/$table': typeof ApiPublicV1TableRoute
+  '/api/public/v1/ping': typeof ApiPublicV1PingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -242,6 +258,8 @@ export interface FileRoutesById {
   '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
+  '/api/public/v1/$table': typeof ApiPublicV1TableRoute
+  '/api/public/v1/ping': typeof ApiPublicV1PingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -270,6 +288,8 @@ export interface FileRouteTypes {
     | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
+    | '/api/public/v1/$table'
+    | '/api/public/v1/ping'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -296,6 +316,8 @@ export interface FileRouteTypes {
     | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
+    | '/api/public/v1/$table'
+    | '/api/public/v1/ping'
   id:
     | '__root__'
     | '/'
@@ -323,6 +345,8 @@ export interface FileRouteTypes {
     | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
+    | '/api/public/v1/$table'
+    | '/api/public/v1/ping'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -333,6 +357,8 @@ export interface RootRouteChildren {
   ApiMailReplyRoute: typeof ApiMailReplyRoute
   ApiPipedriveReconcileRoute: typeof ApiPipedriveReconcileRoute
   ApiPipedriveWebhookRoute: typeof ApiPipedriveWebhookRoute
+  ApiPublicV1TableRoute: typeof ApiPublicV1TableRoute
+  ApiPublicV1PingRoute: typeof ApiPublicV1PingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -512,6 +538,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPipedriveWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/$table': {
+      id: '/api/public/v1/$table'
+      path: '/api/public/v1/$table'
+      fullPath: '/api/public/v1/$table'
+      preLoaderRoute: typeof ApiPublicV1TableRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/ping': {
+      id: '/api/public/v1/ping'
+      path: '/api/public/v1/ping'
+      fullPath: '/api/public/v1/ping'
+      preLoaderRoute: typeof ApiPublicV1PingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -568,6 +608,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMailReplyRoute: ApiMailReplyRoute,
   ApiPipedriveReconcileRoute: ApiPipedriveReconcileRoute,
   ApiPipedriveWebhookRoute: ApiPipedriveWebhookRoute,
+  ApiPublicV1TableRoute: ApiPublicV1TableRoute,
+  ApiPublicV1PingRoute: ApiPublicV1PingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
