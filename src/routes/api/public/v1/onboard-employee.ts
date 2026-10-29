@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { apiKeyOk, CORS_HEADERS, json } from "@/lib/external-api-auth";
+import { CORS_HEADERS, json } from "@/lib/external-api-auth";
+import { teamRequestOk } from "@/lib/teammanagement-auth";
 
 const Body = z.object({
   email: z.string().trim().toLowerCase().email().max(255),
   name: z.string().trim().min(1).max(120),
   country: z.string().trim().toUpperCase().pipe(z.enum(["DE", "AT", "NL"])),
+  external_id: z.string().trim().max(200).optional(),
 });
 
 /**
@@ -18,9 +20,7 @@ export const Route = createFileRoute("/api/public/v1/onboard-employee")({
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS_HEADERS }),
       POST: async ({ request }) => {
-        const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? null;
-        const presented = request.headers.get("x-api-key") ?? bearer;
-        if (!apiKeyOk(presented, process.env['TEAM_MANAGEMENT']))
+        if (!teamRequestOk(request))
           return json({ ok: false, error: "unauthorized" }, 401);
 
         let raw: unknown;
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/public/v1/onboard-employee")({
         const parsed = Body.safeParse(raw);
         if (!parsed.success)
           return json({ ok: false, error: "invalid_input", issues: parsed.error.flatten().fieldErrors }, 400);
-        const { email, name, country } = parsed.data;
+        const { email, name, country, external_id } = parsed.data;
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/public/v1/onboard-employee")({
             email,
             password,
             email_confirm: true,
-            user_metadata: { display_name: name, source: "teammanagement" },
+            user_metadata: { display_name: name, source: "teammanagement", external_id },
           });
           if (error || !data.user) return json({ ok: false, error: "create_failed" }, 500);
           userId = data.user.id;
