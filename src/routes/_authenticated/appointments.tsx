@@ -126,8 +126,12 @@ function AppointmentsPage() {
       const rows = (data ?? [])
         .filter((r) => r.profile?.active !== false)
         .map((r) => ({ id: r.user_id, name: r.profile?.display_name || r.profile?.email || "Unbekannt" }));
-      if (!rows.some((r) => r.id === user.id)) rows.unshift({ id: user.id, name: "Ich" });
-      return rows;
+      // Managers may hand appointments only to Senior Callers (or keep them).
+      const { data: rl } = await supabase.from("user_roles").select("user_id,role").in("user_id", rows.map((r) => r.id));
+      const vets = new Set((rl ?? []).filter((x) => x.role === "veteran").map((x) => x.user_id));
+      const list = rows.filter((r) => r.id === user.id || vets.has(r.id));
+      if (!list.some((r) => r.id === user.id)) list.unshift({ id: user.id, name: "Ich" });
+      return list;
     },
   });
   const nameOf = (id: string | null | undefined) =>

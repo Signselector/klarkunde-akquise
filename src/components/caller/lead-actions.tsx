@@ -134,7 +134,6 @@ export function LeadActions({
   const [month, setMonth] = useState("");
   const [doNotCall, setDoNotCall] = useState(false);
   const [unhappy, setUnhappy] = useState(false);
-  const [selfAssign, setSelfAssign] = useState(false);
   const roles = useRoles(userId);
   const [success, setSuccess] = useState<{
     title: string;
@@ -304,8 +303,6 @@ export function LeadActions({
       else if (needs.month) details = { month };
       else if (needs.doNotCall && (doNotCall || unhappy))
         details = { ...(doNotCall ? { do_not_call: true } : {}), ...(unhappy ? { unhappy: true } : {}) };
-      if (needs.appointment && selfAssign && roles.role === "veteran")
-        details = { ...((details as Record<string, Json> | undefined) ?? {}), self_assign: true };
       // "Kunde unzufrieden" travels with the note, so it is visible in the history and the Kein-Interesse list.
       const noteText =
         needs.doNotCall && unhappy
@@ -540,17 +537,6 @@ export function LeadActions({
                 {renderPicker(current.needs.appointment ? "appointment" : "callback", false)}
               </div>
             ))}
-          {current.needs.appointment && roles.role === "veteran" && (
-            <label className="flex min-h-11 items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="size-4 accent-primary"
-                checked={selfAssign}
-                onChange={(e) => setSelfAssign(e.target.checked)}
-              />
-              Mir selbst zuweisen (sonst entscheidet der Manager)
-            </label>
-          )}
           {current.needs.doNotCall && (
             <div className="space-y-2">
               <label className="cc-check-card">

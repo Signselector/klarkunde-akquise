@@ -121,7 +121,7 @@ const ERRORS: Record<string, string> = {
   callback_slot_taken:
     "Zu dieser Zeit ist bereits ein Rückruf eingetragen. Bitte wähle eine Minute später.",
   slot_full:
-    "Dieser Zeitpunkt ist inzwischen ausgebucht (maximal 2 Termine gleichzeitig). Bitte wähle eine andere Zeit.",
+    "Dieser Zeitpunkt ist inzwischen ausgebucht (maximale Anzahl gleichzeitiger Termine erreicht). Bitte wähle eine andere Zeit.",
   appointment_too_soon:
     "Termine können frühestens in 3 Tagen gebucht werden.",
   slot_conflict:
