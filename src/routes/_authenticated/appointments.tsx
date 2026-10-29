@@ -187,7 +187,9 @@ function AppointmentsPage() {
               ? "Termine können frühestens in 3 Tagen liegen."
               : m.includes("forbidden")
                 ? "Dafür fehlt dir die Berechtigung."
-                : "Termin konnte nicht verschoben werden.",
+                : m.includes("reschedule_appointment") || error.code === "PGRST202"
+                  ? "Das Datenbank-Update für das Verschieben (Migration 0037) ist noch nicht eingespielt."
+                  : `Termin konnte nicht verschoben werden (${m.slice(0, 90)}).`,
       );
       return;
     }
