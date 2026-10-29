@@ -65,7 +65,6 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
       throw new Error("forbidden");
     const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
     const key = process.env["RESEND_API_KEY"];
-    const from = process.env["EMAIL_FROM"] || "Sign Selector <noreply@signselector.com>";
     const { data: leadRow } = await db
       .from("leads")
       .select("batch_id")
@@ -74,7 +73,14 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
     const { data: batch } = leadRow?.batch_id
       ? await db.from("lead_batches").select("country").eq("id", leadRow.batch_id).maybeSingle()
       : { data: null };
-    const bcc = batch?.country ? (process.env[`PIPEDRIVE_BCC_${batch.country}`] ?? null) : null;
+    const country = batch?.country ?? null;
+    // Same template and flow per country; only the sender differs (DE: office@signselector.de).
+    const from =
+      (country && process.env[`EMAIL_FROM_${country}`]) ||
+      (country === "DE"
+        ? "Sign Selector <office@signselector.de>"
+        : process.env["EMAIL_FROM"] || "Sign Selector <noreply@signselector.com>");
+    const bcc = country ? (process.env[`PIPEDRIVE_BCC_${country}`] ?? null) : null;
     const provider: MailProvider | null = key ? resendProvider(key, from, bcc) : null;
     const store: MailStore = {
       async claim(id) {
