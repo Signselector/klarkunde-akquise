@@ -15,6 +15,7 @@ import { useRoles } from "@/lib/use-admin";
 import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { Button } from "@/components/ui/button";
 import { Dropdown } from "@/components/ui/dropdown";
+import { LeadDialog } from "@/components/caller/lead-dialog";
 import { SlotPicker } from "@/components/booking/slot-picker";
 import {
   Dialog,
@@ -152,7 +153,7 @@ function AppointmentsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id,starts_at,title,booked_by,lead:leads(company,contact_name)")
+        .select("id,starts_at,title,notes,booked_by,lead_id,lead:leads(company,contact_name,phone,email,city)")
         .eq("country", country)
         .eq("decision_pending", true)
         .gte("starts_at", new Date().toISOString())
@@ -206,6 +207,9 @@ function AppointmentsPage() {
     setMoving(null);
     setNewStart(null);
   }
+  const queue = pending.data ?? [];
+  const next = queue[0] ?? null;
+  const [fileLead, setFileLead] = useState<string | null>(null);
   const nameOf = (id: string | null | undefined) =>
     id === user.id ? "dir" : (team.data?.find((t) => t.id === id)?.name ?? "jemand anderem");
 
@@ -263,34 +267,54 @@ function AppointmentsPage() {
 
       {isError && <p className="text-destructive">Termine konnten nicht geladen werden.</p>}
 
-      {roles.isStaff && (pending.data?.length ?? 0) > 0 && (
-        <section className="space-y-2" aria-label="Neue Termine" aria-live="polite">
-          {pending.data!.map((n) => (
-            <div key={n.id} className="cc-decision-card" role="status">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">
-                  Neuer Termin: {n.title ?? n.lead?.company ?? "Termin"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(n.starts_at))}{" "}
-                  · gebucht von {n.bookedByName}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" onClick={() => void assign(n.id, user.id)}>
-                  Selbst wahrnehmen
-                </Button>
-                <Dropdown
-                  className="min-h-9 text-[13px]"
-                  ariaLabel={`Termin ${n.title ?? ""} übergeben`}
-                  placeholder="Übergeben an …"
-                  value=""
-                  options={(team.data ?? []).filter((t) => t.id !== user.id).map((t) => ({ value: t.id, label: t.name }))}
-                  onChange={(v) => v && void assign(n.id, v)}
-                />
-              </div>
+      {roles.isStaff && next && (
+        <section className="cc-decision-card cc-decision-card--queue" aria-label="Neuer Termin" aria-live="polite" key={next.id}>
+          <div className="flex w-full flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-bold uppercase tracking-wide text-primary">
+              Neuer Termin · {1} von {queue.length}
+            </p>
+            <p className="text-xs text-muted-foreground">Bitte entscheiden: selbst wahrnehmen oder übergeben</p>
+          </div>
+          <div className="grid w-full gap-3 md:grid-cols-[1.2fr_1fr]">
+            <div className="min-w-0">
+              <p className="text-base font-semibold">{next.title ?? next.lead?.company ?? "Termin"}</p>
+              <p className="text-sm">
+                {new Intl.DateTimeFormat("de-DE", { weekday: "long", day: "2-digit", month: "long", hour: "2-digit", minute: "2-digit" }).format(new Date(next.starts_at))}{" "}
+                Uhr · gebucht von {next.bookedByName}
+              </p>
+              {next.notes && <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{next.notes}</p>}
             </div>
-          ))}
+            <dl className="grid content-start gap-1 rounded-xl bg-white/70 p-3 text-sm">
+              <dt className="text-xs font-semibold uppercase text-muted-foreground">Kundenakte</dt>
+              <dd className="font-medium">{next.lead?.company ?? "–"}</dd>
+              {next.lead?.contact_name && <dd>{next.lead.contact_name}</dd>}
+              {next.lead?.phone && (
+                <dd>
+                  <a className="text-primary hover:underline" href={`tel:${next.lead.phone}`}>{next.lead.phone}</a>
+                </dd>
+              )}
+              {next.lead?.email && <dd className="truncate">{next.lead.email}</dd>}
+              {next.lead?.city && <dd>{next.lead.city}</dd>}
+              {next.lead_id && (
+                <dd className="pt-1">
+                  <Button size="sm" variant="outline" onClick={() => setFileLead(next.lead_id)}>
+                    Kundenakte öffnen
+                  </Button>
+                </dd>
+              )}
+            </dl>
+          </div>
+          <div className="flex w-full flex-wrap items-center gap-2">
+            <Button onClick={() => void assign(next.id, user.id)}>Selbst wahrnehmen</Button>
+            <Dropdown
+              className="min-h-10"
+              ariaLabel="Termin übergeben"
+              placeholder="An Senior Caller übergeben …"
+              value=""
+              options={(team.data ?? []).filter((t) => t.id !== user.id).map((t) => ({ value: t.id, label: t.name }))}
+              onChange={(v) => v && void assign(next.id, v)}
+            />
+          </div>
         </section>
       )}
 
@@ -431,6 +455,8 @@ function AppointmentsPage() {
           </div>
         </aside>
       </div>
+
+      <LeadDialog leadId={fileLead} userId={user.id} onClose={() => setFileLead(null)} />
 
       <Dialog open={!!moving} onOpenChange={(o) => !o && !moveBusy && setMoving(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">

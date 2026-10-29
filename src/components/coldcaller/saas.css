@@ -1955,3 +1955,9 @@ tr:hover > .cc-sticky-action {
     animation: none;
   }
 }
+.cc-decision-card--queue {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-left-width: 5px;
+}
