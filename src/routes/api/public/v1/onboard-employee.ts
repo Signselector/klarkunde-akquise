@@ -20,7 +20,7 @@ export const Route = createFileRoute("/api/public/v1/onboard-employee")({
       POST: async ({ request }) => {
         const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? null;
         const presented = request.headers.get("x-api-key") ?? bearer;
-        if (!apiKeyOk(presented, process.env.TEAM_MANAGEMENT))
+        if (!apiKeyOk(presented, process.env['TEAM_MANAGEMENT']))
           return json({ ok: false, error: "unauthorized" }, 401);
 
         let raw: unknown;
@@ -69,7 +69,7 @@ export const Route = createFileRoute("/api/public/v1/onboard-employee")({
           await supabaseAdmin.from("user_countries").insert({ user_id: userId, country });
 
         let emailSent = false;
-        if (status === "created" && process.env.ONBOARDING_EMAILS_ACTIVE === "true") {
+        if (status === "created" && process.env['ONBOARDING_EMAILS_ACTIVE'] === "true") {
           const origin = new URL(request.url).origin;
           const { error } = await supabaseAdmin.auth.resetPasswordForEmail(email, {
             redirectTo: `${origin}/reset-password`,
