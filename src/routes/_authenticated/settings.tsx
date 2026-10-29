@@ -1,5 +1,6 @@
 import { DataQuality, PipedriveJobs } from "@/components/backend-status";
 import { TemplateManager } from "@/components/template-manager";
+import { ApiAccess } from "@/components/api-access";
 import { BackupCenter } from "@/components/backup-center";
 import { TestModeCard } from "@/components/TestMode";
 import { TestBatchPurge } from "@/components/test-batch-purge";
@@ -74,7 +75,7 @@ function SettingsPage() {
     ["email", "E-Mail"],
     ["sms", "SMS-Vorlagen"],
     ["script", "Leitfaden / Antwort zuordnen"],
-    ...(isMaster ? [["backups", "Backups"] as [string, string]] : []),
+    ...(isMaster ? [["backups", "Backups"] as [string, string], ["api", "API"] as [string, string]] : []),
   ];
   return (
     <div className="space-y-4">
@@ -190,6 +191,15 @@ function SettingsPage() {
               help="7-Tage-Backup-Center mit Download und manueller Erstellung."
             />
             <BackupCenter />
+          </TabsContent>
+        )}
+        {isMaster && (
+          <TabsContent value="api" className="space-y-4">
+            <SectionHeader
+              title="API"
+              help="Schnittstelle zum Verknüpfen anderer Projekte. Nur für den Master-Admin sichtbar."
+            />
+            <ApiAccess />
           </TabsContent>
         )}
       </Tabs>
