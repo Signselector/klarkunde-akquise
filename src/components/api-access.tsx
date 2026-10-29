@@ -1,15 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Copy, Eye, EyeOff } from "lucide-react";
+import { Copy, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getExternalApiKey } from "@/lib/external-api.functions";
+import { getExternalApiKey, regenerateExternalApiKey } from "@/lib/external-api.functions";
 import { API_TABLES } from "@/lib/external-api-auth";
 
 const BASE = "https://cold-caller-tool-neu.lovable.app/api/public/v1";
 
 export function ApiAccess() {
   const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const qc = useQueryClient();
   const { data, error, isLoading } = useQuery({
     queryKey: ["external-api-key"],
     queryFn: () => getExternalApiKey(),
@@ -18,6 +20,20 @@ export function ApiAccess() {
   async function copy(text: string, msg: string) {
     await navigator.clipboard.writeText(text);
     toast.success(msg);
+  }
+  async function regenerate() {
+    if (!window.confirm("Neuen Schlüssel erzeugen? Der bisherige Schlüssel funktioniert danach sofort nicht mehr. Alle verbundenen Projekte brauchen den neuen Schlüssel.")) return;
+    setBusy(true);
+    try {
+      const res = await regenerateExternalApiKey();
+      qc.setQueryData(["external-api-key"], res);
+      setShow(true);
+      toast.success("Neuer API-Schlüssel erzeugt. Der alte ist ungültig.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   }
   const example = `const res = await fetch("${BASE}/leads?limit=50", {
   headers: { "x-api-key": "DEIN_API_KEY" },
@@ -42,6 +58,9 @@ const { data } = await res.json();`;
             </Button>
             <Button onClick={() => copy(key, "API-Schlüssel kopiert.")}>
               <Copy className="mr-2 h-4 w-4" /> Kopieren
+            </Button>
+            <Button variant="outline" onClick={regenerate} disabled={busy}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${busy ? "animate-spin" : ""}`} /> Neu generieren
             </Button>
           </div>
         )}

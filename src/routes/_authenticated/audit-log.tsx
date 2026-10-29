@@ -8,6 +8,8 @@ import { CountryCell } from "@/components/country-scope";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
+import { AuditLocationDialog } from "@/components/audit-location-dialog";
+import { isMasterEmail } from "@/lib/master";
 
 export const Route = createFileRoute("/_authenticated/audit-log")({
   head: () => ({ meta: [{ title: "Aktivitätsprotokoll – Sign Selector Cold Caller" }] }),
@@ -38,6 +40,8 @@ function AuditLogPage() {
   const [actor, setActor] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [openId, setOpenId] = useState<string | null>(null);
+  const master = isMasterEmail(user.email);
 
   const q = useInfiniteQuery({
     enabled: staff,
@@ -141,7 +145,12 @@ function AuditLogPage() {
             {rows.map((r) => {
               const detail = auditDetail(r.action, r.metadata);
               return (
-                <tr key={r.id}>
+                <tr
+                  key={r.id}
+                  onClick={master ? () => setOpenId(r.id) : undefined}
+                  className={master ? "cursor-pointer hover:bg-muted/50" : undefined}
+                  title={master ? "Klicken für IP und Standort" : undefined}
+                >
                   <td className="whitespace-nowrap p-3">{fmt.format(new Date(r.created_at))}</td>
                   <td className="p-3">
                     <div className="font-medium">{r.actor_name}</div>
@@ -170,6 +179,7 @@ function AuditLogPage() {
           </tbody>
         </table>
       </div>
+      {master && <AuditLocationDialog id={openId} onClose={() => setOpenId(null)} />}
       {q.isError && <p className="text-sm text-destructive">Protokoll konnte nicht geladen werden.</p>}
       {q.hasNextPage && (
         <Button variant="outline" onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}>

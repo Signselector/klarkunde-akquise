@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { API_TABLES, CORS_HEADERS, apiKeyOk, json } from "@/lib/external-api-auth";
+import { currentExternalApiKey } from "@/lib/external-api-key.server";
 
 type Table = (typeof API_TABLES)[number];
 const RESERVED = new Set(["limit", "offset", "order", "select", "id"]);
 
 async function guard(request: Request, table: string) {
-  if (!apiKeyOk(request.headers.get("x-api-key"), process.env["EXTERNAL_API_KEY"]))
+  if (!apiKeyOk(request.headers.get("x-api-key"), await currentExternalApiKey()))
     return { error: json({ error: "unauthorized" }, 401) };
   if (!(API_TABLES as readonly string[]).includes(table))
     return { error: json({ error: `unknown table, allowed: ${API_TABLES.join(", ")}` }, 404) };
