@@ -1624,6 +1624,15 @@ export type Database = {
         }
         Returns: Json
       }
+      crm_match_reference_deal: {
+        Args: {
+          p_country: string
+          p_deal: number
+          p_emails?: string[]
+          p_phones?: string[]
+        }
+        Returns: Json
+      }
       crm_save_links: {
         Args: {
           p_actor: string
