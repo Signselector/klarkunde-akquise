@@ -1747,10 +1747,6 @@ export type Database = {
         Args: { _country: string; _uid: string }
         Returns: boolean
       }
-      reschedule_appointment: {
-        Args: { p_appointment_id: string; p_starts_at: string }
-        Returns: Json
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1849,6 +1845,10 @@ export type Database = {
           p_reason: string
           p_request_id: string
         }
+        Returns: Json
+      }
+      reschedule_appointment: {
+        Args: { p_appointment_id: string; p_starts_at: string }
         Returns: Json
       }
       resolve_integration_review: {
