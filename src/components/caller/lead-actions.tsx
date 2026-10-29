@@ -219,7 +219,6 @@ export function LeadActions({
     setMonth("");
     setDoNotCall(false);
     setUnhappy(false);
-    setSelfAssign(false);
     setNote("");
     setDate("");
     setTime("");
