@@ -133,7 +133,6 @@ export function LeadActions({
   const [photo, setPhoto] = useState<File | null>(null);
   const [month, setMonth] = useState("");
   const [doNotCall, setDoNotCall] = useState(false);
-  const [unhappy, setUnhappy] = useState(false);
   const roles = useRoles(userId);
   const [success, setSuccess] = useState<{
     title: string;
@@ -218,7 +217,6 @@ export function LeadActions({
     setPhoto(null);
     setMonth("");
     setDoNotCall(false);
-    setUnhappy(false);
     setNote("");
     setDate("");
     setTime("");
@@ -300,19 +298,13 @@ export function LeadActions({
         details = { email_id: emailId ?? mailState.id ?? "", template: mail.template || null };
       else if (photoPath) details = { photo_path: photoPath };
       else if (needs.month) details = { month };
-      else if (needs.doNotCall && (doNotCall || unhappy))
-        details = { ...(doNotCall ? { do_not_call: true } : {}), ...(unhappy ? { unhappy: true } : {}) };
-      // "Kunde unzufrieden" travels with the note, so it is visible in the history and the Kein-Interesse list.
-      const noteText =
-        needs.doNotCall && unhappy
-          ? ["Kunde unzufrieden", note.trim()].filter(Boolean).join(": ")
-          : note.trim();
+      else if (needs.doNotCall && doNotCall) details = { do_not_call: true };
       const { data, error } = await supabase.rpc("record_lead_action", {
         p_request_id: requestId.current ?? crypto.randomUUID(),
         p_lead_id: lead.id,
         p_expected_version: lead.version,
         p_action: action.key,
-        ...(noteText ? { p_note: noteText } : {}),
+        ...(note.trim() ? { p_note: note.trim() } : {}),
         ...(at ? { p_scheduled_at: at } : {}),
         ...(logo ? { p_logo_path: logo } : {}),
         ...(details ? { p_details: details } : {}),
@@ -537,7 +529,7 @@ export function LeadActions({
               </div>
             ))}
           {current.needs.doNotCall && (
-            <div className="space-y-2">
+            <div>
               <label className="cc-check-card">
                 <input
                   type="checkbox"
@@ -549,19 +541,6 @@ export function LeadActions({
                   <span className="block text-xs text-muted-foreground">
                     Der Lead wird gelöscht. Ohne Haken bleibt er in der Kein-Interesse-Liste der
                     Admins.
-                  </span>
-                </span>
-              </label>
-              <label className="cc-check-card">
-                <input
-                  type="checkbox"
-                  checked={unhappy}
-                  onChange={(e) => setUnhappy(e.target.checked)}
-                />
-                <span>
-                  <strong>Kunde unzufrieden</strong>
-                  <span className="block text-xs text-muted-foreground">
-                    Wird in der Notiz vermerkt, damit der Grund später nachvollziehbar ist.
                   </span>
                 </span>
               </label>
