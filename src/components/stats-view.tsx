@@ -5,6 +5,10 @@ import { COUNTRIES, isCountry, useAllowedCountries, useCountry, type Country } f
 import { ROLE_LABEL, useRoles, type RoleName } from "@/lib/use-admin";
 import { STATUS_LABEL } from "@/lib/leads";
 import {
+  addDaysKey,
+  customPeriod,
+  dayCount,
+  MAX_CUSTOM_DAYS,
   monthOptions,
   periodOf,
   shiftAnchor,
@@ -35,6 +39,12 @@ type TeamRow = {
   reached: number;
   appointments: number;
   deals: number;
+  low_q?: number;
+  high_q?: number;
+  on_hold?: number;
+  reference_mail?: number;
+  not_reached?: number;
+  no_interest?: number;
 };
 type Stats = {
   totals: Totals;
@@ -107,6 +117,9 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
   const [employee, setEmployee] = useState<string | null>(null);
   const [mode, setMode] = useState<PeriodMode>("month");
   const [anchor, setAnchor] = useState(() => todayKey());
+  const [customFrom, setCustomFrom] = useState(() => addDaysKey(todayKey(), -29));
+  const [customTo, setCustomTo] = useState(() => todayKey());
+  const customTooLong = dayCount(customFrom, customTo) > MAX_CUSTOM_DAYS;
 
   // The first allowed country is used when the remembered one is not available to this user.
   useEffect(() => {
@@ -114,7 +127,10 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
   }, [countries, country]);
   useEffect(() => setEmployee(null), [country]);
 
-  const period = useMemo(() => periodOf(mode, anchor), [mode, anchor]);
+  const period = useMemo(
+    () => (mode === "custom" ? customPeriod(customFrom, customTo) : periodOf(mode, anchor)),
+    [mode, anchor, customFrom, customTo],
+  );
   const run = async (user: string | null) => {
     const { data, error } = await supabase.rpc("get_country_period_stats", {
       p_country: country,
@@ -126,7 +142,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
     if (error) throw error;
     return data as unknown as Stats;
   };
-  const enabled = roles.isStaff && isCountry(country);
+  const enabled = roles.isStaff && isCountry(country) && !(mode === "custom" && customTooLong);
   const overall = useQuery({
     enabled,
     queryKey: ["country-stats", country, period.from, period.to, null],
@@ -151,7 +167,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
       if (mode === "day") return { label: `${p.bucket}`, value: p.calls, title: `${p.bucket}:00 Uhr · ${p.calls} Gespräche` };
       const d = new Date(`${p.bucket}T12:00:00Z`);
       return {
-        label: mode === "week" ? weekdayShort.format(d).replace(".", "") : String(d.getUTCDate()),
+        label: mode === "week" ? weekdayShort.format(d).replace(".", "") : mode === "custom" && (data?.timeline.length ?? 0) > 31 ? "" : String(d.getUTCDate()),
         value: p.calls,
         title: `${p.bucket} · ${p.calls} Gespräche`,
       };
@@ -215,8 +231,24 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               { value: "month", label: "Monatlich" },
               { value: "week", label: "Wöchentlich" },
               { value: "day", label: "Täglich" },
+              { value: "custom", label: "Von – Bis" },
             ]}
           />
+          {mode === "custom" ? (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <label className="flex items-center gap-2">
+                Von
+                <input type="date" aria-label="Von" className="min-h-10 rounded-md border bg-background px-3 text-sm"
+                  value={customFrom} max={customTo} onChange={(e) => e.target.value && setCustomFrom(e.target.value)} />
+              </label>
+              <label className="flex items-center gap-2">
+                Bis
+                <input type="date" aria-label="Bis" className="min-h-10 rounded-md border bg-background px-3 text-sm"
+                  value={customTo} min={customFrom} max={today} onChange={(e) => e.target.value && setCustomTo(e.target.value)} />
+              </label>
+              {customTooLong && <span className="text-destructive">Höchstens {MAX_CUSTOM_DAYS} Tage.</span>}
+            </div>
+          ) : (<>
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" aria-label="Zurück" onClick={() => setAnchor(shiftAnchor(mode, anchor, -1))}>
               <ChevronLeft />
@@ -255,6 +287,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
             {mode === "day" ? "Heute" : mode === "week" ? "Diese Woche" : "Dieser Monat"}
           </Button>
           {mode === "day" && <span className="text-sm text-muted-foreground">{period.label}</span>}
+          </>)}
         </div>
       </section>
 
@@ -285,7 +318,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
         </section>
         <section className="space-y-3 rounded-lg border bg-card p-4">
           <h2 className="font-semibold">
-            {mode === "month" ? "Gespräche pro Tag" : mode === "week" ? "Gespräche pro Wochentag" : "Gespräche pro Stunde"}
+            {mode === "month" || mode === "custom" ? "Gespräche pro Tag" : mode === "week" ? "Gespräche pro Wochentag" : "Gespräche pro Stunde"}
           </h2>
           <Timeline points={shown} />
           {outside > 0 && (
@@ -304,7 +337,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
                 <thead className="text-muted-foreground">
                   <tr>
-                    {["Mitarbeiter", "Rolle", "Gespräche", "Erreicht (Quote)", "Termine", "Deals"].map((h, i) => (
+                    {["Mitarbeiter", "Rolle", "Logo Render", "Realismus Render", "Zukunftsprojekte", "Referenzmail", "Nicht erreicht", "Kein Interesse"].map((h, i) => (
                       <th key={h} className={cn("px-3 py-2 font-medium", i > 1 && "text-right")}>
                         {h}
                       </th>
@@ -313,7 +346,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
                 </thead>
                 <tbody className="divide-y">
                   {[...team]
-                    .sort((a, b) => b.calls - a.calls || a.name.localeCompare(b.name))
+                    .sort((a, b) => a.name.localeCompare(b.name))
                     .map((m) => (
                       <tr key={m.user_id}>
                         <td className="px-3 py-2">
@@ -322,12 +355,12 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
                           </button>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{roleLabel(m.role)}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{m.calls}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">
-                          {m.reached} ({m.calls ? `${Math.round((m.reached / m.calls) * 100)} %` : "–"})
-                        </td>
-                        <td className="px-3 py-2 text-right tabular-nums">{m.appointments}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{m.deals}</td>
+<td className="px-3 py-2 text-right tabular-nums">{m.low_q ?? 0}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{m.high_q ?? 0}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{m.on_hold ?? 0}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{m.reference_mail ?? 0}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{m.not_reached ?? 0}</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{m.no_interest ?? 0}</td>
                       </tr>
                     ))}
                 </tbody>

@@ -1,5 +1,5 @@
 /** Periods of the statistics cockpit. Days, weeks and months are counted in Vienna time. */
-export type PeriodMode = "month" | "week" | "day";
+export type PeriodMode = "month" | "week" | "day" | "custom";
 /** A calendar day as `YYYY-MM-DD` (no time zone involved). */
 export type DayKey = string;
 
@@ -94,3 +94,19 @@ export function monthOptions(today: DayKey, count = 24) {
     return { key, label: fmt(key, { month: "long", year: "numeric" }) };
   });
 }
+
+/** A free range from the first to the last day (both inclusive), at most 400 days. */
+export function customPeriod(fromKey: DayKey, toKey: DayKey): Period {
+  const [a, b] = fromKey <= toKey ? [fromKey, toKey] : [toKey, fromKey];
+  const end = addDaysKey(b, 1);
+  const f = (k: DayKey) => fmt(k, { day: "2-digit", month: "short", year: "numeric" });
+  return {
+    mode: "custom", start: a, end,
+    label: `${f(a)} – ${f(b)}`,
+    from: viennaStart(a).toISOString(),
+    to: viennaStart(end).toISOString(),
+    bucket: "day",
+  };
+}
+export const MAX_CUSTOM_DAYS = 400;
+export const dayCount = (a: DayKey, b: DayKey) => Math.round(Math.abs(fromKey(b).getTime() - fromKey(a).getTime()) / 86_400_000) + 1;
