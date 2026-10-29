@@ -283,9 +283,6 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               <ChevronRight />
             </Button>
           </div>
-          <Button variant="outline" size="sm" onClick={() => setAnchor(today)}>
-            {mode === "day" ? "Heute" : mode === "week" ? "Diese Woche" : "Dieser Monat"}
-          </Button>
           {mode === "day" && <span className="text-sm text-muted-foreground">{period.label}</span>}
           </>)}
         </div>
