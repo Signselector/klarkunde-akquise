@@ -121,47 +121,27 @@ export function WeekCalendar({
       aria-label={ariaLabel}
       onKeyDown={onKey}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Vorherige Woche"
-            onClick={() => onWeekChange(addDays(weekStart, -7))}
-          >
-            <ChevronLeft />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Nächste Woche"
-            onClick={() => onWeekChange(addDays(weekStart, 7))}
-          >
-            <ChevronRight />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={thisWeek && !!selected && sameDay(selected, today)}
-            onClick={() => {
-              onWeekChange(startOfWeek(today));
-              onSelect(today);
-            }}
-          >
-            Heute
-          </Button>
-        </div>
-        <h2 className="text-sm font-semibold sm:text-base" aria-live="polite">
+      <div className="flex items-center justify-between gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          aria-label="Vorherige Woche"
+          onClick={() => onWeekChange(addDays(weekStart, -7))}
+        >
+          <ChevronLeft />
+          <span className="hidden sm:inline">Vorherige Woche</span>
+        </Button>
+        <h2 className="text-center text-sm font-semibold sm:text-base" aria-live="polite">
           {weekTitle(weekStart)}
         </h2>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
-          disabled={thisWeek}
-          onClick={() => onWeekChange(startOfWeek(today))}
-          className="hidden sm:inline-flex"
+          aria-label="Nächste Woche"
+          onClick={() => onWeekChange(addDays(weekStart, 7))}
         >
-          Diese Woche
+          <span className="hidden sm:inline">Nächste Woche</span>
+          <ChevronRight />
         </Button>
       </div>
 
