@@ -75,7 +75,7 @@ export const emailErrorMessage = (code: string | null | undefined) =>
   (code && MESSAGES[code]) || (code ? MESSAGES["send_failed"]! : "");
 
 /** Resend (https://resend.com) as the first real provider; active only when its key and sender are configured. */
-export function resendProvider(apiKey: string, from: string): MailProvider {
+export function resendProvider(apiKey: string, from: string, bcc?: string | null): MailProvider {
   return {
     name: "resend",
     async send(mail) {
@@ -83,7 +83,14 @@ export function resendProvider(apiKey: string, from: string): MailProvider {
         method: "POST",
         signal: AbortSignal.timeout(20000),
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to: [mail.to], subject: mail.subject, text: mail.body }),
+        body: JSON.stringify({
+          from,
+          to: [mail.to],
+          subject: mail.subject,
+          text: mail.body,
+          // Pipedrive Smart BCC: the mail is filed in Pipedrive under the contact.
+          ...(bcc ? { bcc: [bcc] } : {}),
+        }),
       }).catch(() => {
         throw new Error("send_failed");
       });

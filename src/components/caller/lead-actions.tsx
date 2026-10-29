@@ -308,7 +308,7 @@ export function LeadActions({
               : action.key === "not_reached"
                 ? "Kontaktversuch gespeichert. Der Lead bleibt unter Offene Leads, kein CRM-Deal."
                 : action.key === "reference_mail"
-                  ? "Mail gesendet, der Lead ist abgeschlossen. Es wird kein Deal angelegt. Antwortet der Kunde, kommt der Lead als Rückruf zu dir zurück."
+                  ? "Mail gesendet, der Lead ist abgeschlossen. Wird in Pipedrive ein Deal für diesen Kunden angelegt, wird er dir gutgeschrieben und erscheint unter Meine Kunden."
                   : "Gespeichert.";
       setSuccess({
         title: `${ACTION_LABEL[action.key]} gespeichert`,
