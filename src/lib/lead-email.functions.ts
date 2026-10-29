@@ -65,8 +65,17 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
       throw new Error("forbidden");
     const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
     const key = process.env["RESEND_API_KEY"];
-    const from = process.env["EMAIL_FROM"];
-    const provider: MailProvider | null = key && from ? resendProvider(key, from) : null;
+    const from = process.env["EMAIL_FROM"] || "Sign Selector <noreply@signselector.com>";
+    const { data: leadRow } = await db
+      .from("leads")
+      .select("batch_id")
+      .eq("id", data.leadId)
+      .maybeSingle();
+    const { data: batch } = leadRow?.batch_id
+      ? await db.from("lead_batches").select("country").eq("id", leadRow.batch_id).maybeSingle()
+      : { data: null };
+    const bcc = batch?.country ? (process.env[`PIPEDRIVE_BCC_${batch.country}`] ?? null) : null;
+    const provider: MailProvider | null = key ? resendProvider(key, from, bcc) : null;
     const store: MailStore = {
       async claim(id) {
         const { data: claimed } = await db
