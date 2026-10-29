@@ -1930,3 +1930,28 @@ tr:hover > .cc-sticky-action {
     border-color: #93b4f5;
   }
 }
+
+/* New appointment waiting for a manager's decision (top of the appointment page) */
+.cc-decision-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  background: #eaf1ff;
+  border: 1px solid #c7d7fb;
+  border-left: 4px solid #2563eb;
+  border-radius: 14px;
+  animation: cc-decision-in 240ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+@keyframes cc-decision-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-decision-card {
+    animation: none;
+  }
+}

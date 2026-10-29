@@ -143,6 +143,21 @@ function Layout() {
       return count ?? 0;
     },
   });
+  // Managers and admins: appointments of Callers that still wait for a decision (shown as a number at "Termine").
+  const { data: pendingAppointments } = useQuery({
+    queryKey: ["appointments", "pending-count", user.id, country],
+    enabled: !!me?.admin && !viewAs,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { count } = await supabase
+        .from("appointments")
+        .select("id", { count: "exact", head: true })
+        .eq("country", country)
+        .eq("decision_pending", true)
+        .gte("starts_at", new Date().toISOString());
+      return count ?? 0;
+    },
+  });
   const showAdmin = !!me?.admin && !callerView;
   const items = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -237,7 +252,13 @@ function Layout() {
                   label={i.label}
                   icon={i.icon}
                   active={location.pathname === i.to}
-                  badge={i.to === "/callbacks" ? (openCallbacks ?? 0) : 0}
+                  badge={
+                    i.to === "/callbacks"
+                      ? (openCallbacks ?? 0)
+                      : i.to === "/appointments"
+                        ? (pendingAppointments ?? 0)
+                        : 0
+                  }
                 />
               </SidebarMenuItem>
             ))}

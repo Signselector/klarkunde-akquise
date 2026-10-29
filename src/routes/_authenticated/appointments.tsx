@@ -5,7 +5,7 @@ import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Phone, Trash2 } from "lucide-react";
+import { CalendarClock, Phone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { backendEnabled } from "@/lib/backend";
@@ -14,6 +14,16 @@ import { cn } from "@/lib/utils";
 import { useRoles } from "@/lib/use-admin";
 import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { Button } from "@/components/ui/button";
+import { Dropdown } from "@/components/ui/dropdown";
+import { SlotPicker } from "@/components/booking/slot-picker";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -134,6 +144,66 @@ function AppointmentsPage() {
       return list;
     },
   });
+  // New appointments of Callers wait here for a decision of a manager: take it or hand it over.
+  const pending = useQuery({
+    queryKey: ["appointments", "pending", country],
+    enabled: roles.isStaff,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("id,starts_at,title,booked_by,lead:leads(company,contact_name)")
+        .eq("country", country)
+        .eq("decision_pending", true)
+        .gte("starts_at", new Date().toISOString())
+        .order("starts_at");
+      if (error) throw error;
+      const ids = [...new Set((data ?? []).map((r) => r.booked_by).filter((v): v is string => !!v))];
+      const { data: people } = ids.length
+        ? await supabase.from("profiles").select("id,display_name,email").in("id", ids)
+        : { data: [] };
+      const name = new Map((people ?? []).map((p) => [p.id, p.display_name || p.email || "Caller"]));
+      return (data ?? []).map((r) => ({ ...r, bookedByName: r.booked_by ? (name.get(r.booked_by) ?? "Caller") : "Caller" }));
+    },
+  });
+
+  // Moving an appointment keeps it (and its Pipedrive activity); it is never created again.
+  const [moving, setMoving] = useState<{ id: string; title: string; startsAt: string } | null>(null);
+  const [newStart, setNewStart] = useState<string | null>(null);
+  const [moveBusy, setMoveBusy] = useState(false);
+  async function confirmMove() {
+    if (!moving || !newStart) return;
+    setMoveBusy(true);
+    const { error } = await supabase.rpc("reschedule_appointment", { p_appointment_id: moving.id, p_starts_at: newStart });
+    if (error) {
+      setMoveBusy(false);
+      const m = error.message;
+      toast.error(
+        m.includes("slot_full")
+          ? "Zu dieser Zeit ist kein Termin mehr frei."
+          : m.includes("slot_conflict")
+            ? "Zu dieser Zeit ist die zuständige Person schon belegt."
+            : m.includes("appointment_too_soon")
+              ? "Termine können frühestens in 3 Tagen liegen."
+              : m.includes("forbidden")
+                ? "Dafür fehlt dir die Berechtigung."
+                : "Termin konnte nicht verschoben werden.",
+      );
+      return;
+    }
+    toast.success("Termin verschoben. Der Eintrag in Pipedrive wird angepasst.");
+    refresh();
+    void qc.invalidateQueries({ queryKey: ["slots"] });
+    try {
+      const r = await pushNow({ data: { appointmentId: moving.id } });
+      if (r.state === "error") toast.error("Der Pipedrive-Eintrag konnte noch nicht angepasst werden. Er wird automatisch erneut versucht.");
+    } catch {
+      // The scheduled calendar sync picks it up.
+    }
+    setMoveBusy(false);
+    setMoving(null);
+    setNewStart(null);
+  }
   const nameOf = (id: string | null | undefined) =>
     id === user.id ? "dir" : (team.data?.find((t) => t.id === id)?.name ?? "jemand anderem");
 
@@ -190,6 +260,37 @@ function AppointmentsPage() {
       </header>
 
       {isError && <p className="text-destructive">Termine konnten nicht geladen werden.</p>}
+
+      {roles.isStaff && (pending.data?.length ?? 0) > 0 && (
+        <section className="space-y-2" aria-label="Neue Termine" aria-live="polite">
+          {pending.data!.map((n) => (
+            <div key={n.id} className="cc-decision-card" role="status">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">
+                  Neuer Termin: {n.title ?? n.lead?.company ?? "Termin"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Intl.DateTimeFormat("de-DE", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(n.starts_at))}{" "}
+                  · gebucht von {n.bookedByName}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" onClick={() => void assign(n.id, user.id)}>
+                  Selbst wahrnehmen
+                </Button>
+                <Dropdown
+                  className="min-h-9 text-[13px]"
+                  ariaLabel={`Termin ${n.title ?? ""} übergeben`}
+                  placeholder="Übergeben an …"
+                  value=""
+                  options={(team.data ?? []).filter((t) => t.id !== user.id).map((t) => ({ value: t.id, label: t.name }))}
+                  onChange={(v) => v && void assign(n.id, v)}
+                />
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
 
       <div className="grid gap-4">
         <WeekCalendar
@@ -289,6 +390,19 @@ function AppointmentsPage() {
                         </div>
                       )}
                     </div>
+                    {(roles.isStaff || e.user_id === user.id) && !("external" in e) && e.date.getTime() > nowMs && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`${heading} verschieben`}
+                        onClick={() => {
+                          setNewStart(null);
+                          setMoving({ id: e.id, title: heading, startsAt: e.starts_at });
+                        }}
+                      >
+                        <CalendarClock className="size-4" />
+                      </Button>
+                    )}
                     {e.user_id === user.id && !("external" in e) && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -315,6 +429,35 @@ function AppointmentsPage() {
           </div>
         </aside>
       </div>
+
+      <Dialog open={!!moving} onOpenChange={(o) => !o && !moveBusy && setMoving(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Termin verschieben</DialogTitle>
+            <DialogDescription>
+              „{moving?.title}“ bekommt eine neue Zeit. Es entsteht kein neuer Termin, der Eintrag in Pipedrive wird
+              angepasst.
+            </DialogDescription>
+          </DialogHeader>
+          {moving && (
+            <SlotPicker
+              kind="appointment"
+              country={country}
+              value={newStart}
+              onChange={setNewStart}
+              initialDay={new Date(moving.startsAt)}
+            />
+          )}
+          <DialogFooter>
+            <Button variant="outline" disabled={moveBusy} onClick={() => setMoving(null)}>
+              Abbrechen
+            </Button>
+            <Button disabled={moveBusy || !newStart} onClick={() => void confirmMove()}>
+              {moveBusy ? "Wird verschoben …" : "Verschieben"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -230,3 +230,32 @@ test("admin list of Zukunftsprojekte: sorted by target month, only for staff", a
   await as(mgr);
   await assert.rejects(() => q("select public.get_future_projects_leads('AT')"), /forbidden/);
 });
+
+test("appointments: decision pending for caller bookings, moving keeps the appointment", async () => {
+  await db.exec("RESET ROLE");
+  const day = (n, h) => { const d = new Date(Date.now() + n * 864e5); d.setUTCHours(h, 0, 0, 0); return d.toISOString(); };
+  const ins = async (owner, by, startsAt, lead) =>
+    (await q("insert into public.appointments(user_id,lead_id,starts_at,country,booked_by,title,kind) values($1,$2,$3,'DE',$4,'T','presentation') returning id, decision_pending", [owner, lead, startsAt, by]))[0];
+  let a1; try { a1 = await ins(mgr, rec, day(8, 9), leads[0]); } catch (e) { throw new Error("a1 insert: " + e.message); }
+  assert.equal(a1.decision_pending, true, "caller booking waits for a decision");
+  const a2 = await ins(mgr, mgr, day(8, 12), leads[1]);
+  assert.equal(a2.decision_pending, false, "manager booking does not");
+  await as(mgr);
+  await q("select public.assign_appointment($1,$2)", [a1.id, vet]);
+  await db.exec("RESET ROLE");
+  assert.equal((await q("select decision_pending, user_id from public.appointments where id=$1", [a1.id]))[0].decision_pending, false);
+  // move: owner (vet) and manager may; a caller may not; too soon / full are refused
+  await as(rec);
+  await assert.rejects(q("select public.reschedule_appointment($1,$2)", [a1.id, day(11, 16)]), /forbidden/);
+  await as(vet);
+  await q("select public.reschedule_appointment($1,$2)", [a1.id, day(11, 16)]);
+  await db.exec("RESET ROLE");
+  const moved = (await q("select starts_at,pd_sync_state from public.appointments where id=$1", [a1.id]))[0];
+  assert.equal(new Date(moved.starts_at).toISOString(), day(11, 16));
+  assert.equal(moved.pd_sync_state, "pending");
+  assert.equal((await q("select count(*)::int n from public.appointments where id=$1", [a1.id]))[0].n, 1);
+  await as(mgr);
+  await assert.rejects(q("select public.reschedule_appointment($1,$2)", [a1.id, day(1, 9)]), /appointment_too_soon/);
+  await assert.rejects(q("select public.reschedule_appointment($1,$2)", [a1.id, day(8, 12)]), /slot_full/);
+  await q("select public.reschedule_appointment($1,$2)", [a1.id, day(11, 16)]);
+});
