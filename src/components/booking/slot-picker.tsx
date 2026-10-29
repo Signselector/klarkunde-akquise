@@ -53,7 +53,14 @@ export function SlotPicker({
 }) {
   const initial = value ? new Date(value) : (initialDay ?? undefined);
   const [day, setDay] = useState<Date | undefined>(initial);
-  const [month, setMonth] = useState<Date>(initial ?? new Date());
+  // Start in the month of the first bookable day: when nothing in the current month can be booked any more (e.g. on
+  // the 29th with a three-day lead time) the next month is shown right away.
+  const [month, setMonth] = useState<Date>(() => {
+    const earliest = new Date();
+    earliest.setHours(0, 0, 0, 0);
+    if (kind === "appointment") earliest.setDate(earliest.getDate() + minLeadDays);
+    return initial && initial >= earliest ? initial : earliest;
+  });
 
   // Appointments: bring the company free/busy from Pipedrive up to date once per opening (the server throttles it).
   const fresh = useQuery({
