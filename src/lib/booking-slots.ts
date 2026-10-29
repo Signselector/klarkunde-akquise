@@ -4,6 +4,8 @@ export const CALLBACK_SLOT_MINUTES = 15;
 /** Appointment length; kept under its old name for the appointment pages. */
 export const SLOT_MINUTES = APPOINTMENT_SLOT_MINUTES;
 export const APPOINTMENT_CAPACITY = 2;
+/** Germany allows only one appointment at the same time, other countries two. */
+export const appointmentCapacity = (country?: string) => (country === "DE" ? 1 : APPOINTMENT_CAPACITY);
 /** Appointments can be booked at the earliest this many days ahead (callbacks have no such limit). */
 export const MIN_APPOINTMENT_LEAD_DAYS = 3;
 export const FIRST_SLOT_HOUR = 8;
@@ -32,9 +34,10 @@ export function slotState(
   start: Date,
   used: Map<number, Availability>,
   now = Date.now(),
+  defaultCapacity: number = APPOINTMENT_CAPACITY,
 ): { state: SlotState; used: number; capacity: number } {
   const a = used.get(start.getTime());
-  const capacity = a?.capacity ?? APPOINTMENT_CAPACITY;
+  const capacity = a?.capacity ?? defaultCapacity;
   const n = a?.used ?? 0;
   if (start.getTime() <= now) return { state: "past", used: n, capacity };
   if (n >= capacity) return { state: "full", used: n, capacity };

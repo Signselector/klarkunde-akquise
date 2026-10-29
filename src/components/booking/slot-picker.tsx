@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "@/components/ui/calendar";
 import { refreshBookingSlots } from "@/lib/calendar-sync.functions";
 import {
-  APPOINTMENT_CAPACITY,
+  appointmentCapacity,
   MIN_APPOINTMENT_LEAD_DAYS,
   daySlots,
   slotDurationMinutes,
@@ -105,7 +105,7 @@ export function SlotPicker({
   // A slot that became full while it was selected is deselected.
   useEffect(() => {
     if (chosen === null || !availability.data) return;
-    if (slotState(new Date(chosen), used).state === "full") onChange(null);
+    if (slotState(new Date(chosen), used, Date.now(), kind === "appointment" ? appointmentCapacity(country) : 1).state === "full") onChange(null);
   }, [chosen, used, availability.data, onChange]);
 
   // Appointments (not callbacks) can be booked at the earliest for the day after tomorrow.
@@ -143,7 +143,7 @@ export function SlotPicker({
               aria-busy={availability.isFetching}
             >
               {slots.map((s) => {
-                const st = slotState(s, used);
+                const st = slotState(s, used, Date.now(), kind === "appointment" ? appointmentCapacity(country) : 1);
                 const blocked = st.state === "past" || st.state === "full" || !!disabled || loading;
                 const selected = chosen === s.getTime();
                 return (
@@ -192,7 +192,7 @@ export function SlotPicker({
       </div>
       <p className="text-xs text-muted-foreground">
         {kind === "appointment"
-          ? `Ein Termin dauert ${slotDurationMinutes("appointment")} Minuten, gleichzeitig sind höchstens ${APPOINTMENT_CAPACITY} möglich. Termine sind frühestens in ${minLeadDays} Tagen buchbar. Ein Punkt markiert einen Zeitpunkt, an dem schon ein Termin liegt.`
+          ? `Ein Termin dauert ${slotDurationMinutes("appointment")} Minuten, gleichzeitig ${appointmentCapacity(country) === 1 ? "ist höchstens 1 Termin" : `sind höchstens ${appointmentCapacity(country)}`} möglich. Termine sind frühestens in ${minLeadDays} Tagen buchbar. Ein Punkt markiert einen Zeitpunkt, an dem schon ein Termin liegt.`
           : `Ein Rückruf belegt ${slotDurationMinutes("callback")} Minuten und ist nur für dich sichtbar. Zeiten, zu denen du bereits einen Termin oder Rückruf hast, sind gesperrt.`}
       </p>
       <div className="flex items-center justify-between gap-2 text-sm">
