@@ -14,7 +14,7 @@ const COLORS = [
   "#ec4899",
   "#06b6d4",
 ];
-const PIECES = 50;
+const PIECES = 75;
 
 /**
  * Achievement card (top right) with a confetti burst out of its trophy. Rare moment, so it may be a little loud:
