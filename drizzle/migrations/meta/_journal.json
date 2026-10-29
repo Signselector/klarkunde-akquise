@@ -246,6 +246,13 @@
       "when": 1793278697199,
       "tag": "0034_reference_deal_match",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793285361412,
+      "tag": "0035_de_capacity_veteran_assign_stats_columns",
+      "breakpoints": true
     }
   ]
 }
