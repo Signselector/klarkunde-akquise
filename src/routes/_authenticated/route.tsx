@@ -1,6 +1,6 @@
 import { isMasterEmail } from "@/lib/master";
 import { LanguageSwitch } from "@/components/language-switch";
-import { useT } from "@/lib/i18n";
+import { useLang, useT } from "@/lib/i18n";
 import { getViewAs, installViewAsGuard, setViewAs } from "@/lib/view-as";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { AchievementHost } from "@/components/achievement-host";
@@ -73,6 +73,7 @@ export const Route = createFileRoute("/_authenticated")({
 function Layout() {
   const { user, realUser, viewAs } = Route.useRouteContext();
   const t = useT();
+  const lang = useLang();
   const qc = useQueryClient();
   const nav = useNavigate();
   const router = useRouter();
@@ -350,7 +351,8 @@ function Layout() {
             </Button>
           </div>
         )}
-        <div id="arbeitsbereich" tabIndex={-1} className="cc-workspace">
+        {/* The key rebuilds the page on a language change, so dates and numbers are formatted again. */}
+        <div id="arbeitsbereich" key={lang} tabIndex={-1} className="cc-workspace">
           {!viewAs && <CallbackReminder userId={user.id} />}
           {!viewAs && <AppointmentNotifier userId={user.id} />}
           {!viewAs && <AchievementNotifier userId={user.id} />}
