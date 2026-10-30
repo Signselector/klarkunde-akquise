@@ -98,11 +98,11 @@ const MONTHS = [
 ];
 const monthText = (v: string) =>
   /^\d{4}-\d{2}$/.test(v) ? `${MONTHS[Number(v.slice(5)) - 1]} ${v.slice(0, 4)}` : v;
-/** The next 36 months, starting with the current one. */
+/** The next 36 months, starting with next month (the current month is not a future project). */
 function monthOptions() {
   const now = new Date();
   return Array.from({ length: 36 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const d = new Date(now.getFullYear(), now.getMonth() + i + 1, 1);
     const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
     return { value, label: monthText(value) };
   });

@@ -1,14 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
+import { strToU8, zipSync } from "fflate";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-function download(data: unknown, name: string) {
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+/** Downloads the backup as a compressed ZIP containing one JSON file. */
+function download(data: unknown, base: string) {
+  const zipped = zipSync({ [`${base}.json`]: strToU8(JSON.stringify(data, null, 2)) }, { level: 9 });
+  const url = URL.createObjectURL(new Blob([zipped as BlobPart], { type: "application/zip" }));
   const a = document.createElement("a");
   a.href = url;
-  a.download = name;
+  a.download = `${base}.zip`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -37,7 +40,7 @@ export function BackupCenter() {
   async function get(id: string, at: string) {
     const { data: b, error } = await supabase.from("backups").select("data").eq("id", id).single();
     if (error || !b) { toast.error("Download fehlgeschlagen."); return; }
-    download(b.data, `coldcaller-backup-${at.slice(0, 10)}.json`);
+    download(b.data, `coldcaller-backup-${at.slice(0, 10)}`);
   }
 
   return (
