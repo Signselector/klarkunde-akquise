@@ -3,6 +3,7 @@ import { LanguageSwitch } from "@/components/language-switch";
 import { useLang, useT } from "@/lib/i18n";
 import { getViewAs, installViewAsGuard, setViewAs } from "@/lib/view-as";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
+import { FutureProjectsActivator } from "@/components/future-projects-activator";
 import { AchievementHost } from "@/components/achievement-host";
 import { AchievementNotifier } from "@/components/achievement-notifier";
 import { AppointmentNotifier } from "@/components/appointment-notifier";
@@ -356,6 +357,7 @@ function Layout() {
         {/* The key rebuilds the page on a language change, so dates and numbers are formatted again. */}
         <div id="arbeitsbereich" key={lang} tabIndex={-1} className="cc-workspace">
           {!viewAs && <CallbackReminder userId={user.id} />}
+          {!viewAs && <FutureProjectsActivator />}
           {!viewAs && <AppointmentNotifier userId={user.id} />}
           {!viewAs && <AchievementNotifier userId={user.id} />}
           <AchievementHost />
