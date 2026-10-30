@@ -105,7 +105,7 @@ export async function syncLeadAction(
   actionId: string,
   store: SyncStore,
   crm: Crm,
-): Promise<{ state: "synced" | "error" | "skipped"; error?: string }> {
+): Promise<{ state: "synced" | "error" | "skipped"; error?: string; pending?: boolean }> {
   const ctx = await store.begin(actionId);
   if (!ctx) return { state: "skipped" };
   try {
@@ -144,30 +144,37 @@ export async function syncLeadAction(
       await save();
       await store.dealCreated?.(ctx, links);
     }
-    if (action.note && !action.crm_steps["note"]) {
-      await crm.addNote(links.deal_id, noteText(ctx));
-      await store.markStep(action.id, "note");
-    }
-    if (action.logo_path && !action.crm_steps["file"]) {
-      const file = await store.downloadLogo(action.logo_path);
-      await crm.uploadFile(
-        links.deal_id,
-        logoFilename(action.logo_path, file.contentType),
-        file.bytes,
-        file.contentType,
-      );
-      await store.markStep(action.id, "file");
-    }
-    const photo = action.details?.["photo_path"];
-    if (typeof photo === "string" && photo && !action.crm_steps["photo"]) {
-      const file = await store.downloadLogo(photo);
-      await crm.uploadFile(
-        links.deal_id,
-        photoFilename(photo, file.contentType),
-        file.bytes,
-        file.contentType,
-      );
-      await store.markStep(action.id, "photo");
+    // The deal exists now. Note and files are extras: if they fail, the deal still counts as created and the
+    // missing parts are sent again later (scheduled job or "erneut versuchen" in the history).
+    try {
+      if (action.note && !action.crm_steps["note"]) {
+        await crm.addNote(links.deal_id, noteText(ctx));
+        await store.markStep(action.id, "note");
+      }
+      if (action.logo_path && !action.crm_steps["file"]) {
+        const file = await store.downloadLogo(action.logo_path);
+        await crm.uploadFile(
+          links.deal_id,
+          logoFilename(action.logo_path, file.contentType),
+          file.bytes,
+          file.contentType,
+        );
+        await store.markStep(action.id, "file");
+      }
+      const photo = action.details?.["photo_path"];
+      if (typeof photo === "string" && photo && !action.crm_steps["photo"]) {
+        const file = await store.downloadLogo(photo);
+        await crm.uploadFile(
+          links.deal_id,
+          photoFilename(photo, file.contentType),
+          file.bytes,
+          file.contentType,
+        );
+        await store.markStep(action.id, "photo");
+      }
+    } catch {
+      await store.finish(action.id, "error", "attachments_pending");
+      return { state: "synced", pending: true };
     }
     await store.finish(action.id, "synced");
     return { state: "synced" };
@@ -189,6 +196,8 @@ const MESSAGES: Record<string, string> = {
   stages_not_validated:
     "Die Stage-Zuordnung wurde noch nicht gegen Pipedrive geprüft. Bitte unter Einstellungen → Stage Mapping „Stages prüfen“ ausführen.",
   logo_missing: "Das hochgeladene Logo wurde nicht gefunden.",
+  attachments_pending:
+    "Der Deal ist in Pipedrive angelegt. Notiz oder Dateien werden automatisch nachgereicht.",
   invalid_payload: "Pipedrive hat die Daten abgelehnt.",
   unexpected_error: "Unerwarteter Fehler bei der Übertragung.",
 };

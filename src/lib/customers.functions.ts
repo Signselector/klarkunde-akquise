@@ -120,16 +120,20 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
         for (const [id, info] of infos) {
           if (!info) continue;
           const status = info.status === "won" || info.status === "lost" ? info.status : null;
-          await db.rpc("crm_apply_stage", {
-            p_country: data.country,
-            p_deal_id: id,
-            p_stage_id: info.stage_id,
-            p_event_id: `view:${id}:${info.stage_id ?? "-"}:${status ?? "-"}:${hour}`,
-            p_occurred: new Date().toISOString(),
-            p_source: "pipedrive",
-            p_actor_name: "Pipedrive (Abgleich)",
-            p_status: status,
-          } as never);
+          try {
+            await db.rpc("crm_apply_stage", {
+              p_country: data.country,
+              p_deal_id: id,
+              p_stage_id: info.stage_id,
+              p_event_id: `view:${id}:${info.stage_id ?? "-"}:${status ?? "-"}:${hour}`,
+              p_occurred: new Date().toISOString(),
+              p_source: "pipedrive",
+              p_actor_name: "Pipedrive (Abgleich)",
+              p_status: status,
+            } as never);
+          } catch {
+            // The stored stage is shown instead.
+          }
         }
       } catch (e) {
         error = e instanceof CrmError ? e.code : "network_error";

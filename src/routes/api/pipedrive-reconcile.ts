@@ -68,7 +68,32 @@ export const Route = createFileRoute("/api/pipedrive-reconcile")({
         } catch (e) {
           calendars["futureProjects"] = e instanceof Error ? e.message : "failed";
         }
-        return Response.json({ deals: results, calendars, futureProjectsActivated: activated });
+        // Transfers that failed recently (e.g. a logo upload during a short Pipedrive outage) are sent again.
+        let retried = 0;
+        try {
+          const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+          const { syncActionAs } = await import("@/lib/crm-sync.functions");
+          const since = new Date(Date.now() - 2 * 86_400_000).toISOString();
+          const { data: failed } = await db
+            .from("lead_actions")
+            .select("id,user_id")
+            .eq("crm_sync_state", "error")
+            .in("crm_error", ["attachments_pending", "network_error", "rate_limited"])
+            .gte("created_at", since)
+            .limit(30);
+          for (const a of failed ?? []) {
+            await syncActionAs(a.id, a.user_id, true);
+            retried++;
+          }
+        } catch (e) {
+          calendars["retry"] = e instanceof Error ? e.message : "failed";
+        }
+        return Response.json({
+          deals: results,
+          calendars,
+          futureProjectsActivated: activated,
+          retried,
+        });
       },
     },
   },
