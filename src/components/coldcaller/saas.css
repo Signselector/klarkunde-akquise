@@ -1333,12 +1333,23 @@ tr:hover > .cc-sticky-action {
 }
 .cc-app .cc-signout > span {
   white-space: nowrap;
-  transition: opacity 200ms var(--cc-ease-out) 80ms;
+  max-width: 200px;
+  overflow: hidden;
+  transition:
+    opacity 200ms var(--cc-ease-out) 80ms,
+    max-width var(--cc-rail) var(--cc-ease-in-out) 60ms;
+}
+.cc-app [data-collapsible="icon"] .cc-signout {
+  justify-content: center;
+  padding: 0;
+  width: auto;
 }
 .cc-app [data-collapsible="icon"] .cc-signout > span {
   opacity: 0;
+  max-width: 0;
   transition-delay: 0s;
 }
+
 .cc-app [data-collapsible="icon"] .cc-admin-body {
   grid-template-rows: 0fr;
 }
