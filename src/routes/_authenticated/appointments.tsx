@@ -6,10 +6,9 @@ import { notifyShowroomFn } from "@/lib/showroom-sync.functions";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Phone, Trash2 } from "lucide-react";
+import { Phone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { backendEnabled } from "@/lib/backend";
 import { useCountry } from "@/lib/country";
 import { cn } from "@/lib/utils";
 import { useRoles } from "@/lib/use-admin";
@@ -17,15 +16,6 @@ import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { Button } from "@/components/ui/button";
 import { Dropdown } from "@/components/ui/dropdown";
 import { LeadDialog } from "@/components/caller/lead-dialog";
-import { SlotPicker } from "@/components/booking/slot-picker";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -34,17 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/appointments")({
   head: () => ({
@@ -93,7 +72,7 @@ function AppointmentsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id,starts_at,notes,title,kind,user_id,booked_by,lead:leads(company,contact_name,phone)")
+        .select("id,starts_at,notes,title,kind,user_id,booked_by,lead_id,lead:leads(company,contact_name,phone)")
         .eq("country", country)
         .order("starts_at");
       if (error) throw error;
@@ -170,46 +149,6 @@ function AppointmentsPage() {
     },
   });
 
-  // Moving an appointment keeps it (and its Pipedrive activity); it is never created again.
-  const [moving, setMoving] = useState<{ id: string; title: string; startsAt: string } | null>(null);
-  const [newStart, setNewStart] = useState<string | null>(null);
-  const [moveBusy, setMoveBusy] = useState(false);
-  async function confirmMove() {
-    if (!moving || !newStart) return;
-    setMoveBusy(true);
-    const { error } = await supabase.rpc("reschedule_appointment", { p_appointment_id: moving.id, p_starts_at: newStart });
-    if (error) {
-      setMoveBusy(false);
-      const m = error.message;
-      toast.error(
-        m.includes("slot_full")
-          ? "Zu dieser Zeit ist kein Termin mehr frei."
-          : m.includes("slot_conflict")
-            ? "Zu dieser Zeit ist die zuständige Person schon belegt."
-            : m.includes("appointment_too_soon")
-              ? "Termine können frühestens in 3 Tagen liegen."
-              : m.includes("forbidden")
-                ? "Dafür fehlt dir die Berechtigung."
-                : m.includes("reschedule_appointment") || error.code === "PGRST202"
-                  ? "Das Datenbank-Update für das Verschieben (Migration 0037) ist noch nicht eingespielt."
-                  : `Termin konnte nicht verschoben werden (${m.slice(0, 90)}).`,
-      );
-      return;
-    }
-    toast.success("Termin verschoben. Der Eintrag in Pipedrive wird angepasst.");
-    void showroom({ data: { appointmentId: moving.id, status: "geplant" } }).catch(() => undefined);
-    refresh();
-    void qc.invalidateQueries({ queryKey: ["slots"] });
-    try {
-      const r = await pushNow({ data: { appointmentId: moving.id } });
-      if (r.state === "error") toast.error("Der Pipedrive-Eintrag konnte noch nicht angepasst werden. Er wird automatisch erneut versucht.");
-    } catch {
-      // The scheduled calendar sync picks it up.
-    }
-    setMoveBusy(false);
-    setMoving(null);
-    setNewStart(null);
-  }
   const queue = pending.data ?? [];
   const next = queue[0] ?? null;
   const [fileLead, setFileLead] = useState<string | null>(null);
@@ -226,17 +165,6 @@ function AppointmentsPage() {
   }
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["appointments"] });
-
-  async function remove(id: string) {
-    // Tell the Showroom before the appointment is gone (it reads the details from it).
-    await showroom({ data: { appointmentId: id, status: "abgesagt" } }).catch(() => undefined);
-    const { error } = await (backendEnabled
-      ? supabase.rpc("delete_appointment", { p_appointment_id: id })
-      : supabase.from("appointments").delete().eq("id", id));
-    if (error) { toast.error(error.message); return; }
-    toast.success("Termin gelöscht.");
-    refresh();
-  }
 
   const weekEntries: WeekEntry[] = events.map((e) => ({
     id: e.id,
@@ -421,37 +349,10 @@ function AppointmentsPage() {
                         </div>
                       )}
                     </div>
-                    {(roles.isStaff || e.user_id === user.id) && !("external" in e) && e.date.getTime() > nowMs && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`${heading} verschieben`}
-                        onClick={() => {
-                          setNewStart(null);
-                          setMoving({ id: e.id, title: heading, startsAt: e.starts_at });
-                        }}
-                      >
-                        <CalendarClock className="size-4" />
+                    {"lead_id" in e && e.lead_id && (
+                      <Button variant="outline" size="sm" onClick={() => setFileLead(e.lead_id)}>
+                        Kundenakte
                       </Button>
-                    )}
-                    {(e.user_id === user.id || roles.isStaff) && !("external" in e) && (
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" aria-label={`${heading} löschen`}>
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Termin löschen?</AlertDialogTitle>
-                            <AlertDialogDescription>„{heading}" wird dauerhaft entfernt.</AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => remove(e.id)}>Löschen</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
                     )}
                   </div>
                 );
@@ -462,35 +363,6 @@ function AppointmentsPage() {
       </div>
 
       <LeadDialog leadId={fileLead} userId={user.id} onClose={() => setFileLead(null)} />
-
-      <Dialog open={!!moving} onOpenChange={(o) => !o && !moveBusy && setMoving(null)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Termin verschieben</DialogTitle>
-            <DialogDescription>
-              „{moving?.title}“ bekommt eine neue Zeit. Es entsteht kein neuer Termin, der Eintrag in Pipedrive wird
-              angepasst.
-            </DialogDescription>
-          </DialogHeader>
-          {moving && (
-            <SlotPicker
-              kind="appointment"
-              country={country}
-              value={newStart}
-              onChange={setNewStart}
-              initialDay={new Date(moving.startsAt)}
-            />
-          )}
-          <DialogFooter>
-            <Button variant="outline" disabled={moveBusy} onClick={() => setMoving(null)}>
-              Abbrechen
-            </Button>
-            <Button disabled={moveBusy || !newStart} onClick={() => void confirmMove()}>
-              {moveBusy ? "Wird verschoben …" : "Verschieben"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
