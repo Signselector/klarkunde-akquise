@@ -2112,3 +2112,33 @@ tr:hover > .cc-sticky-action {
   height: 26px;
   font-size: 10px;
 }
+
+/* Language switch: same look as the country switcher */
+.cc-lang-seg {
+  flex: none;
+  display: flex;
+  padding: 4px;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 14px;
+}
+.cc-lang-seg [role="radio"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+.cc-lang-seg [role="radio"]:hover { background: rgb(255 255 255 / 8%); }
+.cc-lang-seg [role="radio"][aria-checked="true"] { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.cc-lang-seg [role="radio"][aria-checked="false"] svg { opacity: 0.7; }
+.cc-lang-seg [role="radio"]:focus-visible { outline: 2px solid #60a5fa; outline-offset: 1px; }
+.cc-app [data-collapsible="icon"] .cc-lang-seg { padding: 2px; }
+.cc-app [data-collapsible="icon"] .cc-lang-seg [role="radio"] { min-width: 24px; min-height: 26px; padding: 0 3px; }
+.cc-app [data-collapsible="icon"] .cc-lang-seg svg { width: 16px; height: 11px; }
