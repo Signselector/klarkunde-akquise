@@ -267,7 +267,6 @@ function Layout() {
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
-          <LanguageSwitch />
           {adminItems.length > 0 && (
             <div className="cc-admin-group">
               <button
@@ -324,10 +323,13 @@ function Layout() {
             />
             <LevelCard />
           </div>
-          <Button variant="ghost" className="cc-signout" onClick={signOut}>
-            <LogOut size={18} />
-            <span>{t("Abmelden")}</span>
-          </Button>
+          <div className="cc-signout-row">
+            <Button variant="ghost" className="cc-signout" onClick={signOut}>
+              <LogOut size={18} />
+              <span>{t("Abmelden")}</span>
+            </Button>
+            <LanguageSwitch />
+          </div>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="min-w-0">

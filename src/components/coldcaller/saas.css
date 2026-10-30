@@ -2018,13 +2018,23 @@ tr:hover > .cc-sticky-action {
   margin: 1px;
 }
 
-/* Language switch under the main navigation: one pill, the blue thumb slides between DE and EN */
+/* Language switch next to "Abmelden": one pill, the blue thumb slides between DE and EN */
+.cc-signout-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cc-signout-row .cc-signout {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
 .cc-lang-switch {
   position: relative;
+  flex: none;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  width: 112px;
-  margin: 12px 0 0 17px;
+  width: 92px;
   padding: 3px;
   background: rgb(255 255 255 / 6%);
   border: 1px solid rgb(255 255 255 / 14%);
@@ -2050,15 +2060,15 @@ tr:hover > .cc-sticky-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 24px;
+  height: 30px;
   padding: 0;
   color: #c9c7cc;
   background: none;
   border: 0;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  /* Same size as the "Abmelden" text */
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
   transition:
     color 160ms ease,
@@ -2084,10 +2094,12 @@ tr:hover > .cc-sticky-action {
     transition-duration: 1ms;
   }
 }
-/* Collapsed sidebar: a small pill */
+/* Collapsed sidebar: the pill sits under the icon */
+.cc-app [data-collapsible="icon"] .cc-signout-row {
+  flex-direction: column;
+}
 .cc-app [data-collapsible="icon"] .cc-lang-switch {
   width: 52px;
-  margin-inline: auto;
   padding: 2px;
 }
 .cc-app [data-collapsible="icon"] .cc-lang-thumb {
@@ -2097,7 +2109,6 @@ tr:hover > .cc-sticky-action {
   width: calc(50% - 2px);
 }
 .cc-app [data-collapsible="icon"] .cc-lang-option {
-  height: 28px;
+  height: 26px;
   font-size: 10px;
-  letter-spacing: 0;
 }
