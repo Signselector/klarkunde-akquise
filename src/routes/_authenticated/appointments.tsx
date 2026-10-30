@@ -429,7 +429,7 @@ function AppointmentsPage() {
                         <CalendarClock className="size-4" />
                       </Button>
                     )}
-                    {e.user_id === user.id && !("external" in e) && (
+                    {(e.user_id === user.id || roles.isStaff) && !("external" in e) && (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" aria-label={`${heading} löschen`}>

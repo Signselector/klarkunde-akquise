@@ -47,7 +47,8 @@ export function gatewayClient(country: string) {
     if (!response) throw new CrmError("network_error");
     if (response.status === 401 || response.status === 403) throw new CrmError("unauthorized");
     if (response.status === 429) throw new CrmError("rate_limited");
-    if (!response.ok) {
+    // Pipedrive answers 410 Gone (with success: true) on deprecated endpoints and on objects already deleted.
+    if (!response.ok && response.status !== 410) {
       console.error(`Pipedrive ${init.method} ${path} failed [${response.status}]`);
       throw new CrmError(response.status >= 500 ? "network_error" : "invalid_payload");
     }
