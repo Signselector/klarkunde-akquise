@@ -2094,10 +2094,14 @@ tr:hover > .cc-sticky-action {
     transition-duration: 1ms;
   }
 }
-/* Collapsed sidebar: the pill sits under the icon */
+/* Collapsed sidebar: sign-out icon above the language pill, both centered */
 .cc-app [data-collapsible="icon"] .cc-signout-row {
   flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
+
 .cc-app [data-collapsible="icon"] .cc-lang-switch {
   width: 52px;
   padding: 2px;
