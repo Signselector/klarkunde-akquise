@@ -26,17 +26,25 @@ export function gatewayClient(country: string) {
   const headers = { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": connection };
 
   async function call(path: string, init: RequestInit): Promise<GatewayResult> {
-    let response: Response;
-    try {
-      response = await fetch(`${GATEWAY}${path}`, {
-        ...init,
-        redirect: "error",
-        signal: AbortSignal.timeout(30000),
-        headers: { ...headers, ...(init.headers ?? {}) },
-      });
-    } catch {
-      throw new CrmError("network_error");
+    // Brief gateway hiccups (network errors, 429, 502-504) are retried twice before giving up.
+    const delays = [1000, 2000];
+    let response: Response | null = null;
+    for (let attempt = 0; ; attempt++) {
+      try {
+        response = await fetch(`${GATEWAY}${path}`, {
+          ...init,
+          redirect: "error",
+          signal: AbortSignal.timeout(30000),
+          headers: { ...headers, ...(init.headers ?? {}) },
+        });
+      } catch {
+        response = null;
+      }
+      const transient = !response || [429, 502, 503, 504].includes(response.status);
+      if (!transient || attempt >= delays.length) break;
+      await new Promise((r) => setTimeout(r, delays[attempt]));
     }
+    if (!response) throw new CrmError("network_error");
     if (response.status === 401 || response.status === 403) throw new CrmError("unauthorized");
     if (response.status === 429) throw new CrmError("rate_limited");
     if (!response.ok) {
