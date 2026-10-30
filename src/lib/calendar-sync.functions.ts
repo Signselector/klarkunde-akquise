@@ -195,6 +195,8 @@ export async function removeDeletedInPipedrive(userId: string, country: string) 
     }
   }
   if (!gone.length) return 0;
+  const { notifyShowroom } = await import("@/lib/showroom-sync.server");
+  await Promise.all(gone.map((g) => notifyShowroom(g.id, "abgesagt")));
   await db.from("appointments").delete().in("id", gone.map((g) => g.id));
   // Nothing left to delete in Pipedrive for these.
   await db
