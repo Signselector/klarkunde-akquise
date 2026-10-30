@@ -1333,12 +1333,23 @@ tr:hover > .cc-sticky-action {
 }
 .cc-app .cc-signout > span {
   white-space: nowrap;
-  transition: opacity 200ms var(--cc-ease-out) 80ms;
+  max-width: 200px;
+  overflow: hidden;
+  transition:
+    opacity 200ms var(--cc-ease-out) 80ms,
+    max-width var(--cc-rail) var(--cc-ease-in-out) 60ms;
+}
+.cc-app [data-collapsible="icon"] .cc-signout {
+  justify-content: center;
+  padding: 0;
+  width: auto;
 }
 .cc-app [data-collapsible="icon"] .cc-signout > span {
   opacity: 0;
+  max-width: 0;
   transition-delay: 0s;
 }
+
 .cc-app [data-collapsible="icon"] .cc-admin-body {
   grid-template-rows: 0fr;
 }
@@ -2094,10 +2105,14 @@ tr:hover > .cc-sticky-action {
     transition-duration: 1ms;
   }
 }
-/* Collapsed sidebar: the pill sits under the icon */
+/* Collapsed sidebar: sign-out icon above the language pill, both centered */
 .cc-app [data-collapsible="icon"] .cc-signout-row {
   flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
 }
+
 .cc-app [data-collapsible="icon"] .cc-lang-switch {
   width: 52px;
   padding: 2px;
@@ -2139,6 +2154,27 @@ tr:hover > .cc-sticky-action {
 .cc-lang-seg [role="radio"][aria-checked="true"] { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
 .cc-lang-seg [role="radio"][aria-checked="false"] svg { opacity: 0.7; }
 .cc-lang-seg [role="radio"]:focus-visible { outline: 2px solid #60a5fa; outline-offset: 1px; }
-.cc-app [data-collapsible="icon"] .cc-lang-seg { padding: 2px; }
-.cc-app [data-collapsible="icon"] .cc-lang-seg [role="radio"] { min-width: 24px; min-height: 26px; padding: 0 3px; }
-.cc-app [data-collapsible="icon"] .cc-lang-seg svg { width: 16px; height: 11px; }
+/* Collapsed: compact pill that always fits inside the narrow rail */
+.cc-app [data-collapsible="icon"] .cc-sidebar-footer {
+  padding: 12px 6px;
+}
+.cc-app [data-collapsible="icon"] .cc-lang-seg {
+  flex: none;
+  min-width: 0;
+  padding: 2px;
+  gap: 1px;
+  border-radius: 11px;
+}
+.cc-app [data-collapsible="icon"] .cc-lang-seg [role="radio"] {
+  min-width: 0;
+  width: 21px;
+  height: 22px;
+  min-height: 22px;
+  padding: 0;
+  border-radius: 8px;
+}
+.cc-app [data-collapsible="icon"] .cc-lang-seg svg {
+  width: 15px;
+  height: 10px;
+}
+
