@@ -167,6 +167,45 @@ const FALLBACK_CALENDAR: Record<string, string> = {
   DE: "office@signselector.de",
 };
 
+/**
+ * An appointment whose Pipedrive activity was deleted there (or no longer exists) is removed in the tool too.
+ * Only upcoming, already synced appointments of this user are checked.
+ */
+export async function removeDeletedInPipedrive(userId: string, country: string) {
+  const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+  const { data: aps } = await db
+    .from("appointments")
+    .select("id,pd_activity_id")
+    .eq("user_id", userId)
+    .eq("country", country)
+    .not("pd_activity_id", "is", null)
+    .gte("starts_at", new Date().toISOString())
+    .limit(100);
+  if (!aps?.length) return 0;
+  const { call } = gatewayClient(country);
+  const gone: { id: string; activity: number }[] = [];
+  for (const a of aps) {
+    try {
+      const r = (await call(`/activities/${a.pd_activity_id}`, { method: "GET" })) as {
+        data?: { active_flag?: boolean } | null;
+      };
+      if (!r.data || r.data.active_flag === false) gone.push({ id: a.id, activity: a.pd_activity_id! });
+    } catch (e) {
+      if (e instanceof CrmError && e.code === "invalid_payload") gone.push({ id: a.id, activity: a.pd_activity_id! });
+    }
+  }
+  if (!gone.length) return 0;
+  await db.from("appointments").delete().in("id", gone.map((g) => g.id));
+  // Nothing left to delete in Pipedrive for these.
+  await db
+    .from("pd_calendar_queue")
+    .delete()
+    .eq("country", country)
+    .eq("action", "delete")
+    .in("activity_id", gone.map((g) => g.activity));
+  return gone.length;
+}
+
 /** Runs the calendar sync for one user. Used by the page and by the scheduled reconcile. */
 export async function syncCalendarForUser(
   userId: string,
