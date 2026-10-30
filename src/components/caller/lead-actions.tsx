@@ -1,3 +1,4 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Reveal } from "@/components/ui/reveal";
 import { celebrate } from "@/lib/achievements";
 import { useEffect, useRef, useState } from "react";
