@@ -24,7 +24,7 @@ const iso = (v: unknown) => (typeof v === "string" && !Number.isNaN(Date.parse(v
 
 /**
  * Saves a showroom result of an appointment (database) and then carries it over to Pipedrive: the note goes to the
- * deal, the deal moves to its stage, deleted appointments and interested customers get a task on the deal. Moved
+ * deal (tasks always belong to the default Pipedrive user), the deal moves to its stage, deleted appointments and interested customers get a task on the deal. Moved
  * appointments and follow-up appointments reach the Pipedrive calendar through the usual calendar sync.
  * In test mode nothing is sent to Pipedrive.
  */
@@ -81,12 +81,6 @@ export const recordAppointmentOutcome = createServerFn({ method: "POST" })
             await db.from("lead_crm_links").update({ current_stage_id: stageId }).eq("lead_id", r.lead_id!);
           }
           if (TASK_OUTCOMES.includes(data.outcome)) {
-            const { data: pd } = await db
-              .from("pipedrive_user_map")
-              .select("pipedrive_user_id")
-              .eq("user_id", r.actor_id)
-              .eq("country", r.country)
-              .maybeSingle();
             await json("POST", "/activities", {
               subject: `${r.label}: ${r.company ?? "Kunde"}`,
               type: "task",
@@ -94,7 +88,6 @@ export const recordAppointmentOutcome = createServerFn({ method: "POST" })
               note: data.note.trim(),
               due_date: new Date().toISOString().slice(0, 10),
               done: 0,
-              ...(pd?.pipedrive_user_id ? { user_id: pd.pipedrive_user_id } : {}),
             });
           }
         } catch (e) {

@@ -110,7 +110,28 @@ function LeadsPage() {
         );
       const { data, error, count } = await query;
       if (error) throw error;
-      return { rows: data ?? [], total: count ?? data?.length ?? 0 };
+      let rows = data ?? [];
+      // Missed appointments come back to the original caller even when he no longer owns the batch.
+      if (onlyMine && backendEnabled) {
+        let missed = supabase
+          .from("leads")
+          .select("*, lead_batches!inner(country,assigned_to)")
+          .eq("lead_batches.country", country)
+          .eq("status", "appointment_missed")
+          .eq("last_called_by", user.id)
+          .is("archived_at", null)
+          .limit(100);
+        if (batch !== "all") missed = missed.eq("batch_id", batch);
+        if (term)
+          missed = missed.or(
+            `company.ilike.%${term}%,contact_name.ilike.%${term}%,phone.ilike.%${term}%,city.ilike.%${term}%`,
+          );
+        const extra = await missed;
+        if (extra.error) throw extra.error;
+        const have = new Set(rows.map((r) => r.id));
+        rows = [...rows, ...(extra.data ?? []).filter((r) => !have.has(r.id))] as typeof rows;
+      }
+      return { rows, total: Math.max(count ?? 0, rows.length) };
     },
   });
   // Untouched leads first, then not reached, then scheduled callbacks at the very bottom. Order within a group is kept.

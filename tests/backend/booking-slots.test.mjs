@@ -277,37 +277,39 @@ test("managers cannot hand appointments to an admin; completed leads are only th
   assert.ok((await q("select public.get_completed_overview('DE',300) r"))[0].r.some((r) => r.lead_id === leads[6]));
 });
 
-test("showroom results: note is required, no show returns the lead, interest moves the stage and books a follow-up", async () => {
+test("showroom results: note is required, no show returns the lead, interest needs a follow-up and moves the stage", async () => {
   await db.exec("RESET ROLE");
   const day = (n, h) => { const d = new Date(Date.now() + n * 864e5); d.setUTCHours(h, 0, 0, 0); return d.toISOString(); };
-  const mk = async (i, owner, h) => (await q("insert into public.appointments(user_id,lead_id,starts_at,country,booked_by,title,kind) values($1,$2,$3,'DE',$4,'S','presentation') returning id", [owner, leads[i], day(90, h), rec]))[0].id;
-  const a1 = await mk(7, mgr, 7), a2 = await mk(8, mgr, 8), a3 = await mk(9, mgr, 9);
+  await db.exec("select set_config('app.skip_slot_check','1',false)");
+  const mk = async (i, owner, when) => (await q("insert into public.appointments(user_id,lead_id,starts_at,country,booked_by,title,kind) values($1,$2,$3,'DE',$4,'S','presentation') returning id", [owner, leads[i], when, rec]))[0].id;
+  const a1 = await mk(7, mgr, day(-2, 7)), a2 = await mk(8, mgr, day(-2, 8)), a3 = await mk(9, mgr, day(95, 9)), a4 = await mk(5, mgr, day(96, 9));
+  await db.exec("select set_config('app.skip_slot_check','0',false)");
   await q("insert into public.lead_crm_links(lead_id,country,origin_caller_id,origin_lead_id,deal_id,current_stage_key) values($1,'DE',$2,$1,777,'high_q'),($3,'DE',$2,$3,778,'high_q') on conflict (lead_id) do update set deal_id=excluded.deal_id,current_stage_key=excluded.current_stage_key,origin_caller_id=excluded.origin_caller_id", [leads[7], rec, leads[8]]);
   await as(mgr);
   await assert.rejects(q("select public.record_appointment_outcome($1,'no_show','  ')", [a1]), /note_required/);
   await as(rec);
   await assert.rejects(q("select public.record_appointment_outcome($1,'no_show','x')", [a1]), /forbidden/);
   await as(mgr);
+  await assert.rejects(q("select public.record_appointment_outcome($1,'no_show','zu früh')", [a3]), /appointment_not_started/);
   const r = (await q("select public.record_appointment_outcome($1,'no_show','Kunde war nicht da') r", [a1]))[0].r;
   assert.equal(r.stage_key, "no_show");
   await db.exec("RESET ROLE");
   const lead = (await q("select status,last_called_by from public.leads where id=$1", [leads[7]]))[0];
   assert.equal(lead.status, "appointment_missed");
   assert.equal(lead.last_called_by, rec);
-  assert.equal((await q("select count(*)::int n from public.callbacks where lead_id=$1 and user_id=$2 and not done", [leads[7], rec]))[0].n, 1);
+  assert.equal((await q("select count(*)::int n from public.callbacks where lead_id=$1 and not done", [leads[7]]))[0].n, 0, "the caller plans the callback himself");
   assert.equal((await q("select current_stage_key from public.lead_crm_links where lead_id=$1", [leads[7]]))[0].current_stage_key, "no_show");
   await as(mgr);
   await assert.rejects(q("select public.record_appointment_outcome($1,'no_show','nochmal')", [a1]), /already_decided/);
-  const fu = new Date(Date.now() + 95 * 864e5); fu.setUTCHours(12, 0, 0, 0);
+  await assert.rejects(q("select public.record_appointment_outcome($1,'high_interest','ohne Folgetermin')", [a2]), /followup_required/);
+  const fu = new Date(Date.now() + 100 * 864e5); fu.setUTCHours(12, 0, 0, 0);
   const r2 = (await q("select public.record_appointment_outcome($1,'high_interest','Sehr interessiert',null,$2) r", [a2, fu.toISOString()]))[0].r;
   assert.equal(r2.stage_key, "very_interested");
   assert.ok(r2.followup_id, "follow-up appointment");
-  await db.exec("RESET ROLE");
-  assert.equal((await q("select title from public.appointments where id=$1", [r2.followup_id]))[0].title.startsWith("Folgetermin"), true);
-  await as(mgr);
   const r3 = (await q("select public.record_appointment_outcome($1,'deleted','Abgesagt') r", [a3]))[0].r;
   assert.equal(r3.outcome, "deleted");
+  await q("select public.record_appointment_outcome($1,'rescheduled','Verschoben',$2)", [a4, new Date(Date.now() + 110 * 864e5).toISOString()]);
   await db.exec("RESET ROLE");
   assert.equal((await q("select count(*)::int n from public.appointments where id=$1", [a3]))[0].n, 0);
-  assert.equal((await q("select count(*)::int n from public.appointment_outcomes where lead_id=any($1)", [[leads[7], leads[8], leads[9]]]))[0].n, 3);
+  assert.equal((await q("select count(*)::int n from public.appointments where id=$1", [a4]))[0].n, 1, "moved, not recreated");
 });
