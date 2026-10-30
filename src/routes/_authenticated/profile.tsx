@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { ROLE_LABEL, useRoles } from "@/lib/use-admin";
 import { isMasterEmail } from "@/lib/master";
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 function ProfilePage() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
+  const t = useT();
   const roles = useRoles(user.id);
   const allowed = useAllowedCountries();
   const master = isMasterEmail(user.email);
@@ -162,9 +164,9 @@ function ProfilePage() {
     master || roles.isGlobalAdmin ? COUNTRIES.map((c) => c.code) : (allowed.data ?? []);
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-[22px] font-semibold">Mein Profil</h1>
+      <h1 className="text-[22px] font-semibold">{t("Mein Profil")}</h1>
       <section className="space-y-3 rounded-lg border bg-card p-4">
-        <h2 className="font-semibold">Konto</h2>
+        <h2 className="font-semibold">{t("Konto")}</h2>
         <dl className="grid gap-2 text-sm sm:grid-cols-[8rem_1fr]">
           <dt className="text-muted-foreground">E-Mail</dt>
           <dd>{user.email}</dd>
@@ -193,7 +195,7 @@ function ProfilePage() {
           )}
         </span>
         <div className="grid gap-2">
-          <h2 className="font-semibold">Profilbild</h2>
+          <h2 className="font-semibold">{t("Profilbild")}</h2>
           <div className="flex flex-wrap gap-2">
             <Button asChild variant="outline" size="sm" disabled={avatarBusy}>
               <label className="cursor-pointer">
@@ -219,7 +221,7 @@ function ProfilePage() {
         </div>
       </section>
       <form onSubmit={saveName} className="space-y-3 rounded-lg border bg-card p-4">
-        <h2 className="font-semibold">Anzeigename</h2>
+        <h2 className="font-semibold">{t("Anzeigename")}</h2>
         <div className="grid gap-1.5">
           <Label htmlFor="profile-name">Name</Label>
           <Input
@@ -238,7 +240,7 @@ function ProfilePage() {
         </Button>
       </form>
       <form onSubmit={savePassword} className="space-y-3 rounded-lg border bg-card p-4">
-        <h2 className="font-semibold">Passwort ändern</h2>
+        <h2 className="font-semibold">{t("Passwort ändern")}</h2>
         <div className="grid gap-1.5">
           <Label htmlFor="profile-current-pw">Aktuelles Passwort</Label>
           <Input

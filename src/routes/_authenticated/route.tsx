@@ -1,4 +1,6 @@
 import { isMasterEmail } from "@/lib/master";
+import { LanguageSwitch } from "@/components/language-switch";
+import { useT } from "@/lib/i18n";
 import { getViewAs, installViewAsGuard, setViewAs } from "@/lib/view-as";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { AchievementHost } from "@/components/achievement-host";
@@ -70,6 +72,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function Layout() {
   const { user, realUser, viewAs } = Route.useRouteContext();
+  const t = useT();
   const qc = useQueryClient();
   const nav = useNavigate();
   const router = useRouter();
@@ -243,13 +246,13 @@ function Layout() {
           <SidebarCollapseButton />
         </SidebarHeader>
         <SidebarContent className="px-3 pb-4">
-          <p className="cc-nav-caption">Dein Arbeitsplatz</p>
-          <SidebarMenu aria-label="Hauptnavigation">
+          <p className="cc-nav-caption">{t("Dein Arbeitsplatz")}</p>
+          <SidebarMenu aria-label={t("Hauptnavigation")}>
             {items.map((i) => (
               <SidebarMenuItem key={i.to}>
                 <NavigationItem
                   to={i.to}
-                  label={i.label}
+                  label={t(i.label)}
                   icon={i.icon}
                   active={location.pathname === i.to}
                   badge={
@@ -263,6 +266,7 @@ function Layout() {
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
+          <LanguageSwitch />
           {adminItems.length > 0 && (
             <div className="cc-admin-group">
               <button
@@ -272,16 +276,16 @@ function Layout() {
                 onClick={() => setAdminOpen((o) => !o)}
               >
                 <Settings aria-hidden="true" />
-                <span>Admin-Bereich</span>
+                <span>{t("Admin-Bereich")}</span>
                 <ChevronRight className="cc-admin-chevron" aria-hidden="true" />
               </button>
               <div className="cc-admin-body" data-open={adminOpen || adminActive}>
-                <SidebarMenu aria-label="Admin-Bereich">
+                <SidebarMenu aria-label={t("Admin-Bereich")}>
                   {adminItems.map((i) => (
                     <SidebarMenuItem key={i.to}>
                       <NavigationItem
                         to={i.to}
-                        label={i.label}
+                        label={t(i.label)}
                         icon={i.icon}
                         active={location.pathname === i.to}
                       />
@@ -298,7 +302,7 @@ function Layout() {
             {isMaster && callerView && (
               <Button size="sm" aria-pressed={callerView} onClick={toggleCallerView}>
                 <Crown size={16} />
-                Zur Admin-Sicht
+                {t("Zur Admin-Sicht")}
               </Button>
             )}
             <CountrySwitcher />
@@ -312,16 +316,16 @@ function Layout() {
               subtitle={
                 me
                   ? me.admin && callerView
-                    ? "Caller-Ansicht"
-                    : ROLE_LABEL[me.role]
-                  : "Profil wird geladen …"
+                    ? t("Caller-Ansicht")
+                    : t(ROLE_LABEL[me.role])
+                  : t("Profil wird geladen …")
               }
             />
             <LevelCard />
           </div>
           <Button variant="ghost" className="cc-signout" onClick={signOut}>
             <LogOut size={18} />
-            <span>Abmelden</span>
+            <span>{t("Abmelden")}</span>
           </Button>
         </SidebarFooter>
       </Sidebar>
@@ -342,7 +346,7 @@ function Layout() {
               Lesen, es wird nichts gespeichert.
             </span>
             <Button size="sm" onClick={() => void endViewAs()}>
-              Ansicht beenden
+              {t("Ansicht beenden")}
             </Button>
           </div>
         )}
@@ -372,12 +376,13 @@ function ProfileCard({
   subtitle: string;
 }) {
   const { isMobile, setOpenMobile } = useSidebar();
+  const t = useT();
   return (
     <Link
       to="/profile"
       className="cc-user"
-      title="Mein Profil & Einstellungen"
-      aria-label="Mein Profil und Einstellungen öffnen"
+      title={t("Mein Profil & Einstellungen")}
+      aria-label={t("Mein Profil und Einstellungen öffnen")}
       data-active={active}
       aria-current={active ? "page" : undefined}
       onClick={() => {
