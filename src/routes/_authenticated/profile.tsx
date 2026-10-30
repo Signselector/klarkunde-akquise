@@ -231,10 +231,11 @@ function ProfilePage() {
         </div>
       </section>
       <form onSubmit={saveName} className="space-y-3 rounded-lg border bg-card p-4">
+        <h2 className="font-semibold">{t("Anzeigename")}</h2>
         <div className="grid gap-1.5">
-          <Label htmlFor="profile-name">Name</Label>
           <Input
             id="profile-name"
+            aria-label="Anzeigename"
             value={name}
             maxLength={80}
             onChange={(e) => setName(e.target.value)}
