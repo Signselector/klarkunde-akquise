@@ -1,7 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Cold Call Tool – Lead-Management & Kaltakquise" },
@@ -12,15 +13,9 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: Index,
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getSession();
+    throw redirect({ to: data.session ? "/dashboard" : "/auth", replace: true });
+  },
+  component: () => null,
 });
-
-function Index() {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4 text-center">
-      <h1 className="font-display text-4xl font-bold sm:text-5xl">Cold Call Tool</h1>
-      <p className="max-w-md text-muted-foreground">Leads importieren, strukturiert anrufen und jeden nächsten Schritt im Blick behalten.</p>
-      <Button asChild size="lg"><Link to="/dashboard">Zum Tool</Link></Button>
-    </div>
-  );
-}
