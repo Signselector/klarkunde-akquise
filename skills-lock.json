@@ -139,6 +139,12 @@
       "skillPath": "skills/review-animations/SKILL.md",
       "computedHash": "b4e5f0f4fe3e2743c85bf7354108f48a0b9d502cb20ef5c4a9c195da91f93736"
     },
+    "translation-skill": {
+      "source": "zeenie-ai/OpenCompany",
+      "sourceType": "github",
+      "skillPath": "server/skills/language_agent/translation-skill/SKILL.md",
+      "computedHash": "a89c3f7dec32c380a532072da4d5a3087b98620548eea0a7aa8b62e00eb3cbe4"
+    },
     "write-swift": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
