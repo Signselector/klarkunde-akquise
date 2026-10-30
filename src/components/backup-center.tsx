@@ -40,7 +40,7 @@ export function BackupCenter() {
   async function get(id: string, at: string) {
     const { data: b, error } = await supabase.from("backups").select("data").eq("id", id).single();
     if (error || !b) { toast.error("Download fehlgeschlagen."); return; }
-    download(b.data, `coldcaller-backup-${at.slice(0, 10)}.json`);
+    download(b.data, `coldcaller-backup-${at.slice(0, 10)}`);
   }
 
   return (
