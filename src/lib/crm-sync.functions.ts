@@ -292,7 +292,7 @@ async function syncAppointmentOwner(actionId: string) {
     if (!act || !["low_q", "high_q"].includes(act.action)) return;
     const { data: ap } = await db
       .from("appointments")
-      .select("user_id,country")
+      .select("id,user_id,country")
       .eq("lead_id", act.lead_id)
       .eq("booked_by", act.user_id)
       .eq("pd_sync_state", "pending")
@@ -300,6 +300,8 @@ async function syncAppointmentOwner(actionId: string) {
       .limit(1)
       .maybeSingle();
     if (!ap?.user_id) return;
+    const { notifyShowroom } = await import("@/lib/showroom-sync.server");
+    void notifyShowroom(ap.id, "geplant");
     const { syncCalendarForUser } = await import("@/lib/calendar-sync.functions");
     await syncCalendarForUser(ap.user_id, ap.country);
   } catch {

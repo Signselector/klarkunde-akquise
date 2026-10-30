@@ -2,6 +2,7 @@ import { WeekCalendar, inWeek, sameDay, startOfWeek, type WeekEntry } from "@/co
 import { appointmentDotClass } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
 import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
+import { notifyShowroomFn } from "@/lib/showroom-sync.functions";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -78,6 +79,7 @@ function AppointmentsPage() {
   const country = useCountry();
   const roles = useRoles(user.id);
   const pushNow = useServerFn(pushAppointmentNow);
+  const showroom = useServerFn(notifyShowroomFn);
   const { sync, external } = useCalendarSync(user.id, country);
   const [mine] = useState(false);
   // "all": everything, "tool": booked through the Cold Caller tool, "pipedrive": entries that exist in Pipedrive only.
@@ -195,6 +197,7 @@ function AppointmentsPage() {
       return;
     }
     toast.success("Termin verschoben. Der Eintrag in Pipedrive wird angepasst.");
+    void showroom({ data: { appointmentId: moving.id, status: "geplant" } }).catch(() => undefined);
     refresh();
     void qc.invalidateQueries({ queryKey: ["slots"] });
     try {
@@ -225,6 +228,8 @@ function AppointmentsPage() {
   const refresh = () => qc.invalidateQueries({ queryKey: ["appointments"] });
 
   async function remove(id: string) {
+    // Tell the Showroom before the appointment is gone (it reads the details from it).
+    await showroom({ data: { appointmentId: id, status: "abgesagt" } }).catch(() => undefined);
     const { error } = await (backendEnabled
       ? supabase.rpc("delete_appointment", { p_appointment_id: id })
       : supabase.from("appointments").delete().eq("id", id));
