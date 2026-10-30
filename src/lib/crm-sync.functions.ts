@@ -30,15 +30,20 @@ export function gatewayClient(country: string) {
     const delays = [1000, 2000];
     let response: Response | null = null;
     for (let attempt = 0; ; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 45000);
       try {
         response = await fetch(`${GATEWAY}${path}`, {
           ...init,
-          redirect: "error",
-          signal: AbortSignal.timeout(30000),
+          redirect: "follow",
+          signal: controller.signal,
           headers: { ...headers, ...(init.headers ?? {}) },
         });
-      } catch {
+      } catch (err) {
+        console.error(`Pipedrive ${init.method ?? "GET"} ${path} fetch failed (attempt ${attempt + 1})`, err);
         response = null;
+      } finally {
+        clearTimeout(timer);
       }
       const transient = !response || [429, 502, 503, 504].includes(response.status);
       if (!transient || attempt >= delays.length) break;
