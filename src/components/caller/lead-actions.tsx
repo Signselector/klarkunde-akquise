@@ -380,7 +380,10 @@ export function LeadActions({
           if (synced.state === "synced")
             setSuccess({
               title: `${ACTION_LABEL[action.key]} gespeichert`,
-              description: `Deal in Pipedrive angelegt (Stage „${stage}“).`,
+              description:
+                "pending" in synced && synced.pending
+                  ? `Deal in Pipedrive angelegt (Stage „${stage}“). Logo/Notiz werden automatisch nachgereicht.`
+                  : `Deal in Pipedrive angelegt (Stage „${stage}“).`,
               special,
             });
           else if (synced.state === "simulated")
