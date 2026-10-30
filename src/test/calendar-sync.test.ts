@@ -50,6 +50,14 @@ function setup(over: { items?: CalItem[]; mapped?: number | null; list?: unknown
 const window = { from: "2026-10-01T00:00:00Z", to: "2027-03-01T00:00:00Z" };
 
 describe("calendar sync", () => {
+  it("books a caller without Pipedrive login into the country's main calendar, without pulling it back", async () => {
+    const t = setup({ mapped: null, items: [item({ kind: "appointment" })], list: [{ id: 9, due_date: "2026-11-03" }] });
+    const r = await syncCalendar({ ...t, email: "caller@x.test", fallbackEmail: "anna@example.test", window });
+    expect(r).toMatchObject({ state: "synced", pushed: 1, pulled: 0 });
+    expect(t.log).toContain("create:meeting@2026-11-02 09:30 u7");
+    expect(t.log.some((l) => /^(map|apply|prune)/.test(l))).toBe(false);
+  });
+
   it("writes UTC date and time for Pipedrive", () => {
     expect(toPipedriveTime("2026-11-02T09:30:00+01:00")).toEqual({
       due_date: "2026-11-02",
