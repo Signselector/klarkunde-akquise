@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/pipedrive-reconcile")({
             .from("lead_actions")
             .select("id,user_id")
             .eq("crm_sync_state", "error")
-            .in("crm_error", ["attachments_pending", "network_error", "rate_limited"])
+            .in("crm_error", ["attachments_pending", "network_error", "rate_limited", "unexpected_error"])
             .gte("created_at", since)
             .limit(30);
           for (const a of failed ?? []) {

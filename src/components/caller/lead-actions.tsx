@@ -377,7 +377,13 @@ export function LeadActions({
       if (stage && result.action_id) {
         // The action is saved either way; a failed CRM sync stays visible and can be retried in the history.
         try {
-          const synced = await sync({ data: { actionId: result.action_id } });
+          // One silent second attempt for connection drops before the caller sees an error.
+          const actionId = result.action_id;
+          let synced = await sync({ data: { actionId } }).catch(() => ({ state: "error" as const, error: "network_error" }));
+          if (synced.state === "error" && ["network_error", "rate_limited", "unexpected_error"].includes(synced.error ?? "")) {
+            await new Promise((r) => setTimeout(r, 3000));
+            synced = await sync({ data: { actionId } });
+          }
           if (synced.state === "synced")
             setSuccess({
               title: `${ACTION_LABEL[action.key]} gespeichert`,
