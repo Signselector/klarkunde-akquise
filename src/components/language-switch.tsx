@@ -11,7 +11,8 @@ export function LanguageSwitch() {
   const lang = useLang();
   const t = useT();
   return (
-    <div role="radiogroup" aria-label={t("Sprache")} className="cc-lang-switch">
+    <div role="radiogroup" aria-label={t("Sprache")} className="cc-lang-switch" data-lang={lang}>
+      <span className="cc-lang-thumb" aria-hidden="true" />
       {OPTIONS.map((o) => (
         <button
           key={o.lang}
@@ -23,7 +24,7 @@ export function LanguageSwitch() {
           className="cc-lang-option"
           onClick={() => setLang(o.lang)}
         >
-          <Flag code={o.flag} size={26} />
+          <Flag code={o.flag} size={14} />
           <span className="cc-lang-code">{o.lang.toUpperCase()}</span>
         </button>
       ))}

@@ -2018,56 +2018,76 @@ tr:hover > .cc-sticky-action {
   margin: 1px;
 }
 
-/* Language switch under the main navigation */
+/* Language switch under the main navigation: one pill, the blue thumb slides between DE and EN */
 .cc-lang-switch {
-  display: flex;
-  gap: 8px;
-  margin: 12px 4px 0;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 104px;
+  margin: 12px auto 0;
+  padding: 2px;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 999px;
+}
+.cc-lang-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
+  border-radius: 999px;
+  background: #2563eb;
+  box-shadow: 0 2px 8px rgb(37 99 235 / 45%);
+  transition: transform 220ms var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1));
+}
+.cc-lang-switch[data-lang="en"] .cc-lang-thumb {
+  transform: translateX(100%);
 }
 .cc-lang-option {
-  flex: 1;
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 10px;
+  gap: 5px;
+  height: 22px;
+  padding: 0 6px;
   color: #c9c7cc;
-  background: rgb(255 255 255 / 5%);
-  border: 1px solid rgb(255 255 255 / 14%);
+  background: none;
+  border: 0;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition:
-    background-color 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease,
+    color 160ms ease,
     transform 120ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
 }
 .cc-lang-option:active {
-  transform: scale(0.97);
+  transform: scale(0.95);
 }
 .cc-lang-option[aria-checked="true"] {
   color: #fff;
-  background: #2563eb;
-  border-color: #2563eb;
 }
 .cc-lang-option:focus-visible {
   outline: 2px solid #60a5fa;
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 @media (hover: hover) and (pointer: fine) {
   .cc-lang-option[aria-checked="false"]:hover {
-    background: rgb(255 255 255 / 10%);
     color: #fff;
   }
 }
-/* Collapsed sidebar: flags only, stacked */
+@media (prefers-reduced-motion: reduce) {
+  .cc-lang-thumb {
+    transition-duration: 1ms;
+  }
+}
+/* Collapsed sidebar: flags only */
 .cc-app [data-collapsible="icon"] .cc-lang-switch {
-  flex-direction: column;
-  margin-inline: 0;
+  width: 48px;
 }
 .cc-app [data-collapsible="icon"] .cc-lang-code {
   display: none;
