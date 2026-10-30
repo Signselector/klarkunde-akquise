@@ -2023,20 +2023,20 @@ tr:hover > .cc-sticky-action {
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  width: 68px;
-  /* Left edge in line with the icons of the navigation above. */
-  margin: 12px 0 0 17px;
-  padding: 2px;
+  /* Same width and height as the country switcher below. */
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 4px;
   background: rgb(255 255 255 / 6%);
   border: 1px solid rgb(255 255 255 / 14%);
   border-radius: 999px;
 }
 .cc-lang-thumb {
   position: absolute;
-  top: 2px;
-  bottom: 2px;
-  left: 2px;
-  width: calc(50% - 2px);
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
   border-radius: 999px;
   background: #2563eb;
   box-shadow: 0 2px 8px rgb(37 99 235 / 45%);
@@ -2051,15 +2051,15 @@ tr:hover > .cc-sticky-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 22px;
+  height: 38px;
   padding: 0;
   color: #c9c7cc;
   background: none;
   border: 0;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   cursor: pointer;
   transition:
     color 160ms ease,
@@ -2085,15 +2085,20 @@ tr:hover > .cc-sticky-action {
     transition-duration: 1ms;
   }
 }
-/* Collapsed sidebar: flags only */
+/* Collapsed sidebar: a small pill */
 .cc-app [data-collapsible="icon"] .cc-lang-switch {
-  width: 48px;
-  margin-left: auto;
-  margin-right: auto;
+  width: 52px;
+  margin-inline: auto;
+  padding: 2px;
 }
-.cc-app [data-collapsible="icon"] .cc-lang-code {
-  display: none;
+.cc-app [data-collapsible="icon"] .cc-lang-thumb {
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc(50% - 2px);
 }
 .cc-app [data-collapsible="icon"] .cc-lang-option {
-  padding: 0;
+  height: 28px;
+  font-size: 10px;
+  letter-spacing: 0;
 }
