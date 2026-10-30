@@ -3,6 +3,7 @@ import { EN_1 } from "./i18n-en-1";
 import { EN_2 } from "./i18n-en-2";
 import { EN_3 } from "./i18n-en-3";
 import { EN_4 } from "./i18n-en-4";
+import { EN_5 } from "./i18n-en-5";
 
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
@@ -12,7 +13,7 @@ const PATTERNS: { re: RegExp; to: string; literal: number }[] = [];
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-for (const dict of [EN_0, EN_1, EN_2, EN_3, EN_4]) {
+for (const dict of [EN_0, EN_1, EN_2, EN_3, EN_4, EN_5]) {
   for (const [de, en] of Object.entries(dict)) {
     const key = clean(de);
     if (key.includes("{}")) {

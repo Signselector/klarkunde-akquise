@@ -10,6 +10,7 @@ export const STATUS_LABEL: Record<string, string> = {
   no_interest: "Kein Interesse",
   callback: "Rückruf vereinbart",
   in_progress: "In Bearbeitung",
+  appointment_missed: "Termin versäumt",
   low_q: "Logo Render",
   high_q: "Realismus Render",
   reference_mail: "Referenzmail",

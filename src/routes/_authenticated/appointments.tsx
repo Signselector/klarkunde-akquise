@@ -72,7 +72,7 @@ function AppointmentsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id,starts_at,notes,title,kind,user_id,booked_by,lead_id,lead:leads(company,contact_name,phone)")
+        .select("id,starts_at,notes,title,kind,user_id,booked_by,lead_id,outcome,lead:leads(company,contact_name,phone)")
         .eq("country", country)
         .order("starts_at");
       if (error) throw error;
@@ -152,6 +152,8 @@ function AppointmentsPage() {
   const queue = pending.data ?? [];
   const next = queue[0] ?? null;
   const [fileLead, setFileLead] = useState<string | null>(null);
+  // Set when the customer file is opened from an appointment of the list: then it offers the showroom results.
+  const [fileAppt, setFileAppt] = useState<{ id: string; title: string; startsAt: string; outcome: string | null } | null>(null);
   const nameOf = (id: string | null | undefined) =>
     id === user.id ? "dir" : (team.data?.find((t) => t.id === id)?.name ?? "jemand anderem");
 
@@ -230,7 +232,14 @@ function AppointmentsPage() {
               {next.lead?.city && <dd>{next.lead.city}</dd>}
               {next.lead_id && (
                 <dd className="pt-1">
-                  <Button size="sm" variant="outline" onClick={() => setFileLead(next.lead_id)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setFileAppt(null);
+                      setFileLead(next.lead_id);
+                    }}
+                  >
                     Kundenakte öffnen
                   </Button>
                 </dd>
@@ -329,6 +338,11 @@ function AppointmentsPage() {
                         </a>
                       )}
                       {e.notes && e.notes !== heading && <p className="mt-1 text-xs text-muted-foreground">{e.notes}</p>}
+                      {"outcome" in e && e.outcome && (
+                        <p className="mt-1 text-xs font-semibold text-primary">
+                          Ergebnis: {{ no_show: "Termin nicht wahrgenommen", low_interest: "Wenig interessiert", medium_interest: "Mittleres Interesse", high_interest: "Sehr interessiert" }[e.outcome as string] ?? e.outcome}
+                        </p>
+                      )}
                       {roles.isStaff && !("external" in e) && (
                         <div className="mt-2 space-y-1">
                           {"booked_by" in e && e.booked_by && e.booked_by !== e.user_id && (
@@ -350,7 +364,14 @@ function AppointmentsPage() {
                       )}
                     </div>
                     {"lead_id" in e && e.lead_id && (
-                      <Button variant="outline" size="sm" onClick={() => setFileLead(e.lead_id)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setFileAppt({ id: e.id, title: heading, startsAt: e.starts_at, outcome: "outcome" in e ? (e.outcome ?? null) : null });
+                          setFileLead(e.lead_id);
+                        }}
+                      >
                         Kundenakte
                       </Button>
                     )}
@@ -362,7 +383,15 @@ function AppointmentsPage() {
         </aside>
       </div>
 
-      <LeadDialog leadId={fileLead} userId={user.id} onClose={() => setFileLead(null)} />
+      <LeadDialog
+        leadId={fileLead}
+        userId={user.id}
+        appointment={fileAppt}
+        onClose={() => {
+          setFileLead(null);
+          setFileAppt(null);
+        }}
+      />
     </div>
   );
 }

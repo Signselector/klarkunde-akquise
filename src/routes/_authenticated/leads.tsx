@@ -102,7 +102,7 @@ function LeadsPage() {
       if (onlyMine) query = query.eq("lead_batches.assigned_to", user.id);
       if (batch !== "all") query = query.eq("batch_id", batch);
       // Still to work on: untouched leads, not reached and scheduled callbacks. Every other outcome is completed.
-      query = query.in("status", ["open", "callback"]);
+      query = query.in("status", ["open", "callback", "appointment_missed"]);
       const term = q.trim().replace(/[,()%]/g, " ");
       if (term)
         query = query.or(
@@ -125,7 +125,7 @@ function LeadsPage() {
   // Only statuses that occur in the loaded list are offered as filter.
   const statusOptions = useMemo(() => {
     const present = new Set(sorted.map(labelOf));
-    return ["Offen", "Nicht erreicht", "Rückruf vereinbart"].filter((s) => present.has(s));
+    return ["Offen", "Nicht erreicht", "Termin versäumt", "Rückruf vereinbart"].filter((s) => present.has(s));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sorted]);
   useEffect(() => {

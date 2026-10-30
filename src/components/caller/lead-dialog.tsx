@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
 import { LeadContact } from "@/components/coldcaller/workspace-parts";
 import { LeadActions } from "@/components/caller/lead-actions";
+import { ShowroomResults, type ShowroomAppointment } from "@/components/caller/showroom-results";
 import { Building2 } from "@/components/coldcaller/icons";
 import { LeadContactEditor } from "@/components/caller/lead-contact-editor";
 import { ACTION_LABEL } from "@/lib/lead-actions";
@@ -27,7 +28,10 @@ export function LeadDialog({
   onClose,
   leadIds,
   onNavigate,
+  appointment,
 }: {
+  /** Opened from an appointment: shows the showroom results instead of the call results. */
+  appointment?: ShowroomAppointment | null;
   leadId: string | null;
   userId: string;
   /** Kept for the callers; the dialog no longer offers admin-only actions. */
@@ -139,7 +143,9 @@ export function LeadDialog({
             </span>
             <div className="min-w-0">
               <DialogTitle>{lead?.company || "Lead-Details"}</DialogTitle>
-              <DialogDescription>Kontaktdaten und Gesprächsergebnis.</DialogDescription>
+              <DialogDescription>
+                {appointment ? "Kontaktdaten und Showroom-Ergebnis." : "Kontaktdaten und Gesprächsergebnis."}
+              </DialogDescription>
             </div>
           </div>
         </DialogHeader>
@@ -178,7 +184,17 @@ export function LeadDialog({
                 />
               )}
             </div>
-            {backendEnabled && (
+            {backendEnabled && appointment && (
+              <ShowroomResults
+                key={appointment.id}
+                appointment={appointment}
+                onDone={() => {
+                  refresh();
+                  onClose();
+                }}
+              />
+            )}
+            {backendEnabled && !appointment && (
               <LeadActions
                 key={lead.id}
                 lead={lead}
