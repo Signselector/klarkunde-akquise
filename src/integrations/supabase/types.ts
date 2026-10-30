@@ -132,9 +132,54 @@ export type Database = {
           starts_at: string | null
           user_id: string
         }
-        Insert: never
-        Update: { pd_error?: string | null; pd_state?: string }
-        Relationships: []
+        Insert: {
+          appointment_id?: string | null
+          country: string
+          created_at?: string
+          followup_appointment_id?: string | null
+          id?: string
+          lead_id?: string | null
+          new_starts_at?: string | null
+          note: string
+          outcome: string
+          pd_error?: string | null
+          pd_state?: string
+          stage_key?: string | null
+          starts_at?: string | null
+          user_id: string
+        }
+        Update: {
+          appointment_id?: string | null
+          country?: string
+          created_at?: string
+          followup_appointment_id?: string | null
+          id?: string
+          lead_id?: string | null
+          new_starts_at?: string | null
+          note?: string
+          outcome?: string
+          pd_error?: string | null
+          pd_state?: string
+          stage_key?: string | null
+          starts_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_outcomes_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_outcomes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       appointments: {
         Row: {
@@ -182,6 +227,7 @@ export type Database = {
           kind?: string
           lead_id?: string | null
           notes?: string | null
+          outcome?: string | null
           pd_activity_id?: number | null
           pd_sync_error?: string | null
           pd_sync_state?: string
@@ -1770,16 +1816,6 @@ export type Database = {
         Args: { _country: string; _uid: string }
         Returns: boolean
       }
-      record_appointment_outcome: {
-        Args: {
-          p_appointment_id: string
-          p_followup_at?: string
-          p_new_start?: string
-          p_note: string
-          p_outcome: string
-        }
-        Returns: Json
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1835,6 +1871,16 @@ export type Database = {
       purge_test_batch: { Args: { p_batch_id: string }; Returns: Json }
       reassign_batch: {
         Args: { p_batch_id: string; p_user_id: string }
+        Returns: Json
+      }
+      record_appointment_outcome: {
+        Args: {
+          p_appointment_id: string
+          p_followup_at?: string
+          p_new_start?: string
+          p_note: string
+          p_outcome: string
+        }
         Returns: Json
       }
       record_call_outcome: {
