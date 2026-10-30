@@ -120,13 +120,23 @@ export async function syncCalendar(args: {
   crm: CalendarCrm;
   email: string | null;
   window: { from: string; to: string };
+  /** Main account of the country, used when the user has no own Pipedrive login. */
+  fallbackEmail?: string | null;
 }): Promise<CalendarResult> {
   const { store, crm } = args;
   let pdUser = await store.mappedUser();
+  // With the fallback the user's appointments are only pushed to the main calendar; nothing is pulled back,
+  // so the main account's other activities never show up in this user's calendar.
+  let viaFallback = false;
   if (!pdUser) {
-    pdUser = matchPipedriveUser(args.email, await crm.users());
-    if (!pdUser) return { state: "no_pipedrive_user", pushed: 0, pulled: 0 };
-    await store.saveMapping(pdUser);
+    const users = await crm.users();
+    pdUser = matchPipedriveUser(args.email, users);
+    if (pdUser) await store.saveMapping(pdUser);
+    else {
+      pdUser = matchPipedriveUser(args.fallbackEmail, users);
+      if (!pdUser) return { state: "no_pipedrive_user", pushed: 0, pulled: 0 };
+      viaFallback = true;
+    }
   }
   let pushed = 0;
   let firstError: string | undefined;
@@ -156,7 +166,7 @@ export async function syncCalendar(args: {
   }
   // 2. what changed in Pipedrive
   let pulled = 0;
-  try {
+  if (!viaFallback) try {
     const keep: number[] = [];
     for (const raw of await crm.list(pdUser, args.window.from, args.window.to)) {
       const a = parseActivity(raw);
