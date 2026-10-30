@@ -281,6 +281,13 @@
       "when": 1793357018567,
       "tag": "0039_fix_crm_save_links",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793390183255,
+      "tag": "0040_appointment_outcomes",
+      "breakpoints": true
     }
   ]
 }
