@@ -79,6 +79,7 @@ function AppointmentsPage() {
   const country = useCountry();
   const roles = useRoles(user.id);
   const pushNow = useServerFn(pushAppointmentNow);
+  const showroom = useServerFn(notifyShowroomFn);
   const { sync, external } = useCalendarSync(user.id, country);
   const [mine] = useState(false);
   // "all": everything, "tool": booked through the Cold Caller tool, "pipedrive": entries that exist in Pipedrive only.
