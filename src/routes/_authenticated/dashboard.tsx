@@ -70,11 +70,20 @@ function Dashboard() {
     return () => window.removeEventListener("cc-caller-view", sync);
   }, []);
   const qc = useQueryClient();
-  const me = useQuery({
-    queryKey: ["me", user.id],
-    enabled: false,
-    queryFn: async () => null as { name?: string | null } | null,
-  });
+  // Read the sidebar's profile from the shared cache without registering a
+  // competing queryFn (a null placeholder here used to wipe the profile/role).
+  const [meName, setMeName] = useState<string | null | undefined>(
+    () => qc.getQueryData<{ name?: string | null }>(["me", user.id])?.name,
+  );
+  useEffect(() => {
+    const read = () =>
+      setMeName(qc.getQueryData<{ name?: string | null }>(["me", user.id])?.name);
+    read();
+    return qc.getQueryCache().subscribe((e) => {
+      if (e.query.queryKey[0] === "me" && e.query.queryKey[1] === user.id) read();
+    });
+  }, [qc, user.id]);
+  const me = { data: { name: meName } };
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
   const people = useQuery({
