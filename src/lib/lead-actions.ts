@@ -16,6 +16,8 @@ export type LeadAction = {
   key: LeadActionKey;
   label: string;
   hint: string;
+  /** Tooltip: when to use it and what it does. */
+  help: { when: string; effect: string };
   /** Tailwind classes for the coloured button. */
   color: string;
   stageKey?: "low_q" | "high_q" | "waiting_3d";
@@ -43,6 +45,7 @@ const ACTION_BUTTON = "bg-white text-foreground hover:bg-[#2b2f36] hover:text-wh
 export const LEAD_ACTIONS: LeadAction[] = [
   {
     key: "low_q",
+    help: { when: 'Kunde will einen 3D-Logo-Entwurf, Logo liegt vor.', effect: 'Bucht den Fulfilmenttermin und legt den Deal in Pipedrive an (Stage „Logo Render“).' },
     label: "Logo Render",
     hint: "Termin eintragen und Logo hochladen",
     color: ACTION_BUTTON,
@@ -52,6 +55,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
   },
   {
     key: "high_q",
+    help: { when: 'Kunde will eine fotorealistische Ansicht am Gebäude, Logo und Gebäudefoto liegen vor.', effect: 'Bucht den Fulfilmenttermin und legt den Deal in Pipedrive an (Stage „Realismus Render“).' },
     label: "Realismus Render",
     hint: "Termin, Logo und Gebäudefoto",
     color: ACTION_BUTTON,
@@ -61,6 +65,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
   },
   {
     key: "waiting_3d",
+    help: { when: 'Kunde hat Interesse, schickt das Logo aber erst nach.', effect: 'Legt den Deal in Pipedrive an (Stage „Logo ausstehend“), optional mit Rückruf.' },
     label: "Logo ausstehend",
     hint: "Kunde schickt das Logo noch, Rückruf optional",
     color: ACTION_BUTTON,
@@ -69,6 +74,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
   },
   {
     key: "no_interest",
+    help: { when: 'Kunde hat keinen Bedarf.', effect: 'Schließt den Lead ab, optional mit Sperre „Nie wieder anrufen“.' },
     label: "Kein Interesse",
     hint: "Lead abschließen, optional nie wieder anrufen",
     color: ACTION_BUTTON,
@@ -76,6 +82,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
   },
   {
     key: "on_hold",
+    help: { when: 'Projekt ist erst in einigen Monaten geplant.', effect: 'Merkt den Monat vor. Ab dann kommt der Lead automatisch als Deal in Pipedrive.' },
     label: "Zukunftsprojekt",
     hint: "Monat wählen, dann kommt der Lead ins CRM",
     color: ACTION_BUTTON,
@@ -83,6 +90,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
   },
   {
     key: "callback",
+    help: { when: 'Ansprechpartner bittet um Anruf zu einem bestimmten Zeitpunkt.', effect: 'Trägt den Rückruf in deinen Kalender ein, der Lead bleibt aktiv.' },
     label: "Rückruf",
     hint: "Neuen Anruf vereinbaren",
     color: ACTION_BUTTON,
@@ -90,6 +98,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
   },
   {
     key: "reference_mail",
+    help: { when: 'Kunde möchte vorab Referenzen und Produktionsbilder sehen.', effect: 'Sendet die Referenzmail an den Kontakt und schließt den Lead ab.' },
     label: "Referenzmail",
     hint: "Mail senden, Lead abschließen",
     color: ACTION_BUTTON,
@@ -97,6 +106,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
   },
   {
     key: "not_reached",
+    help: { when: 'Niemand abgehoben, besetzt oder Mailbox.', effect: 'Speichert den Kontaktversuch, der Lead kann später erneut angerufen werden.' },
     label: "Nicht erreicht",
     hint: "Kontaktversuch speichern",
     color: ACTION_BUTTON,

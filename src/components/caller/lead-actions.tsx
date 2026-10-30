@@ -1,3 +1,4 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Reveal } from "@/components/ui/reveal";
 import { celebrate } from "@/lib/achievements";
 import { useEffect, useRef, useState } from "react";
@@ -470,25 +471,39 @@ export function LeadActions({
           {...(success.special ? { emphasis: true } : {})}
         />
       )}
-      <div className="cc-outcome-grid">
-        {LEAD_ACTIONS.map((action) => (
-          <button
-            key={action.key}
-            type="button"
-            title={action.hint}
-            disabled={busy}
-            aria-pressed={active === action.key}
-            onClick={() => open(action)}
-            className="cc-outcome-btn"
-          >
-            {(() => {
-              const Icon = ACTION_ICON[action.key];
-              return Icon ? <Icon size={22} aria-hidden="true" /> : null;
-            })()}
-            <span>{action.label}</span>
-          </button>
-        ))}
-      </div>
+      <TooltipProvider delayDuration={250}>
+        <div className="cc-outcome-grid">
+          {LEAD_ACTIONS.map((action) => (
+            <Tooltip key={action.key}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  disabled={busy}
+                  aria-pressed={active === action.key}
+                  onClick={() => open(action)}
+                  className="cc-outcome-btn"
+                >
+                  {(() => {
+                    const Icon = ACTION_ICON[action.key];
+                    return Icon ? <Icon size={22} aria-hidden="true" /> : null;
+                  })()}
+                  <span>{action.label}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[260px] space-y-1 py-2 text-left">
+                <p>
+                  <span className="font-semibold">Wann: </span>
+                  {action.help.when}
+                </p>
+                <p>
+                  <span className="font-semibold">Wirkung: </span>
+                  {action.help.effect}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
 
       {current && !isMailAction(current.key) && (
         <form
