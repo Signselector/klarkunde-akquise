@@ -190,6 +190,11 @@ export async function syncCalendarForUser(
     .maybeSingle();
   const now = new Date();
   try {
+    await removeDeletedInPipedrive(userId, country);
+  } catch {
+    // Next run tries again.
+  }
+  try {
     return await syncCalendar({
       store: await databaseStore(userId, country),
       crm,
