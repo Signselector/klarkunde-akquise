@@ -161,6 +161,12 @@ async function databaseStore(userId: string, country: string): Promise<CalendarS
 export type CalendarSyncState =
   "synced" | "simulated" | "no_pipedrive_user" | "not_configured" | "error";
 
+/** Pipedrive main account per country: callers without an own Pipedrive login book into this calendar. */
+const FALLBACK_CALENDAR: Record<string, string> = {
+  AT: "office@signselector.com",
+  DE: "office@signselector.de",
+};
+
 /** Runs the calendar sync for one user. Used by the page and by the scheduled reconcile. */
 export async function syncCalendarForUser(
   userId: string,
@@ -188,6 +194,7 @@ export async function syncCalendarForUser(
       store: await databaseStore(userId, country),
       crm,
       email: profile?.email ?? null,
+      fallbackEmail: FALLBACK_CALENDAR[country] ?? null,
       window: {
         from: new Date(now.getTime() - 30 * 86_400_000).toISOString(),
         to: new Date(now.getTime() + 180 * 86_400_000).toISOString(),
