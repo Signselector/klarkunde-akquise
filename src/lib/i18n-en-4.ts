@@ -84,6 +84,7 @@ export const EN_4: Record<string, string> = {
   "Anrufe pro Tag": "Calls per day",
   Wochen: "Weeks",
   Heute_: "Today",
+  "Die E-Mail-Adresse wird aus dem Team-Management-Tool übernommen. Wenn eine andere gewünscht ist, informiere bitte den zuständigen Manager.": "The email address is taken from the team management tool. If a different one is wanted, please inform the responsible manager.",
   Montag: "Monday",
   Dienstag: "Tuesday",
   Mittwoch: "Wednesday",

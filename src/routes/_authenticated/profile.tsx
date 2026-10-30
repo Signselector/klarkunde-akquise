@@ -185,6 +185,10 @@ function ProfilePage() {
         <p className="text-xs text-muted-foreground">
           Rolle und Länder legen Manager bzw. Admins fest.
         </p>
+        <p className="text-xs text-muted-foreground">
+          Die E-Mail-Adresse wird aus dem Team-Management-Tool übernommen. Wenn eine andere
+          gewünscht ist, informiere bitte den zuständigen Manager.
+        </p>
       </section>
       <section className="flex items-center gap-4 rounded-lg border bg-card p-4">
         <span className="cc-avatar" style={{ width: 72, height: 72, fontSize: 22, flex: "none" }}>
@@ -196,8 +200,8 @@ function ProfilePage() {
         </span>
         <div className="grid gap-2">
           <h2 className="font-semibold">{t("Profilbild")}</h2>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm" disabled={avatarBusy}>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button asChild variant="outline" size="sm" className="h-9" disabled={avatarBusy}>
               <label className="cursor-pointer">
                 {avatarBusy ? "Lädt …" : "Bild hochladen"}
                 <input
@@ -213,7 +217,13 @@ function ProfilePage() {
               </label>
             </Button>
             {profile?.avatar_url && (
-              <Button variant="ghost" size="sm" disabled={avatarBusy} onClick={removeAvatar}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 text-sm"
+                disabled={avatarBusy}
+                onClick={removeAvatar}
+              >
                 Entfernen
               </Button>
             )}
@@ -221,7 +231,6 @@ function ProfilePage() {
         </div>
       </section>
       <form onSubmit={saveName} className="space-y-3 rounded-lg border bg-card p-4">
-        <h2 className="font-semibold">{t("Anzeigename")}</h2>
         <div className="grid gap-1.5">
           <Label htmlFor="profile-name">Name</Label>
           <Input
