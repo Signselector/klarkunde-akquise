@@ -1961,3 +1961,59 @@ tr:hover > .cc-sticky-action {
   padding: 16px 18px;
   border-left-width: 5px;
 }
+
+/* Batches that somebody has already taken (also by others) look dark. */
+.cc-app .cc-batch[data-claimed="true"] {
+  background: #14171c;
+  border-color: #2b2f36;
+  color: #f4f5f7;
+}
+.cc-app .cc-batch[data-claimed="true"] h3,
+.cc-app .cc-batch[data-claimed="true"] .cc-batch-numbers dd {
+  color: #fff;
+}
+.cc-app .cc-batch[data-claimed="true"] small,
+.cc-app .cc-batch[data-claimed="true"] p,
+.cc-app .cc-batch[data-claimed="true"] .cc-batch-numbers dt {
+  color: #a3a9b4;
+}
+.cc-app .cc-batch[data-claimed="true"] [role="progressbar"] {
+  background: rgb(255 255 255 / 14%);
+}
+.cc-app .cc-batch[data-claimed="true"] [role="progressbar"] > div {
+  background: #60a5fa;
+}
+
+/* Profile picture cropper */
+.cc-crop-view {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #0f172a;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+}
+.cc-crop-view:active {
+  cursor: grabbing;
+}
+.cc-crop-view img {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
+.cc-crop-mask {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 0, transparent 138px, rgb(15 23 42 / 62%) 139px);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 12%);
+}
+.cc-crop-mask::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  margin: 1px;
+}

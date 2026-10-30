@@ -7,6 +7,7 @@ import { ROLE_LABEL, useRoles } from "@/lib/use-admin";
 import { isMasterEmail } from "@/lib/master";
 import { COUNTRIES, useAllowedCountries } from "@/lib/country";
 import { Flag } from "@/components/flag";
+import { AvatarCropper } from "@/components/avatar-cropper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,15 +44,18 @@ function ProfilePage() {
   const [busy, setBusy] = useState(false);
 
   const [avatarBusy, setAvatarBusy] = useState(false);
-  async function changeAvatar(file: File | undefined) {
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  function pickAvatar(file: File | undefined) {
     if (!file) return;
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) {
       toast.error("Bitte ein JPG-, PNG- oder WebP-Bild wählen.");
       return;
     }
+    setCropFile(file);
+  }
+  async function saveAvatar(blob: Blob) {
     setAvatarBusy(true);
     try {
-      const blob = await squareJpeg(file, 256);
       const path = `${user.id}/avatar.jpg`;
       const up = await supabase.storage
         .from("avatars")
@@ -64,10 +68,16 @@ function ProfilePage() {
         .eq("id", user.id);
       if (error) throw error;
       toast.success("Profilbild gespeichert.");
+      setCropFile(null);
       qc.invalidateQueries({ queryKey: ["me", user.id] });
       qc.invalidateQueries({ queryKey: ["profile", user.id] });
-    } catch {
-      toast.error("Profilbild konnte nicht gespeichert werden.");
+    } catch (e) {
+      const m = e instanceof Error ? e.message : "";
+      toast.error(
+        /bucket not found/i.test(m)
+          ? "Der Speicher für Profilbilder ist noch nicht eingerichtet (Migration 0040)."
+          : `Profilbild konnte nicht gespeichert werden${m ? ` (${m.slice(0, 90)})` : ""}.`,
+      );
     } finally {
       setAvatarBusy(false);
     }
@@ -194,7 +204,7 @@ function ProfilePage() {
                   className="sr-only"
                   disabled={avatarBusy}
                   onChange={(e) => {
-                    void changeAvatar(e.target.files?.[0]);
+                    pickAvatar(e.target.files?.[0]);
                     e.target.value = "";
                   }}
                 />
@@ -263,22 +273,12 @@ function ProfilePage() {
           Passwort ändern
         </Button>
       </form>
+      <AvatarCropper
+        file={cropFile}
+        busy={avatarBusy}
+        onCancel={() => setCropFile(null)}
+        onConfirm={(b) => void saveAvatar(b)}
+      />
     </div>
-  );
-}
-
-/** Center-crops to a square and re-encodes as JPEG, so uploads stay small whatever the original was. */
-async function squareJpeg(file: File, size: number): Promise<Blob> {
-  const bmp = await createImageBitmap(file);
-  const side = Math.min(bmp.width, bmp.height);
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("canvas");
-  ctx.drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, size, size);
-  bmp.close();
-  return new Promise((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("encode"))), "image/jpeg", 0.88),
   );
 }

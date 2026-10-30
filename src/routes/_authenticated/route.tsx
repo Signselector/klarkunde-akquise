@@ -311,9 +311,9 @@ function Layout() {
               name={me?.name ?? user.email ?? ""}
               subtitle={
                 me
-                  ? me.admin && !callerView
-                    ? ROLE_LABEL[me.role]
-                    : "Caller-Ansicht"
+                  ? me.admin && callerView
+                    ? "Caller-Ansicht"
+                    : ROLE_LABEL[me.role]
                   : "Profil wird geladen …"
               }
             />

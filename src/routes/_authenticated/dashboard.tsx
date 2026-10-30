@@ -237,7 +237,7 @@ function Dashboard() {
               const free = backendEnabled && hasOwner && !b.assigned_to;
               const row = b as BatchRow;
               return (
-                <article key={b.id} className="cc-batch">
+                <article key={b.id} className="cc-batch" data-claimed={backendEnabled && hasOwner && !free}>
                   <div className="cc-batch-heading">
                     <div>
                       <h3>{b.name}</h3>

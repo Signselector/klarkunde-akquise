@@ -259,3 +259,20 @@ test("appointments: decision pending for caller bookings, moving keeps the appoi
   await assert.rejects(q("select public.reschedule_appointment($1,$2)", [a1.id, day(8, 12)]), /slot_full/);
   await q("select public.reschedule_appointment($1,$2)", [a1.id, day(11, 16)]);
 });
+
+test("managers cannot hand appointments to an admin; completed leads are only the own", async () => {
+  await db.exec("RESET ROLE");
+  const ap = (await q("insert into public.appointments(user_id,lead_id,starts_at,country,booked_by,title,kind) values($1,$2,$3,'DE',$4,'T2','presentation') returning id", [mgr, leads[5], new Date(Date.now() + 20 * 864e5).toISOString(), rec]))[0].id;
+  await as(mgr);
+  await assert.rejects(q("select public.assign_appointment($1,$2)", [ap, admin]), /only_veterans_assignable|invalid_assignee/);
+  // completed overview: another caller's lead is not shown to a manager or an admin
+  await db.exec("RESET ROLE");
+  await q("update public.leads set status='no_interest',last_called_by=$1 where id=$2", [rec, leads[6]]);
+  for (const who of [mgr, admin]) {
+    await as(who);
+    const rows = (await q("select public.get_completed_overview('DE',300) r"))[0].r;
+    assert.ok(!rows.some((r) => r.lead_id === leads[6]), "not the own");
+  }
+  await as(rec);
+  assert.ok((await q("select public.get_completed_overview('DE',300) r"))[0].r.some((r) => r.lead_id === leads[6]));
+});
