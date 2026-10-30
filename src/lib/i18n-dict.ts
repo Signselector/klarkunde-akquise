@@ -8,7 +8,7 @@ const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
 /** Exact texts: German → English. Entries with `{}` are patterns for texts that contain values. */
 const EXACT = new Map<string, string>();
-const PATTERNS: { re: RegExp; to: string }[] = [];
+const PATTERNS: { re: RegExp; to: string; literal: number }[] = [];
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -17,12 +17,12 @@ for (const dict of [EN_0, EN_1, EN_2, EN_3, EN_4]) {
     const key = clean(de);
     if (key.includes("{}")) {
       const re = new RegExp("^" + key.split("{}").map(escape).join("(.+?)") + "$");
-      PATTERNS.push({ re, to: en });
+      PATTERNS.push({ re, to: en, literal: key.replace(/\{\}/g, "").length });
     } else EXACT.set(key, en);
   }
 }
-// Longer (more specific) patterns first.
-PATTERNS.sort((a, b) => b.re.source.length - a.re.source.length);
+// Patterns with more fixed text are more specific and are tried first.
+PATTERNS.sort((a, b) => b.literal - a.literal);
 
 function fill(template: string, groups: string[]) {
   let i = 0;
