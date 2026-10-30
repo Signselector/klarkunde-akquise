@@ -107,17 +107,15 @@ describe("syncLeadAction", () => {
     expect(t.finished).toEqual([{ state: "error", error: "stage_not_configured" }]);
   });
 
-  it("keeps what was created when the logo upload fails, so a retry only uploads the logo", async () => {
+  it("counts the deal as created when only the logo upload fails, and leaves the logo for a retry", async () => {
     const t = setup();
     t.crm.uploadFile = async () => {
       throw new CrmError("network_error");
     };
-    expect(await syncLeadAction("a1", t.store, t.crm)).toEqual({
-      state: "error",
-      error: "network_error",
-    });
+    expect(await syncLeadAction("a1", t.store, t.crm)).toEqual({ state: "synced", pending: true });
     expect(t.saved.at(-1)).toEqual({ organization_id: 101, person_id: 102, deal_id: 103 });
     expect(t.steps).toEqual(["note"]);
+    expect(t.finished.at(-1)).toEqual({ state: "error", error: "attachments_pending" });
   });
 
   it("skips actions that are already synced or running", async () => {

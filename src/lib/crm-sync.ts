@@ -105,7 +105,7 @@ export async function syncLeadAction(
   actionId: string,
   store: SyncStore,
   crm: Crm,
-): Promise<{ state: "synced" | "error" | "skipped"; error?: string }> {
+): Promise<{ state: "synced" | "error" | "skipped"; error?: string; pending?: boolean }> {
   const ctx = await store.begin(actionId);
   if (!ctx) return { state: "skipped" };
   try {
@@ -196,6 +196,8 @@ const MESSAGES: Record<string, string> = {
   stages_not_validated:
     "Die Stage-Zuordnung wurde noch nicht gegen Pipedrive geprüft. Bitte unter Einstellungen → Stage Mapping „Stages prüfen“ ausführen.",
   logo_missing: "Das hochgeladene Logo wurde nicht gefunden.",
+  attachments_pending:
+    "Der Deal ist in Pipedrive angelegt. Notiz oder Dateien werden automatisch nachgereicht.",
   invalid_payload: "Pipedrive hat die Daten abgelehnt.",
   unexpected_error: "Unerwarteter Fehler bei der Übertragung.",
 };
