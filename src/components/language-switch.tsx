@@ -25,7 +25,6 @@ export function LanguageSwitch() {
           onClick={() => setLang(o.lang)}
         >
           <Flag code={o.flag} size={14} />
-          <span className="cc-lang-code">{o.lang.toUpperCase()}</span>
         </button>
       ))}
     </div>
