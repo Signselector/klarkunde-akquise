@@ -115,27 +115,6 @@ export type Database = {
           },
         ]
       }
-      appointment_outcomes: {
-        Row: {
-          appointment_id: string | null
-          country: string
-          created_at: string
-          followup_appointment_id: string | null
-          id: string
-          lead_id: string | null
-          new_starts_at: string | null
-          note: string
-          outcome: string
-          pd_error: string | null
-          pd_state: string
-          stage_key: string | null
-          starts_at: string | null
-          user_id: string
-        }
-        Insert: never
-        Update: { pd_error?: string | null; pd_state?: string }
-        Relationships: []
-      }
       appointments: {
         Row: {
           booked_by: string | null
@@ -146,7 +125,6 @@ export type Database = {
           kind: string
           lead_id: string | null
           notes: string | null
-          outcome: string | null
           pd_activity_id: number | null
           pd_sync_error: string | null
           pd_sync_state: string
@@ -164,7 +142,6 @@ export type Database = {
           kind?: string
           lead_id?: string | null
           notes?: string | null
-          outcome?: string | null
           pd_activity_id?: number | null
           pd_sync_error?: string | null
           pd_sync_state?: string
@@ -1769,16 +1746,6 @@ export type Database = {
       has_admin_rights: {
         Args: { _country: string; _uid: string }
         Returns: boolean
-      }
-      record_appointment_outcome: {
-        Args: {
-          p_appointment_id: string
-          p_followup_at?: string
-          p_new_start?: string
-          p_note: string
-          p_outcome: string
-        }
-        Returns: Json
       }
       has_role: {
         Args: {
