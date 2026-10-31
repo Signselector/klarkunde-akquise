@@ -182,13 +182,14 @@ export function WeekCalendar({
   const nowTop = (now.getHours() + now.getMinutes() / 60 - DAY_START) * HOUR;
   const mobileDay = selected && inWeek(selected, weekStart) ? selected : thisWeek ? now : weekStart;
 
-  const entryButton = (e: WeekEntry, style?: React.CSSProperties, tall = false) => {
+  const entryButton = (e: WeekEntry, style?: React.CSSProperties, tall = false, where = "d") => {
+    const pid = `${where}:${e.id}`;
     const Icon = KIND_META[e.kind ?? "meeting"].icon;
     const past = e.at.getTime() + (e.durationMin ?? 30) * 60_000 < now.getTime();
     const btn = (
       <button
         type="button"
-        onClick={renderDetail ? undefined : () => setOpenId(openId === e.id ? null : e.id)}
+        onClick={renderDetail ? undefined : () => setOpenId(openId === pid ? null : pid)}
         style={style}
         title={`${e.title} · ${fmtRange(e.at, e.durationMin)}`}
         className={cn(
@@ -196,7 +197,7 @@ export function WeekCalendar({
           !e.allDay && "absolute",
           e.allDay && "cc-pd-entry--allday",
           past && "opacity-75",
-          openId === e.id && "ring-2 ring-primary",
+          openId === pid && "ring-2 ring-primary",
         )}
       >
         <span className="flex w-full items-center gap-1.5">
@@ -219,7 +220,7 @@ export function WeekCalendar({
     );
     if (!renderDetail) return <div key={e.id} className="contents">{btn}</div>;
     return (
-      <Popover key={e.id} open={openId === e.id} onOpenChange={(o) => setOpenId(o ? e.id : null)}>
+      <Popover key={pid} open={openId === pid} onOpenChange={(o) => setOpenId((cur) => (o ? pid : cur === pid ? null : cur))}>
         <PopoverTrigger asChild>{btn}</PopoverTrigger>
         <PopoverContent side="right" align="start" className="w-[400px] max-w-[92vw] overflow-hidden p-0">
           {renderDetail(e, () => setOpenId(null))}
@@ -304,7 +305,7 @@ export function WeekCalendar({
             .filter((e) => sameDay(e.at, mobileDay))
             .sort((a, b) => a.at.getTime() - b.at.getTime())
             .map((e) => (
-              <div key={e.id} className="relative">{entryButton({ ...e, allDay: true }, undefined, true)}</div>
+              <div key={e.id} className="relative">{entryButton({ ...e, allDay: true }, undefined, true, "m")}</div>
             ))}
           {onAddForDay && (
             <Button variant="outline" size="sm" onClick={() => onAddForDay(mobileDay)}>
