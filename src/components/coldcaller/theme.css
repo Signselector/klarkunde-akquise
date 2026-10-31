@@ -43,6 +43,11 @@
   outline: 3px solid var(--cc-accent);
   outline-offset: 3px;
 }
+/* Text fields: keep the focus outline tight so it never reaches into the label above. */
+.cc-theme :is(input, textarea):focus-visible {
+  outline-width: 2px;
+  outline-offset: 0;
+}
 .cc-theme h1,
 .cc-theme h2,
 .cc-theme h3,

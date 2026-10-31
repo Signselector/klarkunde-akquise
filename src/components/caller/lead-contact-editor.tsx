@@ -91,7 +91,14 @@ export function LeadContactEditor({
   const field = (key: keyof ReturnType<typeof initial>, label: string, type = "text") => (
     <label className="block text-sm">
       {label}
-      <Input type={type} value={form[key]} onChange={set(key)} maxLength={300} disabled={busy} />
+      <Input
+        type={type}
+        className="mt-1.5 focus-visible:ring-inset"
+        value={form[key]}
+        onChange={set(key)}
+        maxLength={300}
+        disabled={busy}
+      />
     </label>
   );
   return (
