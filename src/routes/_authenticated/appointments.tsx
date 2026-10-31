@@ -120,7 +120,7 @@ function AppointmentsPage() {
             date: new Date(x.due_at),
             k: "other" as Kind,
             external: true as const,
-            pd: { activityId: x.activity_id, type: x.type, durationMin: x.duration_min, ownerId: x.user_id },
+            pd: { activityId: x.activity_id, type: x.type, durationMin: x.duration_min, ownerId: x.user_id, done: !!x.done },
           }))
         : [];
     return [...own, ...fromPipedrive].sort((p, q) => p.date.getTime() - q.date.getTime());
@@ -244,7 +244,7 @@ function AppointmentsPage() {
       dot: appointmentDotClass(e.date, !!pd),
       kind: pd ? toEntryKind(pd.type) : "meeting",
       durationMin: pd ? pd.durationMin : 30,
-      done: "outcome" in e && !!e.outcome,
+      done: "outcome" in e ? !!e.outcome : "pd" in e ? !!e.pd?.done : false,
       allDay: pd ? e.date.getUTCHours() === 0 && e.date.getUTCMinutes() === 0 : false,
     };
   });
