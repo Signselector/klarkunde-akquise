@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { ChevronLeft, ChevronRight } from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 export const sameDay = (a: Date, b: Date) =>
@@ -188,7 +188,7 @@ export function WeekCalendar({
     const btn = (
       <button
         type="button"
-        onClick={() => setOpenId(openId === e.id ? null : e.id)}
+        onClick={renderDetail ? undefined : () => setOpenId(openId === e.id ? null : e.id)}
         style={style}
         title={`${e.title} · ${fmtRange(e.at, e.durationMin)}`}
         className={cn(
@@ -220,7 +220,7 @@ export function WeekCalendar({
     if (!renderDetail) return <div key={e.id} className="contents">{btn}</div>;
     return (
       <Popover key={e.id} open={openId === e.id} onOpenChange={(o) => setOpenId(o ? e.id : null)}>
-        <PopoverAnchor asChild>{btn}</PopoverAnchor>
+        <PopoverTrigger asChild>{btn}</PopoverTrigger>
         <PopoverContent side="right" align="start" className="w-[400px] max-w-[92vw] overflow-hidden p-0">
           {renderDetail(e, () => setOpenId(null))}
         </PopoverContent>
