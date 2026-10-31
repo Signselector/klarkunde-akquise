@@ -1,4 +1,5 @@
 import { LeadDialog } from "@/components/caller/lead-dialog";
+import { LeadQuickDialog } from "@/components/caller/lead-quick-dialog";
 import { LeadsTable, type LeadIntent } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
 import { orderOpenLeads, STATUS_LABEL } from "@/lib/leads";
@@ -292,14 +293,16 @@ function LeadsPage() {
         )}
       </Surface>
       <LeadDialog
-        leadId={openId}
+        leadId={intent ? null : openId}
         userId={user.id}
         leadIds={(leads ?? []).map((l) => l.id)}
+        onNavigate={setOpenId}
+        onClose={() => setOpenId(null)}
+      />
+      <LeadQuickDialog
+        leadId={intent ? openId : null}
         intent={intent}
-        onNavigate={(id) => {
-          setIntent(null);
-          setOpenId(id);
-        }}
+        userId={user.id}
         onClose={() => {
           setIntent(null);
           setOpenId(null);

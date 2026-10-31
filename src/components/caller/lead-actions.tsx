@@ -120,7 +120,13 @@ export function LeadActions({
   callerName,
   onDone,
   initialAction = null,
+  single = false,
+  onCancel,
 }: {
+  /** Only the form of `initialAction`: no heading and no result buttons (the pop-up of the lead list). */
+  single?: boolean;
+  /** Called when the form is cancelled in `single` mode. */
+  onCancel?: () => void;
   /** Result to open right away (a result button of the lead list). */
   initialAction?: LeadActionKey | null;
   lead: Tables<"leads">;
@@ -257,6 +263,11 @@ export function LeadActions({
     if (first) open(first);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function cancelForm() {
+    setActive(null);
+    if (single) onCancel?.();
+  }
 
   function refreshLists() {
     void qc.invalidateQueries({ queryKey: ["leads"] });
@@ -465,6 +476,8 @@ export function LeadActions({
 
   return (
     <section className="cc-detail-section space-y-3" aria-labelledby="lead-actions-title">
+      {!single && (
+        <>
       <h3 id="lead-actions-title" className="flex items-center gap-3 text-lg">
         <Phone size={22} aria-hidden="true" className="text-primary" />
         Gesprächsergebnis
@@ -511,6 +524,8 @@ export function LeadActions({
           ))}
         </div>
       </TooltipProvider>
+        </>
+      )}
 
       {current && !isMailAction(current.key) && (
         <form
@@ -604,7 +619,7 @@ export function LeadActions({
             <Button type="submit" disabled={busy}>
               {busy ? "Wird gespeichert …" : "Bestätigen"}
             </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => setActive(null)}>
+            <Button type="button" variant="outline" disabled={busy} onClick={cancelForm}>
               Abbrechen
             </Button>
           </div>
@@ -663,7 +678,7 @@ export function LeadActions({
                   ? "Erneut senden"
                   : "Bestätigen & Mail senden"}
             </Button>
-            <Button type="button" variant="outline" disabled={busy} onClick={() => setActive(null)}>
+            <Button type="button" variant="outline" disabled={busy} onClick={cancelForm}>
               Abbrechen
             </Button>
           </div>

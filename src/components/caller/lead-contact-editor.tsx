@@ -29,7 +29,10 @@ export function LeadContactEditor({
   lead,
   onSaved,
   startEditing = false,
+  onCancel,
 }: {
+  /** Called when the form is cancelled (pop-up of the lead list). */
+  onCancel?: () => void;
   lead: Tables<"leads">;
   onSaved: () => void;
   /** Open the form right away ("Daten bearbeiten" in the lead list). */
@@ -112,7 +115,10 @@ export function LeadContactEditor({
         <Button type="submit" disabled={busy}>
           {busy ? "Wird gespeichert …" : "Speichern"}
         </Button>
-        <Button type="button" variant="outline" disabled={busy} onClick={() => setEditing(false)}>
+        <Button type="button" variant="outline" disabled={busy} onClick={() => {
+            setEditing(false);
+            onCancel?.();
+          }}>
           Abbrechen
         </Button>
       </div>

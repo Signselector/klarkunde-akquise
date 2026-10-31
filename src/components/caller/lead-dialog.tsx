@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
 import { LeadContact } from "@/components/coldcaller/workspace-parts";
 import { LeadActions } from "@/components/caller/lead-actions";
-import type { LeadActionKey } from "@/lib/lead-actions";
 import { ShowroomResults, type ShowroomAppointment } from "@/components/caller/showroom-results";
 import { Building2 } from "@/components/coldcaller/icons";
 import { LeadContactEditor } from "@/components/caller/lead-contact-editor";
@@ -30,10 +29,7 @@ export function LeadDialog({
   leadIds,
   onNavigate,
   appointment,
-  intent,
 }: {
-  /** Opened from a result button or "Daten bearbeiten" of the list: that step is open right away. */
-  intent?: { action?: LeadActionKey; edit?: boolean } | null;
   /** Opened from an appointment: shows the showroom results instead of the call results. */
   appointment?: ShowroomAppointment | null;
   leadId: string | null;
@@ -184,7 +180,6 @@ export function LeadDialog({
                 <LeadContactEditor
                   key={`${lead.id}-${lead.version}`}
                   lead={lead}
-                  startEditing={!!intent?.edit}
                   onSaved={refresh}
                 />
               )}
@@ -203,7 +198,6 @@ export function LeadDialog({
               <LeadActions
                 key={lead.id}
                 lead={lead}
-                initialAction={intent?.action ?? null}
                 userId={userId}
                 callerName={callerName.data ?? ""}
                 onDone={afterAction}
