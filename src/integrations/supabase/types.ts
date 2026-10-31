@@ -1640,6 +1640,10 @@ export type Database = {
         Returns: undefined
       }
       backend_maintenance: { Args: never; Returns: Json }
+      cal_apply_activities: {
+        Args: { p_country: string; p_list: Json; p_user: string }
+        Returns: number
+      }
       cal_apply_activity: {
         Args: { p_a: Json; p_country: string; p_user: string }
         Returns: string

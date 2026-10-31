@@ -146,6 +146,14 @@ async function databaseStore(userId: string, country: string): Promise<CalendarS
     async apply(a: PdActivity) {
       await db.rpc("cal_apply_activity", { p_country: country, p_user: userId, p_a: a as never });
     },
+    async applyMany(list: PdActivity[]) {
+      const { error } = await db.rpc("cal_apply_activities" as never, {
+        p_country: country,
+        p_user: userId,
+        p_list: list,
+      } as never);
+      if (error) throw new Error(error.message);
+    },
     async prune(from, to, keep) {
       await db.rpc("cal_prune", {
         p_country: country,
