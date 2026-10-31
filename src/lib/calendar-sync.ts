@@ -41,6 +41,7 @@ export type CalendarStore = {
   queue(): Promise<QueueEntry[]>;
   dequeue(id: string): Promise<void>;
   apply(a: PdActivity): Promise<void>;
+  applyMany?(list: PdActivity[]): Promise<void>;
   prune(from: string, to: string, keep: number[]): Promise<void>;
 };
 
@@ -168,13 +169,19 @@ export async function syncCalendar(args: {
   let pulled = 0;
   if (!viaFallback) try {
     const keep: number[] = [];
+    const parsed: PdActivity[] = [];
     for (const raw of await crm.list(pdUser, args.window.from, args.window.to)) {
       const a = parseActivity(raw);
       if (!a) continue;
       keep.push(a.id);
-      await store.apply(a);
-      pulled++;
+      parsed.push(a);
     }
+    if (store.applyMany) {
+      for (let i = 0; i < parsed.length; i += 500) await store.applyMany(parsed.slice(i, i + 500));
+    } else {
+      for (const a of parsed) await store.apply(a);
+    }
+    pulled = parsed.length;
     await store.prune(args.window.from, args.window.to, keep);
   } catch (e) {
     firstError ??= e instanceof Error ? e.message : "unexpected_error";
