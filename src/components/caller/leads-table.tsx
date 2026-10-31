@@ -206,8 +206,8 @@ export function LeadsTable({
             {leads.map((l) => (
               <tbody key={l.id} className="cc-lead-group select-none border-t first:border-t-0">
               <tr
-                className="cc-row-link align-top"
-                onClick={() => onOpen(l.id)}
+                className={quickActions ? "align-top" : "cc-row-link align-top"}
+                onClick={quickActions ? undefined : () => onOpen(l.id)}
               >
                 <td className="px-4 py-4 font-medium">{l.company || "Ohne Firmenname"}</td>
                 <td className="px-2 py-4">
@@ -247,7 +247,7 @@ export function LeadsTable({
                 )}
               </tr>
               {quickActions && (
-                <tr className="cc-row-link" onClick={() => onOpen(l.id)}>
+                <tr>
                   <td colSpan={processed ? 7 : 6} className="px-4 pb-4 pt-0 whitespace-normal">
                     {/* Zero width, full minimum width: the buttons wrap inside the table instead of widening it. */}
                     <div className="w-0 min-w-full">
@@ -263,7 +263,11 @@ export function LeadsTable({
       </div>
       <ul className="divide-y md:hidden">
         {leads.map((l) => (
-          <li key={l.id} className="cc-row-link space-y-2 px-4 py-4" onClick={() => onOpen(l.id)}>
+          <li
+            key={l.id}
+            className={quickActions ? "space-y-2 px-4 py-4" : "cc-row-link space-y-2 px-4 py-4"}
+            onClick={quickActions ? undefined : () => onOpen(l.id)}
+          >
             <div className="flex items-start justify-between gap-3">
               <strong className="min-w-0 break-words">{l.company || "Ohne Firmenname"}</strong>
               <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>

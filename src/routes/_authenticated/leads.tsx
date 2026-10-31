@@ -104,8 +104,8 @@ function LeadsPage() {
       if (backendEnabled) query = query.is("archived_at", null);
       if (onlyMine) query = query.eq("lead_batches.assigned_to", user.id);
       if (batch !== "all") query = query.eq("batch_id", batch);
-      // Still to work on: untouched leads, not reached and scheduled callbacks. Every other outcome is completed.
-      query = query.in("status", ["open", "callback", "appointment_missed"]);
+      // Still to work on: untouched leads and not reached. Callbacks live under "Rückrufe", every other outcome is completed.
+      query = query.in("status", ["open", "appointment_missed"]);
       const term = q.trim().replace(/[,()%]/g, " ");
       if (term)
         query = query.or(
@@ -137,38 +137,16 @@ function LeadsPage() {
       return { rows, total: Math.max(count ?? 0, rows.length) };
     },
   });
-  // Open callbacks of the user: leads with a callback stay in this list and come first, the earliest due time on top.
-  const callbackDue = useQuery({
-    enabled: backendEnabled,
-    queryKey: ["lead-callback-due", user.id, country],
-    refetchInterval: 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("callbacks")
-        .select("lead_id,due_at")
-        .eq("user_id", user.id)
-        .eq("country", country)
-        .eq("done", false);
-      if (error) throw error;
-      const map = new Map<string, number>();
-      for (const c of data ?? []) {
-        const t = new Date(c.due_at).getTime();
-        const old = map.get(c.lead_id);
-        if (old === undefined || t < old) map.set(c.lead_id, t);
-      }
-      return map;
-    },
-  });
   const sorted = useMemo(
-    () => orderOpenLeads(result?.rows ?? [], callbackDue.data),
-    [result?.rows, callbackDue.data],
+    () => orderOpenLeads(result?.rows ?? []),
+    [result?.rows],
   );
   const labelOf = (l: { status: string; attempts: number }) =>
     l.status === "open" && l.attempts > 0 ? "Nicht erreicht" : (STATUS_LABEL[l.status] ?? l.status);
   // Only statuses that occur in the loaded list are offered as filter.
   const statusOptions = useMemo(() => {
     const present = new Set(sorted.map(labelOf));
-    return ["Offen", "Nicht erreicht", "Termin versäumt", "Rückruf vereinbart"].filter((s) => present.has(s));
+    return ["Offen", "Nicht erreicht", "Termin versäumt"].filter((s) => present.has(s));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sorted]);
   useEffect(() => {

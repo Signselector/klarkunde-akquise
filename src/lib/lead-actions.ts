@@ -101,7 +101,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
     label: "Rückruf",
     hint: "Neuen Anruf vereinbaren",
     color: ACTION_BUTTON,
-    needs: { note: "optional", schedule: "required" },
+    needs: { schedule: "required" },
   },
   {
     key: "reference_mail",
