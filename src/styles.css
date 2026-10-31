@@ -147,3 +147,30 @@
     color: var(--color-foreground);
   }
 }
+
+/* Pipedrive-style week calendar */
+.cc-pd-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--foreground);
+  transition: background-color 120ms ease-out;
+}
+.cc-pd-filter:hover { background: var(--accent); }
+.cc-pd-filter--on {
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+.cc-pd-entry {
+  background: color-mix(in oklab, var(--primary) 11%, var(--card));
+  border-left: 3px solid var(--primary);
+  color: var(--foreground);
+  transition: background-color 120ms ease-out;
+}
+.cc-pd-entry:hover { background: color-mix(in oklab, var(--primary) 18%, var(--card)); }
+.cc-pd-entry--allday { border-left-width: 0; }
+.cc-pd-note { background: color-mix(in oklab, oklch(0.93 0.09 95) 70%, var(--card)); }

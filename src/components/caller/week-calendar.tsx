@@ -7,6 +7,7 @@ import {
   Flag,
   Mail,
   Phone,
+  StickyNote,
   Users,
   UtensilsCrossed,
   type LucideIcon,
@@ -440,7 +441,7 @@ export function EntryDetailCard({
       </div>
       {note && (
         <div className="cc-pd-note flex gap-4 border-y px-5 py-3">
-          <span className="mt-0.5 text-muted-foreground" aria-hidden="true">📝</span>
+          <StickyNote className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <p className="whitespace-pre-wrap break-words">{note}</p>
         </div>
       )}
