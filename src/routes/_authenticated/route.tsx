@@ -478,7 +478,8 @@ function LevelCard() {
   const { level, xp, xpNext, coins } = LEVEL_PLACEHOLDER;
   const fmt = (n: number) => n.toLocaleString("de-DE");
   return (
-    <div className="cc-level" aria-label="Level und Coins (Platzhalter)">
+    <div className="cc-level cc-level-soon" aria-label="Level und Coins, kommt bald">
+      <span className="cc-soon-badge">Kommt bald</span>
       <div className="cc-level-row">
         <strong>Level {level}</strong>
         <span>

@@ -1,31 +1,13 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { backendEnabled, backendRpc } from "@/lib/backend";
-import {
-  Building2,
-  CalendarCheck,
-  ChevronLeft,
-  ChevronRight,
-  CircleCheck,
-  Crown,
-  Mail,
-  Phone,
-  PhoneMissed,
-  Target,
-  Trophy,
-  Users,
-  X,
-  ChartNoAxesColumn,
-} from "@/components/coldcaller/icons";
+import { CalendarCheck } from "@/components/coldcaller/icons";
 import { FeedbackState, InfoButton } from "@/components/coldcaller/primitives";
 import {
   formatNumber,
   formatPer100,
   monthStart,
   per100Delta,
-  weekLabel,
-  weekStart,
 } from "@/lib/dashboard";
 import { currentMonth, monthLabel, shiftMonth } from "@/lib/monthly-stats";
 import { useMonthlyCallGoal } from "@/lib/goals";
@@ -54,13 +36,6 @@ type TeamMetrics = {
   leads_contributed: number | null;
   synced_at: string;
 } | null;
-type Ranking = {
-  week_start: string;
-  week_end: string;
-  final: boolean;
-  rows: { rank: number; user_id: string; name: string; points: number; is_me: boolean }[];
-  me: { rank: number | null; points: number };
-};
 
 const VIENNA_TODAY = () =>
   new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Vienna" }).format(new Date());
@@ -74,14 +49,6 @@ function useDay(userId: string) {
     queryFn: async () => (await backendRpc("get_caller_day", {})) as unknown as Day,
   });
 }
-
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join("");
 
 function BentoCard({
   className = "",
@@ -136,7 +103,6 @@ export function CallerPerformance({
   name?: string | null | undefined;
 }) {
   const day = useDay(userId);
-  const [shift, setShift] = useState(0);
   const last = shiftMonth(currentMonth(), -1);
 
   // The last six completed months, oldest first, for the bars of the monthly figure.
@@ -159,14 +125,6 @@ export function CallerPerformance({
     enabled: backendEnabled,
     queryFn: async () =>
       (await backendRpc("get_team_metrics", {} as never)) as unknown as TeamMetrics,
-  });
-  const start = weekStart(new Date(`${VIENNA_TODAY()}T12:00:00Z`), shift);
-  const ranking = useQuery({
-    queryKey: ["weekly-ranking", userId, start],
-    enabled: backendEnabled,
-    refetchInterval: shift === 0 ? 60_000 : false,
-    queryFn: async () =>
-      (await backendRpc("get_weekly_ranking", { p_week: start })) as unknown as Ranking,
   });
 
   const t = team.data;
@@ -193,7 +151,6 @@ export function CallerPerformance({
       : t
         ? `${what} · ${monthLabel({ year: Number(t.period.slice(0, 4)), month: Number(t.period.slice(5, 7)) })}`
         : "Team Management noch nicht verbunden";
-  const data = ranking.data;
 
   return (
     <>
@@ -344,69 +301,12 @@ export function CallerPerformance({
           )}
         </BentoCard>
 
-        <BentoCard
-          className="cc-b-rank"
-          title="Wochenrangliste"
-          meta={
-            <>
-              <span>{weekLabel(start)}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                aria-label="Vorherige Woche"
-                onClick={() => setShift(shift - 1)}
-              >
-                <ChevronLeft size={16} />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                aria-label="Nächste Woche"
-                disabled={shift === 0}
-                onClick={() => setShift(shift + 1)}
-              >
-                <ChevronRight size={16} />
-              </Button>
-            </>
-          }
-          index={5}
-        >
-          {ranking.isLoading ? (
-            <FeedbackState kind="loading" title="Rangliste wird geladen" />
-          ) : ranking.isError || !data ? (
-            <FeedbackState
-              kind="error"
-              title="Rangliste nicht verfügbar"
-              action={<Button onClick={() => void ranking.refetch()}>Erneut versuchen</Button>}
-            />
-          ) : data.rows.length === 0 ? (
-            <FeedbackState kind="empty" title="Noch keine Punkte in dieser Woche">
-              Die Rangliste füllt sich, sobald das Punktesystem Punkte vergibt. Jede Woche beginnt
-              neu, frühere Wochen bleiben gespeichert.
-            </FeedbackState>
-          ) : (
-            <>
-              <ol className="cc-rank">
-                {data.rows.map((row) => (
-                  <li key={row.user_id} className={row.is_me ? "cc-rank-me" : ""}>
-                    <span className={`cc-rank-pos${row.rank === 1 ? " gold" : ""}`}>
-                      {row.rank}
-                    </span>
-                    <span className="cc-rank-avatar">{initials(row.name)}</span>
-                    <span className="cc-rank-name">
-                      {row.is_me ? `${row.name} (du)` : row.name}
-                    </span>
-                    <span className="cc-rank-pts">{formatNumber(row.points)}</span>
-                  </li>
-                ))}
-              </ol>
-              <p className="cc-pills-note">
-                {data.me.rank !== null
-                  ? `Deine Platzierung: ${data.me.rank} · ${formatNumber(data.me.points)} Punkte`
-                  : "Du hast in dieser Woche noch keine Punkte."}
-              </p>
-            </>
-          )}
+        <BentoCard className="cc-b-rank" title="Wochenrangliste" index={5}>
+          {/* The points system follows later: the ranking is shown as "coming soon" until then. */}
+          <div className="cc-soon-panel">
+            <span className="cc-soon-badge">Kommt bald</span>
+            <p>Die Wochenrangliste folgt, sobald das Punktesystem startet.</p>
+          </div>
         </BentoCard>
       </div>
     </>
