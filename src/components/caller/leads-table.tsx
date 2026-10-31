@@ -204,7 +204,7 @@ export function LeadsTable({
           </thead>
           <>
             {leads.map((l) => (
-              <tbody key={l.id} className="border-t first:border-t-0 hover:bg-muted/40">
+              <tbody key={l.id} className="cc-lead-group border-t first:border-t-0">
               <tr
                 className="cc-row-link align-top"
                 onClick={() => onOpen(l.id)}

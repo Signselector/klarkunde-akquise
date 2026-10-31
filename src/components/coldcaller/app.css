@@ -1336,3 +1336,11 @@
   gap: 6px;
   font-size: 13px;
 }
+
+/* A lead of the list is two rows (data and result buttons): the hover colour covers both. */
+.cc-theme table tbody.cc-lead-group tr:hover {
+  background: transparent;
+}
+.cc-theme table tbody.cc-lead-group:hover {
+  background: var(--cc-accent-soft);
+}
