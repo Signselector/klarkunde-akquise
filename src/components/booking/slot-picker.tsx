@@ -192,9 +192,7 @@ export function SlotPicker({
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
-        {kind === "appointment"
-          ? "Ein Punkt markiert einen bereits angelegten Termin."
-          : `Ein Rückruf belegt ${slotDurationMinutes("callback")} Minuten und ist nur für dich sichtbar. Zeiten, zu denen du bereits einen Termin oder Rückruf hast, sind gesperrt.`}
+        {kind === "appointment" ? "Ein Punkt markiert einen bereits angelegten Termin." : null}
       </p>
       <div className="flex items-center justify-between gap-2 text-sm">
         <span aria-live="polite">

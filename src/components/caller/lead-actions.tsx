@@ -572,10 +572,6 @@ export function LeadActions({
                 placeholder="Monat wählen …"
                 options={monthOptions().map((m) => ({ value: m.value, label: m.label }))}
               />
-              <span className="mt-1 block text-xs text-muted-foreground">
-                Sobald dieser Monat beginnt, wird der Lead als Deal in der Stage „Zukünftiges
-                Interesse“ im CRM gespeichert.
-              </span>
             </label>
           )}
           {(current.needs.schedule || current.needs.appointment) &&

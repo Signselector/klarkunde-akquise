@@ -204,7 +204,7 @@ export function LeadsTable({
           </thead>
           <>
             {leads.map((l) => (
-              <tbody key={l.id} className="cc-lead-group border-t first:border-t-0">
+              <tbody key={l.id} className="cc-lead-group select-none border-t first:border-t-0">
               <tr
                 className="cc-row-link align-top"
                 onClick={() => onOpen(l.id)}
@@ -228,14 +228,16 @@ export function LeadsTable({
                         {l.attempts} {l.attempts === 1 ? "Versuch" : "Versuche"}
                       </span>
                     )}
-                    <button
-                      type="button"
-                      className="cc-record-btn"
-                      onClick={() => onOpen(l.id)}
-                      aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
-                    >
-                      Kundenakte
-                    </button>
+                    {!quickActions && (
+                      <button
+                        type="button"
+                        className="cc-record-btn"
+                        onClick={() => onOpen(l.id)}
+                        aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
+                      >
+                        Kundenakte
+                      </button>
+                    )}
                   </div>
                 </td>
                 {processed && (
@@ -279,14 +281,16 @@ export function LeadsTable({
               </p>
             )}
             <Address lead={l} />
-            <button
-              type="button"
-              className="cc-record-btn"
-              onClick={() => onOpen(l.id)}
-              aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
-            >
-              Kundenakte
-            </button>
+            {!quickActions && (
+              <button
+                type="button"
+                className="cc-record-btn"
+                onClick={() => onOpen(l.id)}
+                aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
+              >
+                Kundenakte
+              </button>
+            )}
             {quickActions && <QuickActions lead={l} onOpen={onOpen} />}
           </li>
         ))}

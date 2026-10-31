@@ -50,12 +50,14 @@ export function LeadQuickDialog({
   const l = lead.data;
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="cc-theme max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="cc-theme max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{l?.company || "Lead"}</DialogTitle>
-          <DialogDescription>
-            {intent?.action ? (ACTION_LABEL[intent.action] ?? "Gesprächsergebnis") : "Kundendaten bearbeiten"}
-          </DialogDescription>
+          {intent?.action ? (
+            <DialogDescription className="sr-only">{ACTION_LABEL[intent.action] ?? "Gesprächsergebnis"}</DialogDescription>
+          ) : (
+            <DialogDescription>Kundendaten bearbeiten</DialogDescription>
+          )}
         </DialogHeader>
         {lead.isLoading && <FeedbackState kind="loading" title="Lead wird geladen" />}
         {!lead.isLoading && !l && (
