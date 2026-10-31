@@ -608,7 +608,7 @@ export function LeadActions({
           {current.needs.note && (
             <label className="block text-sm">
               Gesprächsnotiz{current.needs.note === "required" ? " (Pflicht)" : " (optional)"}
-              <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
+              <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={8} />
             </label>
           )}
           <div className="flex gap-2">
