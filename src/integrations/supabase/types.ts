@@ -2016,6 +2016,7 @@ export type Database = {
       }
       upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
       user_role: { Args: { _uid: string }; Returns: string }
+      verify_reconcile_token: { Args: { p_token: string }; Returns: boolean }
       view_as_target: { Args: never; Returns: string }
     }
     Enums: {
