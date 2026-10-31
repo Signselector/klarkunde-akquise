@@ -2,6 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { gatewayClient } from "@/lib/crm-sync.functions";
 import { CrmError } from "@/lib/crm-sync";
+import { buildReviewTask, highPriorityId } from "@/lib/review-task";
+
+// Pipedrive's id of the priority "High" per country, looked up once.
+const priorityCache = new Map<string, number | null>();
 
 export type ShowroomOutcome =
   | "no_show"
@@ -31,7 +35,7 @@ const iso = (v: unknown) => (typeof v === "string" && !Number.isNaN(Date.parse(v
 export const recordAppointmentOutcome = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (d: { appointmentId: string; outcome: ShowroomOutcome; note: string; newStart?: string | null; followupAt?: string | null }) => {
+    (d: { appointmentId: string; outcome: ShowroomOutcome; note: string; newStart?: string | null; followupAt?: string | null; highPriority?: boolean }) => {
       if (!d || typeof d.appointmentId !== "string" || !/^[0-9a-f-]{36}$/i.test(d.appointmentId)) throw new Error("invalid");
       if (!OUTCOMES.includes(d.outcome) || typeof d.note !== "string") throw new Error("invalid");
       return d;
@@ -62,12 +66,13 @@ export const recordAppointmentOutcome = createServerFn({ method: "POST" })
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     let state: "synced" | "simulated" | "no_deal" | "error" = r.deal_id ? "synced" : "no_deal";
     let problem: string | null = null;
+    let priority: "set" | "none" | "unavailable" = "none";
     if (r.deal_id) {
       const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
       if (config?.test_mode !== false) state = "simulated";
       else {
         try {
-          const { json } = gatewayClient(r.country);
+          const { call, json } = gatewayClient(r.country);
           await json("POST", "/notes", { content: `${r.label}\n\n${data.note.trim()}`, deal_id: r.deal_id });
           if (r.stage_key) {
             const { data: map } = await db
@@ -81,14 +86,20 @@ export const recordAppointmentOutcome = createServerFn({ method: "POST" })
             await db.from("lead_crm_links").update({ current_stage_id: stageId }).eq("lead_id", r.lead_id!);
           }
           if (TASK_OUTCOMES.includes(data.outcome)) {
-            await json("POST", "/activities", {
-              subject: `${r.label}: ${r.company ?? "Kunde"}`,
-              type: "task",
-              deal_id: r.deal_id,
-              note: data.note.trim(),
-              due_date: new Date().toISOString().slice(0, 10),
-              done: 0,
-            });
+            let priorityId: number | null = null;
+            if (data.highPriority) {
+              if (!priorityCache.has(r.country)) {
+                try {
+                  const fields = await call("/activityFields", { method: "GET" });
+                  priorityCache.set(r.country, highPriorityId(fields.data));
+                } catch {
+                  // The task is created anyway, only without priority.
+                }
+              }
+              priorityId = priorityCache.get(r.country) ?? null;
+              priority = priorityId === null ? "unavailable" : "set";
+            }
+            await json("POST", "/activities", buildReviewTask({ dealId: r.deal_id, note: data.note.trim(), priorityId }));
           }
         } catch (e) {
           state = "error";
@@ -121,5 +132,5 @@ export const recordAppointmentOutcome = createServerFn({ method: "POST" })
         // The scheduled sync picks it up.
       }
     }
-    return { state, error: problem, followupId: r.followup_id, stageKey: r.stage_key };
+    return { state, error: problem, followupId: r.followup_id, stageKey: r.stage_key, priority };
   });

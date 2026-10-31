@@ -7,6 +7,7 @@ import { Phone } from "@/components/coldcaller/icons";
 import { SlotPicker } from "@/components/booking/slot-picker";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Reveal } from "@/components/ui/reveal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCountry } from "@/lib/country";
@@ -63,6 +64,7 @@ export function ShowroomResults({
   const [active, setActive] = useState<ShowroomOutcome | null>(null);
   const [note, setNote] = useState("");
   const [when, setWhen] = useState<string | null>(null);
+  const [highPriority, setHighPriority] = useState(false);
   const [busy, setBusy] = useState(false);
 
   if (appointment.outcome)
@@ -82,6 +84,7 @@ export function ShowroomResults({
   const started = new Date(appointment.startsAt).getTime() <= Date.now();
   const needsStart = (k: ShowroomOutcome) => k !== "deleted" && k !== "rescheduled";
   const current = OPTIONS.find((o) => o.key === active) ?? null;
+  const makesTask = active === "deleted" || active === "low_interest" || active === "medium_interest" || active === "high_interest";
   const interest = active === "low_interest" || active === "medium_interest" || active === "high_interest";
 
   function pick(key: ShowroomOutcome) {
@@ -89,6 +92,7 @@ export function ShowroomResults({
     setActive(key);
     setNote("");
     setWhen(null);
+    setHighPriority(false);
   }
 
   async function submit() {
@@ -110,6 +114,7 @@ export function ShowroomResults({
           note: note.trim(),
           newStart: current.key === "rescheduled" ? when : null,
           followupAt: interest ? when : null,
+          highPriority: makesTask && highPriority,
         },
       });
       toast.success(
@@ -119,6 +124,8 @@ export function ShowroomResults({
             ? "Termin verschoben. Der Eintrag in Pipedrive wird angepasst."
             : `Ergebnis „${current.label}“ gespeichert.`,
       );
+      if (r.priority === "unavailable")
+        toast.warning("Die Aufgabe ist angelegt, aber die Priorität „Hoch“ konnte in Pipedrive nicht gesetzt werden (Feld „Priorität“ nicht gefunden).");
       if (r.state === "error")
         toast.error(PIPEDRIVE_PROBLEM[r.error ?? ""] ?? "Die Übertragung an Pipedrive ist fehlgeschlagen. Das Ergebnis ist gespeichert.");
       else if (r.state === "no_deal")
@@ -221,6 +228,17 @@ export function ShowroomResults({
               </p>
               <SlotPicker kind="appointment" country={country} value={when} onChange={setWhen} />
             </Reveal>
+          )}
+          {makesTask && (
+            <label className="flex min-h-11 items-center justify-between gap-3 rounded-md border p-3 text-sm">
+              <span>
+                <span className="block font-medium">Hohe Priorität</span>
+                <span className="block text-xs text-muted-foreground">
+                  Die Aufgabe „Termin Review“ in Pipedrive bekommt die Priorität „Hoch“. Aus: keine Priorität.
+                </span>
+              </span>
+              <Switch checked={highPriority} onCheckedChange={setHighPriority} aria-label="Hohe Priorität" />
+            </label>
           )}
           <div className="flex gap-2">
             <Button type="submit" disabled={busy} variant={current.key === "deleted" ? "destructive" : "default"}>

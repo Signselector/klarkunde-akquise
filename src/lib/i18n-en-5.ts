@@ -1,5 +1,8 @@
 /** English texts, part 5: showroom results. */
 export const EN_5: Record<string, string> = {
+  "Hohe Priorität": "High priority",
+  "Die Aufgabe „Termin Review“ in Pipedrive bekommt die Priorität „Hoch“. Aus: keine Priorität.": "The task “Termin Review” in Pipedrive gets the priority “High”. Off: no priority.",
+  "Die Aufgabe ist angelegt, aber die Priorität „Hoch“ konnte in Pipedrive nicht gesetzt werden (Feld „Priorität“ nicht gefunden).": "The task was created, but the priority “High” could not be set in Pipedrive (field “Priority” not found).",
   "Neu für dich": "New for you",
   "Neuer Termin zugewiesen": "New appointment assigned",
   "Termin öffnen": "Open appointment",
