@@ -95,9 +95,6 @@ async function databaseStore(userId: string, country: string): Promise<CalendarS
       const deals = await dealIds(
         (aps.data ?? []).map((r) => r.lead_id).filter((v): v is string => !!v),
       );
-      const who = (
-        l: { company: string | null; contact_name: string | null; phone: string | null } | null,
-      ) => (l ? [l.contact_name, l.phone].filter(Boolean).join(" · ") || null : null);
       return [
         ...(aps.data ?? []).map((a): CalItem => ({
           kind: "appointment",
