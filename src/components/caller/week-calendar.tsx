@@ -347,7 +347,7 @@ export function WeekCalendar({
           <div className="grid grid-cols-[64px_repeat(7,minmax(0,1fr))] border-b">
             <div />
             {days.map((d) => (
-              <div key={d.toISOString()} className="flex min-w-0 flex-col gap-1 border-l p-1.5">
+              <div key={d.toISOString()} className="flex max-h-[132px] min-w-0 flex-col gap-1 overflow-y-auto border-l p-1.5">
                 {untimed(d).map((e) => entryButton(e))}
               </div>
             ))}

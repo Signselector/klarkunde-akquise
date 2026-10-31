@@ -171,6 +171,9 @@
   color: var(--pd);
 }
 .cc-pd-entry {
+  border-radius: 4px !important;
+  min-height: 0 !important;
+  box-shadow: none !important;
   background: color-mix(in oklab, var(--pd) 12%, var(--card));
   border-left: 3px solid var(--pd);
   color: var(--foreground);
