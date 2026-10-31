@@ -1,9 +1,14 @@
-import { Mail, MapPin, Phone } from "@/components/coldcaller/icons";
+import { Mail, MapPin, Pencil, Phone } from "@/components/coldcaller/icons";
+import { ACTION_ICON } from "@/components/caller/action-icons";
+import { LEAD_ACTIONS, OUTCOME_TONES, type LeadActionKey } from "@/lib/lead-actions";
 import { parseLeadLinks } from "@/components/coldcaller/workspace-parts";
 import { StatusBadge } from "@/components/coldcaller/primitives";
 import type { Tone } from "@/components/coldcaller/primitives";
 import { STATUS_LABEL } from "@/lib/leads";
 import type { Json } from "@/integrations/supabase/types";
+
+/** What the caller wants to do when the customer file opens: record a result, or correct the customer data. */
+export type LeadIntent = { action?: LeadActionKey; edit?: boolean };
 
 export type TableLead = {
   id: string;
@@ -131,6 +136,36 @@ function Address({ lead }: { lead: TableLead }) {
 
 const dateFormat = new Intl.DateTimeFormat("de-DE", { dateStyle: "short", timeStyle: "short" });
 
+/** The result buttons and "Daten bearbeiten" below a lead; a click opens the customer file at that step. */
+function QuickActions({ lead, onOpen }: { lead: TableLead; onOpen: (id: string, intent?: LeadIntent) => void }) {
+  const go = (e: React.MouseEvent, intent: LeadIntent) => {
+    e.stopPropagation();
+    onOpen(lead.id, intent);
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label={`Ergebnis für ${lead.company || "Ohne Firmenname"}`}>
+      {LEAD_ACTIONS.map((a, position) => {
+        const Icon = ACTION_ICON[a.key];
+        return (
+          <button
+            key={a.key}
+            type="button"
+            className={`cc-outcome-btn cc-outcome-btn--compact cc-outcome-btn--${OUTCOME_TONES[position] ?? "slate"}`}
+            onClick={(e) => go(e, { action: a.key })}
+          >
+            {Icon ? <Icon size={16} aria-hidden="true" /> : null}
+            <span>{a.label}</span>
+          </button>
+        );
+      })}
+      <button type="button" className="cc-outcome-btn cc-outcome-btn--compact" onClick={(e) => go(e, { edit: true })}>
+        <Pencil size={16} aria-hidden="true" />
+        <span>Daten bearbeiten</span>
+      </button>
+    </div>
+  );
+}
+
 /**
  * Lead table for the caller pages. `processed` swaps the status column for the
  * recorded result plus the last-processed time (completed leads).
@@ -140,11 +175,14 @@ export function LeadsTable({
   onOpen,
   resultLabel,
   processed = false,
+  quickActions = false,
 }: {
   leads: TableLead[];
-  onOpen: (id: string) => void;
+  onOpen: (id: string, intent?: LeadIntent) => void;
   resultLabel?: (lead: TableLead) => string;
   processed?: boolean;
+  /** Result buttons and "Daten bearbeiten" below every lead (Offene Leads). */
+  quickActions?: boolean;
 }) {
   const label = (l: TableLead) => resultLabel?.(l) ?? STATUS_LABEL[l.status] ?? l.status;
   return (
@@ -164,11 +202,11 @@ export function LeadsTable({
               {processed && <th className="px-2 py-3 font-medium">Bearbeitet</th>}
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <>
             {leads.map((l) => (
+              <tbody key={l.id} className="border-t first:border-t-0 hover:bg-muted/40">
               <tr
-                key={l.id}
-                className="cc-row-link align-top hover:bg-muted/40"
+                className="cc-row-link align-top"
                 onClick={() => onOpen(l.id)}
               >
                 <td className="px-4 py-4 font-medium">{l.company || "Ohne Firmenname"}</td>
@@ -206,8 +244,19 @@ export function LeadsTable({
                   </td>
                 )}
               </tr>
+              {quickActions && (
+                <tr className="cc-row-link" onClick={() => onOpen(l.id)}>
+                  <td colSpan={processed ? 7 : 6} className="px-4 pb-4 pt-0 whitespace-normal">
+                    {/* Zero width, full minimum width: the buttons wrap inside the table instead of widening it. */}
+                    <div className="w-0 min-w-full">
+                      <QuickActions lead={l} onOpen={onOpen} />
+                    </div>
+                  </td>
+                </tr>
+              )}
+              </tbody>
             ))}
-          </tbody>
+          </>
         </table>
       </div>
       <ul className="divide-y md:hidden">
@@ -238,6 +287,7 @@ export function LeadsTable({
             >
               Kundenakte
             </button>
+            {quickActions && <QuickActions lead={l} onOpen={onOpen} />}
           </li>
         ))}
       </ul>

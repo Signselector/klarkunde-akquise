@@ -1327,3 +1327,12 @@
   background: var(--o-solid);
   border-color: var(--o-solid);
 }
+
+/* Result buttons inside the lead list: smaller and only as wide as their text. */
+.cc-outcome-btn.cc-outcome-btn--compact {
+  width: auto;
+  min-height: 36px;
+  padding: 4px 12px;
+  gap: 6px;
+  font-size: 13px;
+}

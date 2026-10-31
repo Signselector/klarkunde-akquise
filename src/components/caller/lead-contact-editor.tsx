@@ -28,11 +28,14 @@ const MESSAGES: Record<string, string> = {
 export function LeadContactEditor({
   lead,
   onSaved,
+  startEditing = false,
 }: {
   lead: Tables<"leads">;
   onSaved: () => void;
+  /** Open the form right away ("Daten bearbeiten" in the lead list). */
+  startEditing?: boolean;
 }) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(startEditing);
   const [busy, setBusy] = useState(false);
   const initial = () => ({
     company: lead.company ?? "",

@@ -1,5 +1,5 @@
 import { LeadDialog } from "@/components/caller/lead-dialog";
-import { LeadsTable } from "@/components/caller/leads-table";
+import { LeadsTable, type LeadIntent } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
 import { orderOpenLeads, STATUS_LABEL } from "@/lib/leads";
 import { backendEnabled } from "@/lib/backend";
@@ -40,6 +40,8 @@ function LeadsPage() {
   const [batch, setBatch] = useState("all");
   const [status, setStatus] = useState("all");
   const [openId, setOpenId] = useState<string | null>(null);
+  // Set when a result button or "Daten bearbeiten" of the list was clicked: the file opens at that step.
+  const [intent, setIntent] = useState<LeadIntent | null>(null);
   useEffect(() => {
     setBatch("all");
   }, [country]);
@@ -273,7 +275,15 @@ function LeadsPage() {
               : "Passe deine Suche oder die Filter an."}
           </FeedbackState>
         ) : (
-          <LeadsTable leads={leads ?? []} onOpen={setOpenId} resultLabel={labelOf} />
+          <LeadsTable
+            leads={leads ?? []}
+            quickActions
+            onOpen={(id, it) => {
+              setIntent(it ?? null);
+              setOpenId(id);
+            }}
+            resultLabel={labelOf}
+          />
         )}
         {leads && leads.length === 300 && (
           <p className="cc-list-caption pt-4">
@@ -285,8 +295,15 @@ function LeadsPage() {
         leadId={openId}
         userId={user.id}
         leadIds={(leads ?? []).map((l) => l.id)}
-        onNavigate={setOpenId}
-        onClose={() => setOpenId(null)}
+        intent={intent}
+        onNavigate={(id) => {
+          setIntent(null);
+          setOpenId(id);
+        }}
+        onClose={() => {
+          setIntent(null);
+          setOpenId(null);
+        }}
       />
     </div>
   );

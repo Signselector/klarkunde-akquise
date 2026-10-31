@@ -22,19 +22,9 @@ import {
   type LeadAction,
   type LeadActionKey,
 } from "@/lib/lead-actions";
-import { Calendar, Clock } from "lucide-react";
-import { Box, ImageIcon, Mail, Phone, PhoneMissed, X } from "@/components/coldcaller/icons";
+import { Phone } from "@/components/coldcaller/icons";
+import { ACTION_ICON } from "@/components/caller/action-icons";
 
-const ACTION_ICON: Record<string, typeof Mail> = {
-  low_q: ImageIcon,
-  high_q: Box,
-  waiting_3d: Clock,
-  no_interest: X,
-  on_hold: Calendar,
-  callback: Phone,
-  reference_mail: Mail,
-  not_reached: PhoneMissed,
-};
 import { SuccessBanner } from "@/components/coldcaller/success-banner";
 import { SlotPicker } from "@/components/booking/slot-picker";
 import { dateValue, timeValue } from "@/lib/booking-slots";
@@ -129,7 +119,10 @@ export function LeadActions({
   userId,
   callerName,
   onDone,
+  initialAction = null,
 }: {
+  /** Result to open right away (a result button of the lead list). */
+  initialAction?: LeadActionKey | null;
   lead: Tables<"leads">;
   userId: string;
   callerName: string;
@@ -257,6 +250,13 @@ export function LeadActions({
     // Every outcome has to be confirmed with the button below the form.
     setActive(action.key);
   }
+
+  // Opened from a result button of the list: start at that result's form.
+  useEffect(() => {
+    const first = initialAction ? LEAD_ACTIONS.find((a) => a.key === initialAction) : null;
+    if (first) open(first);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function refreshLists() {
     void qc.invalidateQueries({ queryKey: ["leads"] });

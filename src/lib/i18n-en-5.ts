@@ -1,5 +1,7 @@
 /** English texts, part 5: showroom results. */
 export const EN_5: Record<string, string> = {
+  "Daten bearbeiten": "Edit data",
+  "Ergebnis für {}": "Result for {}",
   "Dashboard-Kennzahlen von {}": "Dashboard figures of {}",
   "Dieselben Zahlen, die {} im eigenen Dashboard sieht. Die Anzahlen gelten für den gewählten Zeitraum, die drei Monatswerte für den zuletzt abgeschlossenen Monat.": "The same numbers {} sees in their own dashboard. The counts apply to the chosen period, the three monthly values to the last completed month.",
   "Bearbeitete Leads": "Processed leads",
