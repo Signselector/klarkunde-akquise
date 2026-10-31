@@ -196,7 +196,7 @@ export function LeadsTable({
               <th className="px-2 py-3 font-medium">Website</th>
               <th className="px-2 py-3 font-medium">Stadt</th>
               <th className="px-2 py-3 font-medium">Adresse</th>
-              <th className="px-2 py-3 text-center font-medium">
+              <th className="px-4 py-3 font-medium">
                 {processed ? "Ergebnis" : "Status"}
               </th>
               {processed && <th className="px-2 py-3 font-medium">Bearbeitet</th>}
@@ -221,7 +221,7 @@ export function LeadsTable({
                   <Address lead={l} />
                 </td>
                 <td className="min-w-[10rem] px-4 py-4">
-                  <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="flex flex-col items-start gap-2">
                     <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
                     {l.attempts > 0 && (
                       <span className="text-xs text-muted-foreground">
