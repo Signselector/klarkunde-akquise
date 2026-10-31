@@ -254,6 +254,7 @@ function AppointmentsPage() {
     if (!e) return null;
     const pd = "pd" in e && e.pd ? e.pd : null;
     const lead = e.lead;
+    const leadId = "lead_id" in e ? e.lead_id : null;
     const note = pd
       ? e.notes
       : [
@@ -314,13 +315,13 @@ function AppointmentsPage() {
                   Bearbeiten
                 </Button>
               )}
-              {!pd && e.lead_id && (
+              {!pd && leadId && (
                 <Button
                   variant="outline"
                   onClick={() => {
                     close();
                     setFileAppt({ id: e.id, title: entry.title, startsAt: e.starts_at, outcome: ("outcome" in e ? e.outcome : null) ?? null });
-                    setFileLead(e.lead_id);
+                    setFileLead(leadId);
                   }}
                 >
                   Kundenakte
