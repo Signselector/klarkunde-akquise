@@ -115,8 +115,9 @@ export function SlotPicker({
   const end = chosen !== null ? new Date(chosen + slotDurationMinutes(kind) * 60_000) : null;
 
   return (
-    <div className="space-y-3 rounded-[10px] border p-3" data-slot-picker={kind}>
-      <div className="flex flex-col gap-3">
+    <div className="@container space-y-3 rounded-[10px] border p-3" data-slot-picker={kind}>
+      {/* Date on the left, times on the right (stacked when the space is narrow). */}
+      <div className="flex flex-col gap-4 @lg:flex-row @lg:items-start">
         <Calendar
           mode="single"
           selected={day}
@@ -129,7 +130,7 @@ export function SlotPicker({
           disabled={[{ before: today }, ...(disabled ? [() => true] : [])]}
           weekStartsOn={1}
           locale={de}
-          className="mx-auto shrink-0 rounded-md border p-2"
+          className="mx-auto shrink-0 rounded-md border p-2 @lg:mx-0"
         />
         <div className="min-w-0 flex-1">
           <p className="mb-2 text-sm font-medium">
@@ -137,7 +138,7 @@ export function SlotPicker({
           </p>
           {day && (
             <div
-              className="grid grid-cols-4 gap-1.5 sm:grid-cols-6 md:grid-cols-8"
+              className="grid grid-cols-3 gap-1.5 @sm:grid-cols-4"
               role="listbox"
               aria-label="Uhrzeit wählen"
               aria-busy={availability.isFetching}
@@ -192,7 +193,7 @@ export function SlotPicker({
       </div>
       <p className="text-xs text-muted-foreground">
         {kind === "appointment"
-          ? `Ein Termin dauert ${slotDurationMinutes("appointment")} Minuten, gleichzeitig ${appointmentCapacity(country) === 1 ? "ist höchstens 1 Termin" : `sind höchstens ${appointmentCapacity(country)}`} möglich. Termine sind frühestens in ${minLeadDays} Tagen buchbar. Ein Punkt markiert einen Zeitpunkt, an dem schon ein Termin liegt.`
+          ? "Ein Punkt markiert einen bereits angelegten Termin."
           : `Ein Rückruf belegt ${slotDurationMinutes("callback")} Minuten und ist nur für dich sichtbar. Zeiten, zu denen du bereits einen Termin oder Rückruf hast, sind gesperrt.`}
       </p>
       <div className="flex items-center justify-between gap-2 text-sm">

@@ -1,5 +1,6 @@
 /** English texts, part 5: showroom results. */
 export const EN_5: Record<string, string> = {
+  "Ein Punkt markiert einen bereits angelegten Termin.": "A dot marks an appointment that already exists.",
   "Kommt bald": "Coming soon",
   "Die Wochenrangliste folgt, sobald das Punktesystem startet.": "The weekly ranking follows as soon as the points system starts.",
   "Level und Coins, kommt bald": "Level and coins, coming soon",
