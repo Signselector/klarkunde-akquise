@@ -396,10 +396,10 @@ export function WeekCalendar({
             {/* current time */}
             {thisWeek && (
               <div className="pointer-events-none absolute inset-x-0 z-10" style={{ top: nowTop }} aria-hidden="true">
-                <div className="relative h-px bg-destructive" style={{ marginLeft: 60 }}>
-                  <span className="absolute -left-[3px] -top-[3px] size-[7px] rounded-full bg-destructive" />
+                <div className="cc-pd-now relative h-[2px]" style={{ marginLeft: 60 }}>
+                  <span className="cc-pd-now absolute -left-[3px] -top-[3px] size-2 rounded-full" />
                 </div>
-                <span className="absolute left-1 -top-2 bg-card px-0.5 text-[11px] font-semibold text-destructive tabular-nums">
+                <span className="cc-pd-now-label absolute left-0 -top-2 w-[58px] bg-card pr-1 text-right text-[11px] font-semibold tabular-nums">
                   {time.format(now)}
                 </span>
               </div>

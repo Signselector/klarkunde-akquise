@@ -151,6 +151,8 @@
 /* Pipedrive-style week calendar */
 .cc-pd-cal { --pd: oklch(0.55 0.16 258); --pd-on: oklch(0.99 0 0); }
 .dark .cc-pd-cal { --pd: oklch(0.7 0.14 258); --pd-on: oklch(0.15 0 0); }
+.cc-pd-now { background: oklch(0.6 0.22 27); }
+.cc-pd-now-label { color: oklch(0.55 0.22 27); }
 .cc-pd-today { background: var(--pd); color: var(--pd-on); }
 .cc-pd-filter {
   display: inline-flex;
