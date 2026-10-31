@@ -193,7 +193,7 @@ export function WeekCalendar({
         style={style}
         title={`${e.title} · ${fmtRange(e.at, e.durationMin)}`}
         className={cn(
-          "cc-pd-entry group flex w-full min-w-0 flex-col overflow-hidden rounded-[4px] px-2 py-1 text-left text-[13px] leading-tight",
+          "cc-pd-entry group flex w-full min-w-0 shrink-0 flex-col overflow-hidden rounded-[4px] px-2 py-1 text-left text-[13px] leading-tight",
           !e.allDay && "absolute",
           e.allDay && "cc-pd-entry--allday",
           past && "opacity-75",
