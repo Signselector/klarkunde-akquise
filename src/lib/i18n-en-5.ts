@@ -104,4 +104,6 @@ export const EN_5: Record<string, string> = {
   "Das Ergebnis konnte nicht gespeichert werden{}.": "The result could not be saved{}.",
   "Für diesen Termin ist das Ergebnis „{}“ erfasst.": "The result “{}” is recorded for this appointment.",
   "Ergebnis: {}": "Result: {}",
+  "Notizen ({})": "Notes ({})",
+  "Keine Notizen vorhanden.": "No notes available.",
 };

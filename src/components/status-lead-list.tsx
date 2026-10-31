@@ -237,6 +237,7 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
           leadId={selected}
           userId={userId}
           admin={roles.isGlobalAdmin}
+          foldHistory
           leadIds={rows.map((l) => l.lead_id)}
           onNavigate={setSelected}
           onClose={() => setSelected(null)}

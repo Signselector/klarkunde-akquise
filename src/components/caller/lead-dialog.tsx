@@ -22,6 +22,22 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+function Fold({ enabled, title, children }: { enabled: boolean; title: string; children: React.ReactNode }) {
+  if (!enabled)
+    return (
+      <div className="cc-detail-section">
+        <h3>{title}</h3>
+        {children}
+      </div>
+    );
+  return (
+    <details className="cc-detail-section cc-fold">
+      <summary className="cursor-pointer font-semibold">{title}</summary>
+      <div className="pt-2">{children}</div>
+    </details>
+  );
+}
+
 export function LeadDialog({
   leadId,
   userId,
@@ -29,7 +45,10 @@ export function LeadDialog({
   leadIds,
   onNavigate,
   appointment,
+  foldHistory = false,
 }: {
+  /** Completed leads: notes and history are folded and open on click. */
+  foldHistory?: boolean;
   /** Opened from an appointment: shows the showroom results instead of the call results. */
   appointment?: ShowroomAppointment | null;
   leadId: string | null;
@@ -81,6 +100,12 @@ export function LeadDialog({
       };
     },
   });
+  const noteEntries = [
+    ...(data?.actions ?? [])
+      .filter((a) => a.note?.trim())
+      .map((a) => ({ id: `a${a.id}`, at: a.created_at, label: ACTION_LABEL[a.action] ?? a.action, text: a.note as string })),
+    ...(data?.notes ?? []).map((n) => ({ id: `n${n.id}`, at: n.created_at, label: "", text: n.body })),
+  ].sort((x, y) => y.at.localeCompare(x.at));
   const callerName = useQuery({
     enabled: !!leadId && backendEnabled,
     queryKey: ["profile-name", userId],
@@ -203,8 +228,29 @@ export function LeadDialog({
                 onDone={afterAction}
               />
             )}
-            <div className="cc-detail-section">
-              <h3>Verlauf</h3>
+            {foldHistory && (
+              <details className="cc-detail-section cc-fold">
+                <summary className="cursor-pointer font-semibold">
+                  {`Notizen (${noteEntries.length})`}
+                </summary>
+                {noteEntries.length === 0 ? (
+                  <p className="pt-2 text-sm text-muted-foreground">Keine Notizen vorhanden.</p>
+                ) : (
+                  <ul className="cc-history pt-2">
+                    {noteEntries.map((n) => (
+                      <li key={n.id}>
+                        <span className="text-muted-foreground">
+                          {new Date(n.at).toLocaleString("de-DE")}
+                          {n.label ? ` · ${n.label}` : ""}:
+                        </span>{" "}
+                        <span className="whitespace-pre-wrap break-words">{n.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </details>
+            )}
+            <Fold enabled={foldHistory} title="Verlauf">
               <ul className="cc-history">
                 {data?.actions.map((a) => (
                   <li key={a.id}>
@@ -238,7 +284,7 @@ export function LeadDialog({
                   </li>
                 ))}
               </ul>
-            </div>
+            </Fold>
           </>
         )}
       </DialogContent>
