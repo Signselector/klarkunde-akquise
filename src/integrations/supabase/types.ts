@@ -1758,8 +1758,14 @@ export type Database = {
       freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
       get_batch_crm_objects: { Args: { p_batch_id: string }; Returns: Json }
       get_batch_progress: { Args: never; Returns: Json }
-      get_caller_day: { Args: { p_day?: string }; Returns: Json }
-      get_caller_month: { Args: { p_month?: string }; Returns: Json }
+      get_caller_day: {
+        Args: { p_day?: string; p_user?: string }
+        Returns: Json
+      }
+      get_caller_month: {
+        Args: { p_month?: string; p_user?: string }
+        Returns: Json
+      }
       get_caller_performance: {
         Args: {
           p_from: string
@@ -1788,8 +1794,20 @@ export type Database = {
         Args: { p_from: string; p_scope?: string; p_to: string }
         Returns: Json
       }
+      get_employee_stats: {
+        Args: {
+          p_country: string
+          p_from: string
+          p_to: string
+          p_user: string
+        }
+        Returns: Json
+      }
       get_future_projects_leads: { Args: { p_country: string }; Returns: Json }
-      get_monthly_quality: { Args: { p_month?: string }; Returns: Json }
+      get_monthly_quality: {
+        Args: { p_month?: string; p_user?: string }
+        Returns: Json
+      }
       get_my_customers: { Args: { p_country: string }; Returns: Json }
       get_no_interest_leads: { Args: { p_country: string }; Returns: Json }
       get_quality_issues: {
@@ -1806,7 +1824,7 @@ export type Database = {
         }
         Returns: Json
       }
-      get_team_metrics: { Args: never; Returns: Json }
+      get_team_metrics: { Args: { p_user?: string }; Returns: Json }
       get_unanswered_reference_leads: {
         Args: { p_country: string }
         Returns: Json

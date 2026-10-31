@@ -309,6 +309,13 @@
       "when": 1793460323268,
       "tag": "0043_release_batch_staff_only",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793461816736,
+      "tag": "0044_employee_metrics",
+      "breakpoints": true
     }
   ]
 }
