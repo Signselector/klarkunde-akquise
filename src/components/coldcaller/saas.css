@@ -2178,3 +2178,139 @@ tr:hover > .cc-sticky-action {
   height: 10px;
 }
 
+
+/* Appointment handed to a senior caller: bigger and darker than the normal notifications, same palette. */
+.cc-assign-toast {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: min(400px, calc(100vw - 32px));
+  padding: 20px 48px 20px 20px;
+  color: #fff;
+  background: #14171c;
+  border: 1px solid #2b2f36;
+  border-left: 5px solid #2563eb;
+  border-radius: 18px;
+  box-shadow:
+    0 22px 48px rgb(15 23 42 / 40%),
+    0 0 0 1px rgb(37 99 235 / 35%);
+  animation: cc-assign-in 280ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
+}
+@keyframes cc-assign-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.96);
+  }
+}
+.cc-assign-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #2563eb;
+  color: #fff;
+  animation: cc-assign-ring 1400ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) 200ms 1 both;
+}
+.cc-assign-icon svg {
+  width: 26px;
+  height: 26px;
+}
+@keyframes cc-assign-ring {
+  from {
+    box-shadow: 0 0 0 0 rgb(37 99 235 / 70%);
+  }
+  to {
+    box-shadow: 0 0 0 18px rgb(37 99 235 / 0%);
+  }
+}
+.cc-assign-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.cc-assign-text small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6c9bff;
+}
+.cc-assign-text strong {
+  font-size: 18px;
+  line-height: 1.2;
+}
+.cc-assign-company {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cc-assign-when {
+  font-size: 14px;
+  color: #c9c7cc;
+}
+.cc-assign-cta {
+  justify-self: start;
+  margin-top: 10px;
+  min-height: 38px;
+  padding: 0 18px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: #2563eb;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    transform 120ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
+}
+.cc-assign-cta:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cc-assign-cta:hover {
+    background: #1d4ed8;
+  }
+}
+.cc-assign-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #a3a9b4;
+  cursor: pointer;
+}
+.cc-assign-close svg {
+  width: 16px;
+  height: 16px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cc-assign-close:hover {
+    background: rgb(255 255 255 / 10%);
+    color: #fff;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-assign-toast {
+    animation: none;
+  }
+  .cc-assign-icon {
+    animation: none;
+  }
+}
+/* The appointment that was opened from the notification */
+.cc-focus-ring {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 22%);
+  transition: box-shadow 300ms ease;
+}

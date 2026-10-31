@@ -1,5 +1,9 @@
 /** English texts, part 5: showroom results. */
 export const EN_5: Record<string, string> = {
+  "Neu für dich": "New for you",
+  "Neuer Termin zugewiesen": "New appointment assigned",
+  "Termin öffnen": "Open appointment",
+  "{} Uhr": "{}",
   "Showroom-Ergebnisse": "Showroom results",
   "Kontaktdaten und Showroom-Ergebnis.": "Contact details and showroom result.",
   "Termin versäumt": "Appointment missed",

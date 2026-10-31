@@ -3,8 +3,8 @@ import { appointmentDotClass } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
 import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
 import { notifyShowroomFn } from "@/lib/showroom-sync.functions";
-import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Phone } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +36,9 @@ export const Route = createFileRoute("/_authenticated/appointments")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  // ?termin=<id> opens the page at the week and day of that appointment (used by the "Termin öffnen" button).
+  validateSearch: (search: Record<string, unknown>): { termin?: string } =>
+    typeof search["termin"] === "string" ? { termin: search["termin"] } : {},
   component: AppointmentsPage,
 });
 
@@ -65,6 +68,9 @@ function AppointmentsPage() {
   const [filter, setFilter] = useState<"all" | "tool" | "pipedrive">("all");
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [selected, setSelected] = useState<Date | null>(null);
+  const { termin } = Route.useSearch();
+  const navigateHere = useNavigate();
+  const [focusId, setFocusId] = useState<string | null>(null);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["appointments", country],
@@ -105,6 +111,20 @@ function AppointmentsPage() {
         : [];
     return [...own, ...fromPipedrive].sort((p, q) => p.date.getTime() - q.date.getTime());
   }, [data, external, mine, filter, user.id, roles.isStaff]);
+
+  // Jump to the appointment named in the address and mark it for a moment.
+  useEffect(() => {
+    if (!termin || !data) return;
+    const hit = data.find((a) => a.id === termin);
+    if (hit) {
+      const d = new Date(hit.starts_at);
+      setWeekStart(startOfWeek(d));
+      setSelected(d);
+      setFocusId(hit.id);
+      window.setTimeout(() => setFocusId((f) => (f === hit.id ? null : f)), 6000);
+    }
+    void navigateHere({ to: "/appointments", search: {}, replace: true });
+  }, [termin, data, navigateHere]);
 
   const team = useQuery({
     queryKey: ["appointment-team", country],
@@ -313,7 +333,10 @@ function AppointmentsPage() {
               list.map((e) => {
                 const heading = e.title ?? e.lead?.company ?? e.notes ?? "Termin";
                 return (
-                  <div key={e.id} className="flex items-start gap-3 rounded-md border p-3">
+                  <div
+                    key={e.id}
+                    className={cn("flex items-start gap-3 rounded-md border p-3", focusId === e.id && "cc-focus-ring")}
+                  >
                     <span className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", appointmentDotClass(e.date, "external" in e && !!e.external))} />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold">
