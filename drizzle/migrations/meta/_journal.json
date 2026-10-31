@@ -295,6 +295,20 @@
       "when": 1793390198047,
       "tag": "0041_showroom_rules",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1793460317855,
+      "tag": "0042_showroom_followup_optional",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793460323268,
+      "tag": "0043_release_batch_staff_only",
+      "breakpoints": true
     }
   ]
 }
