@@ -6,14 +6,19 @@ export const Route = createFileRoute("/api/pipedrive-reconcile")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        if (
-          !basicAuthOk(
-            request.headers.get("authorization"),
-            process.env["PIPEDRIVE_WEBHOOK_USER"],
-            process.env["PIPEDRIVE_WEBHOOK_PASSWORD"],
-          )
-        )
-          return new Response("unauthorized", { status: 401 });
+        const auth = request.headers.get("authorization");
+        let ok = basicAuthOk(
+          auth,
+          process.env["PIPEDRIVE_WEBHOOK_USER"],
+          process.env["PIPEDRIVE_WEBHOOK_PASSWORD"],
+        );
+        // Hourly database scheduler: bearer token that lives only in the database.
+        if (!ok && auth?.startsWith("Bearer ")) {
+          const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+          const { data } = await db.rpc("verify_reconcile_token", { p_token: auth.slice(7).trim() });
+          ok = data === true;
+        }
+        if (!ok) return new Response("unauthorized", { status: 401 });
         const { reconcileCountry } = await import("@/lib/crm-admin.functions");
         const results: Record<string, unknown> = {};
         for (const country of ["DE", "AT"]) {
