@@ -7,18 +7,19 @@ import { Phone } from "@/components/coldcaller/icons";
 import { SlotPicker } from "@/components/booking/slot-picker";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCountry } from "@/lib/country";
 import { recordAppointmentOutcome, type ShowroomOutcome } from "@/lib/appointment-outcome.functions";
 
 export type ShowroomAppointment = { id: string; title: string; startsAt: string; outcome: string | null };
 
-const OPTIONS: { key: ShowroomOutcome; label: string; icon: typeof Phone; hint: string }[] = [
-  { key: "no_show", label: "Termin nicht wahrgenommen", icon: UserX as never, hint: "Deal geht auf „No Show“. Der Lead geht an den ursprünglichen Caller zurück (Termin versäumt), er plant den Rückruf selbst. Erst ab Terminbeginn." },
-  { key: "low_interest", label: "Wenig interessiert", icon: ThumbsDown as never, hint: "Deal geht auf „Wenig Interesse“, Aufgabe am Deal, Folgetermin ist Pflicht. Erst ab Terminbeginn." },
-  { key: "medium_interest", label: "Mittleres Interesse", icon: Meh as never, hint: "Deal geht auf „Mittleres Interesse“, Aufgabe am Deal, Folgetermin ist Pflicht. Erst ab Terminbeginn." },
-  { key: "high_interest", label: "Sehr interessiert", icon: Flame as never, hint: "Deal geht auf „Sehr interessiert“, Aufgabe am Deal, Folgetermin ist Pflicht. Erst ab Terminbeginn." },
-  { key: "deleted", label: "Löschen", icon: Trash2 as never, hint: "Der Termin wird aus dem Kalender gelöscht, Aufgabe am Deal." },
-  { key: "rescheduled", label: "Verschieben", icon: CalendarClock as never, hint: "Der Termin bekommt eine neue Zeit (kein neuer Termin), Notiz am Deal." },
+const OPTIONS: { key: ShowroomOutcome; label: string; icon: typeof Phone; when: string; hint: string }[] = [
+  { key: "no_show", when: "Der Kunde ist nicht erschienen, hat nicht abgehoben oder war aus einem anderen Grund nicht da.", label: "Termin nicht wahrgenommen", icon: UserX as never, hint: "Deal geht auf „No Show“. Der Lead geht an den ursprünglichen Caller zurück (Termin versäumt), er plant den Rückruf selbst. Erst ab Terminbeginn." },
+  { key: "low_interest", when: "Der Kunde hat nur wenig Interesse.", label: "Wenig interessiert", icon: ThumbsDown as never, hint: "Deal geht auf „Wenig Interesse“, Aufgabe am Deal, Folgetermin ist Pflicht. Erst ab Terminbeginn." },
+  { key: "medium_interest", when: "Der Kunde hat mittleres Interesse.", label: "Mittleres Interesse", icon: Meh as never, hint: "Deal geht auf „Mittleres Interesse“, Aufgabe am Deal, Folgetermin ist Pflicht. Erst ab Terminbeginn." },
+  { key: "high_interest", when: "Der Kunde ist sehr interessiert.", label: "Sehr interessiert", icon: Flame as never, hint: "Deal geht auf „Sehr interessiert“, Aufgabe am Deal, Folgetermin ist Pflicht. Erst ab Terminbeginn." },
+  { key: "deleted", when: "Der Termin findet nicht statt, zum Beispiel weil der Kunde noch warten möchte.", label: "Löschen", icon: Trash2 as never, hint: "Der Termin wird aus dem Kalender gelöscht, Aufgabe am Deal." },
+  { key: "rescheduled", when: "Der Termin soll auf eine andere Zeit gelegt werden.", label: "Verschieben", icon: CalendarClock as never, hint: "Der Termin bekommt eine neue Zeit (kein neuer Termin), Notiz am Deal." },
 ];
 
 const OUTCOME_LABEL: Record<string, string> = {
@@ -146,25 +147,43 @@ export function ShowroomResults({
         <Phone size={22} aria-hidden="true" className="text-primary" />
         Showroom-Ergebnisse
       </h3>
-      <div className="cc-outcome-grid">
-        {OPTIONS.map((o) => {
-          const Icon = o.icon as unknown as typeof UserX;
-          return (
-            <button
-              key={o.key}
-              type="button"
-              disabled={busy || (needsStart(o.key) && !started)}
-              aria-pressed={active === o.key}
-              title={needsStart(o.key) && !started ? "Erst ab Terminbeginn möglich." : o.hint}
-              onClick={() => pick(o.key)}
-              className="cc-outcome-btn"
-            >
-              <Icon size={22} aria-hidden="true" />
-              <span>{o.label}</span>
-            </button>
-          );
-        })}
-      </div>
+      <TooltipProvider delayDuration={250}>
+        <div className="cc-outcome-grid">
+          {OPTIONS.map((o) => {
+            const Icon = o.icon as unknown as typeof UserX;
+            const blocked = needsStart(o.key) && !started;
+            return (
+              <Tooltip key={o.key}>
+                <TooltipTrigger asChild>
+                  <span className="block">
+                    <button
+                      type="button"
+                      disabled={busy || blocked}
+                      aria-pressed={active === o.key}
+                      onClick={() => pick(o.key)}
+                      className="cc-outcome-btn w-full"
+                    >
+                      <Icon size={22} aria-hidden="true" />
+                      <span>{o.label}</span>
+                    </button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[260px] space-y-1 py-2 text-left">
+                  <p>
+                    <span className="font-semibold">Wann: </span>
+                    {o.when}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Wirkung: </span>
+                    {o.hint}
+                  </p>
+                  {blocked && <p className="font-semibold">Erst ab Terminbeginn möglich.</p>}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </div>
+      </TooltipProvider>
       {current && (
         <form
           className="space-y-3 rounded-[10px] border p-3"
