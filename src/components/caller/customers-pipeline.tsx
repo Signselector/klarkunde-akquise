@@ -10,6 +10,7 @@ import { placeDeals, type CustomerDeal } from "@/lib/customer-stages";
 import { Mail, Phone } from "@/components/coldcaller/icons";
 import { FeedbackState, StatusBadge, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
+import { DealDetailDialog } from "@/components/caller/deal-detail-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -19,11 +20,16 @@ function since(iso: string | null) {
   return days === 0 ? "heute" : days === 1 ? "vor 1 Tag" : `vor ${days} Tagen`;
 }
 
-/** Information only: the card does not open the customer file. */
-function Card({ deal }: { deal: CustomerDeal }) {
+/** The card opens the notes and history of the deal (not the customer file). */
+function Card({ deal, onOpen }: { deal: CustomerDeal; onOpen: (d: CustomerDeal) => void }) {
   return (
     <li>
-      <div className="w-full space-y-2 rounded-[10px] border bg-card p-3 text-left">
+      <button
+        type="button"
+        onClick={() => onOpen(deal)}
+        aria-label={`Notizen und Verlauf von ${deal.company || "Ohne Firmenname"} öffnen`}
+        className="w-full cursor-pointer space-y-2 rounded-[10px] border bg-card p-3 text-left transition-colors hover:border-[#93b4f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+      >
         <strong className="block break-words">{deal.company || "Ohne Firmenname"}</strong>
         {deal.contact_name && <span className="block text-sm">{deal.contact_name}</span>}
         <span className="flex items-center justify-between text-xs text-muted-foreground">
@@ -33,7 +39,7 @@ function Card({ deal }: { deal: CustomerDeal }) {
             {deal.email && <Mail size={14} aria-label="E-Mail vorhanden" />}
           </span>
         </span>
-      </div>
+      </button>
     </li>
   );
 }
@@ -47,6 +53,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
   const country = useCountry();
   const load = useServerFn(loadMyCustomers);
   const [search, setSearch] = useState("");
+  const [openDeal, setOpenDeal] = useState<CustomerDeal | null>(null);
 
   const mapping = useQuery({
     queryKey: ["stage-mapping", country],
@@ -165,7 +172,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
                     ) : (
                       <ul className="space-y-2">
                         {items.map((d) => (
-                          <Card key={d.deal_id} deal={d} />
+                          <Card key={d.deal_id} deal={d} onOpen={setOpenDeal} />
                         ))}
                       </ul>
                     )}
@@ -185,7 +192,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
                     <ul className="space-y-2">
                       {placed.other.map((d) => (
                         <div key={d.deal_id} className="space-y-1">
-                          <Card deal={d} />
+                          <Card deal={d} onOpen={setOpenDeal} />
                           <StatusBadge tone="neutral">
                             {d.stage_id !== null && stageNames[d.stage_id]
                               ? stageNames[d.stage_id]
@@ -201,6 +208,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
           )}
         </div>
       </Surface>
+      <DealDetailDialog deal={openDeal} country={country} onClose={() => setOpenDeal(null)} />
     </div>
   );
 }
