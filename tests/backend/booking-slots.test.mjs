@@ -324,3 +324,27 @@ test("batches: only managers and admins release a batch, also not the caller who
   const r = (await q("select public.release_batch($1) r", [b]))[0].r;
   assert.equal(r.assigned_to, null);
 });
+
+test("employee statistics: same numbers as the dashboard, managers of the country only", async () => {
+  await db.exec("RESET ROLE");
+  const day0 = new Date(Date.now() - 40 * 864e5); day0.setUTCHours(10, 0, 0, 0);
+  for (const [i, st] of [[0, "low_q"], [1, "not_reached"], [1, "not_reached"], [2, "no_interest"], [3, "callback"]])
+    await q("insert into public.status_changes(lead_id,user_id,new_status,created_at) values($1,$2,$3,$4)", [leads[i], rec, st, day0.toISOString()]);
+  const vienna = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Vienna" }).format(day0);
+  const w = (await q("select ($1::date)::timestamp at time zone 'Europe/Vienna' f, (($1::date)+1)::timestamp at time zone 'Europe/Vienna' t", [vienna]))[0];
+  await as(mgr);
+  const stats = (await q("select public.get_employee_stats('DE',$1,$2,$3) r", [rec, w.f, w.t]))[0].r.metrics;
+  assert.equal(stats.attempts, 5);
+  assert.equal(stats.not_reached, 2);
+  assert.equal(stats.low_q, 1);
+  assert.equal(stats.callback, 1);
+  const dash = (await q("select public.get_caller_day($1::date,$2) r", [vienna, rec]))[0].r;
+  for (const k of ["attempts", "reached", "no_interest", "not_reached", "low_q", "high_q", "waiting_3d", "total_leads"]) assert.equal(dash[k], stats[k], k);
+  assert.ok((await q("select public.get_monthly_quality(null,$1) r", [rec]))[0].r.month);
+  await as(rec);
+  await assert.rejects(q("select public.get_employee_stats('DE',$1,$2,$3)", [rec, w.f, w.t]), /forbidden/);
+  await assert.rejects(q("select public.get_caller_day(null,$1)", [mgr]), /forbidden/);
+  assert.ok((await q("select public.get_caller_day($1::date) r", [vienna]))[0].r.attempts >= 5);
+  await as(other);
+  await assert.rejects(q("select public.get_employee_stats('DE',$1,$2,$3)", [rec, w.f, w.t]), /forbidden/);
+});

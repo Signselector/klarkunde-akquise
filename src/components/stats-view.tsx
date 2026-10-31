@@ -21,6 +21,7 @@ import { FeedbackState } from "@/components/coldcaller/primitives";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Dropdown } from "@/components/ui/dropdown";
+import { EmployeeDashboardPanel } from "@/components/employee-dashboard-panel";
 import { ChoiceButtons } from "@/components/ui/choice-buttons";
 
 type Totals = {
@@ -307,6 +308,16 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
           </div>
         ))}
       </div>
+
+      {employee && enabled && (
+        <EmployeeDashboardPanel
+          country={country}
+          userId={employee}
+          name={team.find((m) => m.user_id === employee)?.name ?? "Mitarbeiter"}
+          from={period.from}
+          to={period.to}
+        />
+      )}
 
       <div className="grid gap-4 md:grid-cols-2">
         <section className="space-y-3 rounded-lg border bg-card p-4">
