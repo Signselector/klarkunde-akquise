@@ -101,11 +101,12 @@ function AppointmentsPage() {
         ? external
             // Managers and admins see the meetings and calls of the whole team (and every activity of their own);
             // everybody else sees the own calendar only.
-            .filter((x) =>
-              roles.isStaff
-                ? x.user_id === user.id || pdKind(x.type) !== "other"
-                : x.user_id === user.id,
-            )
+            .filter((x) => (roles.isStaff ? true : x.user_id === user.id))
+            // Only real appointments: meetings, and calls that belong to a deal. Tasks and internal to-dos stay out.
+            .filter((x) => {
+              const k = pdKind(x.type);
+              return k === "meeting" || (k === "call" && x.deal_id != null);
+            })
             .filter((x) => filter !== "pd_meeting" || pdKind(x.type) === "meeting")
             .filter((x) => filter !== "pd_call" || pdKind(x.type) === "call")
             .map((x) => ({
