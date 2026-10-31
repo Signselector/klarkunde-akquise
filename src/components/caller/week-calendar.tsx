@@ -287,7 +287,7 @@ export function WeekCalendar({
                 className={cn("flex flex-col items-center rounded-md py-1.5 text-xs", isSel && "bg-accent")}
               >
                 <span className="text-muted-foreground">{weekday.format(d).replace(".", "")}</span>
-                <span className={cn("grid size-7 place-items-center rounded-full text-sm font-semibold", sameDay(d, now) && "bg-primary text-primary-foreground")}>
+                <span className={cn("grid size-7 place-items-center rounded-full text-sm font-semibold", sameDay(d, now) && "cc-pd-today")}>
                   {d.getDate()}
                 </span>
                 <span className="h-1.5">{n > 0 && <span className="block size-1.5 rounded-full bg-primary" />}</span>
@@ -325,7 +325,7 @@ export function WeekCalendar({
             return (
               <div key={d.toISOString()} className="group relative flex items-center justify-center gap-1.5 border-l py-3 text-sm font-semibold">
                 <span>{weekday.format(d).replace(".", "")}</span>
-                <span className={cn("grid size-7 place-items-center rounded-full", today && "bg-primary text-primary-foreground")}>
+                <span className={cn("grid size-7 place-items-center rounded-full", today && "cc-pd-today")}>
                   {d.getDate()}
                 </span>
                 {onAddForDay && (
