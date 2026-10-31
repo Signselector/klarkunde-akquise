@@ -28,7 +28,7 @@ function Card({ deal, onOpen }: { deal: CustomerDeal; onOpen: (d: CustomerDeal) 
         type="button"
         onClick={() => onOpen(deal)}
         aria-label={`Notizen und Verlauf von ${deal.company || "Ohne Firmenname"} öffnen`}
-        className="w-full cursor-pointer space-y-2 rounded-[10px] border bg-card p-3 text-left transition-colors hover:border-[#93b4f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
+        className="w-full cursor-pointer space-y-2 !rounded-[10px] !min-h-0 border bg-card p-3 text-left transition-colors hover:border-[#93b4f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
       >
         <strong className="block break-words">{deal.company || "Ohne Firmenname"}</strong>
         {deal.contact_name && <span className="block text-sm">{deal.contact_name}</span>}
