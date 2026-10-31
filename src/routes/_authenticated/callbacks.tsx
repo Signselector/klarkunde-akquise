@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { calendarStatus, STATUS_DOT } from "@/lib/calendar-status";
-import { WeekCalendar, inWeek, sameDay, startOfWeek } from "@/components/caller/week-calendar";
+import { EntryDetailCard, WeekCalendar, inWeek, sameDay, startOfWeek, type WeekEntry } from "@/components/caller/week-calendar";
+import { Building2, Phone, User } from "lucide-react";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
@@ -48,9 +49,33 @@ function CallbacksPage() {
   const weekEntries = weekRows.map((c) => ({
     id: c.id,
     at: new Date(c.due_at),
-    title: c.lead?.company || "Rückruf",
+    title: c.lead?.company ? `Rückruf: ${c.lead.company}` : "Rückruf",
     dot: STATUS_DOT[calendarStatus(c.due_at, c.done, now)],
+    kind: "call" as const,
+    durationMin: 15,
+    done: c.done,
   }));
+  const renderDetail = (entry: WeekEntry, close: () => void) => {
+    const c = weekRows.find((r) => r.id === entry.id);
+    if (!c) return null;
+    const note = [c.lead?.company ? `Kunde: ${c.lead.company}` : null, c.lead?.phone ? `Telefon: ${c.lead.phone}` : null].filter(Boolean).join(" ") || null;
+    return (
+      <EntryDetailCard
+        entry={entry}
+        note={note}
+        rows={[
+          ...(c.lead?.contact_name ? [{ icon: User, text: c.lead.contact_name }] : []),
+          ...(c.lead?.phone ? [{ icon: Phone, text: <a className="text-primary hover:underline" href={`tel:${c.lead.phone}`}>{c.lead.phone}</a> }] : []),
+          ...(c.lead?.company ? [{ icon: Building2, text: c.lead.company }] : []),
+        ]}
+        footer={
+          <Button className="ml-auto" variant="outline" onClick={() => { close(); setLeadId(c.lead?.id ?? null); }}>
+            Kundenakte öffnen
+          </Button>
+        }
+      />
+    );
+  };
   // Overdue callbacks of earlier weeks would otherwise be out of sight.
   const earlierOverdue = (data ?? []).filter(
     (c) => new Date(c.due_at) < weekStart && new Date(c.due_at) < now,
@@ -70,6 +95,8 @@ function CallbacksPage() {
           selected={day}
           onSelect={setDay}
           loading={isLoading}
+          renderDetail={renderDetail}
+          kinds={["call"]}
           footer={
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">

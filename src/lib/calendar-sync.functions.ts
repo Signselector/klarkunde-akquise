@@ -95,16 +95,13 @@ async function databaseStore(userId: string, country: string): Promise<CalendarS
       const deals = await dealIds(
         (aps.data ?? []).map((r) => r.lead_id).filter((v): v is string => !!v),
       );
-      const who = (
-        l: { company: string | null; contact_name: string | null; phone: string | null } | null,
-      ) => (l ? [l.contact_name, l.phone].filter(Boolean).join(" · ") || null : null);
       return [
         ...(aps.data ?? []).map((a): CalItem => ({
           kind: "appointment",
           id: a.id,
           startsAt: a.starts_at,
-          subject: a.title || a.lead?.company || "Termin",
-          note: [a.notes, who(a.lead)].filter(Boolean).join("\n") || null,
+          subject: a.lead?.company ? `Termin: ${a.lead.company}` : a.title || "Termin",
+          note: [a.lead ? [`Kunde: ${a.lead.company ?? "–"}`, a.lead.phone ? `Telefon: ${a.lead.phone}` : null, a.lead.contact_name ? `Ansprechpartner: ${a.lead.contact_name}` : null].filter(Boolean).join(" ") : null, a.notes].filter(Boolean).join("\n") || null,
           dealId: a.lead_id ? (deals.get(a.lead_id) ?? null) : null,
           pdActivityId: a.pd_activity_id,
         })),

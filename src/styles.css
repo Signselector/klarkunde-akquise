@@ -147,3 +147,38 @@
     color: var(--color-foreground);
   }
 }
+
+/* Pipedrive-style week calendar */
+.cc-pd-cal { --pd: oklch(0.55 0.16 258); --pd-on: oklch(0.99 0 0); }
+.dark .cc-pd-cal { --pd: oklch(0.7 0.14 258); --pd-on: oklch(0.15 0 0); }
+.cc-pd-now { background: oklch(0.6 0.22 27); }
+.cc-pd-now-label { color: oklch(0.55 0.22 27); }
+.cc-pd-today { background: var(--pd); color: var(--pd-on); }
+.cc-pd-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 6px;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--foreground);
+  transition: background-color 120ms ease-out;
+}
+.cc-pd-filter:hover { background: var(--accent); }
+.cc-pd-filter--on {
+  background: color-mix(in oklab, var(--pd) 14%, transparent);
+  color: var(--pd);
+}
+.cc-pd-entry {
+  border-radius: 4px !important;
+  min-height: 0 !important;
+  box-shadow: none !important;
+  background: color-mix(in oklab, var(--pd) 12%, var(--card));
+  border-left: 3px solid var(--pd);
+  color: var(--foreground);
+  transition: background-color 120ms ease-out;
+}
+.cc-pd-entry:hover { background: color-mix(in oklab, var(--pd) 20%, var(--card)); }
+.cc-pd-entry--allday { border-left-width: 0; }
+.cc-pd-note { background: color-mix(in oklab, oklch(0.93 0.09 95) 70%, var(--card)); }
