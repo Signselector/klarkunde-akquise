@@ -25,8 +25,8 @@ export const sameDay = (a: Date, b: Date) =>
 export const addDays = (d: Date, n: number) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 
-/** Monday 00:00 of the week the date is in. */
-export const startOfWeek = (d: Date) => addDays(d, -((d.getDay() + 6) % 7));
+/** Sunday 00:00 of the week the date is in (like Pipedrive: Sunday–Saturday). */
+export const startOfWeek = (d: Date) => addDays(d, -d.getDay());
 
 /** ISO calendar week number (weeks start on Monday, week 1 contains the first Thursday). */
 export function isoWeek(d: Date) {
@@ -49,7 +49,7 @@ export function weekTitle(weekStart: Date) {
   const end = addDays(weekStart, 6);
   const a =
     weekStart.getFullYear() === end.getFullYear() ? short.format(weekStart) : full.format(weekStart);
-  return `KW ${isoWeek(weekStart)} · ${a.replace(/\.$/, "")} – ${full.format(end)}`;
+  return `KW ${isoWeek(addDays(weekStart, 1))} · ${a.replace(/\.$/, "")} – ${full.format(end)}`;
 }
 
 /** Activity types as in Pipedrive. */

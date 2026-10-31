@@ -15,6 +15,7 @@ export type ExternalActivity = {
   deal_id: number | null;
   person_name: string | null;
   org_name: string | null;
+  done?: boolean;
 };
 
 /**
@@ -47,11 +48,11 @@ export function useCalendarSync(userId: string, country: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pipedrive_activities")
-        .select("activity_id,user_id,subject,type,due_at,duration_min,deal_id,person_name,org_name")
+        .select("activity_id,user_id,subject,type,due_at,duration_min,deal_id,person_name,org_name,done")
         .eq("country", country)
-        .eq("done", false)
+        .gte("due_at", new Date(Date.now() - 60 * 86_400_000).toISOString())
         .order("due_at")
-        .limit(500);
+        .limit(2000);
       if (error) throw error;
       return (data ?? []) as ExternalActivity[];
     },
