@@ -297,7 +297,7 @@ function Dashboard() {
                           Batch übernehmen
                         </Button>
                       )}
-                      {(mine || (admin && taken)) && (
+                      {admin && (mine || taken) && (
                         <Button
                           size="sm"
                           variant="outline"

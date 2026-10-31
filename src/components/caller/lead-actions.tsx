@@ -18,6 +18,7 @@ import {
   actionErrorMessage,
   fillTemplate,
   LEAD_ACTIONS,
+  OUTCOME_TONES,
   type LeadAction,
   type LeadActionKey,
 } from "@/lib/lead-actions";
@@ -479,7 +480,7 @@ export function LeadActions({
       )}
       <TooltipProvider delayDuration={250}>
         <div className="cc-outcome-grid">
-          {LEAD_ACTIONS.map((action) => (
+          {LEAD_ACTIONS.map((action, position) => (
             <Tooltip key={action.key}>
               <TooltipTrigger asChild>
                 <button
@@ -487,7 +488,7 @@ export function LeadActions({
                   disabled={busy}
                   aria-pressed={active === action.key}
                   onClick={() => open(action)}
-                  className="cc-outcome-btn"
+                  className={`cc-outcome-btn cc-outcome-btn--${OUTCOME_TONES[position] ?? "slate"}`}
                 >
                   {(() => {
                     const Icon = ACTION_ICON[action.key];

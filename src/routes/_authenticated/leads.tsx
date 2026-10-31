@@ -1,7 +1,7 @@
 import { LeadDialog } from "@/components/caller/lead-dialog";
 import { LeadsTable } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
-import { STATUS_LABEL } from "@/lib/leads";
+import { orderOpenLeads, STATUS_LABEL } from "@/lib/leads";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -134,13 +134,32 @@ function LeadsPage() {
       return { rows, total: Math.max(count ?? 0, rows.length) };
     },
   });
-  // Untouched leads first, then not reached, then scheduled callbacks at the very bottom. Order within a group is kept.
-  const sorted = useMemo(() => {
-    const rank = (l: { status: string; attempts: number }) =>
-      l.status === "callback" ? 2 : l.status === "open" && l.attempts > 0 ? 1 : 0;
-    const rows = result?.rows ?? [];
-    return [0, 1, 2].flatMap((r) => rows.filter((l) => rank(l) === r));
-  }, [result?.rows]);
+  // Open callbacks of the user: leads with a callback stay in this list and come first, the earliest due time on top.
+  const callbackDue = useQuery({
+    enabled: backendEnabled,
+    queryKey: ["lead-callback-due", user.id, country],
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("callbacks")
+        .select("lead_id,due_at")
+        .eq("user_id", user.id)
+        .eq("country", country)
+        .eq("done", false);
+      if (error) throw error;
+      const map = new Map<string, number>();
+      for (const c of data ?? []) {
+        const t = new Date(c.due_at).getTime();
+        const old = map.get(c.lead_id);
+        if (old === undefined || t < old) map.set(c.lead_id, t);
+      }
+      return map;
+    },
+  });
+  const sorted = useMemo(
+    () => orderOpenLeads(result?.rows ?? [], callbackDue.data),
+    [result?.rows, callbackDue.data],
+  );
   const labelOf = (l: { status: string; attempts: number }) =>
     l.status === "open" && l.attempts > 0 ? "Nicht erreicht" : (STATUS_LABEL[l.status] ?? l.status);
   // Only statuses that occur in the loaded list are offered as filter.

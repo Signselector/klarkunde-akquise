@@ -277,7 +277,7 @@ test("managers cannot hand appointments to an admin; completed leads are only th
   assert.ok((await q("select public.get_completed_overview('DE',300) r"))[0].r.some((r) => r.lead_id === leads[6]));
 });
 
-test("showroom results: note is required, no show returns the lead, interest needs a follow-up and moves the stage", async () => {
+test("showroom results: note is required, no show returns the lead, interest moves the stage (follow-up optional)", async () => {
   await db.exec("RESET ROLE");
   const day = (n, h) => { const d = new Date(Date.now() + n * 864e5); d.setUTCHours(h, 0, 0, 0); return d.toISOString(); };
   await db.exec("select set_config('app.skip_slot_check','1',false)");
@@ -301,7 +301,6 @@ test("showroom results: note is required, no show returns the lead, interest nee
   assert.equal((await q("select current_stage_key from public.lead_crm_links where lead_id=$1", [leads[7]]))[0].current_stage_key, "no_show");
   await as(mgr);
   await assert.rejects(q("select public.record_appointment_outcome($1,'no_show','nochmal')", [a1]), /already_decided/);
-  await assert.rejects(q("select public.record_appointment_outcome($1,'high_interest','ohne Folgetermin')", [a2]), /followup_required/);
   const fu = new Date(Date.now() + 100 * 864e5); fu.setUTCHours(12, 0, 0, 0);
   const r2 = (await q("select public.record_appointment_outcome($1,'high_interest','Sehr interessiert',null,$2) r", [a2, fu.toISOString()]))[0].r;
   assert.equal(r2.stage_key, "very_interested");
@@ -312,4 +311,16 @@ test("showroom results: note is required, no show returns the lead, interest nee
   await db.exec("RESET ROLE");
   assert.equal((await q("select count(*)::int n from public.appointments where id=$1", [a3]))[0].n, 0);
   assert.equal((await q("select count(*)::int n from public.appointments where id=$1", [a4]))[0].n, 1, "moved, not recreated");
+});
+
+test("batches: only managers and admins release a batch, also not the caller who owns it", async () => {
+  await db.exec("RESET ROLE");
+  const b = (await q("insert into public.lead_batches(name,created_by,import_state,country,assigned_to) values ('Own',$1,'confirmed','DE',$2) returning id", [admin, rec]))[0].id;
+  await as(rec);
+  await assert.rejects(q("select public.release_batch($1)", [b]), /forbidden/);
+  await as(vet);
+  await assert.rejects(q("select public.release_batch($1)", [b]), /forbidden/);
+  await as(mgr);
+  const r = (await q("select public.release_batch($1) r", [b]))[0].r;
+  assert.equal(r.assigned_to, null);
 });

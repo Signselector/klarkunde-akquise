@@ -39,7 +39,14 @@ export type LeadAction = {
   celebration?: "normal" | "special";
 };
 
-/** All outcome buttons look the same: white, anthracite on hover. */
+/**
+ * Colour of an outcome button. The tones are assigned by position, from left to right, and live in one place so that
+ * the call results and the showroom results use the same palette (see .cc-outcome-btn--<tone> in app.css).
+ */
+export type OutcomeTone = "green" | "grey" | "red" | "forest" | "yellow" | "slate";
+export const OUTCOME_TONES: OutcomeTone[] = ["green", "green", "grey", "red", "forest", "yellow", "slate", "red"];
+
+/** All outcome buttons share one shape: tinted by tone, solid in the tone on hover and when chosen. */
 const ACTION_BUTTON = "bg-white text-foreground hover:bg-[#2b2f36] hover:text-white";
 
 export const LEAD_ACTIONS: LeadAction[] = [

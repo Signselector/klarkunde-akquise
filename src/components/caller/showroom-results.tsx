@@ -7,19 +7,21 @@ import { Phone } from "@/components/coldcaller/icons";
 import { SlotPicker } from "@/components/booking/slot-picker";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Reveal } from "@/components/ui/reveal";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useCountry } from "@/lib/country";
+import type { OutcomeTone } from "@/lib/lead-actions";
 import { recordAppointmentOutcome, type ShowroomOutcome } from "@/lib/appointment-outcome.functions";
 
 export type ShowroomAppointment = { id: string; title: string; startsAt: string; outcome: string | null };
 
-const OPTIONS: { key: ShowroomOutcome; label: string; icon: typeof Phone; when: string; hint: string }[] = [
-  { key: "no_show", when: "Der Kunde ist nicht erschienen, hat nicht abgehoben oder war aus einem anderen Grund nicht da.", label: "Termin nicht wahrgenommen", icon: UserX as never, hint: "Deal geht auf „No Show“. Der Lead geht an den ursprünglichen Caller zurück (Termin versäumt), er plant den Rückruf selbst. Erst ab Terminbeginn." },
-  { key: "low_interest", when: "Der Kunde hat nur wenig Interesse.", label: "Wenig interessiert", icon: ThumbsDown as never, hint: "Deal geht auf „Wenig Interesse“, Aufgabe am Deal, Folgetermin ist Pflicht. Erst ab Terminbeginn." },
-  { key: "medium_interest", when: "Der Kunde hat mittleres Interesse.", label: "Mittleres Interesse", icon: Meh as never, hint: "Deal geht auf „Mittleres Interesse“, Aufgabe am Deal, Folgetermin ist Pflicht. Erst ab Terminbeginn." },
-  { key: "high_interest", when: "Der Kunde ist sehr interessiert.", label: "Sehr interessiert", icon: Flame as never, hint: "Deal geht auf „Sehr interessiert“, Aufgabe am Deal, Folgetermin ist Pflicht. Erst ab Terminbeginn." },
-  { key: "deleted", when: "Der Termin findet nicht statt, zum Beispiel weil der Kunde noch warten möchte.", label: "Löschen", icon: Trash2 as never, hint: "Der Termin wird aus dem Kalender gelöscht, Aufgabe am Deal." },
-  { key: "rescheduled", when: "Der Termin soll auf eine andere Zeit gelegt werden.", label: "Verschieben", icon: CalendarClock as never, hint: "Der Termin bekommt eine neue Zeit (kein neuer Termin), Notiz am Deal." },
+const OPTIONS: { key: ShowroomOutcome; label: string; icon: typeof Phone; when: string; hint: string; tone: OutcomeTone | null }[] = [
+  { key: "no_show", tone: "red", when: "Der Kunde ist nicht erschienen, hat nicht abgehoben oder war aus einem anderen Grund nicht da.", label: "Termin nicht wahrgenommen", icon: UserX as never, hint: "Deal geht auf „No Show“. Der Lead geht an den ursprünglichen Caller zurück (Termin versäumt), er plant den Rückruf selbst. Erst ab Terminbeginn." },
+  { key: "low_interest", tone: "grey", when: "Der Kunde hat nur wenig Interesse.", label: "Wenig interessiert", icon: ThumbsDown as never, hint: "Deal geht auf „Wenig Interesse“, Aufgabe am Deal, optional Folgetermin. Erst ab Terminbeginn." },
+  { key: "medium_interest", tone: "yellow", when: "Der Kunde hat mittleres Interesse.", label: "Mittleres Interesse", icon: Meh as never, hint: "Deal geht auf „Mittleres Interesse“, Aufgabe am Deal, optional Folgetermin. Erst ab Terminbeginn." },
+  { key: "high_interest", tone: "green", when: "Der Kunde ist sehr interessiert.", label: "Sehr interessiert", icon: Flame as never, hint: "Deal geht auf „Sehr interessiert“, Aufgabe am Deal, optional Folgetermin. Erst ab Terminbeginn." },
+  { key: "deleted", tone: "slate", when: "Der Termin findet nicht statt, zum Beispiel weil der Kunde noch warten möchte.", label: "Löschen", icon: Trash2 as never, hint: "Der Termin wird aus dem Kalender gelöscht, Aufgabe am Deal." },
+  { key: "rescheduled", tone: null, when: "Der Termin soll auf eine andere Zeit gelegt werden.", label: "Verschieben", icon: CalendarClock as never, hint: "Der Termin bekommt eine neue Zeit (kein neuer Termin), Notiz am Deal." },
 ];
 
 const OUTCOME_LABEL: Record<string, string> = {
@@ -32,7 +34,6 @@ const OUTCOME_LABEL: Record<string, string> = {
 const ERRORS: Record<string, string> = {
   note_required: "Bitte eine Notiz eintragen.",
   appointment_required: "Bitte die neue Zeit wählen.",
-  followup_required: "Bitte einen Folgetermin wählen.",
   appointment_not_started: "Dieses Ergebnis ist erst ab Terminbeginn möglich.",
   already_decided: "Für diesen Termin wurde schon ein Ergebnis erfasst.",
   forbidden: "Dafür fehlt dir die Berechtigung.",
@@ -100,10 +101,6 @@ export function ShowroomResults({
       toast.error(ERRORS["appointment_required"]!);
       return;
     }
-    if (interest && !when) {
-      toast.error(ERRORS["followup_required"]!);
-      return;
-    }
     setBusy(true);
     try {
       const r = await save({
@@ -161,7 +158,7 @@ export function ShowroomResults({
                       disabled={busy || blocked}
                       aria-pressed={active === o.key}
                       onClick={() => pick(o.key)}
-                      className="cc-outcome-btn w-full"
+                      className={`cc-outcome-btn w-full${o.tone ? ` cc-outcome-btn--${o.tone}` : ""}`}
                     >
                       <Icon size={22} aria-hidden="true" />
                       <span>{o.label}</span>
@@ -205,13 +202,25 @@ export function ShowroomResults({
             </div>
           )}
           {interest && (
-            <div className="space-y-1.5">
-              <span className="block text-sm">Folgetermin (Pflicht)</span>
-              <p className="text-xs text-muted-foreground">
+            <Reveal
+              title="Folgetermin (optional)"
+              summary={
+                when
+                  ? new Intl.DateTimeFormat("de-DE", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(when))
+                  : null
+              }
+            >
+              <p className="mb-2 text-xs text-muted-foreground">
                 Der Folgetermin erscheint unter Termine wieder beim Manager.
               </p>
               <SlotPicker kind="appointment" country={country} value={when} onChange={setWhen} />
-            </div>
+            </Reveal>
           )}
           <div className="flex gap-2">
             <Button type="submit" disabled={busy} variant={current.key === "deleted" ? "destructive" : "default"}>

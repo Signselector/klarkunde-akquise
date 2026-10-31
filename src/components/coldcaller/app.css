@@ -1266,3 +1266,64 @@
 .cc-auth-story .cc-brand-tagline {
   color: #4f86f7;
 }
+
+/* Outcome button tones (call results and showroom results). Muted colours: tinted at rest, solid on hover / chosen. */
+.cc-outcome-btn--green {
+  --o-tint: #e6f2ea;
+  --o-border: #9cc7ad;
+  --o-ink: #1d5a37;
+  --o-solid: #2f7a4d;
+  --o-solid-ink: #fff;
+}
+.cc-outcome-btn--grey {
+  --o-tint: #eceef0;
+  --o-border: #c3c8cf;
+  --o-ink: #444b55;
+  --o-solid: #6b7380;
+  --o-solid-ink: #fff;
+}
+.cc-outcome-btn--red {
+  --o-tint: #f7e6e4;
+  --o-border: #dba9a3;
+  --o-ink: #8a2d25;
+  --o-solid: #b04238;
+  --o-solid-ink: #fff;
+}
+.cc-outcome-btn--forest {
+  --o-tint: #d9e7de;
+  --o-border: #6fa086;
+  --o-ink: #0f3d27;
+  --o-solid: #14502f;
+  --o-solid-ink: #fff;
+}
+.cc-outcome-btn--yellow {
+  --o-tint: #fbf1d4;
+  --o-border: #e2c76e;
+  --o-ink: #6b5200;
+  --o-solid: #e0b43a;
+  --o-solid-ink: #2b2200;
+}
+.cc-outcome-btn--slate {
+  --o-tint: #e0e2e6;
+  --o-border: #9aa0a9;
+  --o-ink: #23272e;
+  --o-solid: #2b2f36;
+  --o-solid-ink: #fff;
+}
+.cc-outcome-btn[class*="cc-outcome-btn--"] {
+  color: var(--o-ink);
+  background: var(--o-tint);
+  border-color: var(--o-border);
+}
+@media (hover: hover) and (pointer: fine) {
+  .cc-outcome-btn[class*="cc-outcome-btn--"]:hover:not(:disabled) {
+    color: var(--o-solid-ink);
+    background: var(--o-solid);
+    border-color: var(--o-solid);
+  }
+}
+.cc-outcome-btn[class*="cc-outcome-btn--"][aria-pressed="true"] {
+  color: var(--o-solid-ink);
+  background: var(--o-solid);
+  border-color: var(--o-solid);
+}
