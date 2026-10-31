@@ -256,7 +256,6 @@ function LeadsPage() {
         ) : (
           <LeadsTable
             leads={leads ?? []}
-            quickActions
             onOpen={(id, it) => {
               setIntent(it ?? null);
               setOpenId(id);
