@@ -1,4 +1,4 @@
-import { WeekCalendar, inWeek, sameDay, startOfWeek, type WeekEntry } from "@/components/caller/week-calendar";
+import { EntryDetailCard, WeekCalendar, inWeek, sameDay, startOfWeek, toEntryKind, type WeekEntry } from "@/components/caller/week-calendar";
 import { appointmentDotClass } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
 import { PipedriveMeetingDialog, type EditableMeeting } from "@/components/pipedrive-meeting-dialog";
@@ -9,7 +9,7 @@ import { notifyShowroomFn } from "@/lib/showroom-sync.functions";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Phone } from "lucide-react";
+import { Building2, CircleDollarSign, Phone, Trash2, User, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { backendEnabled } from "@/lib/backend";
@@ -82,7 +82,7 @@ function AppointmentsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id,starts_at,notes,title,kind,user_id,booked_by,lead_id,outcome,lead:leads(company,contact_name,phone)")
+        .select("id,starts_at,notes,title,kind,user_id,booked_by,lead_id,outcome,lead:leads(company,contact_name,phone,city)")
         .eq("country", country)
         .order("starts_at");
       if (error) throw error;
@@ -233,13 +233,105 @@ function AppointmentsPage() {
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["appointments"] });
 
-  const weekEntries: WeekEntry[] = events.map((e) => ({
-    id: e.id,
-    at: e.date,
-    title: e.title ?? e.lead?.company ?? e.notes ?? "Termin",
-    dot: appointmentDotClass(e.date, "external" in e && !!e.external),
-    ...("pd" in e && e.pd ? { badge: PD_KIND_LABEL[pdKind(e.pd.type)] } : {}),
-  }));
+  const weekEntries: WeekEntry[] = events.map((e) => {
+    const pd = "pd" in e && e.pd ? e.pd : null;
+    const company = e.lead?.company ?? null;
+    return {
+      id: e.id,
+      at: e.date,
+      // Like in Pipedrive: render appointments are titled "Termin: <Firma>".
+      title: pd ? (e.title ?? e.notes ?? "Aktivität") : company ? `Termin: ${company}` : (e.title ?? "Termin"),
+      dot: appointmentDotClass(e.date, !!pd),
+      kind: pd ? toEntryKind(pd.type) : "meeting",
+      durationMin: pd ? pd.durationMin : 30,
+      done: "outcome" in e && !!e.outcome,
+      allDay: pd ? e.date.getUTCHours() === 0 && e.date.getUTCMinutes() === 0 : false,
+    };
+  });
+  const byId = new Map(events.map((e) => [e.id, e]));
+  const renderDetail = (entry: WeekEntry, close: () => void) => {
+    const e = byId.get(entry.id);
+    if (!e) return null;
+    const pd = "pd" in e && e.pd ? e.pd : null;
+    const lead = e.lead;
+    const note = pd
+      ? e.notes
+      : [
+          lead ? `Kunde: ${lead.company ?? "–"}` : null,
+          lead?.phone ? `Telefon: ${lead.phone}` : null,
+          lead && "city" in lead && lead.city ? `Ort: ${lead.city}` : null,
+          e.notes && e.notes !== e.title ? e.notes : null,
+        ].filter(Boolean).join(" ") || null;
+    const rows = pd
+      ? [
+          ...(roles.isStaff ? [{ icon: UserCircle, text: pd.ownerId === user.id ? "Ich" : pdOwnerName(pd.ownerId) }] : []),
+          ...(e.title ? [{ icon: CircleDollarSign, text: e.title }] : []),
+          ...("notes" in e && e.notes ? [{ icon: Building2, text: e.notes }] : []),
+        ]
+      : [
+          { icon: UserCircle, text: e.user_id === user.id ? "Ich" : nameOf(e.user_id) },
+          ...(lead?.company ? [{ icon: CircleDollarSign, text: lead.company }] : []),
+          ...(lead?.contact_name ? [{ icon: User, text: lead.contact_name }] : []),
+          ...(lead?.phone ? [{ icon: Phone, text: <a className="text-primary hover:underline" href={`tel:${lead.phone}`}>{lead.phone}</a> }] : []),
+          ...(lead?.company ? [{ icon: Building2, text: lead.company }] : []),
+        ];
+    return (
+      <EntryDetailCard
+        entry={entry}
+        note={note}
+        rows={rows}
+        footer={
+          <>
+            {!pd && roles.isStaff && (
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Termin löschen"
+                onClick={async () => {
+                  if (!window.confirm("Termin wirklich löschen?")) return;
+                  const { error } = await supabase.from("appointments").delete().eq("id", e.id);
+                  if (error) toast.error("Termin konnte nicht gelöscht werden.");
+                  else { toast.success("Termin gelöscht."); close(); refresh(); }
+                }}
+              >
+                <Trash2 />
+              </Button>
+            )}
+            {"outcome" in e && e.outcome && (
+              <span className="text-xs font-semibold text-primary">
+                {{ no_show: "Nicht wahrgenommen", low_interest: "Wenig interessiert", medium_interest: "Mittleres Interesse", high_interest: "Sehr interessiert" }[e.outcome as string] ?? e.outcome}
+              </span>
+            )}
+            <span className="ml-auto flex gap-2">
+              {pd && canEditPdActivity(pd.type, roles.isStaff) && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    close();
+                    setEditMeeting({ activityId: pd.activityId, subject: entry.title, startsAt: e.starts_at, durationMin: pd.durationMin });
+                  }}
+                >
+                  Bearbeiten
+                </Button>
+              )}
+              {!pd && e.lead_id && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    close();
+                    setFileAppt({ id: e.id, title: entry.title, startsAt: e.starts_at, outcome: ("outcome" in e ? e.outcome : null) ?? null });
+                    setFileLead(e.lead_id);
+                  }}
+                >
+                  Kundenakte
+                </Button>
+              )}
+            </span>
+          </>
+        }
+      />
+    );
+  };
   // Details: a chosen day in full. The overview of the week lists everything upcoming plus only the last three past
   // entries, so finished appointments do not push the coming ones out of sight.
   const dayChosen = !!selected && inWeek(selected, weekStart);
@@ -335,6 +427,8 @@ function AppointmentsPage() {
           selected={selected}
           onSelect={setSelected}
           loading={isLoading}
+          renderDetail={renderDetail}
+          kinds={["call", "meeting"]}
           footer={
           <div className="flex flex-wrap items-center gap-3">
             <Label className="text-xs">Anzeigen</Label>
