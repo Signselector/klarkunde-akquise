@@ -50,6 +50,8 @@ export type WeekEntry = {
   title: string;
   /** Tailwind classes of the status dot. */
   dot: string;
+  /** Short tag before the title, e.g. "Meeting" / "Anruf" for Pipedrive entries. */
+  badge?: string;
 };
 
 /**
@@ -281,11 +283,16 @@ function EntryLine({ entry, compact = false }: { entry: WeekEntry; compact?: boo
         "flex min-w-0 items-start gap-1.5 rounded bg-background/70 px-1.5 py-1",
         compact ? "text-[11px] leading-4" : "text-sm",
       )}
-      title={`${time.format(entry.at)} · ${entry.title}`}
+      title={`${time.format(entry.at)} · ${entry.badge ? `${entry.badge}: ` : ""}${entry.title}`}
     >
       <span className={cn("mt-1 size-2 shrink-0 rounded-full", entry.dot)} aria-hidden="true" />
       <span className="min-w-0">
         <span className="font-semibold tabular-nums">{time.format(entry.at)}</span>{" "}
+        {entry.badge && (
+          <span className="mr-1 rounded border border-orange-300 bg-orange-50 px-1 text-[9px] font-semibold uppercase leading-3 text-orange-800">
+            {entry.badge}
+          </span>
+        )}
         <span className="break-words">{entry.title}</span>
       </span>
     </div>

@@ -7,6 +7,7 @@ import { syncMyCalendar } from "@/lib/calendar-sync.functions";
 
 export type ExternalActivity = {
   activity_id: number;
+  user_id: string;
   subject: string | null;
   type: string | null;
   due_at: string;

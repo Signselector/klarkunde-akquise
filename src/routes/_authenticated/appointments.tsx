@@ -1,6 +1,9 @@
 import { WeekCalendar, inWeek, sameDay, startOfWeek, type WeekEntry } from "@/components/caller/week-calendar";
 import { appointmentDotClass } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
+import { PipedriveMeetingDialog, type EditableMeeting } from "@/components/pipedrive-meeting-dialog";
+import { canEditPdActivity, pdKind, PD_KIND_LABEL } from "@/lib/pipedrive-activity";
+import { syncTeamCalendars } from "@/lib/pipedrive-activity.functions";
 import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
 import { notifyShowroomFn } from "@/lib/showroom-sync.functions";
 import { useEffect, useMemo, useState } from "react";
@@ -9,6 +12,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Phone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { backendEnabled } from "@/lib/backend";
 import { useCountry } from "@/lib/country";
 import { cn } from "@/lib/utils";
 import { useRoles } from "@/lib/use-admin";
@@ -65,7 +69,7 @@ function AppointmentsPage() {
   const { sync, external } = useCalendarSync(user.id, country);
   const [mine] = useState(false);
   // "all": everything, "tool": booked through the Cold Caller tool, "pipedrive": entries that exist in Pipedrive only.
-  const [filter, setFilter] = useState<"all" | "tool" | "pipedrive">("all");
+  const [filter, setFilter] = useState<"all" | "tool" | "pipedrive" | "pd_meeting" | "pd_call">("all");
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [selected, setSelected] = useState<Date | null>(null);
   const { termin } = Route.useSearch();
@@ -89,13 +93,21 @@ function AppointmentsPage() {
   const events = useMemo(() => {
     const own = (data ?? [])
       // Callers and Senior Callers only ever see appointments assigned to them (also enforced by the database).
-      .filter((a) => (!mine && roles.isStaff ? true : a.user_id === user.id) && filter !== "pipedrive")
+      .filter((a) => (!mine && roles.isStaff ? true : a.user_id === user.id) && !["pipedrive", "pd_meeting", "pd_call"].includes(filter))
       .map((a) => ({ ...a, date: new Date(a.starts_at), k: kindOf(a.kind) }));
     // Entries that exist only in the user's Pipedrive calendar.
     const fromPipedrive =
       filter !== "tool"
         ? external
-            .filter((x) => roles.isStaff || (x as { user_id?: string }).user_id === user.id)
+            // Managers and admins see the meetings and calls of the whole team (and every activity of their own);
+            // everybody else sees the own calendar only.
+            .filter((x) =>
+              roles.isStaff
+                ? x.user_id === user.id || pdKind(x.type) !== "other"
+                : x.user_id === user.id,
+            )
+            .filter((x) => filter !== "pd_meeting" || pdKind(x.type) === "meeting")
+            .filter((x) => filter !== "pd_call" || pdKind(x.type) === "call")
             .map((x) => ({
             id: `pd-${x.activity_id}`,
             starts_at: x.due_at,
@@ -107,6 +119,7 @@ function AppointmentsPage() {
             date: new Date(x.due_at),
             k: "other" as Kind,
             external: true as const,
+            pd: { activityId: x.activity_id, type: x.type, durationMin: x.duration_min, ownerId: x.user_id },
           }))
         : [];
     return [...own, ...fromPipedrive].sort((p, q) => p.date.getTime() - q.date.getTime());
@@ -169,6 +182,37 @@ function AppointmentsPage() {
     },
   });
 
+  // Meeting edit dialog and the names of the people whose Pipedrive entries the manager sees.
+  const [editMeeting, setEditMeeting] = useState<EditableMeeting | null>(null);
+  const pdOwnerIds = [...new Set(external.map((x) => x.user_id))].filter((id) => id !== user.id);
+  const pdOwners = useQuery({
+    enabled: roles.isStaff && pdOwnerIds.length > 0,
+    queryKey: ["pd-owner-names", pdOwnerIds.join(",")],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("id,display_name,email").in("id", pdOwnerIds);
+      return new Map((data ?? []).map((p) => [p.id, p.display_name || p.email || "Unbekannt"]));
+    },
+  });
+  const pdOwnerName = (id: string) => pdOwners.data?.get(id) ?? "…";
+  // Managers and admins: bring the Pipedrive calendars of the whole team up to date (the server throttles it).
+  const syncTeam = useServerFn(syncTeamCalendars);
+  useQuery({
+    enabled: roles.isStaff && backendEnabled,
+    queryKey: ["team-calendar-sync", country],
+    staleTime: 3 * 60_000,
+    refetchInterval: 5 * 60_000,
+    retry: false,
+    queryFn: async () => {
+      try {
+        const r = await syncTeam({ data: { country } });
+        if (!r.skipped) await qc.invalidateQueries({ queryKey: ["external-activities"] });
+        return r;
+      } catch {
+        return { synced: 0, skipped: true };
+      }
+    },
+  });
+
   const queue = pending.data ?? [];
   const next = queue[0] ?? null;
   const [fileLead, setFileLead] = useState<string | null>(null);
@@ -193,6 +237,7 @@ function AppointmentsPage() {
     at: e.date,
     title: e.title ?? e.lead?.company ?? e.notes ?? "Termin",
     dot: appointmentDotClass(e.date, "external" in e && !!e.external),
+    ...("pd" in e && e.pd ? { badge: PD_KIND_LABEL[pdKind(e.pd.type)] } : {}),
   }));
   // Details: a chosen day in full. The overview of the week lists everything upcoming plus only the last three past
   // entries, so finished appointments do not push the coming ones out of sight.
@@ -292,12 +337,14 @@ function AppointmentsPage() {
           footer={
           <div className="flex flex-wrap items-center gap-3">
             <Label className="text-xs">Anzeigen</Label>
-            <Select value={filter} onValueChange={(v) => setFilter(v as "all" | "tool" | "pipedrive")}>
+            <Select value={filter} onValueChange={(v) => setFilter(v as "all" | "tool" | "pipedrive" | "pd_meeting" | "pd_call")}>
               <SelectTrigger className="min-h-11 w-[320px] max-w-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Termine</SelectItem>
                 <SelectItem value="tool">Cold Caller Tool</SelectItem>
                 <SelectItem value="pipedrive">Pipedrive</SelectItem>
+                <SelectItem value="pd_meeting">Pipedrive: Meetings</SelectItem>
+                <SelectItem value="pd_call">Pipedrive: Anrufe</SelectItem>
               </SelectContent>
             </Select>
             <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -342,7 +389,9 @@ function AppointmentsPage() {
                       <p className="text-sm font-semibold">
                         {heading}
                         {"external" in e && e.external && (
-                          <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-800">Pipedrive</span>
+                          <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-800">
+                            Pipedrive{"pd" in e && e.pd ? ` · ${PD_KIND_LABEL[pdKind(e.pd.type)]}` : ""}
+                          </span>
                         )}
                       </p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
@@ -361,6 +410,29 @@ function AppointmentsPage() {
                         </a>
                       )}
                       {e.notes && e.notes !== heading && <p className="mt-1 text-xs text-muted-foreground">{e.notes}</p>}
+                      {"pd" in e && e.pd && roles.isStaff && e.pd.ownerId !== user.id && (
+                        <p className="mt-1 text-xs text-muted-foreground">Zuständig: {pdOwnerName(e.pd.ownerId)}</p>
+                      )}
+                      {"pd" in e && e.pd && pdKind(e.pd.type) === "call" && (
+                        <p className="mt-1 text-xs text-muted-foreground">Anrufe aus Pipedrive werden nur angezeigt.</p>
+                      )}
+                      {"pd" in e && e.pd && canEditPdActivity(e.pd.type, roles.isStaff) && (
+                        <Button
+                          className="mt-2"
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setEditMeeting({
+                              activityId: e.pd.activityId,
+                              subject: heading,
+                              startsAt: e.starts_at,
+                              durationMin: e.pd.durationMin,
+                            })
+                          }
+                        >
+                          Meeting bearbeiten
+                        </Button>
+                      )}
                       {"outcome" in e && e.outcome && (
                         <p className="mt-1 text-xs font-semibold text-primary">
                           Ergebnis: {{ no_show: "Termin nicht wahrgenommen", low_interest: "Wenig interessiert", medium_interest: "Mittleres Interesse", high_interest: "Sehr interessiert" }[e.outcome as string] ?? e.outcome}
@@ -406,6 +478,12 @@ function AppointmentsPage() {
         </aside>
       </div>
 
+      <PipedriveMeetingDialog
+        meeting={editMeeting}
+        country={country}
+        onClose={() => setEditMeeting(null)}
+        onSaved={() => void qc.invalidateQueries({ queryKey: ["external-activities"] })}
+      />
       <LeadDialog
         leadId={fileLead}
         userId={user.id}
