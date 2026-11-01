@@ -103,6 +103,21 @@ test("callers cannot take a batch; a manager or admin takes or assigns it", asyn
   assert.equal(b.assigned_name, "Anna");
 });
 
+test("a batch can only be assigned to accounts of its country, global admins included", async () => {
+  await db.exec("RESET ROLE");
+  const dora = randomUUID();
+  await db.query(
+    "insert into auth.users values ($1,'dora@example.test','{\"display_name\":\"Dora\"}')",
+    [dora],
+  );
+  await db.query("update public.user_roles set role='admin' where user_id=$1", [dora]);
+  await db.query("delete from public.user_countries where user_id=$1", [dora]);
+  await db.query("insert into public.user_countries(user_id,country) values ($1,'AT')", [dora]);
+  await as(admin);
+  await assert.rejects(() => rpc("reassign_batch", [open, dora]), /invalid_assignee/);
+  assert.equal((await rpc("reassign_batch", [abroad, dora])).assigned_to, dora);
+});
+
 test("only confirmed batches in an allowed country can be taken", async () => {
   await as(admin);
   await assert.rejects(() => rpc("claim_batch", [draft]), /batch_not_found/);

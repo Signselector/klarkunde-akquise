@@ -86,16 +86,20 @@ function Dashboard() {
   const me = { data: { name: meName } };
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
+  // Only accounts of the selected country can receive a batch of that country.
   const people = useQuery({
     enabled: admin && backendEnabled,
-    queryKey: ["batch-assignees"],
+    queryKey: ["batch-assignees", country],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("profiles")
-        .select("id,display_name")
-        .order("display_name");
+        .from("user_countries")
+        .select("user_id,profile:profiles(display_name,email,active)")
+        .eq("country", country);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? [])
+        .filter((r) => r.profile?.active !== false)
+        .map((r) => ({ id: r.user_id, display_name: r.profile?.display_name || r.profile?.email || "Unbekannt" }))
+        .sort((x, y) => x.display_name.localeCompare(y.display_name, "de"));
     },
   });
 
