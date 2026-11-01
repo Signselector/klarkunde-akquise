@@ -351,6 +351,13 @@
       "when": 1793536784315,
       "tag": "0049_auto_assign_next_batch",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1793536800030,
+      "tag": "0050_backend_maintenance_cron",
+      "breakpoints": true
     }
   ]
 }
