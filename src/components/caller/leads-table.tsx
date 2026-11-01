@@ -191,14 +191,14 @@ export function LeadsTable({
         <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
           <thead className="bg-muted/50 text-muted-foreground">
             <tr>
-              <th className="px-4 py-3 font-medium">Firma</th>
+              <th className="px-4 py-3 font-medium">
+                {processed ? "Ergebnis" : "Status"}
+              </th>
+              <th className="px-2 py-3 font-medium">Firma</th>
               <th className="px-2 py-3 font-medium">Kontakt</th>
               <th className="px-2 py-3 font-medium">Website</th>
               <th className="px-2 py-3 font-medium">Stadt</th>
               <th className="px-2 py-3 font-medium">Adresse</th>
-              <th className="px-4 py-3 font-medium">
-                {processed ? "Ergebnis" : "Status"}
-              </th>
               {processed && <th className="px-2 py-3 font-medium">Bearbeitet</th>}
             </tr>
           </thead>
@@ -209,17 +209,6 @@ export function LeadsTable({
                 className={quickActions ? "align-top" : "cc-row-link align-top"}
                 onClick={quickActions ? undefined : () => onOpen(l.id)}
               >
-                <td className="px-4 py-4 font-medium">{l.company || "Ohne Firmenname"}</td>
-                <td className="px-2 py-4">
-                  <ContactLinks lead={l} />
-                </td>
-                <td className="px-2 py-4">
-                  <WebsiteLink lead={l} />
-                </td>
-                <td className="px-2 py-4">{l.city || "–"}</td>
-                <td className="px-2 py-4">
-                  <Address lead={l} />
-                </td>
                 <td className="min-w-[10rem] px-4 py-4">
                   <div className="flex flex-col items-start gap-2">
                     <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
@@ -239,6 +228,17 @@ export function LeadsTable({
                       </button>
                     )}
                   </div>
+                </td>
+                <td className="px-2 py-4 font-medium">{l.company || "Ohne Firmenname"}</td>
+                <td className="px-2 py-4">
+                  <ContactLinks lead={l} />
+                </td>
+                <td className="px-2 py-4">
+                  <WebsiteLink lead={l} />
+                </td>
+                <td className="px-2 py-4">{l.city || "–"}</td>
+                <td className="px-2 py-4">
+                  <Address lead={l} />
                 </td>
                 {processed && (
                   <td className="whitespace-nowrap px-2 py-4 text-muted-foreground">
