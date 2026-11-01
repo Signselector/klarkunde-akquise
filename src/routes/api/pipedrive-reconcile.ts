@@ -93,20 +93,11 @@ export const Route = createFileRoute("/api/pipedrive-reconcile")({
         } catch (e) {
           calendars["retry"] = e instanceof Error ? e.message : "failed";
         }
-        // Welcome/password mails for accounts imported from Teammanagement (only from 06:00 Vienna time).
-        let welcome: unknown = null;
-        try {
-          const { sendPendingWelcomeMails } = await import("@/lib/welcome-mail.server");
-          welcome = await sendPendingWelcomeMails();
-        } catch (e) {
-          welcome = { error: e instanceof Error ? e.message : "failed" };
-        }
         return Response.json({
           deals: results,
           calendars,
           futureProjectsActivated: activated,
           retried,
-          welcome,
         });
       },
     },
