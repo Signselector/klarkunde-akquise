@@ -163,7 +163,12 @@ test("taking and releasing leave an audit trail; callers cannot write batches di
       "select action from public.audit_events where action like '%\_batch' order by created_at,id",
     )
   ).rows.map((r) => r.action);
-  assert.deepEqual(actions, ["reassign_batch", "release_batch", "reassign_batch"]);
+  assert.deepEqual(actions, [
+    "reassign_batch",
+    "reassign_batch",
+    "release_batch",
+    "reassign_batch",
+  ]);
   await as(ben);
   await assert.rejects(
     () => db.query("update public.lead_batches set assigned_to=null"),
