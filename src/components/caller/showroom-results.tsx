@@ -67,12 +67,13 @@ export function ShowroomResults({
   const [highPriority, setHighPriority] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  const isFollowupTitle = /^folgetermin/i.test(appointment.title ?? "");
   if (appointment.outcome)
     return (
       <section className="cc-detail-section space-y-2" aria-labelledby="showroom-title">
         <h3 id="showroom-title" className="flex items-center gap-3 text-lg">
           <Phone size={22} aria-hidden="true" className="text-primary" />
-          Termin-Ergebnisse
+          {isFollowupTitle ? "Termin-Ergebnisse" : "Showroom-Ergebnisse"}
         </h3>
         <p className="rounded-md border bg-muted/40 p-3 text-sm">
           Für diesen Termin ist das Ergebnis „{OUTCOME_LABEL[appointment.outcome] ?? appointment.outcome}“ erfasst.
@@ -150,7 +151,7 @@ export function ShowroomResults({
     <section className="cc-detail-section space-y-3" aria-labelledby="showroom-title">
       <h3 id="showroom-title" className="flex items-center gap-3 text-lg">
         <Phone size={22} aria-hidden="true" className="text-primary" />
-        Termin-Ergebnisse
+        {isFollowup ? "Termin-Ergebnisse" : "Showroom-Ergebnisse"}
       </h3>
       <TooltipProvider delayDuration={250}>
         <div className="cc-outcome-grid">
