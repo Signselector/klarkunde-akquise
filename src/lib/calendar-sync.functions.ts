@@ -130,13 +130,13 @@ async function databaseStore(userId: string, country: string): Promise<CalendarS
           pd_sync_error: null,
           pd_synced_at: new Date().toISOString(),
           ...(item.kind === "appointment" ? { pd_push_claimed_at: null } : {}),
-        })
+        } as never)
         .eq("id", item.id);
     },
     async markFailed(item, error) {
       await db
         .from(table(item))
-        .update({ pd_sync_state: "failed", pd_sync_error: error.slice(0, 120), ...(item.kind === "appointment" ? { pd_push_claimed_at: null } : {}) })
+        .update({ pd_sync_state: "failed", pd_sync_error: error.slice(0, 120), ...(item.kind === "appointment" ? { pd_push_claimed_at: null } : {}) } as never)
         .eq("id", item.id);
     },
     async queue() {
