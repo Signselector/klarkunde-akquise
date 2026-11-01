@@ -136,4 +136,10 @@ export const EN_5: Record<string, string> = {
   "{} · aktuell {}": "{} · currently {}",
   "Keine Notiz.": "No note.",
   "Notizen und Verlauf des Deals.": "Notes and history of the deal.",
+  "Als erledigt markieren": "Mark as done",
+  "Erledigt": "Done",
+  "Wieder als offen markiert.": "Marked as open again.",
+  "Als erledigt markiert und in Pipedrive aktualisiert.": "Marked as done and updated in Pipedrive.",
+  "Als erledigt markiert (Testmodus, nicht an Pipedrive gesendet).": "Marked as done (test mode, not sent to Pipedrive).",
+  "Das ging leider nicht.": "That did not work.",
 };

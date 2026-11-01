@@ -3,12 +3,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { dateValue, timeValue } from "@/lib/booking-slots";
-import { updatePipedriveMeeting } from "@/lib/pipedrive-activity.functions";
+import { updatePipedriveActivityNote, updatePipedriveMeeting } from "@/lib/pipedrive-activity.functions";
 
-export type EditableMeeting = { activityId: number; subject: string; startsAt: string; durationMin: number };
+export type EditableMeeting = { activityId: number; subject: string; startsAt: string; durationMin: number; note?: string };
 
 const DURATIONS = [15, 30, 45, 60, 90, 120];
 
@@ -25,6 +26,8 @@ export function PipedriveMeetingDialog({
   onSaved: () => void;
 }) {
   const save = useServerFn(updatePipedriveMeeting);
+  const saveNote = useServerFn(updatePipedriveActivityNote);
+  const [note, setNote] = useState("");
   const [subject, setSubject] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -35,6 +38,7 @@ export function PipedriveMeetingDialog({
     if (!meeting) return;
     const d = new Date(meeting.startsAt);
     setSubject(meeting.subject);
+    setNote(meeting.note ?? "");
     setDate(dateValue(d));
     setTime(timeValue(d));
     setDuration(String(meeting.durationMin));
@@ -52,6 +56,7 @@ export function PipedriveMeetingDialog({
       const r = await save({
         data: { country, activityId: meeting.activityId, subject, startsAt: start.toISOString(), durationMin: Number(duration) },
       });
+      if (note.trim() !== (meeting.note ?? "").trim()) await saveNote({ data: { country, activityId: meeting.activityId, note } });
       toast.success(
         r.state === "synced"
           ? "Meeting gespeichert und in Pipedrive geändert."
@@ -69,7 +74,7 @@ export function PipedriveMeetingDialog({
   const options = [...new Set([...DURATIONS, meeting?.durationMin ?? 30])].sort((a, b) => a - b);
   return (
     <Dialog open={!!meeting} onOpenChange={(o) => !o && !busy && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Meeting bearbeiten</DialogTitle>
           <DialogDescription>Die Änderung wird an das Meeting in Pipedrive gesendet. Anrufe lassen sich nicht bearbeiten.</DialogDescription>
@@ -89,6 +94,10 @@ export function PipedriveMeetingDialog({
               <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
             </label>
           </div>
+          <label className="grid gap-1">
+            Notiz
+            <Textarea value={note} rows={6} maxLength={15000} onChange={(e) => setNote(e.target.value)} />
+          </label>
           <label className="grid gap-1">
             Dauer
             <Dropdown

@@ -3,13 +3,14 @@ import { appointmentDotClass } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
 import { PipedriveMeetingDialog, type EditableMeeting } from "@/components/pipedrive-meeting-dialog";
 import { canEditPdActivity, pdKind, PD_KIND_LABEL } from "@/lib/pipedrive-activity";
-import { syncTeamCalendars } from "@/lib/pipedrive-activity.functions";
+import { setPipedriveActivityDone, syncTeamCalendars } from "@/lib/pipedrive-activity.functions";
+import { stripHtml } from "@/lib/deal-detail";
 import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
 import { notifyShowroomFn } from "@/lib/showroom-sync.functions";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Building2, CircleDollarSign, Phone, Trash2, User, UserCircle } from "lucide-react";
+import { Building2, CheckCircle2, Circle, CircleDollarSign, Phone, Trash2, User, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { backendEnabled } from "@/lib/backend";
@@ -66,6 +67,7 @@ function AppointmentsPage() {
   const country = useCountry();
   const roles = useRoles(user.id);
   const pushNow = useServerFn(pushAppointmentNow);
+  const markDone = useServerFn(setPipedriveActivityDone);
   const showroom = useServerFn(notifyShowroomFn);
   const { sync, external } = useCalendarSync(user.id, country);
   const [mine] = useState(false);
@@ -313,13 +315,37 @@ function AppointmentsPage() {
                 {{ no_show: "Nicht wahrgenommen", low_interest: "Wenig interessiert", medium_interest: "Mittleres Interesse", high_interest: "Sehr interessiert" }[e.outcome as string] ?? e.outcome}
               </span>
             )}
-            <span className="ml-auto flex gap-2">
+            <span className="ml-auto flex flex-wrap items-center gap-2">
+              {pd && pdEditable && (
+                <Button
+                  variant="ghost"
+                  onClick={async () => {
+                    try {
+                      const r = await markDone({ data: { country, activityId: pd.activityId, done: !pd.done } });
+                      toast.success(
+                        pd.done
+                          ? "Wieder als offen markiert."
+                          : r.state === "synced"
+                            ? "Als erledigt markiert und in Pipedrive aktualisiert."
+                            : "Als erledigt markiert (Testmodus, nicht an Pipedrive gesendet).",
+                      );
+                      close();
+                      void qc.invalidateQueries({ queryKey: ["external-activities"] });
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : "Das ging leider nicht.");
+                    }
+                  }}
+                >
+                  {pd.done ? <CheckCircle2 className="text-green-600" aria-hidden="true" /> : <Circle aria-hidden="true" />}
+                  {pd.done ? "Erledigt" : "Als erledigt markieren"}
+                </Button>
+              )}
               {pd && canEditPdActivity(pd.type, roles.isStaff) && (
                 <Button
                   variant="outline"
                   onClick={() => {
                     close();
-                    setEditMeeting({ activityId: pd.activityId, subject: entry.title, startsAt: e.starts_at, durationMin: pd.durationMin });
+                    setEditMeeting({ activityId: pd.activityId, subject: entry.title, startsAt: e.starts_at, durationMin: pd.durationMin, note: "pdNote" in e && e.pdNote ? stripHtml(e.pdNote) : "" });
                   }}
                 >
                   Bearbeiten
