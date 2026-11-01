@@ -58,7 +58,7 @@ async function openConn(host: string, port: number): Promise<Conn> {
   };
   socket.on("end", end);
   socket.on("close", end);
-  socket.on("error", end);
+  socket.on("error", (e) => { console.error("SMTP socket error", e?.message); end(); });
   return {
     write: (d) =>
       new Promise((res, rej) => socket.write(d, (e) => (e ? rej(e) : res()))),
