@@ -153,6 +153,11 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
               <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
+                    {canOpen && (
+                      <th className="px-4 py-3 font-medium">
+                        <span className="sr-only">Aktionen</span>
+                      </th>
+                    )}
                     {[
                       "Firma",
                       "Kontakt",
@@ -163,21 +168,35 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
                       "Abgeschlossen",
                       "Letzte Aktivität",
                     ].map((h) => (
-                      <th key={h} className="px-3 py-3 font-medium first:px-4">
+                      <th key={h} className="px-3 py-3 font-medium">
                         {h}
                       </th>
                     ))}
-                    {canOpen && (
-                      <th className="sticky right-0 bg-[#faf8f4] px-4 py-3 text-right font-medium">
-                        <span className="sr-only">Aktionen</span>
-                      </th>
-                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {rows.map((l) => (
-                    <tr key={l.lead_id} className="align-top hover:bg-muted/40">
-                      <td className="px-4 py-3 font-medium">{l.company || "Ohne Firmenname"}</td>
+                    <tr
+                      key={l.lead_id}
+                      className={canOpen ? "cc-row-link align-top" : "align-top hover:bg-muted/40"}
+                      onClick={canOpen ? () => setSelected(l.lead_id) : undefined}
+                    >
+                      {canOpen && (
+                        <td className="px-4 py-3">
+                          <button
+                            type="button"
+                            className="cc-record-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelected(l.lead_id);
+                            }}
+                            aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
+                          >
+                            Kundenakte
+                          </button>
+                        </td>
+                      )}
+                      <td className="px-3 py-3 font-medium">{l.company || "Ohne Firmenname"}</td>
                       <td className="px-3 py-3">
                         <div className="flex min-w-[11rem] max-w-[18rem] flex-col gap-1">
                           {l.contact_name && <span className="truncate">{l.contact_name}</span>}
@@ -212,18 +231,6 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
                       <td className="px-3 py-3 tabular-nums">{l.deal_id ?? "–"}</td>
                       <td className="px-3 py-3">{when(l.completed_at)}</td>
                       <td className="px-3 py-3">{when(l.last_activity_at)}</td>
-                      {canOpen && (
-                        <td className="cc-sticky-action sticky right-0 px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            className="cc-record-btn"
-                            onClick={() => setSelected(l.lead_id)}
-                            aria-label={`Kundenakte ${l.company || "Ohne Firmenname"} öffnen`}
-                          >
-                            Kundenakte
-                          </button>
-                        </td>
-                      )}
                     </tr>
                   ))}
                 </tbody>
