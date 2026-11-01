@@ -150,4 +150,5 @@ export const EN_5: Record<string, string> = {
   "Testmodus: Der Termin wurde im Tool geändert, nichts wurde an Pipedrive gesendet.": "Test mode: the appointment was changed in the tool, nothing was sent to Pipedrive.",
   "Der Termin konnte nicht gespeichert werden.": "The appointment could not be saved.",
   "Nur Meetings und Anrufe können bearbeitet werden.": "Only meetings and calls can be edited.",
+  "Wird von einem Manager zugewiesen": "Will be assigned by a manager",
 };

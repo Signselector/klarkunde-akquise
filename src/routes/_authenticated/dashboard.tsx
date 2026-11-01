@@ -289,7 +289,10 @@ function Dashboard() {
                           <Link to="/leads">Offene Leads</Link>
                         </Button>
                       )}
-                      {free && (
+                      {free && !admin && (
+                        <span className="text-xs text-muted-foreground">Wird von einem Manager zugewiesen</span>
+                      )}
+                      {free && admin && (
                         <Button
                           size="sm"
                           onClick={() => setPending({ batch: row, action: "claim" })}

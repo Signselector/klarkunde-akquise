@@ -2351,3 +2351,17 @@ tr:hover > .cc-sticky-action {
 .cc-app [data-collapsible="icon"] .cc-soon-badge {
   display: none;
 }
+
+/* Dark batch cards (any owner, not only the own batch): buttons and the assignment menu stay readable. */
+.cc-app .cc-batch[data-claimed="true"] :is(a, button) {
+  background: transparent;
+  color: #ffffff;
+  border-color: #3a3a40;
+}
+.cc-app .cc-batch[data-claimed="true"] :is(a, button):hover:not(:disabled) {
+  background: #26262b;
+  color: #ffffff;
+}
+.cc-app .cc-batch[data-claimed="true"] :is(a, button):disabled {
+  opacity: 0.6;
+}
