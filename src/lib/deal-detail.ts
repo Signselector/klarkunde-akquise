@@ -1,5 +1,5 @@
 /** Notes and history of a deal, as shown under "Meine Kunden". E-mails are never part of it. */
-export type DealNote = { id: string; at: string; author: string | null; text: string };
+export type DealNote = { id: string; at: string; author: string | null; text: string; editable?: boolean };
 export type DealEvent = { id: string; at: string; text: string; by: string | null };
 
 const ACTIVITY_LABEL: Record<string, string> = {
@@ -127,7 +127,16 @@ export type StreamItem = {
   detail?: string;
   /** E-mail state such as GEPLANT. */
   state?: string;
+  /** Start of the e-mail text. */
+  preview?: string;
+  /** Activity is done. */
+  done?: boolean;
 };
+
+/** Text of a note without the "date · caller" header line the tool puts on notes it sends to Pipedrive. */
+export function noteBody(text: string): string {
+  return text.replace(/^[^\n]*·[^\n]*\n/, "").trim();
+}
 
 function fileSize(bytes: unknown): string | undefined {
   const n = Number(bytes);
@@ -186,7 +195,8 @@ export function parseStream(
         by,
         kind: "activity",
         text: subject || (ACTIVITY_LABEL[type] ?? "Aktivität"),
-        activity: `${ACTIVITY_LABEL[type] ?? "Aktivität"}${data["done"] ? " (erledigt)" : ""}`,
+        activity: ACTIVITY_LABEL[type] ?? "Aktivität",
+        done: !!data["done"],
         ...(due ? { detail: due } : {}),
       });
     } else if (/mail/i.test(kind)) {
@@ -197,6 +207,9 @@ export function parseStream(
         })
         .filter(Boolean)
         .join(", ");
+      const body = data["snippet"] ?? data["body"] ?? data["body_url"];
+      const preview =
+        typeof body === "string" && !/^https?:/.test(body) ? stripHtml(body).slice(0, 200) : "";
       const state = data["draft"]
         ? "ENTWURF"
         : data["sent_flag"] === 0 || data["sent_flag"] === false
@@ -212,6 +225,7 @@ export function parseStream(
         text: typeof data["subject"] === "string" && data["subject"] ? data["subject"] : "(Ohne Betreff)",
         ...(to ? { detail: to } : {}),
         ...(state ? { state } : {}),
+        ...(preview ? { preview } : {}),
       });
     } else if (kind === "file") {
       const name = String(data["file_name"] ?? data["name"] ?? "Datei");

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseFlow, parseNotes, parseStream, stripHtml } from "@/lib/deal-detail";
+import { noteBody, parseFlow, parseNotes, parseStream, stripHtml } from "@/lib/deal-detail";
 
 describe("deal detail", () => {
   it("turns note html into text, newest note first", () => {
@@ -52,4 +52,24 @@ describe("deal detail", () => {
     const items = parseStream(flow, { 3: "A", 5: "B" }, { staff: false });
     expect(items.map((i) => i.text)).toEqual(["Stage: A → B"]);
   });
+});
+
+it("removes the header line the tool adds to notes sent to Pipedrive", () => {
+  expect(noteBody("01.11.2026, 10:00:00 · Anna\nKunde will Angebot")).toBe("Kunde will Angebot");
+  expect(noteBody("Nur Text")).toBe("Nur Text");
+});
+
+it("adds a mail preview and the done flag for staff", () => {
+  const items = parseStream(
+    {
+      data: [
+        { object: "mailMessage", timestamp: "2026-11-02 12:00:00", data: { id: 3, subject: "Hi", snippet: "<p>Guten Tag</p>", draft: 0, sent_flag: 1 } },
+        { object: "activity", timestamp: "2026-11-02 13:00:00", data: { id: 4, type: "task", subject: "Review", done: 1 } },
+      ],
+    },
+    {},
+    { staff: true },
+  );
+  expect(items.find((i) => i.kind === "email")).toMatchObject({ preview: "Guten Tag", state: "GESENDET" });
+  expect(items.find((i) => i.kind === "activity")).toMatchObject({ done: true });
 });
