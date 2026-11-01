@@ -379,6 +379,13 @@
       "when": 1793552788298,
       "tag": "0053_manager_assign_down_realtime_callback_move",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1793557277426,
+      "tag": "0054_lead_contact_edit_appointment_holder",
+      "breakpoints": true
     }
   ]
 }

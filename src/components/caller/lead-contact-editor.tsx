@@ -55,9 +55,11 @@ export function LeadContactEditor({
 
   async function save() {
     setBusy(true);
+    // Use the current version: a cached copy of the lead (list, earlier save) must not block saving.
+    const fresh = await supabase.from("leads").select("version").eq("id", lead.id).maybeSingle();
     const { error } = await supabase.rpc("update_lead_contact", {
       p_lead_id: lead.id,
-      p_expected_version: lead.version,
+      p_expected_version: fresh.data?.version ?? lead.version,
       p_contact: form,
     });
     setBusy(false);
