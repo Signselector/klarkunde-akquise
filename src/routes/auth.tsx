@@ -163,14 +163,6 @@ function AuthPage() {
               Passwort vergessen?
             </button>
           )}
-          <button
-            type="button"
-            disabled={busy}
-            className="cc-auth-mode"
-            onClick={() => setMode(mode === "in" ? "up" : "in")}
-          >
-            {mode === "in" ? "Neu im Team? Account erstellen" : "Schon registriert? Anmelden"}
-          </button>
         </form>
       </div>
     </div>
