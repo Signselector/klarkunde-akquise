@@ -1828,7 +1828,6 @@ export type Database = {
       }
       get_my_customers: { Args: { p_country: string }; Returns: Json }
       get_no_interest_leads: { Args: { p_country: string }; Returns: Json }
-      get_unreached_leads: { Args: { p_country: string }; Returns: Json }
       get_quality_issues: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: Json
@@ -1848,6 +1847,7 @@ export type Database = {
         Args: { p_country: string }
         Returns: Json
       }
+      get_unreached_leads: { Args: { p_country: string }; Returns: Json }
       get_weekly_ranking: { Args: { p_week?: string }; Returns: Json }
       has_admin_rights: {
         Args: { _country: string; _uid: string }

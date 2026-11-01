@@ -27,7 +27,7 @@ BEGIN
    ORDER BY l.last_called_at DESC NULLS LAST)
   FROM public.leads l JOIN public.lead_batches b ON b.id=l.batch_id
   WHERE (p_country='ALL' OR b.country=p_country) AND l.status='open' AND l.attempts>0
-    AND l.last_called_at<now()-interval '20 days' AND l.archived_at IS NULL),'[]'::jsonb);
+     AND l.last_called_at<now()-interval '20 days' AND l.archived_at IS NULL),'[]'::jsonb);
 END $$;
 REVOKE ALL ON FUNCTION public.get_unreached_leads(text) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.get_unreached_leads(text) TO authenticated;
