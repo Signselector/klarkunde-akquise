@@ -677,6 +677,8 @@ export type Database = {
         Row: {
           assigned_at: string | null
           assigned_to: string | null
+          auto_next_at: string | null
+          auto_next_batch_id: string | null
           country: string
           created_at: string
           created_by: string | null
@@ -687,6 +689,8 @@ export type Database = {
         Insert: {
           assigned_at?: string | null
           assigned_to?: string | null
+          auto_next_at?: string | null
+          auto_next_batch_id?: string | null
           country?: string
           created_at?: string
           created_by?: string | null
@@ -697,6 +701,8 @@ export type Database = {
         Update: {
           assigned_at?: string | null
           assigned_to?: string | null
+          auto_next_at?: string | null
+          auto_next_batch_id?: string | null
           country?: string
           created_at?: string
           created_by?: string | null
@@ -710,6 +716,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_batches_auto_next_batch_id_fkey"
+            columns: ["auto_next_batch_id"]
+            isOneToOne: false
+            referencedRelation: "lead_batches"
             referencedColumns: ["id"]
           },
         ]
@@ -1639,6 +1652,7 @@ export type Database = {
         Args: { p_appointment_id: string; p_user_id: string }
         Returns: undefined
       }
+      auto_assign_finished_batches: { Args: never; Returns: number }
       backend_maintenance: { Args: never; Returns: Json }
       cal_apply_activities: {
         Args: { p_country: string; p_list: Json; p_user: string }
