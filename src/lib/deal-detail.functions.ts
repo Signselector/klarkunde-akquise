@@ -168,14 +168,16 @@ async function resolveLeadDeal(context: { supabase: any; userId: string }, leadI
     .not("deal_id", "is", null)
     .limit(1)
     .maybeSingle();
-  if (!link || link.deal_id == null) return { db, link: null, staff: false, senior: false };
+  const country = (link?.country as string | undefined) ?? (await db.from("leads").select("batch:lead_batches(country)").eq("id", leadId).maybeSingle()).data?.batch?.country ?? "";
   const [{ data: staff }, { data: senior }] = await Promise.all([
-    context.supabase.rpc("has_admin_rights", { _uid: context.userId, _country: link.country }),
+    country
+      ? context.supabase.rpc("has_admin_rights", { _uid: context.userId, _country: country })
+      : Promise.resolve({ data: false }),
     context.supabase.rpc("has_role", { _user_id: context.userId, _role: "veteran" }),
   ]);
   return {
     db,
-    link: { country: link.country as string, dealId: Number(link.deal_id) },
+    link: link && link.deal_id != null ? { country: link.country as string, dealId: Number(link.deal_id) } : null,
     staff: !!staff,
     senior: !!senior,
   };

@@ -12,6 +12,21 @@ async function requireStaff(supabase: { rpc: (fn: "has_admin_rights", args: { _u
   if (!data) throw new Error("Dafür fehlt dir die Berechtigung.");
 }
 
+/** Managers and admins of the country may change every entry, a Senior Caller only the entries that belong to him. */
+async function requireStaffOrSeniorOwner(
+  context: { supabase: any; userId: string },
+  country: string,
+  ownerId: string,
+) {
+  const { data: staff } = await context.supabase.rpc("has_admin_rights", { _uid: context.userId, _country: country });
+  if (staff) return;
+  if (ownerId === context.userId) {
+    const { data: senior } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "veteran" });
+    if (senior) return;
+  }
+  throw new Error("Dafür fehlt dir die Berechtigung.");
+}
+
 /**
  * Edits a meeting of the Pipedrive calendar. Managers and admins of the country only, and only meetings: calls are
  * refused here, whatever the page does. The change goes to Pipedrive first (in test mode only the tool copy changes).
@@ -23,15 +38,15 @@ export const updatePipedriveMeeting = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data, context }) => {
-    await requireStaff(context.supabase, context.userId, data.country);
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     const { data: act } = await db
       .from("pipedrive_activities")
-      .select("activity_id,type")
+      .select("activity_id,type,user_id")
       .eq("country", data.country)
       .eq("activity_id", data.activityId)
       .maybeSingle();
     if (!act) throw new Error("Der Eintrag wurde nicht gefunden.");
+    await requireStaffOrSeniorOwner(context, data.country, act.user_id);
     if (pdKind(act.type) !== "meeting") throw new Error("Nur Meetings können bearbeitet werden. Anrufe werden nur angezeigt.");
     let payload;
     try {
@@ -112,7 +127,7 @@ export const updatePipedriveActivityNote = createServerFn({ method: "POST" })
       .eq("activity_id", data.activityId)
       .maybeSingle();
     if (!act) throw new Error("Der Eintrag wurde nicht gefunden.");
-    if (act.user_id !== context.userId) await requireStaff(context.supabase, context.userId, data.country);
+    await requireStaffOrSeniorOwner(context, data.country, act.user_id);
     const text = data.note.trim();
     const html = text ? escapeHtml(text).replace(/\n/g, "<br>") : "";
     const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
@@ -153,7 +168,7 @@ export const setPipedriveActivityDone = createServerFn({ method: "POST" })
       .eq("activity_id", data.activityId)
       .maybeSingle();
     if (!act) throw new Error("Der Eintrag wurde nicht gefunden.");
-    if (act.user_id !== context.userId) await requireStaff(context.supabase, context.userId, data.country);
+    await requireStaffOrSeniorOwner(context, data.country, act.user_id);
     const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
     let state: "synced" | "simulated" = "simulated";
     if (config?.test_mode === false) {

@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { PipedriveMeetingDialog, type EditableMeeting } from "@/components/pipedrive-meeting-dialog";
 import { canEditPdActivity, pdKind, PD_KIND_LABEL } from "@/lib/pipedrive-activity";
 import { setPipedriveActivityDone, syncTeamCalendars } from "@/lib/pipedrive-activity.functions";
-import { stripHtml } from "@/lib/deal-detail";
 import { pushAppointmentNow } from "@/lib/calendar-sync.functions";
 import { notifyShowroomFn } from "@/lib/showroom-sync.functions";
 import { useEffect, useMemo, useState } from "react";
@@ -259,7 +258,8 @@ function AppointmentsPage() {
     const pd = "pd" in e && e.pd ? e.pd : null;
     const lead = e.lead;
     const leadId = "lead_id" in e ? e.lead_id : null;
-    const pdEditable = !!pd && (roles.isStaff || pd.ownerId === user.id);
+    // Managers and admins edit every entry; a Senior Caller only the ones that belong to them.
+    const pdEditable = !!pd && (roles.isStaff || (roles.role === "veteran" && pd.ownerId === user.id));
     const pdHasNote = !!pd && !!(("pdNote" in e && e.pdNote) || e.notes);
     const note = pd ? (!pdHasNote && !pdEditable ? null : (
       <PdNoteBlock
@@ -340,12 +340,12 @@ function AppointmentsPage() {
                   {pd.done ? "Erledigt" : "Als erledigt markieren"}
                 </Button>
               )}
-              {pd && canEditPdActivity(pd.type, roles.isStaff) && (
+              {pd && canEditPdActivity(pd.type, pdEditable) && (
                 <Button
                   variant="outline"
                   onClick={() => {
                     close();
-                    setEditMeeting({ activityId: pd.activityId, subject: entry.title, startsAt: e.starts_at, durationMin: pd.durationMin, note: "pdNote" in e && e.pdNote ? stripHtml(e.pdNote) : "" });
+                    setEditMeeting({ activityId: pd.activityId, subject: entry.title, startsAt: e.starts_at, durationMin: pd.durationMin });
                   }}
                 >
                   Bearbeiten
