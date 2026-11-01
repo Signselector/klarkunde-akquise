@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { PhoneCall } from "lucide-react";
 import { toast } from "sonner";
@@ -14,9 +14,24 @@ export function CallbackReminder({ userId }: { userId: string }) {
   const navigate = useNavigate();
   const location = useLocation();
   const notified = useRef(new Set<string>());
+  const shown = useRef(new Set<string>());
+  const qc = useQueryClient();
+  // Live: a moved, done or deleted callback updates the reminders at once.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`callbacks-${userId}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "callbacks", filter: `user_id=eq.${userId}` }, () => {
+        void qc.invalidateQueries({ queryKey: ["callback-reminders", userId] });
+        void qc.invalidateQueries({ queryKey: ["callbacks"] });
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [qc, userId]);
   const query = useQuery({
     queryKey: ["callback-reminders", userId, country],
-    refetchInterval: 30_000,
+    refetchInterval: 15_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("callbacks")
@@ -34,6 +49,11 @@ export function CallbackReminder({ userId }: { userId: string }) {
   });
   useEffect(() => {
     const due = query.data ?? [];
+    // A reminder whose callback was deleted, done or moved later disappears.
+    if (query.data) {
+      const live = new Set(due.map((c) => `callback-${c.id}`));
+      for (const id of shown.current) if (!live.has(id)) { toast.dismiss(id); shown.current.delete(id); }
+    }
     // Already on the callbacks page: nothing to point at, and earlier reminders are done with.
     if (location.pathname === "/callbacks") {
       for (const callback of due) toast.dismiss(`callback-${callback.id}`);
@@ -45,6 +65,7 @@ export function CallbackReminder({ userId }: { userId: string }) {
       notified.current.add(key);
       const lead = callback.lead;
       const toastId = `callback-${callback.id}`;
+      shown.current.add(toastId);
       const time = new Intl.DateTimeFormat("de-DE", { hour: "2-digit", minute: "2-digit" }).format(
         new Date(callback.due_at),
       );

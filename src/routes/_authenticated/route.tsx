@@ -7,6 +7,7 @@ import { FutureProjectsActivator } from "@/components/future-projects-activator"
 import { AchievementHost } from "@/components/achievement-host";
 import { AchievementNotifier } from "@/components/achievement-notifier";
 import { AppointmentNotifier } from "@/components/appointment-notifier";
+import { AppointmentReminder } from "@/components/appointment-reminder";
 import { primaryRole, ROLE_LABEL } from "@/lib/use-admin";
 import { Brand } from "@/components/coldcaller/brand";
 import { TestModeBanner } from "@/components/TestMode";
@@ -361,6 +362,7 @@ function Layout() {
           {!viewAs && <CallbackReminder userId={user.id} />}
           {!viewAs && <FutureProjectsActivator />}
           {!viewAs && <AppointmentNotifier userId={user.id} />}
+          {!viewAs && <AppointmentReminder userId={user.id} />}
           {!viewAs && <AchievementNotifier userId={user.id} />}
           <AchievementHost />
           <Outlet />

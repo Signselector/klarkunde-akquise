@@ -193,6 +193,7 @@ export type Database = {
           notes: string | null
           outcome: string | null
           pd_activity_id: number | null
+          pd_push_claimed_at: string | null
           pd_sync_error: string | null
           pd_sync_state: string
           pd_synced_at: string | null
@@ -211,6 +212,7 @@ export type Database = {
           notes?: string | null
           outcome?: string | null
           pd_activity_id?: number | null
+          pd_push_claimed_at?: string | null
           pd_sync_error?: string | null
           pd_sync_state?: string
           pd_synced_at?: string | null
@@ -229,6 +231,7 @@ export type Database = {
           notes?: string | null
           outcome?: string | null
           pd_activity_id?: number | null
+          pd_push_claimed_at?: string | null
           pd_sync_error?: string | null
           pd_sync_state?: string
           pd_synced_at?: string | null
@@ -1662,6 +1665,7 @@ export type Database = {
         Args: { p_a: Json; p_country: string; p_user: string }
         Returns: string
       }
+      cal_claim_appointments: { Args: { p_ids: string[] }; Returns: string[] }
       cal_prune: {
         Args: {
           p_country: string
@@ -1966,6 +1970,10 @@ export type Database = {
       reschedule_appointment: {
         Args: { p_appointment_id: string; p_starts_at: string }
         Returns: Json
+      }
+      reschedule_callback: {
+        Args: { p_callback_id: string; p_due_at: string }
+        Returns: string
       }
       resolve_integration_review: {
         Args: {

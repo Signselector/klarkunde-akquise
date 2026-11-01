@@ -41,15 +41,13 @@ export function RescheduleCallbackDialog({
   async function save() {
     if (!callback || !chosen) return;
     setBusy(true);
-    const { data, error } = await supabase
-      .from("callbacks")
-      .update({ due_at: new Date(chosen).toISOString() })
-      .eq("id", callback.id)
-      .eq("user_id", userId)
-      .eq("done", false)
-      .select("id");
+    void userId;
+    const { data, error } = await supabase.rpc("reschedule_callback", {
+      p_callback_id: callback.id,
+      p_due_at: new Date(chosen).toISOString(),
+    });
     setBusy(false);
-    if (error || !data?.length) {
+    if (error || !data) {
       toast.error(
         "Der Rückruf konnte nicht verschoben werden. Bitte lade die Seite neu und versuche es erneut.",
       );
@@ -59,6 +57,7 @@ export function RescheduleCallbackDialog({
     void qc.invalidateQueries({ queryKey: ["callbacks"] });
     void qc.invalidateQueries({ queryKey: ["lead-callback-due"] });
     void qc.invalidateQueries({ queryKey: ["external-activities"] });
+    void qc.invalidateQueries({ queryKey: ["callback-reminders"] });
     close();
   }
   return (

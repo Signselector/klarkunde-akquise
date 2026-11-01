@@ -13,7 +13,14 @@ const fixture = vi.hoisted(() => ({
     },
   ],
 }));
-vi.mock("@tanstack/react-query", () => ({ useQuery: () => ({ data: fixture.rows }) }));
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: () => ({ data: fixture.rows }),
+  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
+}));
+vi.mock("@/integrations/supabase/client", () => {
+  const channel = { on: () => channel, subscribe: () => channel };
+  return { supabase: { channel: () => channel, removeChannel: vi.fn() } };
+});
 vi.mock("@tanstack/react-router", () => ({
   useNavigate: () => fixture.navigate,
   useLocation: () => ({ pathname: fixture.path }),
@@ -44,4 +51,13 @@ it("shows nothing on the callbacks page and closes existing reminders", () => {
   render(<CallbackReminder userId="caller" />);
   expect(fixture.toast).not.toHaveBeenCalled();
   expect(fixture.toast.dismiss).toHaveBeenCalledWith("callback-callback-1");
+});
+
+it("closes the reminder of a callback that was deleted", () => {
+  const view = render(<CallbackReminder userId="caller" />);
+  const saved = fixture.rows;
+  fixture.rows = [];
+  view.rerender(<CallbackReminder userId="caller" />);
+  expect(fixture.toast.dismiss).toHaveBeenCalledWith("callback-callback-1");
+  fixture.rows = saved;
 });

@@ -26,7 +26,9 @@ export type TableLead = {
 export function leadTone(status: string): Tone {
   return status === "production"
     ? "success"
-    : status === "callback"
+    : status === "not_reached"
+      ? "orange"
+      : status === "callback"
       ? "warning"
       : status === "no_interest"
         ? "neutral"

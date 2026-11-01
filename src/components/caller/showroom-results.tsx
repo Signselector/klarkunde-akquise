@@ -18,9 +18,9 @@ export type ShowroomAppointment = { id: string; title: string; startsAt: string;
 
 const OPTIONS: { key: ShowroomOutcome; label: string; icon: typeof Phone; when: string; hint: string; tone: OutcomeTone | null }[] = [
   { key: "no_show", tone: "red", when: "Der Kunde ist nicht erschienen, hat nicht abgehoben oder war aus einem anderen Grund nicht da.", label: "Termin nicht wahrgenommen", icon: UserX as never, hint: "Deal geht auf „No Show“. Der Lead geht an den ursprünglichen Caller zurück (Termin versäumt), er plant den Rückruf selbst. Erst ab Terminbeginn." },
-  { key: "low_interest", tone: "grey", when: "Der Kunde hat nur wenig Interesse.", label: "Wenig interessiert", icon: ThumbsDown as never, hint: "Deal geht auf „Wenig Interesse“, Aufgabe am Deal, optional Folgetermin. Erst ab Terminbeginn." },
-  { key: "medium_interest", tone: "yellow", when: "Der Kunde hat mittleres Interesse.", label: "Mittleres Interesse", icon: Meh as never, hint: "Deal geht auf „Mittleres Interesse“, Aufgabe am Deal, optional Folgetermin. Erst ab Terminbeginn." },
-  { key: "high_interest", tone: "green", when: "Der Kunde ist sehr interessiert.", label: "Sehr interessiert", icon: Flame as never, hint: "Deal geht auf „Sehr interessiert“, Aufgabe am Deal, optional Folgetermin. Erst ab Terminbeginn." },
+  { key: "low_interest", tone: "grey", when: "Der Kunde hat nur wenig Interesse.", label: "Wenig interessiert", icon: ThumbsDown as never, hint: "Deal geht auf „Wenig Interesse“, Aufgabe am Deal, Erst ab Terminbeginn." },
+  { key: "medium_interest", tone: "yellow", when: "Der Kunde hat mittleres Interesse.", label: "Mittleres Interesse", icon: Meh as never, hint: "Deal geht auf „Mittleres Interesse“, Aufgabe am Deal, Erst ab Terminbeginn." },
+  { key: "high_interest", tone: "green", when: "Der Kunde ist sehr interessiert.", label: "Sehr interessiert", icon: Flame as never, hint: "Deal geht auf „Sehr interessiert“, Aufgabe am Deal, Erst ab Terminbeginn." },
   { key: "deleted", tone: "slate", when: "Der Termin findet nicht statt, zum Beispiel weil der Kunde noch warten möchte.", label: "Löschen", icon: Trash2 as never, hint: "Der Termin wird aus dem Kalender gelöscht, Aufgabe am Deal." },
   { key: "rescheduled", tone: null, when: "Der Termin soll auf eine andere Zeit gelegt werden.", label: "Verschieben", icon: CalendarClock as never, hint: "Der Termin bekommt eine neue Zeit (kein neuer Termin), Notiz am Deal." },
 ];
@@ -50,7 +50,7 @@ const PIPEDRIVE_PROBLEM: Record<string, string> = {
   unauthorized: "Pipedrive hat die Anmeldung abgelehnt. Das Ergebnis ist gespeichert, aber nicht in Pipedrive.",
 };
 
-/** "Showroom-Ergebnisse": what happened at the appointment. Every result needs a note. */
+/** "Termin-Ergebnisse": what happened at the appointment. Every result needs a note. */
 export function ShowroomResults({
   appointment,
   onDone,
@@ -72,7 +72,7 @@ export function ShowroomResults({
       <section className="cc-detail-section space-y-2" aria-labelledby="showroom-title">
         <h3 id="showroom-title" className="flex items-center gap-3 text-lg">
           <Phone size={22} aria-hidden="true" className="text-primary" />
-          Showroom-Ergebnisse
+          Termin-Ergebnisse
         </h3>
         <p className="rounded-md border bg-muted/40 p-3 text-sm">
           Für diesen Termin ist das Ergebnis „{OUTCOME_LABEL[appointment.outcome] ?? appointment.outcome}“ erfasst.
@@ -85,7 +85,8 @@ export function ShowroomResults({
   const needsStart = (k: ShowroomOutcome) => k !== "deleted" && k !== "rescheduled";
   const current = OPTIONS.find((o) => o.key === active) ?? null;
   const makesTask = active === "deleted" || active === "low_interest" || active === "medium_interest" || active === "high_interest";
-  const interest = active === "low_interest" || active === "medium_interest" || active === "high_interest";
+  const isFollowup = /^folgetermin/i.test(appointment.title ?? "");
+  const interest = !isFollowup && (active === "low_interest" || active === "medium_interest" || active === "high_interest");
 
   function pick(key: ShowroomOutcome) {
     if (busy) return;
@@ -149,7 +150,7 @@ export function ShowroomResults({
     <section className="cc-detail-section space-y-3" aria-labelledby="showroom-title">
       <h3 id="showroom-title" className="flex items-center gap-3 text-lg">
         <Phone size={22} aria-hidden="true" className="text-primary" />
-        Showroom-Ergebnisse
+        Termin-Ergebnisse
       </h3>
       <TooltipProvider delayDuration={250}>
         <div className="cc-outcome-grid">
