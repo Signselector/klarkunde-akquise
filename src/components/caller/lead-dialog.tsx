@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-function Fold({ enabled, title, children }: { enabled: boolean; title: string; children: React.ReactNode }) {
+function Fold({ enabled, title, children, defaultOpen = false }: { enabled: boolean; title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   if (!enabled)
     return (
       <div className="cc-detail-section">
@@ -32,7 +32,7 @@ function Fold({ enabled, title, children }: { enabled: boolean; title: string; c
       </div>
     );
   return (
-    <details className="cc-detail-section cc-fold">
+    <details className="cc-detail-section cc-fold" open={defaultOpen || undefined}>
       <summary className="cursor-pointer font-semibold">{title}</summary>
       <div className="pt-2">{children}</div>
     </details>
@@ -47,7 +47,10 @@ export function LeadDialog({
   onNavigate,
   appointment,
   foldHistory = false,
+  dealView = false,
 }: {
+  /** "Meine Kunden": only the deal's notes & history from Pipedrive and the tool's history, both already open. */
+  dealView?: boolean;
   /** Completed leads: notes and history are folded and open on click. */
   foldHistory?: boolean;
   /** Opened from an appointment: shows the showroom results instead of the call results. */
@@ -165,7 +168,7 @@ export function LeadDialog({
             <div className="min-w-0">
               <DialogTitle>{lead?.company || "Lead-Details"}</DialogTitle>
               <DialogDescription>
-                {appointment ? "Kontaktdaten und Showroom-Ergebnis." : "Kontaktdaten und Gesprächsergebnis."}
+                {dealView ? "Notizen und Verlauf des Deals." : appointment ? "Kontaktdaten und Showroom-Ergebnis." : "Kontaktdaten und Gesprächsergebnis."}
               </DialogDescription>
             </div>
           </div>
@@ -189,6 +192,7 @@ export function LeadDialog({
         )}
         {lead && (
           <>
+            {!dealView && (
             <div className="space-y-1 text-sm">
               <p>{[lead.contact_name, lead.city].filter(Boolean).join(" · ")}</p>
               <LeadContact
@@ -205,7 +209,8 @@ export function LeadDialog({
                 />
               )}
             </div>
-            {backendEnabled && appointment && (
+            )}
+            {backendEnabled && appointment && !dealView && (
               <ShowroomResults
                 key={`showroom-${appointment.id}`}
                 appointment={appointment}
@@ -215,7 +220,7 @@ export function LeadDialog({
                 }}
               />
             )}
-            {backendEnabled && !appointment && (
+            {backendEnabled && !appointment && !dealView && (
               <LeadActions
                 key={`actions-${lead.id}`}
                 lead={lead}
@@ -224,8 +229,8 @@ export function LeadDialog({
                 onDone={afterAction}
               />
             )}
-            {backendEnabled && <PipedriveStream key={`stream-${lead.id}`} leadId={lead.id} />}
-            <Fold enabled={foldHistory} title="Verlauf">
+            {backendEnabled && <PipedriveStream key={`stream-${lead.id}`} leadId={lead.id} defaultOpen={dealView} />}
+            <Fold enabled={foldHistory || dealView} defaultOpen={dealView} title="Verlauf">
               <ul className="cc-history">
                 {data?.actions.map((a) => (
                   <li key={a.id}>

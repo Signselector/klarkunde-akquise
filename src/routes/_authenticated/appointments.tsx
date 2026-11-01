@@ -20,6 +20,7 @@ import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { Button } from "@/components/ui/button";
 import { Dropdown } from "@/components/ui/dropdown";
 import { LeadDialog } from "@/components/caller/lead-dialog";
+import { PdNoteBlock } from "@/components/caller/pd-note-block";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -120,6 +121,7 @@ function AppointmentsPage() {
             date: new Date(x.due_at),
             k: "other" as Kind,
             external: true as const,
+            pdNote: x.note ?? null,
             pd: { activityId: x.activity_id, type: x.type, durationMin: x.duration_min, ownerId: x.user_id, done: !!x.done },
           }))
         : [];
@@ -255,9 +257,17 @@ function AppointmentsPage() {
     const pd = "pd" in e && e.pd ? e.pd : null;
     const lead = e.lead;
     const leadId = "lead_id" in e ? e.lead_id : null;
-    const note = pd
-      ? e.notes
-      : [
+    const pdEditable = !!pd && (roles.isStaff || pd.ownerId === user.id);
+    const pdHasNote = !!pd && !!(("pdNote" in e && e.pdNote) || e.notes);
+    const note = pd ? (!pdHasNote && !pdEditable ? null : (
+      <PdNoteBlock
+        activityId={pd.activityId}
+        country={country}
+        html={"pdNote" in e ? e.pdNote : null}
+        fallback={e.notes}
+        editable={pdEditable}
+      />
+    )) : [
           lead ? `Kunde: ${lead.company ?? "–"}` : null,
           lead?.phone ? `Telefon: ${lead.phone}` : null,
           lead && "city" in lead && lead.city ? `Ort: ${lead.city}` : null,

@@ -421,7 +421,7 @@ export function EntryDetailCard({
   footer,
 }: {
   entry: WeekEntry;
-  note?: string | null;
+  note?: ReactNode;
   rows: { icon: LucideIcon; text: ReactNode }[];
   footer?: ReactNode;
 }) {
@@ -443,7 +443,7 @@ export function EntryDetailCard({
       {note && (
         <div className="cc-pd-note flex gap-4 border-y px-5 py-3">
           <StickyNote className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <p className="whitespace-pre-wrap break-words">{note}</p>
+          <div className="min-w-0 flex-1 whitespace-pre-wrap break-words">{note}</div>
         </div>
       )}
       {rows.length > 0 && (

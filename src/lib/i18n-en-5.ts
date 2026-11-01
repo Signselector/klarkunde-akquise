@@ -129,4 +129,11 @@ export const EN_5: Record<string, string> = {
   "E-Mails ({})": "Emails ({})",
   "Dateien ({})": "Files ({})",
   "ERLEDIGT": "DONE",
+  "Termin verschieben": "Reschedule",
+  "Rückruf verschieben": "Reschedule callback",
+  "Rückruf verschoben.": "Callback rescheduled.",
+  "Der Rückruf konnte nicht verschoben werden. Bitte lade die Seite neu und versuche es erneut.": "The callback could not be rescheduled. Please reload the page and try again.",
+  "{} · aktuell {}": "{} · currently {}",
+  "Keine Notiz.": "No note.",
+  "Notizen und Verlauf des Deals.": "Notes and history of the deal.",
 };

@@ -208,7 +208,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
           )}
         </div>
       </Surface>
-      <LeadDialog leadId={openDeal?.lead_id ?? null} userId={userId} onClose={() => setOpenDeal(null)} />
+      <LeadDialog dealView leadId={openDeal?.lead_id ?? null} userId={userId} onClose={() => setOpenDeal(null)} />
     </div>
   );
 }

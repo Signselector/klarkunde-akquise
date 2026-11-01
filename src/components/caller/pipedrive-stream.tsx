@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, CalendarDays, Check, Mail, Paperclip, Pencil } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, ChevronDown, ChevronUp, Mail, Paperclip, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FeedbackState } from "@/components/coldcaller/primitives";
@@ -48,13 +48,25 @@ type Entry = NoteEntry | { type: "item"; item: StreamItem };
 function NoteCard({ note, onSave, saving }: { note: NoteEntry; onSave: (text: string) => Promise<boolean>; saving: boolean }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(note.text);
+  // Open by default; a click on the header folds the note up to two lines and back.
+  const [expanded, setExpanded] = useState(true);
+  const long = note.text.length > 120 || note.text.includes("\n");
   return (
     <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
       <div className="mb-1 flex items-start justify-between gap-2">
-        <p className="text-xs opacity-70">
-          {when(note.at)}
-          {note.author ? ` · ${note.author}` : ""}
-        </p>
+        <button
+          type="button"
+          aria-expanded={expanded}
+          disabled={editing}
+          onClick={() => setExpanded((v) => !v)}
+          className="!min-h-0 flex min-w-0 flex-1 items-center gap-1 text-left text-xs opacity-70 hover:opacity-100"
+        >
+          {long && (expanded ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />)}
+          <span>
+            {when(note.at)}
+            {note.author ? ` · ${note.author}` : ""}
+          </span>
+        </button>
         {note.editable && !editing && (
           <button
             type="button"
@@ -88,7 +100,7 @@ function NoteCard({ note, onSave, saving }: { note: NoteEntry; onSave: (text: st
           </div>
         </div>
       ) : (
-        <p className="whitespace-pre-wrap break-words">{note.text}</p>
+        <p className={`whitespace-pre-wrap break-words ${expanded ? "" : "line-clamp-2"}`}>{note.text}</p>
       )}
     </div>
   );
@@ -147,10 +159,10 @@ function Row({ entry, onSave, saving }: { entry: Entry; onSave: (note: NoteEntry
  * Notes and history of the lead's Pipedrive deal, folded in the customer file. Only shown when the lead has a deal.
  * Managers and admins get the whole feed with filter tabs; callers get notes and stage changes (the server filters).
  */
-export function PipedriveStream({ leadId }: { leadId: string }) {
+export function PipedriveStream({ leadId, defaultOpen = false }: { leadId: string; defaultOpen?: boolean }) {
   const check = useServerFn(hasLeadDeal);
   const load = useServerFn(loadLeadStream);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [tab, setTab] = useState<Tab>("all");
   const linked = useQuery({
     queryKey: ["lead-deal", leadId],
@@ -218,7 +230,7 @@ export function PipedriveStream({ leadId }: { leadId: string }) {
       ? `${text} (${count(key)})`
       : text;
   return (
-    <details className="cc-detail-section cc-fold" onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
+    <details className="cc-detail-section cc-fold" open={defaultOpen || undefined} onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
       <summary className="cursor-pointer font-semibold">
         {d ? `Notizen & Verlauf (Pipedrive) · ${all.length}` : "Notizen & Verlauf (Pipedrive)"}
       </summary>

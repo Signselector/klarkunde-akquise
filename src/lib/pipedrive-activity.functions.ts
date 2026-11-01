@@ -89,3 +89,46 @@ export const syncTeamCalendars = createServerFn({ method: "POST" })
     }
     return { synced, skipped: false };
   });
+
+const escapeHtml = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/**
+ * Edits the note of a Pipedrive calendar entry (meeting or call). Allowed for managers and admins of the country and
+ * for the owner of the entry. In test mode only the tool copy changes.
+ */
+export const updatePipedriveActivityNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { country: string; activityId: number; note: string }) => {
+    if (!d || !/^[A-Z]{2}$/.test(d.country) || !Number.isSafeInteger(d.activityId) || typeof d.note !== "string" || d.note.length > 15000)
+      throw new Error("invalid");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+    const { data: act } = await db
+      .from("pipedrive_activities")
+      .select("activity_id,user_id")
+      .eq("country", data.country)
+      .eq("activity_id", data.activityId)
+      .maybeSingle();
+    if (!act) throw new Error("Der Eintrag wurde nicht gefunden.");
+    if (act.user_id !== context.userId) await requireStaff(context.supabase, context.userId, data.country);
+    const text = data.note.trim();
+    const html = text ? escapeHtml(text).replace(/\n/g, "<br>") : "";
+    const { data: config } = await db.from("integration_config").select("test_mode").maybeSingle();
+    let state: "synced" | "simulated" = "simulated";
+    if (config?.test_mode === false) {
+      try {
+        await gatewayClient(data.country).json("PUT", `/activities/${data.activityId}`, { note: html });
+        state = "synced";
+      } catch (e) {
+        throw new Error(e instanceof CrmError ? `Pipedrive hat die Änderung nicht angenommen (${e.code}).` : "Pipedrive war nicht erreichbar.");
+      }
+    }
+    await db
+      .from("pipedrive_activities")
+      .update({ note: html || null, updated_at: new Date().toISOString() })
+      .eq("country", data.country)
+      .eq("activity_id", data.activityId);
+    return { state };
+  });
