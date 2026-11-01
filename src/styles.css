@@ -182,3 +182,9 @@
 .cc-pd-entry:hover { background: color-mix(in oklab, var(--pd) 20%, var(--card)); }
 .cc-pd-entry--allday { border-left-width: 0; }
 .cc-pd-note { background: color-mix(in oklab, oklch(0.93 0.09 95) 70%, var(--card)); }
+
+/* A modal dialog sets pointer-events:none on the page outside of it. Toasts must stay clickable then, otherwise a click
+   on a toast (e.g. its X) falls through and counts as a click outside, which closes the dialog. */
+[data-sonner-toast] {
+  pointer-events: auto !important;
+}
