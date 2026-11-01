@@ -344,6 +344,13 @@
       "when": 1793535911384,
       "tag": "0048_claim_batch_staff_only",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1793536784315,
+      "tag": "0049_auto_assign_next_batch",
+      "breakpoints": true
     }
   ]
 }
