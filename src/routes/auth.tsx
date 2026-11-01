@@ -1,6 +1,6 @@
 import { Brand } from "@/components/coldcaller/brand";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,14 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const nav = useNavigate();
   const [mode, setMode] = useState<"in" | "up">("in");
+  // Reminders and notifications belong to a signed-in session: clear any left over on the login page.
+  useEffect(() => {
+    toast.dismiss();
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") toast.dismiss();
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [name, setName] = useState("");
