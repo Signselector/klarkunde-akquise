@@ -48,12 +48,14 @@ const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 const DEFAULT_REFERENCE_TEMPLATE: Template = {
   id: "default-referenz",
   name: "Referenzprojekte und Produktionsbilder",
-  subject: "Referenzprojekte und Produktionsbilder – Signselector",
+  subject: "Referenzprojekte und Produktionsbilder, Sign Selector",
   body:
-    "Guten Tag {{ansprechpartner}},\n\n" +
-    "vielen Dank für das nette Gespräch. Wie besprochen sende ich Ihnen anbei einige Referenzprojekte und Eindrücke aus unserer Produktion.\n\n" +
-    "Gerne erstellen wir auch für {{firma}} einen unverbindlichen Entwurf. Antworten Sie einfach auf diese E-Mail, wenn Sie Interesse haben.\n\n" +
-    "Mit freundlichen Grüßen\n{{caller}}\nSignselector",
+    "Sehr geehrte Damen und Herren,\n\n" +
+    "anbei lassen wir Ihnen einige Referenzen unserer Kunden zukommen, deren Projekte in Österreich umgesetzt wurden.\n\n" +
+    "Die Referenzen 1., 2. und 3. zeigen sowohl Produktionsbilder als auch den fertig montierten Endzustand der jeweiligen Leuchtreklame. Die betreffenden Kunden haben uns freundlicherweise die Erlaubnis erteilt, diese Projekte als Referenzen zu verwenden.\n\n" +
+    "Zusätzlich finden Sie im Anhang weitere Eindrücke unserer zuletzt realisierten Projekte sowie einige Produktionsbilder aus unserer Fertigung.\n\n" +
+    "Bei Fragen stehen wir Ihnen jederzeit gerne zur Verfügung.\n\n" +
+    "Mit freundlichen Grüßen\n\nSign Selector",
 };
 
 function parseTemplates(raw: string | null | undefined): Template[] {

@@ -81,7 +81,27 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
         ? "Sign Selector <office@signselector.de>"
         : process.env["EMAIL_FROM"] || "Sign Selector <noreply@signselector.com>");
     const bcc = country ? (process.env[`PIPEDRIVE_BCC_${country}`] ?? null) : null;
-    const provider: MailProvider | null = key ? resendProvider(key, from, bcc) : null;
+    const smtpPass = process.env["SMTP_PASSWORD_AT"];
+    let provider: MailProvider | null = null;
+    if (country !== "DE" && smtpPass) {
+      // AT: sent from noreply@signselector.com over our own S4 mail server, with signature and reference photos.
+      const { getRequest } = await import("@tanstack/react-start/server");
+      let origin = "https://coldcaller-tool.signselector.com";
+      try {
+        origin = new URL(getRequest().url).origin;
+      } catch {
+        /* keep published domain */
+      }
+      const { s4ReferenceProvider } = await import("@/lib/reference-mail.server");
+      provider = s4ReferenceProvider({
+        pass: smtpPass,
+        from: "Sign Selector <noreply@signselector.com>",
+        bcc,
+        origin,
+      });
+    } else if (key) {
+      provider = resendProvider(key, from, bcc);
+    }
     const store: MailStore = {
       async claim(id) {
         const { data: claimed } = await db
