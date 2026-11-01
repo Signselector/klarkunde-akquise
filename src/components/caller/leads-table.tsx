@@ -213,7 +213,7 @@ export function LeadsTable({
               >
                 <td className="min-w-[10rem] px-4 py-4">
                   <div className="flex flex-col items-start gap-2">
-                    <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
+                    <StatusBadge tone={l.status === "open" && l.attempts > 0 ? "orange" : leadTone(l.status)}>{label(l)}</StatusBadge>
                     {l.attempts > 0 && (
                       <span className="text-xs text-muted-foreground">
                         {l.attempts} {l.attempts === 1 ? "Versuch" : "Versuche"}
@@ -272,7 +272,7 @@ export function LeadsTable({
           >
             <div className="flex items-start justify-between gap-3">
               <strong className="min-w-0 break-words">{l.company || "Ohne Firmenname"}</strong>
-              <StatusBadge tone={leadTone(l.status)}>{label(l)}</StatusBadge>
+              <StatusBadge tone={l.status === "open" && l.attempts > 0 ? "orange" : leadTone(l.status)}>{label(l)}</StatusBadge>
             </div>
             <ContactLinks lead={l} />
             <WebsiteLink lead={l} />
