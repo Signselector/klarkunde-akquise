@@ -8,4 +8,4 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
-- AT reference mails go over our own S4 SMTP server (src/lib/smtp.server.ts, host s4.meinehp.at:465 whose TLS cert matches) with signature + photo attachments listed in reference-mail-attachments.json; Pipedrive mail API needs OAuth mail scope, so it is not used.
+- AT and DE reference mails go over our own SMTP servers (src/lib/smtp.server.ts; AT s4.meinehp.at, DE s5.meinehp.at, port 465) with per-country signature + photo attachments; Pipedrive mail API needs OAuth mail scope, so it is not used.
