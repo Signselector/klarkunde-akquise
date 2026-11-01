@@ -66,7 +66,7 @@ export function s4ReferenceProvider(opts: {
     async send(mail) {
       const attachments = await loadAttachments(opts.origin);
       return sendSmtp(
-        { host: "s4.meinlogin.at", port: 465, user: "noreply@signselector.com", pass: opts.pass },
+        { host: "s4.meinehp.at", port: 465, user: "noreply@signselector.com", pass: opts.pass },
         {
           from: opts.from,
           to: mail.to,
