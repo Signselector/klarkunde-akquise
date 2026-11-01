@@ -38,14 +38,22 @@ function gatewayCalendar(country: string): CalendarCrm {
       }
     },
     async list(pdUserId, from, to) {
-      const q = new URLSearchParams({
-        user_id: String(pdUserId),
-        start_date: from.slice(0, 10),
-        end_date: to.slice(0, 10),
-        limit: "500",
-      });
-      const r = await call(`/activities?${q}`, { method: "GET" });
-      return Array.isArray(r.data) ? (r.data as unknown[]) : [];
+      // Several pages: a busy calendar has far more than 500 entries in the window.
+      const all: unknown[] = [];
+      for (let start = 0; start < 5000; start += 500) {
+        const q = new URLSearchParams({
+          user_id: String(pdUserId),
+          start_date: from.slice(0, 10),
+          end_date: to.slice(0, 10),
+          limit: "500",
+          start: String(start),
+        });
+        const r = await call(`/activities?${q}`, { method: "GET" });
+        const page = Array.isArray(r.data) ? (r.data as unknown[]) : [];
+        all.push(...page);
+        if (page.length < 500) break;
+      }
+      return all;
     },
   };
 }

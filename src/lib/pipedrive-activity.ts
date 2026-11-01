@@ -1,4 +1,4 @@
-/** Pipedrive calendar entries in the tool: meetings can be edited, calls are shown only. */
+/** Pipedrive calendar entries in the tool: meetings and calls can be edited the same way. */
 export type PdKind = "meeting" | "call" | "other";
 
 export const pdKind = (type: string | null | undefined): PdKind =>
@@ -10,9 +10,9 @@ export const PD_KIND_LABEL: Record<PdKind, string> = {
   other: "Aktivität",
 };
 
-/** Only managers and admins edit, and only meetings. */
-export const canEditPdActivity = (type: string | null | undefined, isStaff: boolean) =>
-  isStaff && pdKind(type) === "meeting";
+/** Meetings and calls can be edited by those who may edit the entry; tasks and other types are not shown for editing. */
+export const canEditPdActivity = (type: string | null | undefined, mayEdit: boolean) =>
+  mayEdit && (pdKind(type) === "meeting" || pdKind(type) === "call");
 
 const pad = (n: number) => String(n).padStart(2, "0");
 

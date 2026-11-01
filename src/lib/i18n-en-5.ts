@@ -144,4 +144,10 @@ export const EN_5: Record<string, string> = {
   "Das ging leider nicht.": "That did not work.",
   "Termin verschoben.": "Appointment rescheduled.",
   "Der Termin konnte nicht verschoben werden.": "The appointment could not be rescheduled.",
+  "Termin bearbeiten": "Edit appointment",
+  "Die Änderung wird an den Eintrag in Pipedrive gesendet.": "The change is sent to the entry in Pipedrive.",
+  "Termin gespeichert und in Pipedrive geändert.": "Appointment saved and changed in Pipedrive.",
+  "Testmodus: Der Termin wurde im Tool geändert, nichts wurde an Pipedrive gesendet.": "Test mode: the appointment was changed in the tool, nothing was sent to Pipedrive.",
+  "Der Termin konnte nicht gespeichert werden.": "The appointment could not be saved.",
+  "Nur Meetings und Anrufe können bearbeitet werden.": "Only meetings and calls can be edited.",
 };

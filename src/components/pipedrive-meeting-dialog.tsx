@@ -54,13 +54,13 @@ export function PipedriveMeetingDialog({
       });
       toast.success(
         r.state === "synced"
-          ? "Meeting gespeichert und in Pipedrive geändert."
-          : "Testmodus: Das Meeting wurde im Tool geändert, nichts wurde an Pipedrive gesendet.",
+          ? "Termin gespeichert und in Pipedrive geändert."
+          : "Testmodus: Der Termin wurde im Tool geändert, nichts wurde an Pipedrive gesendet.",
       );
       onSaved();
       onClose();
     } catch (e) {
-      toast.error(e instanceof Error && e.message ? e.message.slice(0, 160) : "Das Meeting konnte nicht gespeichert werden.");
+      toast.error(e instanceof Error && e.message ? e.message.slice(0, 160) : "Der Termin konnte nicht gespeichert werden.");
     } finally {
       setBusy(false);
     }
@@ -71,8 +71,8 @@ export function PipedriveMeetingDialog({
     <Dialog open={!!meeting} onOpenChange={(o) => !o && !busy && onClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Meeting bearbeiten</DialogTitle>
-          <DialogDescription>Die Änderung wird an das Meeting in Pipedrive gesendet. Anrufe lassen sich nicht bearbeiten.</DialogDescription>
+          <DialogTitle>Termin bearbeiten</DialogTitle>
+          <DialogDescription>Die Änderung wird an den Eintrag in Pipedrive gesendet.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 text-sm">
           <label className="grid gap-1">

@@ -105,11 +105,8 @@ function AppointmentsPage() {
             // Managers and admins see the meetings and calls of the whole team (and every activity of their own);
             // everybody else sees the own calendar only.
             .filter((x) => (roles.isStaff ? true : roles.role === "veteran" && x.user_id === user.id))
-            // Only real appointments: meetings, and calls that belong to a deal. Tasks and internal to-dos stay out.
-            .filter((x) => {
-              const k = pdKind(x.type);
-              return k === "meeting" || (k === "call" && x.deal_id != null);
-            })
+            // Like the Pipedrive calendar: all meetings and all calls (tasks and deadlines are not shown).
+            .filter((x) => pdKind(x.type) !== "other")
             .filter((x) => filter !== "pd_meeting" || pdKind(x.type) === "meeting")
             .filter((x) => filter !== "pd_call" || pdKind(x.type) === "call")
             .map((x) => ({
@@ -558,10 +555,7 @@ function AppointmentsPage() {
                       {"pd" in e && e.pd && roles.isStaff && e.pd.ownerId !== user.id && (
                         <p className="mt-1 text-xs text-muted-foreground">Zuständig: {pdOwnerName(e.pd.ownerId)}</p>
                       )}
-                      {"pd" in e && e.pd && pdKind(e.pd.type) === "call" && (
-                        <p className="mt-1 text-xs text-muted-foreground">Anrufe aus Pipedrive werden nur angezeigt.</p>
-                      )}
-                      {"pd" in e && e.pd && canEditPdActivity(e.pd.type, roles.isStaff) && (
+                      {"pd" in e && e.pd && canEditPdActivity(e.pd.type, roles.isStaff || (roles.role === "veteran" && e.pd.ownerId === user.id)) && (
                         <Button
                           className="mt-2"
                           size="sm"
@@ -575,7 +569,7 @@ function AppointmentsPage() {
                             })
                           }
                         >
-                          Meeting bearbeiten
+                          Termin bearbeiten
                         </Button>
                       )}
                       {"outcome" in e && e.outcome && (

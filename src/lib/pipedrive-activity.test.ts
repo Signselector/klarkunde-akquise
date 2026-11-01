@@ -11,7 +11,8 @@ describe("pipedrive activities", () => {
   it("lets only staff edit, and only meetings", () => {
     expect(canEditPdActivity("meeting", true)).toBe(true);
     expect(canEditPdActivity("meeting", false)).toBe(false);
-    expect(canEditPdActivity("call", true)).toBe(false);
+    expect(canEditPdActivity("call", true)).toBe(true);
+    expect(canEditPdActivity("task", true)).toBe(false);
   });
   it("builds the Pipedrive update in UTC", () => {
     expect(buildMeetingUpdate({ subject: " Showroom ", startsAt: "2026-11-02T09:30:00Z", durationMin: 90 })).toEqual({

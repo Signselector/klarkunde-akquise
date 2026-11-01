@@ -28,8 +28,8 @@ async function requireStaffOrSeniorOwner(
 }
 
 /**
- * Edits a meeting of the Pipedrive calendar. Managers and admins of the country only, and only meetings: calls are
- * refused here, whatever the page does. The change goes to Pipedrive first (in test mode only the tool copy changes).
+ * Edits a meeting or call of the Pipedrive calendar (managers and admins of the country, Senior Callers for their own
+ * entries). Other activity types are refused here, whatever the page does. The change goes to Pipedrive first (in test mode only the tool copy changes).
  */
 export const updatePipedriveMeeting = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -47,7 +47,7 @@ export const updatePipedriveMeeting = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!act) throw new Error("Der Eintrag wurde nicht gefunden.");
     await requireStaffOrSeniorOwner(context, data.country, act.user_id);
-    if (pdKind(act.type) !== "meeting") throw new Error("Nur Meetings können bearbeitet werden. Anrufe werden nur angezeigt.");
+    if (pdKind(act.type) === "other") throw new Error("Nur Meetings und Anrufe können bearbeitet werden.");
     let payload;
     try {
       payload = buildMeetingUpdate({ subject: data.subject, startsAt: data.startsAt, durationMin: data.durationMin });
