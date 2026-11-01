@@ -1,6 +1,9 @@
 import attachmentsManifest from "@/lib/reference-mail-attachments.json";
 import { sendSmtp, type SmtpAttachment } from "@/lib/smtp.server";
 import type { MailProvider } from "@/lib/lead-email";
+import { LOGO_PNG_BASE64 } from "@/lib/reference-mail-logo";
+
+const LOGO_CID = "signselector-logo";
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -26,7 +29,7 @@ function signatureHtml(origin: string) {
 <p style="margin:0"><b>SIGNSELECTOR</b><br><i>Projektberatung &amp; Kundenservice Österreich</i><br>3D-Leuchtreklame · Werbeanlagen · Lichtwerbung</p>
 <p style="margin:16px 0 0"><b>Manuela Greiner</b><br>Office Management | SignSelector</p>
 <p style="margin:16px 0 0">E-Mail: <a style="${a}" href="mailto:office@signselector.com">office@signselector.com</a><br>Tel.: +43 677 63798279<br>Web: <a style="${a}" href="https://www.signselector.com">www.signselector.com</a></p>
-<p style="margin:16px 0 0"><img src="${origin}/brand/signselector/logo-ink.png" alt="SignSelector" width="260" style="display:block;width:260px;height:auto"></p>`;
+<p style="margin:16px 0 0"><img src="cid:${LOGO_CID}" alt="SignSelector" width="260" style="display:block;width:260px;height:auto"></p>`;
 }
 
 export function referenceHtml(body: string, origin: string) {
@@ -75,6 +78,14 @@ export function s4ReferenceProvider(opts: {
           text: `${mail.body}\n\n${SIGNATURE_TEXT}`,
           html: referenceHtml(mail.body, opts.origin),
           attachments,
+          inline: [
+            {
+              cid: LOGO_CID,
+              filename: "signselector-logo.png",
+              contentType: "image/png",
+              content: Uint8Array.from(atob(LOGO_PNG_BASE64), (c) => c.charCodeAt(0)),
+            },
+          ],
         },
       );
     },

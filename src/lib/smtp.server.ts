@@ -92,6 +92,8 @@ export type SmtpMail = {
   text: string;
   html: string;
   attachments?: SmtpAttachment[];
+  /** Images shown inside the HTML via src="cid:<cid>". */
+  inline?: (SmtpAttachment & { cid: string })[];
 };
 
 const addr = (s: string) => (s.match(/<([^>]+)>/)?.[1] ?? s).trim();
@@ -118,12 +120,33 @@ export function buildMime(mail: SmtpMail, messageId: string): string {
     "",
     wrap76(b64(enc.encode(mail.text))),
     `--${alt}`,
+  ];
+  const htmlPart = [
     "Content-Type: text/html; charset=UTF-8",
     "Content-Transfer-Encoding: base64",
     "",
     wrap76(b64(enc.encode(mail.html))),
-    `--${alt}--`,
   ];
+  const inline = mail.inline ?? [];
+  if (inline.length) {
+    const rel = `rel_${crypto.randomUUID()}`;
+    lines.push(`Content-Type: multipart/related; boundary="${rel}"`, "", `--${rel}`, ...htmlPart);
+    for (const i of inline) {
+      lines.push(
+        `--${rel}`,
+        `Content-Type: ${i.contentType}; name="${i.filename}"`,
+        "Content-Transfer-Encoding: base64",
+        `Content-ID: <${i.cid}>`,
+        `Content-Disposition: inline; filename="${i.filename}"`,
+        "",
+        wrap76(b64(i.content)),
+      );
+    }
+    lines.push(`--${rel}--`);
+  } else {
+    lines.push(...htmlPart);
+  }
+  lines.push(`--${alt}--`);
   for (const a of mail.attachments ?? []) {
     const fn = encodeURIComponent(a.filename);
     lines.push(
