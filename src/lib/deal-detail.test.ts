@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseFlow, parseNotes, stripHtml } from "@/lib/deal-detail";
+import { parseFlow, parseNotes, parseStream, stripHtml } from "@/lib/deal-detail";
 
 describe("deal detail", () => {
   it("turns note html into text, newest note first", () => {
@@ -30,4 +30,26 @@ describe("deal detail", () => {
   });
 
   it("strips tags", () => expect(stripHtml("<b>a</b>&nbsp;b")).toBe("a b"));
+
+  const flow = {
+    data: [
+      { object: "dealChange", timestamp: "2026-11-01 10:00:00", data: { id: 1, field_key: "stage_id", old_value: "3", new_value: "5", user_id: 7 } },
+      { object: "dealChange", timestamp: "2026-11-01 10:05:00", data: { id: 6, field_key: "status", old_value: "open", new_value: "won" } },
+      { object: "activity", timestamp: "2026-11-02 11:00:00", data: { id: 2, type: "meeting", subject: "Showroom", due_date: "2026-11-05", due_time: "10:00" } },
+      { object: "mailMessage", timestamp: "2026-11-02 12:00:00", data: { id: 3, subject: "Angebot", to: [{ name: "Max", email_address: "m@x.de" }], sent_flag: 0 } },
+      { object: "file", timestamp: "2026-11-02 13:00:00", data: { id: 4, file_name: "Logo.pdf", file_size: 2048 } },
+      { object: "note", timestamp: "2026-11-02 12:30:00", data: { id: 5, content: "x" } },
+    ],
+    related_objects: { user: { "7": { name: "Max" } } },
+  };
+  it("gives managers and admins the whole feed", () => {
+    const items = parseStream(flow, { 3: "A", 5: "B" }, { staff: true });
+    expect(items.map((i) => i.kind).sort()).toEqual(["activity", "email", "file", "stage", "status"]);
+    expect(items.find((i) => i.kind === "email")).toMatchObject({ text: "Angebot", state: "GEPLANT", detail: "Max" });
+    expect(items.find((i) => i.kind === "file")).toMatchObject({ text: "Logo.pdf", detail: "2.0 KB" });
+  });
+  it("gives callers stage changes only: no e-mails, files or activities", () => {
+    const items = parseStream(flow, { 3: "A", 5: "B" }, { staff: false });
+    expect(items.map((i) => i.text)).toEqual(["Stage: A → B"]);
+  });
 });

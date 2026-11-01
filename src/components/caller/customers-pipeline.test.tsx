@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, expect, it, vi } from "vitest";
 import { CustomersPipeline } from "./customers-pipeline";
@@ -16,8 +16,8 @@ const fixture = vi.hoisted(() => ({
 vi.mock("@/lib/country", () => ({ useCountry: () => "DE" }));
 vi.mock("@tanstack/react-start", () => ({ useServerFn: (fn: unknown) => fn }));
 vi.mock("@/lib/customers.functions", () => ({ loadMyCustomers: async () => fixture.response }));
-vi.mock("@/lib/deal-detail.functions", () => ({
-  loadDealDetail: async () => ({ source: "pipedrive", error: null, notes: [], events: [] }),
+vi.mock("@/components/caller/lead-dialog", () => ({
+  LeadDialog: ({ leadId }: { leadId: string | null }) => (leadId ? <div role="dialog">Akte {leadId}</div> : null),
 }));
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
@@ -84,4 +84,11 @@ it("marks the view as not synchronized when Pipedrive could not be read", async 
   const alert = await screen.findByRole("alert");
   expect(alert.textContent).toMatch(/Nicht mit Pipedrive synchronisiert/);
   expect(alert.textContent).toMatch(/Anmeldung abgelehnt/);
+});
+
+it("opens the customer file of the lead when a card is clicked", async () => {
+  fixture.response.deals = [deal(1, 8)];
+  renderBoard();
+  fireEvent.click(await screen.findByRole("button", { name: /Kundenakte Firma 1/ }));
+  expect((await screen.findByRole("dialog")).textContent).toBe("Akte l1");
 });

@@ -10,7 +10,7 @@ import { placeDeals, type CustomerDeal } from "@/lib/customer-stages";
 import { Mail, Phone } from "@/components/coldcaller/icons";
 import { FeedbackState, StatusBadge, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
-import { DealDetailDialog } from "@/components/caller/deal-detail-dialog";
+import { LeadDialog } from "@/components/caller/lead-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -20,14 +20,14 @@ function since(iso: string | null) {
   return days === 0 ? "heute" : days === 1 ? "vor 1 Tag" : `vor ${days} Tagen`;
 }
 
-/** The card opens the notes and history of the deal (not the customer file). */
+/** The card opens the customer file. */
 function Card({ deal, onOpen }: { deal: CustomerDeal; onOpen: (d: CustomerDeal) => void }) {
   return (
     <li>
       <button
         type="button"
         onClick={() => onOpen(deal)}
-        aria-label={`Notizen und Verlauf von ${deal.company || "Ohne Firmenname"} öffnen`}
+        aria-label={`Kundenakte ${deal.company || "Ohne Firmenname"} öffnen`}
         className="w-full cursor-pointer space-y-2 !rounded-[10px] !min-h-0 border bg-card p-3 text-left transition-colors hover:border-[#93b4f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]"
       >
         <strong className="block break-words">{deal.company || "Ohne Firmenname"}</strong>
@@ -208,7 +208,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
           )}
         </div>
       </Surface>
-      <DealDetailDialog deal={openDeal} country={country} onClose={() => setOpenDeal(null)} />
+      <LeadDialog leadId={openDeal?.lead_id ?? null} userId={userId} onClose={() => setOpenDeal(null)} />
     </div>
   );
 }

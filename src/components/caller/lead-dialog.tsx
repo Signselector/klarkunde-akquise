@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
 import { LeadContact } from "@/components/coldcaller/workspace-parts";
 import { LeadActions } from "@/components/caller/lead-actions";
+import { PipedriveStream } from "@/components/caller/pipedrive-stream";
 import { ShowroomResults, type ShowroomAppointment } from "@/components/caller/showroom-results";
 import { Building2 } from "@/components/coldcaller/icons";
 import { LeadContactEditor } from "@/components/caller/lead-contact-editor";
@@ -228,6 +229,7 @@ export function LeadDialog({
                 onDone={afterAction}
               />
             )}
+            {backendEnabled && <PipedriveStream key={lead.id} leadId={lead.id} />}
             {foldHistory && (
               <details className="cc-detail-section cc-fold">
                 <summary className="cursor-pointer font-semibold">

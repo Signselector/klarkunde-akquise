@@ -111,3 +111,113 @@ export function parseFlow(
   });
   return events.sort((a, b) => b.at.localeCompare(a.at));
 }
+
+/** One entry of the Pipedrive feed in the customer file. */
+export type StreamKind = "stage" | "status" | "created" | "activity" | "email" | "file";
+export type StreamItem = {
+  id: string;
+  at: string;
+  by: string | null;
+  kind: StreamKind;
+  /** Headline: "Stage: A → B", the activity subject, the mail subject or the file name. */
+  text: string;
+  /** Activity type (call, meeting, task …) in German. */
+  activity?: string;
+  /** Activity date, e-mail recipient(s) or file size, ready for display. */
+  detail?: string;
+  /** E-mail state such as GEPLANT. */
+  state?: string;
+};
+
+function fileSize(bytes: unknown): string | undefined {
+  const n = Number(bytes);
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  return n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`;
+}
+
+/**
+ * Full Pipedrive feed of a deal (stage changes, activities, e-mails, files). Notes come from {@link parseNotes}.
+ * With `staff: false` (callers) only stage changes remain: the filter lives here so the server never hands out
+ * e-mails, files or activities to a caller.
+ */
+export function parseStream(
+  raw: { data?: unknown; related_objects?: unknown } | null | undefined,
+  stageNames: Record<number, string>,
+  opts: { staff: boolean },
+): StreamItem[] {
+  const list = Array.isArray(raw?.data) ? (raw!.data as unknown[]) : [];
+  const users = obj(obj(raw?.related_objects)["user"]);
+  const userName = (id: unknown) => {
+    const u = obj(users[String(id)]);
+    return typeof u["name"] === "string" ? u["name"] : null;
+  };
+  const stage = (v: unknown) => {
+    const id = Number(v);
+    return Number.isInteger(id) ? (stageNames[id] ?? `Stage ${id}`) : String(v ?? "–");
+  };
+  const items: StreamItem[] = [];
+  list.forEach((entry, i) => {
+    const e = obj(entry);
+    const kind = String(e["object"] ?? "");
+    if (kind === "note") return;
+    const data = obj(e["data"]);
+    const at = pdTime(e["timestamp"]) ?? pdTime(data["add_time"]);
+    if (!at) return;
+    const by = userName(data["user_id"]);
+    const id = `${kind}-${String(data["id"] ?? i)}-${at}`;
+    if (kind === "dealChange") {
+      const key = String(data["field_key"] ?? "");
+      if (key === "stage_id")
+        items.push({ id, at, by, kind: "stage", text: `Stage: ${stage(data["old_value"])} → ${stage(data["new_value"])}` });
+      else if (!opts.staff) return;
+      else if (key === "status")
+        items.push({ id, at, by, kind: "status", text: `Status: ${String(data["old_value"] ?? "–")} → ${String(data["new_value"] ?? "–")}` });
+      else if (key === "add_time") items.push({ id, at, by, kind: "created", text: "Deal angelegt" });
+      return;
+    }
+    if (!opts.staff) return;
+    if (kind === "activity") {
+      const type = String(data["type"] ?? "");
+      const subject = typeof data["subject"] === "string" ? data["subject"] : "";
+      const due = [data["due_date"], data["due_time"]].filter((x) => typeof x === "string" && x).join(" ");
+      items.push({
+        id,
+        at,
+        by,
+        kind: "activity",
+        text: subject || (ACTIVITY_LABEL[type] ?? "Aktivität"),
+        activity: `${ACTIVITY_LABEL[type] ?? "Aktivität"}${data["done"] ? " (erledigt)" : ""}`,
+        ...(due ? { detail: due } : {}),
+      });
+    } else if (/mail/i.test(kind)) {
+      const to = (Array.isArray(data["to"]) ? (data["to"] as unknown[]) : [])
+        .map((r) => {
+          const o = obj(r);
+          return String(o["name"] || o["email_address"] || "");
+        })
+        .filter(Boolean)
+        .join(", ");
+      const state = data["draft"]
+        ? "ENTWURF"
+        : data["sent_flag"] === 0 || data["sent_flag"] === false
+          ? "GEPLANT"
+          : data["sent_flag"] === 1 || data["sent_flag"] === true
+            ? "GESENDET"
+            : undefined;
+      items.push({
+        id,
+        at,
+        by,
+        kind: "email",
+        text: typeof data["subject"] === "string" && data["subject"] ? data["subject"] : "(Ohne Betreff)",
+        ...(to ? { detail: to } : {}),
+        ...(state ? { state } : {}),
+      });
+    } else if (kind === "file") {
+      const name = String(data["file_name"] ?? data["name"] ?? "Datei");
+      const size = fileSize(data["file_size"]);
+      items.push({ id, at, by, kind: "file", text: name, ...(size ? { detail: size } : {}) });
+    }
+  });
+  return items.sort((a, b) => b.at.localeCompare(a.at));
+}
