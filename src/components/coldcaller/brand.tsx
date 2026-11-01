@@ -3,7 +3,7 @@ export function Brand({ inverse = false }: { inverse?: boolean }) {
   return (
     <span className="cc-brand-content">
       <img
-        src={`/brand/signselector/logo-${inverse ? "light" : "ink"}.png`}
+        src={`/brand/signselector/logo-${inverse ? "light" : "ink"}.png?v=blue2`}
         width={330}
         height={102}
         alt="Sign Selector"
