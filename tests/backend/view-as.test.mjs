@@ -19,7 +19,7 @@ before(async () => {
  CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,raw_user_meta_data jsonb);
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
-  for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url))).filter((x) => x.endsWith(".sql") && !x.startsWith("0045_")).sort()) {
+  for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url))).filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron)/.test(x)).sort()) {
     const sql = (await readFile(new URL("../../drizzle/migrations/" + file, import.meta.url), "utf8"))
       .replace(/^CREATE EXTENSION IF NOT EXISTS pg_cron;$/m, "")
       .replace(/^SELECT cron\.schedule\(.*$/m, "");

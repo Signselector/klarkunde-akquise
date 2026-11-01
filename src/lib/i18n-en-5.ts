@@ -151,4 +151,11 @@ export const EN_5: Record<string, string> = {
   "Der Termin konnte nicht gespeichert werden.": "The appointment could not be saved.",
   "Nur Meetings und Anrufe können bearbeitet werden.": "Only meetings and calls can be edited.",
   "Wird von einem Manager zugewiesen": "Will be assigned by a manager",
+  "Nicht erreicht": "Not reached",
+  "Leads, die 20 Tage lang nicht erreicht wurden. Sie sind bei den Callern nicht mehr unter Offene Leads. Als Liste herunterladbar und über Upload wieder ins Tool einspielbar.": "Leads that could not be reached for 20 days. They are no longer in the callers' open leads. Can be downloaded as a list and imported into the tool again via upload.",
+  "Nicht erreichte Leads": "Not reached leads",
+  "Firma, Kontakt, Telefon, Caller, Batch suchen": "Search company, contact, phone, caller, batch",
+  "Sobald ein Lead 20 Tage lang als „Nicht erreicht“ unter Offene Leads lag, erscheint er hier.": "As soon as a lead has been listed as “Not reached” under open leads for 20 days, it appears here.",
+  "Versuche": "Attempts",
+  "Letzter Versuch": "Last attempt",
 };

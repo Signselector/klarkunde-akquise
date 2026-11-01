@@ -2,7 +2,7 @@ import { LeadDialog } from "@/components/caller/lead-dialog";
 import { LeadQuickDialog } from "@/components/caller/lead-quick-dialog";
 import { LeadsTable, type LeadIntent } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
-import { orderOpenLeads, STATUS_LABEL } from "@/lib/leads";
+import { orderOpenLeads, STATUS_LABEL, UNREACHED_DAYS } from "@/lib/leads";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -106,6 +106,8 @@ function LeadsPage() {
       if (batch !== "all") query = query.eq("batch_id", batch);
       // Still to work on: untouched leads and not reached. Callbacks live under "Rückrufe", every other outcome is completed.
       query = query.in("status", ["open", "appointment_missed"]);
+      // Not reached leads are loaded separately below, so they stay in the list (at the bottom) for 20 days.
+      if (backendEnabled) query = query.or("status.neq.open,attempts.eq.0");
       const term = q.trim().replace(/[,()%]/g, " ");
       if (term)
         query = query.or(
@@ -133,6 +135,31 @@ function LeadsPage() {
         if (extra.error) throw extra.error;
         const have = new Set(rows.map((r) => r.id));
         rows = [...rows, ...(extra.data ?? []).filter((r) => !have.has(r.id))] as typeof rows;
+      }
+      // Not reached: tried at least once, shown at the bottom for 20 days after the last attempt, then they leave the list
+      // (managers and admins find them under "Nicht erreicht"). They keep counting as processed for their batch.
+      if (backendEnabled) {
+        const cutoff = new Date(Date.now() - UNREACHED_DAYS * 86_400_000).toISOString();
+        let unreached = supabase
+          .from("leads")
+          .select("*, lead_batches!inner(country,assigned_to)")
+          .eq("lead_batches.country", country)
+          .eq("status", "open")
+          .gt("attempts", 0)
+          .gte("last_called_at", cutoff)
+          .is("archived_at", null)
+          .order("last_called_at", { ascending: false })
+          .limit(300);
+        if (onlyMine) unreached = unreached.eq("lead_batches.assigned_to", user.id);
+        if (batch !== "all") unreached = unreached.eq("batch_id", batch);
+        if (term)
+          unreached = unreached.or(
+            `company.ilike.%${term}%,contact_name.ilike.%${term}%,phone.ilike.%${term}%,city.ilike.%${term}%`,
+          );
+        const tried = await unreached;
+        if (tried.error) throw tried.error;
+        const have = new Set(rows.map((r) => r.id));
+        rows = [...rows, ...(tried.data ?? []).filter((r) => !have.has(r.id))] as typeof rows;
       }
       return { rows, total: Math.max(count ?? 0, rows.length) };
     },

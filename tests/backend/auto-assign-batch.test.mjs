@@ -45,7 +45,7 @@ before(async () => {
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
-    .filter((x) => x.endsWith(".sql") && !x.startsWith("0045_"))
+    .filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron)/.test(x))
     .sort()) {
     const sql = (
       await readFile(new URL("../../drizzle/migrations/" + file, import.meta.url), "utf8")
@@ -119,4 +119,47 @@ test("if no free batch exists, the maintenance job assigns one as soon as it app
   assert.equal((await db.query("select public.auto_assign_finished_batches() n")).rows[0].n, 1);
   assert.equal(await owner(F), ben);
   assert.equal((await db.query("select public.auto_assign_finished_batches() n")).rows[0].n, 0);
+});
+
+test("not reached leads are handed out for 20 days, then they only show up in the admin list", async () => {
+  const U = await mk("U", "DE");
+  await addLeads(U, 2);
+  await db.query("update public.lead_batches set assigned_to=$2 where id=$1", [U, anna]);
+  // Isolate the scenario: every other lead is done.
+  await db.query("update public.leads set status='no_interest' where batch_id<>$1", [U]);
+  const ids = (
+    await db.query("select id from public.leads where batch_id=$1 order by id", [U])
+  ).rows.map((r) => r.id);
+  // Both tried once: one 5 days ago, one 25 days ago.
+  await db.query(
+    "update public.leads set status='open',attempts=1,last_called_at=now()-interval '5 days',last_called_by=$2 where id=$1",
+    [ids[0], anna],
+  );
+  await db.query(
+    "update public.leads set status='open',attempts=1,last_called_at=now()-interval '25 days',last_called_by=$2 where id=$1",
+    [ids[1], anna],
+  );
+  await as(anna);
+  const next = await rpc("claim_next_lead", ["DE"]);
+  assert.equal(next.lead.id, ids[0], "the recent one is still handed out");
+  await db.exec("RESET ROLE");
+  await db.query("delete from public.lead_claims");
+  await db.query("update public.leads set last_called_at=now()-interval '30 days' where id=$1", [
+    ids[0],
+  ]);
+  await as(anna);
+  assert.equal(await rpc("claim_next_lead", ["DE"]), null, "after 20 days nothing is handed out");
+  await assert.rejects(() => rpc("get_unreached_leads", ["DE"]), /forbidden/);
+  await as(admin);
+  const list = await rpc("get_unreached_leads", ["DE"]);
+  assert.deepEqual(list.map((r) => r.lead_id).sort(), [...ids].sort());
+  assert.equal(list[0].caller, "Anna");
+  await db.exec("RESET ROLE");
+  const p = (
+    await db.query(
+      "select count(*) filter(where attempts>0)::int processed from public.leads where batch_id=$1",
+      [U],
+    )
+  ).rows[0];
+  assert.equal(p.processed, 2, "they still count as processed for the batch");
 });

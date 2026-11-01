@@ -31,6 +31,7 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedReferenceUnansweredRouteImport } from './routes/_authenticated/reference-unanswered'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedStatsRouteImport } from './routes/_authenticated/stats'
+import { Route as AuthenticatedUnreachedRouteImport } from './routes/_authenticated/unreached'
 import { Route as ApiMailReplyRouteImport } from './routes/api/mail-reply'
 import { Route as ApiPipedriveReconcileRouteImport } from './routes/api/pipedrive-reconcile'
 import { Route as ApiPipedriveWebhookRouteImport } from './routes/api/pipedrive-webhook'
@@ -153,6 +154,11 @@ const AuthenticatedStatsRoute = AuthenticatedStatsRouteImport.update({
   path: '/stats',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUnreachedRoute = AuthenticatedUnreachedRouteImport.update({
+  id: '/unreached',
+  path: '/unreached',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiMailReplyRoute = ApiMailReplyRouteImport.update({
   id: '/api/mail-reply',
   path: '/api/mail-reply',
@@ -223,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/reference-unanswered': typeof AuthenticatedReferenceUnansweredRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/unreached': typeof AuthenticatedUnreachedRoute
   '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/reference-unanswered': typeof AuthenticatedReferenceUnansweredRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/stats': typeof AuthenticatedStatsRoute
+  '/unreached': typeof AuthenticatedUnreachedRoute
   '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/_authenticated/reference-unanswered': typeof AuthenticatedReferenceUnansweredRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/stats': typeof AuthenticatedStatsRoute
+  '/_authenticated/unreached': typeof AuthenticatedUnreachedRoute
   '/api/mail-reply': typeof ApiMailReplyRoute
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
@@ -323,6 +332,7 @@ export interface FileRouteTypes {
     | '/reference-unanswered'
     | '/settings'
     | '/stats'
+    | '/unreached'
     | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
@@ -355,6 +365,7 @@ export interface FileRouteTypes {
     | '/reference-unanswered'
     | '/settings'
     | '/stats'
+    | '/unreached'
     | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
@@ -388,6 +399,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reference-unanswered'
     | '/_authenticated/settings'
     | '/_authenticated/stats'
+    | '/_authenticated/unreached'
     | '/api/mail-reply'
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
@@ -570,6 +582,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStatsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/unreached': {
+      id: '/_authenticated/unreached'
+      path: '/unreached'
+      fullPath: '/unreached'
+      preLoaderRoute: typeof AuthenticatedUnreachedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/mail-reply': {
       id: '/api/mail-reply'
       path: '/api/mail-reply'
@@ -655,6 +674,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedReferenceUnansweredRoute: typeof AuthenticatedReferenceUnansweredRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStatsRoute: typeof AuthenticatedStatsRoute
+  AuthenticatedUnreachedRoute: typeof AuthenticatedUnreachedRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -676,6 +696,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedReferenceUnansweredRoute: AuthenticatedReferenceUnansweredRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStatsRoute: AuthenticatedStatsRoute,
+  AuthenticatedUnreachedRoute: AuthenticatedUnreachedRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -96,6 +96,9 @@ export function parseCsv(text: string): string[][] {
   return rows;
 }
 
+/** A lead that was tried but not reached stays at the bottom of the open leads this many days, then it leaves the list. */
+export const UNREACHED_DAYS = 20;
+
 /**
  * Order of "Offene Leads": callbacks first (earliest due time on top), then untouched leads, then not reached.
  * The original order is kept inside a group and every lead appears once.

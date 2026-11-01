@@ -40,6 +40,7 @@ import {
   Upload,
   Users,
   Mail,
+  PhoneMissed,
   X,
 } from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
@@ -178,6 +179,7 @@ function Layout() {
     ? ([
         { to: "/stats", label: "Statistik", icon: ChartNoAxesColumn },
         { to: "/no-interest", label: "Kein Interesse", icon: X },
+        { to: "/unreached", label: "Nicht erreicht", icon: PhoneMissed },
         { to: "/future-projects", label: "Zukunftsprojekte", icon: CalendarDays },
         { to: "/reference-unanswered", label: "Referenzmail offen", icon: Mail },
         { to: "/import", label: "Upload", icon: Upload },
