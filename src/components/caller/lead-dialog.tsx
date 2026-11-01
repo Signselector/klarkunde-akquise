@@ -207,7 +207,7 @@ export function LeadDialog({
             </div>
             {backendEnabled && appointment && (
               <ShowroomResults
-                key={appointment.id}
+                key={`showroom-${appointment.id}`}
                 appointment={appointment}
                 onDone={() => {
                   refresh();
@@ -217,14 +217,14 @@ export function LeadDialog({
             )}
             {backendEnabled && !appointment && (
               <LeadActions
-                key={lead.id}
+                key={`actions-${lead.id}`}
                 lead={lead}
                 userId={userId}
                 callerName={callerName.data ?? ""}
                 onDone={afterAction}
               />
             )}
-            {backendEnabled && <PipedriveStream key={lead.id} leadId={lead.id} />}
+            {backendEnabled && <PipedriveStream key={`stream-${lead.id}`} leadId={lead.id} />}
             <Fold enabled={foldHistory} title="Verlauf">
               <ul className="cc-history">
                 {data?.actions.map((a) => (
