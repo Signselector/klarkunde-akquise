@@ -68,6 +68,7 @@ export function LeadDialog({
   const canNavigate = !!onNavigate && index >= 0;
   const { data, isLoading, isError, refetch } = useQuery({
     enabled: !!leadId,
+    refetchOnWindowFocus: false,
     queryKey: ["lead-detail", leadId],
     queryFn: async () => {
       const [l, n, s, act] = await Promise.all([
@@ -101,12 +102,6 @@ export function LeadDialog({
       };
     },
   });
-  const noteEntries = [
-    ...(data?.actions ?? [])
-      .filter((a) => a.note?.trim())
-      .map((a) => ({ id: `a${a.id}`, at: a.created_at, label: ACTION_LABEL[a.action] ?? a.action, text: a.note as string })),
-    ...(data?.notes ?? []).map((n) => ({ id: `n${n.id}`, at: n.created_at, label: "", text: n.body })),
-  ].sort((x, y) => y.at.localeCompare(x.at));
   const callerName = useQuery({
     enabled: !!leadId && backendEnabled,
     queryKey: ["profile-name", userId],
@@ -230,28 +225,6 @@ export function LeadDialog({
               />
             )}
             {backendEnabled && <PipedriveStream key={lead.id} leadId={lead.id} />}
-            {foldHistory && (
-              <details className="cc-detail-section cc-fold">
-                <summary className="cursor-pointer font-semibold">
-                  {`Notizen (${noteEntries.length})`}
-                </summary>
-                {noteEntries.length === 0 ? (
-                  <p className="pt-2 text-sm text-muted-foreground">Keine Notizen vorhanden.</p>
-                ) : (
-                  <ul className="cc-history pt-2">
-                    {noteEntries.map((n) => (
-                      <li key={n.id}>
-                        <span className="text-muted-foreground">
-                          {new Date(n.at).toLocaleString("de-DE")}
-                          {n.label ? ` · ${n.label}` : ""}:
-                        </span>{" "}
-                        <span className="whitespace-pre-wrap break-words">{n.text}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </details>
-            )}
             <Fold enabled={foldHistory} title="Verlauf">
               <ul className="cc-history">
                 {data?.actions.map((a) => (
