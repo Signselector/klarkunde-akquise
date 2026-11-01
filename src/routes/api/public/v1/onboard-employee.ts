@@ -34,8 +34,8 @@ async function onboard(e: Employee): Promise<Result> {
       email,
       password: crypto.randomUUID() + crypto.randomUUID(),
       email_confirm: true,
-      // welcome_pending: the welcome/password mail is sent by the hourly job (from 06:00 Vienna time).
-      user_metadata: { display_name: name, source: "teammanagement", external_id, welcome_pending: true },
+      // No automatic welcome mail: new users set their password via "Passwort vergessen" or log in via SSO.
+      user_metadata: { display_name: name, source: "teammanagement", external_id },
     });
     if (error || !data.user) return { ok: false, email, error: "create_failed" };
     userId = data.user.id;
