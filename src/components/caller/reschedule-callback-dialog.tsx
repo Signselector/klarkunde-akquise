@@ -4,9 +4,20 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SlotPicker } from "@/components/booking/slot-picker";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-export type CallbackToMove = { id: string; due_at: string; lead_id: string; company: string | null };
+export type CallbackToMove = {
+  id: string;
+  due_at: string;
+  lead_id: string;
+  company: string | null;
+};
 
 /** Moves an open callback to another time: day on the left, free times on the right, like when it was booked. */
 export function RescheduleCallbackDialog({
@@ -39,7 +50,9 @@ export function RescheduleCallbackDialog({
       .select("id");
     setBusy(false);
     if (error || !data?.length) {
-      toast.error("Der Rückruf konnte nicht verschoben werden. Bitte lade die Seite neu und versuche es erneut.");
+      toast.error(
+        "Der Rückruf konnte nicht verschoben werden. Bitte lade die Seite neu und versuche es erneut.",
+      );
       return;
     }
     toast.success("Rückruf verschoben.");
@@ -54,7 +67,8 @@ export function RescheduleCallbackDialog({
         <DialogHeader>
           <DialogTitle>Rückruf verschieben</DialogTitle>
           <DialogDescription>
-            {callback?.company || "Ohne Firmenname"} · aktuell {callback ? new Date(callback.due_at).toLocaleString("de-DE") : ""}
+            {callback?.company || "Ohne Firmenname"} · aktuell{" "}
+            {callback ? new Date(callback.due_at).toLocaleString("de-DE") : ""}
           </DialogDescription>
         </DialogHeader>
         {callback && (

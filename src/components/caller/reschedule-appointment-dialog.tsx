@@ -4,7 +4,13 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SlotPicker } from "@/components/booking/slot-picker";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export type AppointmentToMove = { id: string; title: string; startsAt: string };
 
@@ -60,7 +66,8 @@ export function RescheduleAppointmentDialog({
         <DialogHeader>
           <DialogTitle>Termin verschieben</DialogTitle>
           <DialogDescription>
-            {appointment?.title} · aktuell {appointment ? new Date(appointment.startsAt).toLocaleString("de-DE") : ""}
+            {appointment?.title} · aktuell{" "}
+            {appointment ? new Date(appointment.startsAt).toLocaleString("de-DE") : ""}
           </DialogDescription>
         </DialogHeader>
         {appointment && (

@@ -2,7 +2,16 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, CalendarDays, Check, ChevronDown, ChevronUp, Mail, Paperclip, Pencil } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Mail,
+  Paperclip,
+  Pencil,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FeedbackState } from "@/components/coldcaller/primitives";
@@ -41,11 +50,27 @@ const KIND_TAB: Record<StreamKind, Tab> = {
   file: "file",
 };
 
-type NoteEntry = { type: "note"; id: string; rawId: string; at: string; author: string | null; text: string; editable: boolean };
+type NoteEntry = {
+  type: "note";
+  id: string;
+  rawId: string;
+  at: string;
+  author: string | null;
+  text: string;
+  editable: boolean;
+};
 type Entry = NoteEntry | { type: "item"; item: StreamItem };
 
 /** Yellow note card; the pencil opens inline editing when the server says the user may edit this note. */
-function NoteCard({ note, onSave, saving }: { note: NoteEntry; onSave: (text: string) => Promise<boolean>; saving: boolean }) {
+function NoteCard({
+  note,
+  onSave,
+  saving,
+}: {
+  note: NoteEntry;
+  onSave: (text: string) => Promise<boolean>;
+  saving: boolean;
+}) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(note.text);
   // Open by default; a click on the header folds the note up to two lines and back.
@@ -61,7 +86,12 @@ function NoteCard({ note, onSave, saving }: { note: NoteEntry; onSave: (text: st
           onClick={() => setExpanded((v) => !v)}
           className="!min-h-0 flex min-w-0 flex-1 items-center gap-1 text-left text-xs opacity-70 hover:opacity-100"
         >
-          {long && (expanded ? <ChevronUp size={14} aria-hidden="true" /> : <ChevronDown size={14} aria-hidden="true" />)}
+          {long &&
+            (expanded ? (
+              <ChevronUp size={14} aria-hidden="true" />
+            ) : (
+              <ChevronDown size={14} aria-hidden="true" />
+            ))}
           <span>
             {when(note.at)}
             {note.author ? ` · ${note.author}` : ""}
@@ -83,7 +113,13 @@ function NoteCard({ note, onSave, saving }: { note: NoteEntry; onSave: (text: st
       </div>
       {editing ? (
         <div className="space-y-2">
-          <Textarea value={text} onChange={(e) => setText(e.target.value)} rows={5} disabled={saving} className="bg-white" />
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={5}
+            disabled={saving}
+            className="bg-white"
+          />
           <div className="flex gap-2">
             <Button
               size="sm"
@@ -100,7 +136,9 @@ function NoteCard({ note, onSave, saving }: { note: NoteEntry; onSave: (text: st
           </div>
         </div>
       ) : (
-        <p className={`whitespace-pre-wrap break-words ${expanded ? "" : "line-clamp-2"}`}>{note.text}</p>
+        <p className={`whitespace-pre-wrap break-words ${expanded ? "" : "line-clamp-2"}`}>
+          {note.text}
+        </p>
       )}
     </div>
   );
@@ -117,7 +155,15 @@ function Dot({ children, tone }: { children: React.ReactNode; tone: string }) {
   );
 }
 
-function Row({ entry, onSave, saving }: { entry: Entry; onSave: (note: NoteEntry, text: string) => Promise<boolean>; saving: boolean }) {
+function Row({
+  entry,
+  onSave,
+  saving,
+}: {
+  entry: Entry;
+  onSave: (note: NoteEntry, text: string) => Promise<boolean>;
+  saving: boolean;
+}) {
   if (entry.type === "note")
     return (
       <li className="relative">
@@ -129,12 +175,26 @@ function Row({ entry, onSave, saving }: { entry: Entry; onSave: (note: NoteEntry
     );
   const i = entry.item;
   const icon =
-    i.kind === "email" ? <Mail size={12} /> : i.kind === "activity" ? (i.done ? <Check size={12} /> : <CalendarDays size={12} />) : i.kind === "file" ? <Paperclip size={12} /> : <ArrowRight size={12} />;
+    i.kind === "email" ? (
+      <Mail size={12} />
+    ) : i.kind === "activity" ? (
+      i.done ? (
+        <Check size={12} />
+      ) : (
+        <CalendarDays size={12} />
+      )
+    ) : i.kind === "file" ? (
+      <Paperclip size={12} />
+    ) : (
+      <ArrowRight size={12} />
+    );
   return (
     <li className="relative rounded-md border bg-card p-3 text-sm">
       <Dot tone="bg-muted text-muted-foreground">{icon}</Dot>
       <p className="break-words font-medium">
-        {i.kind === "activity" && i.activity ? <span className="font-normal text-muted-foreground">{i.activity}: </span> : null}
+        {i.kind === "activity" && i.activity ? (
+          <span className="font-normal text-muted-foreground">{i.activity}: </span>
+        ) : null}
         {i.text}
         {i.state && (
           <span className="ml-2 rounded bg-muted px-1.5 py-0.5 text-[11px] font-semibold tracking-wide text-muted-foreground">
@@ -142,7 +202,9 @@ function Row({ entry, onSave, saving }: { entry: Entry; onSave: (note: NoteEntry
           </span>
         )}
         {i.kind === "activity" && i.done && (
-          <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-[11px] font-semibold text-green-800">ERLEDIGT</span>
+          <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-[11px] font-semibold text-green-800">
+            ERLEDIGT
+          </span>
         )}
       </p>
       <p className="text-xs text-muted-foreground">
@@ -159,7 +221,13 @@ function Row({ entry, onSave, saving }: { entry: Entry; onSave: (note: NoteEntry
  * Notes and history of the lead's Pipedrive deal, folded in the customer file. Only shown when the lead has a deal.
  * Managers and admins get the whole feed with filter tabs; callers get notes and stage changes (the server filters).
  */
-export function PipedriveStream({ leadId, defaultOpen = false }: { leadId: string; defaultOpen?: boolean }) {
+export function PipedriveStream({
+  leadId,
+  defaultOpen = false,
+}: {
+  leadId: string;
+  defaultOpen?: boolean;
+}) {
   const check = useServerFn(hasLeadDeal);
   const load = useServerFn(loadLeadStream);
   const [open, setOpen] = useState(defaultOpen);
@@ -198,16 +266,28 @@ export function PipedriveStream({ leadId, defaultOpen = false }: { leadId: strin
           editable: !!n.editable,
         })),
         ...d.items.map((item) => ({ type: "item" as const, item })),
-      ].sort((a, b) => (b.type === "note" ? b.at : b.item.at).localeCompare(a.type === "note" ? a.at : a.item.at))
+      ].sort((a, b) =>
+        (b.type === "note" ? b.at : b.item.at).localeCompare(a.type === "note" ? a.at : a.item.at),
+      )
     : [];
   const count = (t: Tab) =>
-    all.filter((e) => (t === "notes" ? e.type === "note" : e.type === "item" && KIND_TAB[e.item.kind] === t)).length;
+    all.filter((e) =>
+      t === "notes" ? e.type === "note" : e.type === "item" && KIND_TAB[e.item.kind] === t,
+    ).length;
   const shown = all.filter((e) =>
-    tab === "all" ? true : tab === "notes" ? e.type === "note" : e.type === "item" && KIND_TAB[e.item.kind] === tab,
+    tab === "all"
+      ? true
+      : tab === "notes"
+        ? e.type === "note"
+        : e.type === "item" && KIND_TAB[e.item.kind] === tab,
   );
   const onSave = async (note: NoteEntry, text: string) => {
     try {
-      const r = await edit.mutateAsync({ noteId: note.rawId, source: d?.source ?? "pipedrive", content: text });
+      const r = await edit.mutateAsync({
+        noteId: note.rawId,
+        source: d?.source ?? "pipedrive",
+        content: text,
+      });
       toast.success(
         r.pipedrive === "synced"
           ? "Notiz gespeichert und in Pipedrive aktualisiert."
@@ -230,7 +310,11 @@ export function PipedriveStream({ leadId, defaultOpen = false }: { leadId: strin
       ? `${text} (${count(key)})`
       : text;
   return (
-    <details className="cc-detail-section cc-fold" open={defaultOpen || undefined} onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}>
+    <details
+      className="cc-detail-section cc-fold"
+      open={defaultOpen || undefined}
+      onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
+    >
       <summary className="cursor-pointer font-semibold">
         {d ? `Notizen & Verlauf (Pipedrive) · ${all.length}` : "Notizen & Verlauf (Pipedrive)"}
       </summary>
@@ -253,7 +337,8 @@ export function PipedriveStream({ leadId, defaultOpen = false }: { leadId: strin
           <>
             {d.source === "local" && d.error && (
               <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                Pipedrive war nicht erreichbar. Angezeigt werden die im Tool gespeicherten Notizen und Stage-Wechsel.
+                Pipedrive war nicht erreichbar. Angezeigt werden die im Tool gespeicherten Notizen
+                und Stage-Wechsel.
               </p>
             )}
             <div className="flex flex-wrap gap-2" role="tablist" aria-label="Verlauf filtern">
@@ -275,7 +360,12 @@ export function PipedriveStream({ leadId, defaultOpen = false }: { leadId: strin
             ) : (
               <ul className="ml-3 space-y-2 border-l-2 pl-8">
                 {shown.map((e) => (
-                  <Row key={e.type === "note" ? e.id : e.item.id} entry={e} onSave={onSave} saving={edit.isPending} />
+                  <Row
+                    key={e.type === "note" ? e.id : e.item.id}
+                    entry={e}
+                    onSave={onSave}
+                    saving={edit.isPending}
+                  />
                 ))}
               </ul>
             )}

@@ -1,5 +1,11 @@
 /** Notes and history of a deal, as shown under "Meine Kunden". E-mails are never part of it. */
-export type DealNote = { id: string; at: string; author: string | null; text: string; editable?: boolean };
+export type DealNote = {
+  id: string;
+  at: string;
+  author: string | null;
+  text: string;
+  editable?: boolean;
+};
 export type DealEvent = { id: string; at: string; text: string; by: string | null };
 
 const ACTIVITY_LABEL: Record<string, string> = {
@@ -141,7 +147,11 @@ export function noteBody(text: string): string {
 function fileSize(bytes: unknown): string | undefined {
   const n = Number(bytes);
   if (!Number.isFinite(n) || n <= 0) return undefined;
-  return n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`;
+  return n < 1024
+    ? `${n} B`
+    : n < 1048576
+      ? `${(n / 1024).toFixed(1)} KB`
+      : `${(n / 1048576).toFixed(1)} MB`;
 }
 
 /**
@@ -177,18 +187,33 @@ export function parseStream(
     if (kind === "dealChange") {
       const key = String(data["field_key"] ?? "");
       if (key === "stage_id")
-        items.push({ id, at, by, kind: "stage", text: `Stage: ${stage(data["old_value"])} → ${stage(data["new_value"])}` });
+        items.push({
+          id,
+          at,
+          by,
+          kind: "stage",
+          text: `Stage: ${stage(data["old_value"])} → ${stage(data["new_value"])}`,
+        });
       else if (!opts.staff) return;
       else if (key === "status")
-        items.push({ id, at, by, kind: "status", text: `Status: ${String(data["old_value"] ?? "–")} → ${String(data["new_value"] ?? "–")}` });
-      else if (key === "add_time") items.push({ id, at, by, kind: "created", text: "Deal angelegt" });
+        items.push({
+          id,
+          at,
+          by,
+          kind: "status",
+          text: `Status: ${String(data["old_value"] ?? "–")} → ${String(data["new_value"] ?? "–")}`,
+        });
+      else if (key === "add_time")
+        items.push({ id, at, by, kind: "created", text: "Deal angelegt" });
       return;
     }
     if (!opts.staff) return;
     if (kind === "activity") {
       const type = String(data["type"] ?? "");
       const subject = typeof data["subject"] === "string" ? data["subject"] : "";
-      const due = [data["due_date"], data["due_time"]].filter((x) => typeof x === "string" && x).join(" ");
+      const due = [data["due_date"], data["due_time"]]
+        .filter((x) => typeof x === "string" && x)
+        .join(" ");
       items.push({
         id,
         at,
@@ -222,7 +247,10 @@ export function parseStream(
         at,
         by,
         kind: "email",
-        text: typeof data["subject"] === "string" && data["subject"] ? data["subject"] : "(Ohne Betreff)",
+        text:
+          typeof data["subject"] === "string" && data["subject"]
+            ? data["subject"]
+            : "(Ohne Betreff)",
         ...(to ? { detail: to } : {}),
         ...(state ? { state } : {}),
         ...(preview ? { preview } : {}),

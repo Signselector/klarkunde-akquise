@@ -1,3 +1,5 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { gatewayClient } from "@/lib/crm-sync.functions";
@@ -7,21 +9,36 @@ import { buildMeetingUpdate, pdKind } from "@/lib/pipedrive-activity";
 const lastTeamSync = new Map<string, number>();
 const TEAM_SYNC_MIN_GAP_MS = 2 * 60_000;
 
-async function requireStaff(supabase: { rpc: (fn: "has_admin_rights", args: { _uid: string; _country: string }) => PromiseLike<{ data: unknown }> }, userId: string, country: string) {
+async function requireStaff(
+  supabase: {
+    rpc: (
+      fn: "has_admin_rights",
+      args: { _uid: string; _country: string },
+    ) => PromiseLike<{ data: unknown }>;
+  },
+  userId: string,
+  country: string,
+) {
   const { data } = await supabase.rpc("has_admin_rights", { _uid: userId, _country: country });
   if (!data) throw new Error("Dafür fehlt dir die Berechtigung.");
 }
 
 /** Managers and admins of the country may change every entry, a Senior Caller only the entries that belong to him. */
 async function requireStaffOrSeniorOwner(
-  context: { supabase: any; userId: string },
+  context: { supabase: SupabaseClient<Database>; userId: string },
   country: string,
   ownerId: string,
 ) {
-  const { data: staff } = await context.supabase.rpc("has_admin_rights", { _uid: context.userId, _country: country });
+  const { data: staff } = await context.supabase.rpc("has_admin_rights", {
+    _uid: context.userId,
+    _country: country,
+  });
   if (staff) return;
   if (ownerId === context.userId) {
-    const { data: senior } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "veteran" });
+    const { data: senior } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "veteran",
+    });
     if (senior) return;
   }
   throw new Error("Dafür fehlt dir die Berechtigung.");
@@ -33,10 +50,19 @@ async function requireStaffOrSeniorOwner(
  */
 export const updatePipedriveMeeting = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { country: string; activityId: number; subject: string; startsAt: string; durationMin: number }) => {
-    if (!d || !/^[A-Z]{2}$/.test(d.country) || !Number.isSafeInteger(d.activityId)) throw new Error("invalid");
-    return d;
-  })
+  .inputValidator(
+    (d: {
+      country: string;
+      activityId: number;
+      subject: string;
+      startsAt: string;
+      durationMin: number;
+    }) => {
+      if (!d || !/^[A-Z]{2}$/.test(d.country) || !Number.isSafeInteger(d.activityId))
+        throw new Error("invalid");
+      return d;
+    },
+  )
   .handler(async ({ data, context }) => {
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     const { data: act } = await db
@@ -47,10 +73,15 @@ export const updatePipedriveMeeting = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!act) throw new Error("Der Eintrag wurde nicht gefunden.");
     await requireStaffOrSeniorOwner(context, data.country, act.user_id);
-    if (pdKind(act.type) === "other") throw new Error("Nur Meetings und Anrufe können bearbeitet werden.");
+    if (pdKind(act.type) === "other")
+      throw new Error("Nur Meetings und Anrufe können bearbeitet werden.");
     let payload;
     try {
-      payload = buildMeetingUpdate({ subject: data.subject, startsAt: data.startsAt, durationMin: data.durationMin });
+      payload = buildMeetingUpdate({
+        subject: data.subject,
+        startsAt: data.startsAt,
+        durationMin: data.durationMin,
+      });
     } catch {
       throw new Error("Bitte Betreff, Zeit und Dauer prüfen.");
     }
@@ -61,17 +92,30 @@ export const updatePipedriveMeeting = createServerFn({ method: "POST" })
         await gatewayClient(data.country).json("PUT", `/activities/${data.activityId}`, payload);
         state = "synced";
       } catch (e) {
-        throw new Error(e instanceof CrmError ? `Pipedrive hat die Änderung nicht angenommen (${e.code}).` : "Pipedrive war nicht erreichbar.");
+        throw new Error(
+          e instanceof CrmError
+            ? `Pipedrive hat die Änderung nicht angenommen (${e.code}).`
+            : "Pipedrive war nicht erreichbar.",
+        );
       }
     }
     const startsAt = new Date(data.startsAt).toISOString();
     await db
       .from("pipedrive_activities")
-      .update({ subject: payload.subject, due_at: startsAt, duration_min: data.durationMin, updated_at: new Date().toISOString() })
+      .update({
+        subject: payload.subject,
+        due_at: startsAt,
+        duration_min: data.durationMin,
+        updated_at: new Date().toISOString(),
+      })
       .eq("country", data.country)
       .eq("activity_id", data.activityId);
     // A meeting that is also an appointment of the tool keeps the same time there.
-    await db.from("appointments").update({ starts_at: startsAt }).eq("country", data.country).eq("pd_activity_id", data.activityId);
+    await db
+      .from("appointments")
+      .update({ starts_at: startsAt })
+      .eq("country", data.country)
+      .eq("pd_activity_id", data.activityId);
     return { state };
   });
 
@@ -92,7 +136,11 @@ export const syncTeamCalendars = createServerFn({ method: "POST" })
     lastTeamSync.set(data.country, Date.now());
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     const { syncCalendarForUser } = await import("@/lib/calendar-sync.functions");
-    const { data: mapped } = await db.from("pipedrive_user_map").select("user_id").eq("country", data.country).limit(200);
+    const { data: mapped } = await db
+      .from("pipedrive_user_map")
+      .select("user_id")
+      .eq("country", data.country)
+      .limit(200);
     let synced = 0;
     for (const m of mapped ?? []) {
       try {
@@ -105,7 +153,8 @@ export const syncTeamCalendars = createServerFn({ method: "POST" })
     return { synced, skipped: false };
   });
 
-const escapeHtml = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escapeHtml = (t: string) =>
+  t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /**
  * Edits the note of a Pipedrive calendar entry (meeting or call). Allowed for managers and admins of the country and
@@ -114,7 +163,13 @@ const escapeHtml = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;")
 export const updatePipedriveActivityNote = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { country: string; activityId: number; note: string }) => {
-    if (!d || !/^[A-Z]{2}$/.test(d.country) || !Number.isSafeInteger(d.activityId) || typeof d.note !== "string" || d.note.length > 15000)
+    if (
+      !d ||
+      !/^[A-Z]{2}$/.test(d.country) ||
+      !Number.isSafeInteger(d.activityId) ||
+      typeof d.note !== "string" ||
+      d.note.length > 15000
+    )
       throw new Error("invalid");
     return d;
   })
@@ -134,10 +189,16 @@ export const updatePipedriveActivityNote = createServerFn({ method: "POST" })
     let state: "synced" | "simulated" = "simulated";
     if (config?.test_mode === false) {
       try {
-        await gatewayClient(data.country).json("PUT", `/activities/${data.activityId}`, { note: html });
+        await gatewayClient(data.country).json("PUT", `/activities/${data.activityId}`, {
+          note: html,
+        });
         state = "synced";
       } catch (e) {
-        throw new Error(e instanceof CrmError ? `Pipedrive hat die Änderung nicht angenommen (${e.code}).` : "Pipedrive war nicht erreichbar.");
+        throw new Error(
+          e instanceof CrmError
+            ? `Pipedrive hat die Änderung nicht angenommen (${e.code}).`
+            : "Pipedrive war nicht erreichbar.",
+        );
       }
     }
     await db
@@ -155,7 +216,12 @@ export const updatePipedriveActivityNote = createServerFn({ method: "POST" })
 export const setPipedriveActivityDone = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { country: string; activityId: number; done: boolean }) => {
-    if (!d || !/^[A-Z]{2}$/.test(d.country) || !Number.isSafeInteger(d.activityId) || typeof d.done !== "boolean")
+    if (
+      !d ||
+      !/^[A-Z]{2}$/.test(d.country) ||
+      !Number.isSafeInteger(d.activityId) ||
+      typeof d.done !== "boolean"
+    )
       throw new Error("invalid");
     return d;
   })
@@ -173,10 +239,16 @@ export const setPipedriveActivityDone = createServerFn({ method: "POST" })
     let state: "synced" | "simulated" = "simulated";
     if (config?.test_mode === false) {
       try {
-        await gatewayClient(data.country).json("PUT", `/activities/${data.activityId}`, { done: data.done ? 1 : 0 });
+        await gatewayClient(data.country).json("PUT", `/activities/${data.activityId}`, {
+          done: data.done ? 1 : 0,
+        });
         state = "synced";
       } catch (e) {
-        throw new Error(e instanceof CrmError ? `Pipedrive hat die Änderung nicht angenommen (${e.code}).` : "Pipedrive war nicht erreichbar.");
+        throw new Error(
+          e instanceof CrmError
+            ? `Pipedrive hat die Änderung nicht angenommen (${e.code}).`
+            : "Pipedrive war nicht erreichbar.",
+        );
       }
     }
     await db

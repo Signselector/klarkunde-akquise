@@ -34,7 +34,9 @@ export function PdNoteBlock({
     try {
       const r = await save({ data: { country, activityId, note: draft } });
       toast.success(
-        r.state === "synced" ? "Notiz gespeichert und in Pipedrive aktualisiert." : "Notiz gespeichert (Testmodus, nicht an Pipedrive gesendet).",
+        r.state === "synced"
+          ? "Notiz gespeichert und in Pipedrive aktualisiert."
+          : "Notiz gespeichert (Testmodus, nicht an Pipedrive gesendet).",
       );
       void qc.invalidateQueries({ queryKey: ["external-activities"] });
       setEditing(false);
@@ -47,7 +49,13 @@ export function PdNoteBlock({
   if (editing)
     return (
       <div className="space-y-2">
-        <Textarea value={draft} onChange={(e) => setDraft(e.target.value)} rows={8} disabled={busy} className="bg-white" />
+        <Textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          rows={8}
+          disabled={busy}
+          className="bg-white"
+        />
         <div className="flex gap-2">
           <Button size="sm" disabled={busy || draft.trim() === text} onClick={() => void submit()}>
             {busy ? "Speichert …" : "Speichern"}
@@ -61,7 +69,9 @@ export function PdNoteBlock({
   return (
     <div className="flex items-start gap-2">
       {/* Like in Pipedrive: one continuous text, line breaks become spaces. */}
-      <p className="min-w-0 flex-1 break-words">{text ? text.replace(/\s*\n+\s*/g, " ") : "Keine Notiz."}</p>
+      <p className="min-w-0 flex-1 break-words">
+        {text ? text.replace(/\s*\n+\s*/g, " ") : "Keine Notiz."}
+      </p>
       {editable && (
         <button
           type="button"
