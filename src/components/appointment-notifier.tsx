@@ -11,7 +11,7 @@ export function AppointmentNotifier({ userId }: { userId: string }) {
   const navigate = useNavigate();
   const { data } = useQuery({
     queryKey: ["appointment-notifications", userId],
-    refetchInterval: 60_000,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointment_notifications")
