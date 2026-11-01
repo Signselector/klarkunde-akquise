@@ -20,6 +20,7 @@ import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { Button } from "@/components/ui/button";
 import { Dropdown } from "@/components/ui/dropdown";
 import { LeadDialog } from "@/components/caller/lead-dialog";
+import { RescheduleAppointmentDialog, type AppointmentToMove } from "@/components/caller/reschedule-appointment-dialog";
 import { PdNoteBlock } from "@/components/caller/pd-note-block";
 import { Label } from "@/components/ui/label";
 import {
@@ -188,6 +189,7 @@ function AppointmentsPage() {
 
   // Meeting edit dialog and the names of the people whose Pipedrive entries the manager sees.
   const [editMeeting, setEditMeeting] = useState<EditableMeeting | null>(null);
+  const [moving, setMoving] = useState<AppointmentToMove | null>(null);
   const pdOwnerIds = [...new Set(external.map((x) => x.user_id))].filter((id) => id !== user.id);
   const pdOwners = useQuery({
     enabled: roles.isStaff && pdOwnerIds.length > 0,
@@ -349,6 +351,17 @@ function AppointmentsPage() {
                   }}
                 >
                   Bearbeiten
+                </Button>
+              )}
+              {!pd && (roles.isStaff || e.user_id === user.id) && !("outcome" in e && e.outcome) && (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    close();
+                    setMoving({ id: e.id, title: entry.title, startsAt: e.starts_at });
+                  }}
+                >
+                  Verschieben
                 </Button>
               )}
               {!pd && leadId && (
@@ -610,6 +623,12 @@ function AppointmentsPage() {
         </aside>
       </div>
 
+      <RescheduleAppointmentDialog
+        appointment={moving}
+        country={country}
+        onClose={() => setMoving(null)}
+        onMoved={(id) => void pushNow({ data: { appointmentId: id } }).catch(() => undefined)}
+      />
       <PipedriveMeetingDialog
         meeting={editMeeting}
         country={country}
