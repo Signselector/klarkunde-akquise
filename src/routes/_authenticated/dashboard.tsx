@@ -87,17 +87,35 @@ function Dashboard() {
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
   // Only accounts of the selected country can receive a batch of that country.
+  // Managers may only hand batches to roles below them (Senior Caller, Caller); admins to everyone.
+  const myRoles = useRoles(user.id);
   const people = useQuery({
     enabled: admin && backendEnabled,
-    queryKey: ["batch-assignees", country],
+    queryKey: ["batch-assignees", country, myRoles.role],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("user_countries")
         .select("user_id,profile:profiles(display_name,email,active)")
         .eq("country", country);
       if (error) throw error;
-      return (data ?? [])
-        .filter((r) => r.profile?.active !== false)
+      const rows = (data ?? []).filter((r) => r.profile?.active !== false);
+      let allowed: Set<string> | null = null;
+      if (myRoles.role !== "admin") {
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("user_id,role")
+          .in("user_id", rows.map((r) => r.user_id));
+        const byUser = new Map<string, string[]>();
+        for (const r of roles ?? []) byUser.set(r.user_id, [...(byUser.get(r.user_id) ?? []), r.role as string]);
+        allowed = new Set(
+          rows.map((r) => r.user_id).filter((id) => {
+            const p = primaryRole(byUser.get(id) ?? []);
+            return p === "recruit" || p === "veteran";
+          }),
+        );
+      }
+      return rows
+        .filter((r) => !allowed || allowed.has(r.user_id))
         .map((r) => ({ id: r.user_id, display_name: r.profile?.display_name || r.profile?.email || "Unbekannt" }))
         .sort((x, y) => x.display_name.localeCompare(y.display_name, "de"));
     },
