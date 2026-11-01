@@ -10,7 +10,7 @@ import {
   ShieldCheck,
 } from "@/components/coldcaller/icons";
 
-export type Tone = "neutral" | "info" | "success" | "warning" | "danger";
+export type Tone = "neutral" | "info" | "success" | "warning" | "danger" | "orange";
 
 /** Presentation only: labels, values and permissions must be supplied by the caller. */
 export function ActionButton({

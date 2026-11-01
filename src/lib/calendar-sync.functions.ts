@@ -100,6 +100,12 @@ async function databaseStore(userId: string, country: string): Promise<CalendarS
           .gte("starts_at", since)
           .limit(200),
       ]);
+      // Claim the rows first: two syncs running at once must never both create the same Pipedrive activity.
+      const ids = (aps.data ?? []).map((a) => a.id);
+      const claimed = ids.length
+        ? new Set(((await db.rpc("cal_claim_appointments", { p_ids: ids })).data ?? []) as string[])
+        : new Set<string>();
+      aps.data = (aps.data ?? []).filter((a) => claimed.has(a.id));
       const deals = await dealIds(
         (aps.data ?? []).map((r) => r.lead_id).filter((v): v is string => !!v),
       );
@@ -123,13 +129,14 @@ async function databaseStore(userId: string, country: string): Promise<CalendarS
           pd_sync_state: "synced",
           pd_sync_error: null,
           pd_synced_at: new Date().toISOString(),
+          ...(item.kind === "appointment" ? { pd_push_claimed_at: null } : {}),
         })
         .eq("id", item.id);
     },
     async markFailed(item, error) {
       await db
         .from(table(item))
-        .update({ pd_sync_state: "failed", pd_sync_error: error.slice(0, 120) })
+        .update({ pd_sync_state: "failed", pd_sync_error: error.slice(0, 120), ...(item.kind === "appointment" ? { pd_push_claimed_at: null } : {}) })
         .eq("id", item.id);
     },
     async queue() {
