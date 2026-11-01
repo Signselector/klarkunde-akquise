@@ -99,7 +99,9 @@ function LeadsPage() {
           },
         )
         .eq("lead_batches.country", country)
+        // Leads of one import share the same created_at: the id keeps their order the same after an edit.
         .order("created_at", { ascending: false })
+        .order("id")
         .limit(300);
       if (backendEnabled) query = query.is("archived_at", null);
       if (onlyMine) query = query.eq("lead_batches.assigned_to", user.id);
@@ -125,6 +127,7 @@ function LeadsPage() {
           .eq("status", "appointment_missed")
           .eq("last_called_by", user.id)
           .is("archived_at", null)
+          .order("id")
           .limit(100);
         if (batch !== "all") missed = missed.eq("batch_id", batch);
         if (term)
@@ -149,6 +152,7 @@ function LeadsPage() {
           .gte("last_called_at", cutoff)
           .is("archived_at", null)
           .order("last_called_at", { ascending: false })
+          .order("id")
           .limit(300);
         if (onlyMine) unreached = unreached.eq("lead_batches.assigned_to", user.id);
         if (batch !== "all") unreached = unreached.eq("batch_id", batch);
