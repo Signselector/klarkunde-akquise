@@ -330,6 +330,13 @@
       "when": 1793464701124,
       "tag": "0046_cal_apply_activities_batch",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793524911469,
+      "tag": "0047_activity_note_length",
+      "breakpoints": true
     }
   ]
 }
