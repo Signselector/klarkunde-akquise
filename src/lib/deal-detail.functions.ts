@@ -163,7 +163,7 @@ async function resolveLeadDeal(context: { supabase: any; userId: string }, leadI
   if (!visible) throw new Error("Für diesen Lead hast du keinen Zugriff.");
   const { data: link } = await db
     .from("lead_crm_links")
-    .select("country,deal_id")
+    .select("country,deal_id,origin_caller_id")
     .eq("lead_id", leadId)
     .not("deal_id", "is", null)
     .limit(1)
@@ -175,8 +175,27 @@ async function resolveLeadDeal(context: { supabase: any; userId: string }, leadI
       : Promise.resolve({ data: false }),
     context.supabase.rpc("has_role", { _user_id: context.userId, _role: "veteran" }),
   ]);
+  // Callers and Senior Callers only get the data of their own leads: the lead came from their batch, they called it or
+  // they brought in the deal. Managers and admins of the country see every lead.
+  let allowed = !!staff;
+  if (!allowed) {
+    const { data: lead } = await db
+      .from("leads")
+      .select("last_called_by,batch:lead_batches(assigned_to)")
+      .eq("id", leadId)
+      .maybeSingle();
+    allowed =
+      lead?.last_called_by === context.userId ||
+      lead?.batch?.assigned_to === context.userId ||
+      link?.origin_caller_id === context.userId;
+    if (!allowed) {
+      const { data: acted } = await db.from("lead_actions").select("id").eq("lead_id", leadId).eq("user_id", context.userId).limit(1);
+      allowed = !!acted?.length;
+    }
+  }
   return {
     db,
+    allowed,
     link: link && link.deal_id != null ? { country: link.country as string, dealId: Number(link.deal_id) } : null,
     staff: !!staff,
     senior: !!senior,
@@ -192,7 +211,7 @@ export const hasLeadDeal = createServerFn({ method: "POST" })
   })
   .handler(async ({ data, context }): Promise<{ linked: boolean; staff: boolean }> => {
     const r = await resolveLeadDeal(context, data.leadId);
-    return { linked: !!r.link, staff: r.staff };
+    return { linked: r.allowed && !!r.link, staff: r.staff };
   });
 
 /**
@@ -206,7 +225,8 @@ export const loadLeadStream = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data, context }): Promise<LeadStream> => {
-    const { db, link, staff, senior } = await resolveLeadDeal(context, data.leadId);
+    const { db, link, staff, senior, allowed } = await resolveLeadDeal(context, data.leadId);
+    if (!allowed) throw new Error("Für diesen Lead hast du keinen Zugriff.");
     if (!link) return { linked: false, staff, source: "local", notes: [], items: [], error: null };
     const first = await firstContactNote(db, data.leadId);
     const mayEdit = (text: string) =>
@@ -289,7 +309,8 @@ export const updateLeadNote = createServerFn({ method: "POST" })
     return d;
   })
   .handler(async ({ data, context }): Promise<{ ok: true; pipedrive: "synced" | "simulated" | "skipped" | "error" }> => {
-    const { db, link, staff, senior } = await resolveLeadDeal(context, data.leadId);
+    const { db, link, staff, senior, allowed } = await resolveLeadDeal(context, data.leadId);
+    if (!allowed) throw new Error("Für diesen Lead hast du keinen Zugriff.");
     const content = data.content.trim();
     const first = await firstContactNote(db, data.leadId);
     const all = staff || senior;
