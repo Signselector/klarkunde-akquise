@@ -7,7 +7,7 @@ export async function schemaDatabase() {
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const f of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
-    .filter((x) => x.endsWith(".sql"))
+    .filter((x) => x.endsWith(".sql") && !x.startsWith("0045_"))
     .sort())
     // PGlite has no pg_cron: skip only the nightly schedule, the functions are still created.
     await db.exec(

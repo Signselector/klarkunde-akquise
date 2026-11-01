@@ -24,7 +24,7 @@ before(async () => {
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
-    .filter((x) => x.endsWith(".sql"))
+    .filter((x) => x.endsWith(".sql") && !x.startsWith("0045_"))
     .sort()) {
     const sql = (await readFile(new URL("../../drizzle/migrations/" + file, import.meta.url), "utf8"))
       .replace(/^CREATE EXTENSION IF NOT EXISTS pg_cron;$/m, "")

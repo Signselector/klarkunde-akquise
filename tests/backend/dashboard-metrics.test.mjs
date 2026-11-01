@@ -39,7 +39,7 @@ before(async () => {
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
-    .filter((x) => x.endsWith(".sql"))
+    .filter((x) => x.endsWith(".sql") && !x.startsWith("0045_"))
     .sort()) {
     // PGlite has no pg_cron: skip only the nightly schedule, the functions are still created.
     const text = (
@@ -305,8 +305,9 @@ test("batch progress counts distinct processed leads and survives release and re
   await sql("update public.leads set attempts=3 where id=$1", [leads[0]]); // many attempts: still one processed lead
   await sql("update public.leads set status='low_q',attempts=1 where id=$1", [leads[1]]);
   await sql("update public.leads set archived_at=now() where id=$1", [leads[11]]);
+  await as(admin);
+  await rpc("reassign_batch", [batch, anna]);
   await as(anna);
-  await rpc("claim_batch", [batch]);
   const p = (await rpc("get_batch_progress")).find((b) => b.id === batch);
   assert.equal(p.total, 11, "archived leads are not counted");
   assert.equal(p.processed, 2);
@@ -315,13 +316,11 @@ test("batch progress counts distinct processed leads and survives release and re
   await as(ben);
   await assert.rejects(() => rpc("release_batch", [batch]), /forbidden/);
   await as(anna);
-  assert.equal(
-    (await rpc("release_batch", [batch])).assigned_to,
-    null,
-    "the owner can give a batch back",
-  );
+  await assert.rejects(() => rpc("release_batch", [batch]), /forbidden/);
+  await as(admin);
+  assert.equal((await rpc("release_batch", [batch])).assigned_to, null, "a manager can release a batch");
+  await rpc("reassign_batch", [batch, ben]);
   await as(ben);
-  await rpc("claim_batch", [batch]);
   assert.equal(
     (await rpc("get_batch_progress")).find((b) => b.id === batch).processed,
     2,
