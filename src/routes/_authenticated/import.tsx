@@ -424,5 +424,5 @@ type Job = {
   rows: string[][];
   map: Record<string, number>;
   state: "ready" | "running" | "done" | "failed" | "error";
-  message?: string;
+  message?: string | undefined;
 };
