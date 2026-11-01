@@ -85,7 +85,7 @@ function AppointmentsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("appointments")
-        .select("id,starts_at,notes,title,kind,user_id,booked_by,lead_id,outcome,lead:leads(company,contact_name,phone,city)")
+        .select("id,starts_at,notes,title,kind,user_id,booked_by,lead_id,outcome,pd_activity_id,lead:leads(company,contact_name,phone,city)")
         .eq("country", country)
         .order("starts_at");
       if (error) throw error;
@@ -98,7 +98,8 @@ function AppointmentsPage() {
       // Callers and Senior Callers only ever see appointments assigned to them (also enforced by the database).
       .filter((a) => (!mine && roles.isStaff ? true : a.user_id === user.id) && !["pipedrive", "pd_meeting", "pd_call"].includes(filter))
       .map((a) => ({ ...a, date: new Date(a.starts_at), k: kindOf(a.kind) }));
-    // Entries that exist only in the user's Pipedrive calendar.
+    // Entries that exist only in the user's Pipedrive calendar (tool appointments already pushed to Pipedrive are not shown twice).
+    const toolPdIds = new Set((data ?? []).map((a) => a.pd_activity_id).filter((v): v is number => v != null).map(Number));
     const fromPipedrive =
       filter !== "tool"
         ? external
@@ -107,6 +108,7 @@ function AppointmentsPage() {
             .filter((x) => (roles.isStaff ? true : roles.role === "veteran" && x.user_id === user.id))
             // Like the Pipedrive calendar: all meetings and all calls (tasks and deadlines are not shown).
             .filter((x) => pdKind(x.type) !== "other")
+            .filter((x) => !toolPdIds.has(Number(x.activity_id)))
             .filter((x) => filter !== "pd_meeting" || pdKind(x.type) === "meeting")
             .filter((x) => filter !== "pd_call" || pdKind(x.type) === "call")
             .map((x) => ({
@@ -535,10 +537,6 @@ function AppointmentsPage() {
                             Pipedrive{"pd" in e && e.pd ? ` · ${PD_KIND_LABEL[pdKind(e.pd.type)]}` : ""}
                           </span>
                         )}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {KINDS[e.k].label} ·{" "}
-                        {new Intl.DateTimeFormat("de-DE", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(e.date)}
                       </p>
                       {e.lead && (
                         <p className="mt-1 text-xs">
