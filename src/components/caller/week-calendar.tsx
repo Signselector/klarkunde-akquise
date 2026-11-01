@@ -443,7 +443,7 @@ export function EntryDetailCard({
       {note && (
         <div className="cc-pd-note flex gap-4 border-y px-5 py-3">
           <StickyNote className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-          <div className="min-w-0 flex-1 whitespace-pre-wrap break-words">{note}</div>
+          <div className="max-h-[40vh] min-w-0 flex-1 overflow-y-auto whitespace-pre-wrap break-words pr-1">{note}</div>
         </div>
       )}
       {rows.length > 0 && (

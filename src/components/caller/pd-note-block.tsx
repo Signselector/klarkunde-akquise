@@ -60,7 +60,8 @@ export function PdNoteBlock({
     );
   return (
     <div className="flex items-start gap-2">
-      <p className="min-w-0 flex-1 whitespace-pre-wrap break-words">{text || "Keine Notiz."}</p>
+      {/* Like in Pipedrive: one continuous text, line breaks become spaces. */}
+      <p className="min-w-0 flex-1 break-words">{text ? text.replace(/\s*\n+\s*/g, " ") : "Keine Notiz."}</p>
       {editable && (
         <button
           type="button"
