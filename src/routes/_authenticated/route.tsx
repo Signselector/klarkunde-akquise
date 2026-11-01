@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { isMasterEmail } from "@/lib/master";
 import { LanguageSwitch } from "@/components/language-switch";
 import { useLang, useT } from "@/lib/i18n";
@@ -114,7 +115,9 @@ function Layout() {
     }
     await qc.cancelQueries();
     qc.clear();
+    toast.dismiss();
     await supabase.auth.signOut();
+    toast.dismiss();
     nav({ to: "/auth", replace: true });
   }
 
