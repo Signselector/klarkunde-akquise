@@ -146,8 +146,10 @@ export function LeadActions({
   const [note, setNote] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [photo, setPhoto] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const file = files[0] ?? null;
+  const photo = photos[0] ?? null;
   const [month, setMonth] = useState("");
   const [doNotCall, setDoNotCall] = useState(false);
   const roles = useRoles(userId);
@@ -160,6 +162,7 @@ export function LeadActions({
   const requestId = useRef<string | null>(null);
   const uploaded = useRef<string | null>(null);
   const uploadedPhoto = useRef<string | null>(null);
+  const uploadedExtra = useRef<Map<File, string>>(new Map());
 
   const [mail, setMail] = useState({ to: lead.email ?? "", subject: "", body: "", template: "" });
   // Review step and delivery state of the e-mail. The lead is only completed after a confirmed send.
@@ -240,13 +243,14 @@ export function LeadActions({
     requestId.current = crypto.randomUUID();
     uploaded.current = null;
     uploadedPhoto.current = null;
-    setPhoto(null);
+    setPhotos([]);
+    uploadedExtra.current = new Map();
     setMonth("");
     setDoNotCall(false);
     setNote("");
     setDate("");
     setTime("");
-    setFile(null);
+    setFiles([]);
     if (isMailAction(action.key)) {
       mailRequest.current = crypto.randomUUID();
       setPreview(false);
@@ -323,18 +327,37 @@ export function LeadActions({
       at = toIso(date, time);
       if (!at) return fail("Datum oder Uhrzeit sind ungültig.");
     }
-    if (needs.logo && file && file.size > MAX_LOGO_BYTES)
-      return fail("Das Logo darf höchstens 5 MB groß sein.");
-    if (needs.photo && photo && photo.size > MAX_LOGO_BYTES)
-      return fail("Das Foto darf höchstens 5 MB groß sein.");
+    if (needs.logo && files.some((f) => f.size > MAX_LOGO_BYTES))
+      return fail("Jede Logo-Datei darf höchstens 5 MB groß sein.");
+    if (needs.photo && photos.some((f) => f.size > MAX_LOGO_BYTES))
+      return fail("Jedes Foto darf höchstens 5 MB groß sein.");
     setBusy(true);
     try {
       const logo = needs.logo && file ? await uploadLogo(file) : undefined;
       const photoPath = needs.photo && photo ? await uploadLogo(photo, uploadedPhoto) : undefined;
+      const uploadExtra = async (list: File[]) => {
+        const out: string[] = [];
+        for (const f of list) {
+          const known = uploadedExtra.current.get(f);
+          if (known) { out.push(known); continue; }
+          const ref = { current: null as string | null };
+          const path = await uploadLogo(f, ref);
+          uploadedExtra.current.set(f, path);
+          out.push(path);
+        }
+        return out;
+      };
+      const extraLogos = needs.logo ? await uploadExtra(files.slice(1)) : [];
+      const extraPhotos = needs.photo ? await uploadExtra(photos.slice(1)) : [];
       let details: Json | undefined;
       if (isMailAction(action.key))
         details = { email_id: emailId ?? mailState.id ?? "", template: mail.template || null };
-      else if (photoPath) details = { photo_path: photoPath };
+      else if (photoPath || extraLogos.length)
+        details = {
+          ...(photoPath ? { photo_path: photoPath } : {}),
+          ...(extraLogos.length ? { extra_logo_paths: extraLogos } : {}),
+          ...(extraPhotos.length ? { extra_photo_paths: extraPhotos } : {}),
+        };
       else if (needs.month) details = { month };
       else if (needs.doNotCall && doNotCall) details = { do_not_call: true };
       const { data, error } = await supabase.rpc("record_lead_action", {
@@ -540,28 +563,36 @@ export function LeadActions({
           <p className="font-medium">{current.label}</p>
           {current.needs.logo && (
             <label className="block text-sm">
-              Firmenlogo (Bild oder PDF, max. 5 MB)
+              Firmenlogo (Bilder oder PDF, beliebig viele, je max. 5 MB)
               <Input
                 type="file"
+                multiple
                 accept="image/png,image/jpeg,image/webp,image/svg+xml,application/pdf"
                 onChange={(e) => {
-                  uploaded.current = null;
-                  setFile(e.target.files?.[0] ?? null);
+                  const picked = Array.from(e.target.files ?? []);
+                  e.target.value = "";
+                  if (!files.length) uploaded.current = null;
+                  setFiles((prev) => [...prev, ...picked]);
                 }}
               />
+              <FileList files={files} onRemove={(i) => { if (i === 0) uploaded.current = null; setFiles((p) => p.filter((_, j) => j !== i)); }} />
             </label>
           )}
           {current.needs.photo && (
             <label className="block text-sm">
-              Gebäudefoto (Bild, max. 5 MB)
+              Gebäudefotos (beliebig viele, je max. 5 MB)
               <Input
                 type="file"
+                multiple
                 accept="image/png,image/jpeg,image/webp"
                 onChange={(e) => {
-                  uploadedPhoto.current = null;
-                  setPhoto(e.target.files?.[0] ?? null);
+                  const picked = Array.from(e.target.files ?? []);
+                  e.target.value = "";
+                  if (!photos.length) uploadedPhoto.current = null;
+                  setPhotos((prev) => [...prev, ...picked]);
                 }}
               />
+              <FileList files={photos} onRemove={(i) => { if (i === 0) uploadedPhoto.current = null; setPhotos((p) => p.filter((_, j) => j !== i)); }} />
             </label>
           )}
           {current.needs.month && (
@@ -683,5 +714,19 @@ export function LeadActions({
         </form>
       )}
     </section>
+  );
+}
+
+function FileList({ files, onRemove }: { files: File[]; onRemove: (i: number) => void }) {
+  if (!files.length) return null;
+  return (
+    <ul className="mt-2 space-y-1">
+      {files.map((f, i) => (
+        <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-2 rounded-md border px-2 py-1 text-xs">
+          <span className="truncate">{f.name} · {(f.size / 1024 / 1024).toFixed(1)} MB</span>
+          <button type="button" className="text-muted-foreground hover:text-foreground" aria-label={`${f.name} entfernen`} onClick={() => onRemove(i)}>✕</button>
+        </li>
+      ))}
+    </ul>
   );
 }
