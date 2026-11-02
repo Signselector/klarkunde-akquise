@@ -33,7 +33,7 @@ function CallbacksPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("callbacks")
-        .select("*,lead:leads(id,company,contact_name,phone)")
+        .select("*,lead:leads(id,company,contact_name,phone,lead_notes(body,created_at))")
         .eq("country", country)
         .eq("user_id", user.id)
         .eq("done", false)
@@ -57,10 +57,12 @@ function CallbacksPage() {
     durationMin: 15,
     done: c.done,
   }));
+  const lastNote = (c: (typeof weekRows)[number]) =>
+    [...(c.lead?.lead_notes ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]?.body ?? null;
   const renderDetail = (entry: WeekEntry, close: () => void) => {
     const c = weekRows.find((r) => r.id === entry.id);
     if (!c) return null;
-    const note = [c.lead?.company ? `Kunde: ${c.lead.company}` : null, c.lead?.phone ? `Telefon: ${c.lead.phone}` : null].filter(Boolean).join(" ") || null;
+    const note = lastNote(c) ?? ([c.lead?.company ? `Kunde: ${c.lead.company}` : null, c.lead?.phone ? `Telefon: ${c.lead.phone}` : null].filter(Boolean).join(" ") || null);
     return (
       <EntryDetailCard
         entry={entry}
@@ -173,6 +175,11 @@ function CallbacksPage() {
                       <p className="text-sm text-muted-foreground">
                         {[c.lead?.contact_name, c.lead?.phone].filter(Boolean).join(" · ")}
                       </p>
+                      {lastNote(c) && (
+                        <p className="max-w-[65ch] whitespace-pre-wrap rounded-md border-l-2 border-primary bg-muted/50 px-2 py-1 text-sm">
+                          {lastNote(c)}
+                        </p>
+                      )}
                       <div className="flex flex-wrap items-center gap-2 text-sm">
                         <span
                           className={`size-2 shrink-0 rounded-full ${STATUS_DOT[calendarStatus(c.due_at, c.done, now)]}`}

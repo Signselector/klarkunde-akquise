@@ -101,7 +101,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
     label: "Rückruf",
     hint: "Neuen Anruf vereinbaren",
     color: ACTION_BUTTON,
-    needs: { schedule: "required" },
+    needs: { note: "optional", schedule: "required" },
   },
   {
     key: "reference_mail",
@@ -117,7 +117,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
     label: "Nicht erreicht",
     hint: "Kontaktversuch speichern",
     color: ACTION_BUTTON,
-    needs: {},
+    needs: { note: "optional" },
   },
 ];
 

@@ -229,6 +229,25 @@ export function LeadDialog({
                 onDone={afterAction}
               />
             )}
+            {!dealView && (data?.notes.length ?? 0) > 0 && (
+              <section className="cc-detail-section space-y-2" aria-label="Gesprächsnotizen">
+                <h3 className="text-sm font-semibold">Gesprächsnotizen</h3>
+                <ul className="space-y-2">
+                  {data!.notes.map((n) => {
+                    const act = data!.actions.find((a) => a.note === n.body && Math.abs(new Date(a.created_at).getTime() - new Date(n.created_at).getTime()) < 5000);
+                    return (
+                      <li key={n.id} className="rounded-md border-l-2 border-primary bg-muted/50 px-3 py-2 text-sm">
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(n.created_at).toLocaleString("de-DE")}
+                          {act && ` · ${ACTION_LABEL[act.action] ?? act.action}`}
+                        </p>
+                        <p className="whitespace-pre-wrap">{n.body}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
             {backendEnabled && <PipedriveStream key={`stream-${lead.id}`} leadId={lead.id} defaultOpen={dealView} />}
             <Fold enabled={foldHistory || dealView} defaultOpen={dealView} title="Verlauf">
               <ul className="cc-history">
