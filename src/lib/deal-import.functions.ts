@@ -17,11 +17,12 @@ const idOf = (v: unknown): number | null => {
 /** Master admin only: pulls an existing Pipedrive deal (e.g. from the old tool) into the Cold Caller Tool and assigns it to a caller. */
 export const importDealById = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { country: string; dealId: number; callerId: string }) => {
+  .inputValidator((d: { country: string; dealId: number; callerId: string; stats?: StatsChoice }) => {
     if (!["DE", "AT"].includes(d?.country)) throw new Error("Ungültiges Land.");
     if (!Number.isInteger(d.dealId) || d.dealId <= 0) throw new Error("Ungültige Deal-ID.");
     if (!/^[0-9a-f-]{36}$/i.test(d.callerId)) throw new Error("Bitte Mitarbeiter wählen.");
-    return d;
+    const stats: StatsChoice = ["auto", "low_q", "high_q", "none"].includes(d.stats ?? "") ? d.stats! : "auto";
+    return { ...d, stats };
   })
   .handler(async ({ data, context }) => {
     const { data: master } = await context.supabase.rpc("is_master", { _uid: context.userId });
@@ -45,7 +46,7 @@ export const importDealById = createServerFn({ method: "POST" })
     if (!caller) throw new Error("Der Mitarbeiter ist diesem Land nicht zugeordnet.");
 
     const { call } = gatewayClient(data.country);
-    type Deal = { id?: number; deleted?: boolean; status?: string; title?: string; stage_id?: number; org_id?: unknown; person_id?: unknown };
+    type Deal = { id?: number; deleted?: boolean; status?: string; title?: string; stage_id?: number; add_time?: string; org_id?: unknown; person_id?: unknown };
     let deal: Deal;
     try {
       deal = ((await call(`/deals/${data.dealId}`, { method: "GET" })).data ?? {}) as Deal;
