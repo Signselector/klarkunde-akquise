@@ -14,8 +14,8 @@ const SIG: Record<Country, { region: string; name: string; email: string; tel: s
   DE: { region: "Deutschland", name: "Linda Weber", email: "office@signselector.de", tel: "+49 177 5909248", web: "www.signselector.de" },
 };
 const SMTP: Record<Country, { host: string; user: string }> = {
-  AT: { host: "s4.meinehp.at", user: "noreply@signselector.com" },
-  DE: { host: "s5.meinehp.at", user: "noreply@signselector.de" },
+  AT: { host: "s4.meinehp.at", user: "info@signselector.com" },
+  DE: { host: "s5.meinehp.at", user: "info@signselector.de" },
 };
 
 function signatureText(c: Country) {

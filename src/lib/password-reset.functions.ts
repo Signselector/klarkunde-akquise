@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 
 const SMTP = {
-  AT: { host: "s4.meinehp.at", user: "noreply@signselector.com", support: "office@signselector.com", secret: "SMTP_PASSWORD_AT" },
-  DE: { host: "s5.meinehp.at", user: "noreply@signselector.de", support: "office@signselector.de", secret: "SMTP_PASSWORD_DE" },
+  AT: { host: "s4.meinehp.at", user: "info@signselector.com", support: "office@signselector.com", secret: "SMTP_PASSWORD_AT" },
+  DE: { host: "s5.meinehp.at", user: "info@signselector.de", support: "office@signselector.de", secret: "SMTP_PASSWORD_DE" },
 } as const;
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -18,7 +18,7 @@ function html(link: string, support: string, code: string) {
 ${code ? `<p style="font-size:14px;line-height:1.55;text-align:center">Alternativ auf der Seite „Neues Passwort“ diesen Code eingeben:<br><span style="display:inline-block;margin-top:8px;font-size:22px;font-weight:700;letter-spacing:4px">${esc(code)}</span></p>` : ""}
 <p style="font-size:13px;color:#636366">Der Link ist zeitlich begrenzt. Wenn du das nicht angefordert hast, kannst du diese Mail ignorieren.</p>
 <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e5e5ea;font-size:13px;color:#8e8e93">
-<strong>Sign Selector</strong><br>Automatische Nachricht · Bitte nicht antworten.<br>Support: ${support}</div>
+<strong>Sign Selector</strong><br>Automatische Nachricht.<br>Support: ${support}</div>
 </div></body></html>`;
 }
 

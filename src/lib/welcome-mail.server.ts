@@ -61,9 +61,9 @@ export async function sendPendingWelcomeMails(): Promise<{ sent: number; failed:
       if (error || !url) throw new Error("link_failed");
       const greeting = p.name || "zusammen";
       await sendSmtp(
-        { host: "s4.meinehp.at", port: 465, user: "noreply@signselector.com", pass },
+        { host: "s4.meinehp.at", port: 465, user: "info@signselector.com", pass },
         {
-          from: "Sign Selector <noreply@signselector.com>",
+          from: "Sign Selector <info@signselector.com>",
           to: p.email,
           subject: "Dein Zugang zum Sign Selector Cold-Caller-Tool",
           text: `Hallo ${greeting},\n\ndein Account für das Sign Selector Cold-Caller-Tool wurde eingerichtet.\nLege hier dein Passwort fest:\n\n${url}\n\nSign Selector\noffice@signselector.com`,
