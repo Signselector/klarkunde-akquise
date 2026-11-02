@@ -115,9 +115,9 @@ export const LEAD_ACTIONS: LeadAction[] = [
     key: "not_reached",
     help: { when: 'Niemand abgehoben, besetzt oder Mailbox.', effect: 'Speichert den Kontaktversuch, der Lead kann später erneut angerufen werden.' },
     label: "Nicht erreicht",
-    hint: "Kontaktversuch speichern",
+    hint: "Kontaktversuch sofort speichern",
     color: ACTION_BUTTON,
-    needs: { note: "optional" },
+    needs: {},
   },
 ];
 

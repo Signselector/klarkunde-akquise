@@ -107,7 +107,7 @@ function LeadsPage() {
       if (onlyMine) query = query.eq("lead_batches.assigned_to", user.id);
       if (batch !== "all") query = query.eq("batch_id", batch);
       // Still to work on: untouched leads and not reached. Callbacks live under "Rückrufe", every other outcome is completed.
-      query = query.in("status", ["open", "appointment_missed"]);
+      query = query.in("status", ["open", "appointment_missed", "reference_mail"]);
       // Not reached leads are loaded separately below, so they stay in the list (at the bottom) for 20 days.
       if (backendEnabled) query = query.or("status.neq.open,attempts.eq.0");
       const term = q.trim().replace(/[,()%]/g, " ");
@@ -177,7 +177,7 @@ function LeadsPage() {
   // Only statuses that occur in the loaded list are offered as filter.
   const statusOptions = useMemo(() => {
     const present = new Set(sorted.map(labelOf));
-    return ["Offen", "Nicht erreicht", "Termin versäumt"].filter((s) => present.has(s));
+    return ["Offen", "Nicht erreicht", "Termin versäumt", "Referenzmail"].filter((s) => present.has(s));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sorted]);
   useEffect(() => {

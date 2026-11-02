@@ -100,17 +100,18 @@ export function parseCsv(text: string): string[][] {
 export const UNREACHED_DAYS = 20;
 
 /**
- * Order of "Offene Leads": callbacks first (earliest due time on top), then untouched leads, then not reached.
+ * Order of "Offene Leads": callbacks first (earliest due time on top), then untouched leads, then not reached, then reference mails.
  * The original order is kept inside a group and every lead appears once.
  */
 export function orderOpenLeads<T extends { id: string; status: string; attempts: number }>(
   rows: T[],
   callbackDue?: Map<string, number>,
 ): T[] {
-  const rank = (l: T) => (l.status === "callback" ? 0 : l.status === "open" && l.attempts > 0 ? 2 : 1);
+  const rank = (l: T) =>
+    l.status === "callback" ? 0 : l.status === "reference_mail" ? 3 : l.status === "open" && l.attempts > 0 ? 2 : 1;
   const seen = new Set<string>();
   const unique = rows.filter((l) => !seen.has(l.id) && !!seen.add(l.id));
-  return [0, 1, 2].flatMap((r) => {
+  return [0, 1, 2, 3].flatMap((r) => {
     const group = unique.filter((l) => rank(l) === r);
     if (r !== 0) return group;
     const at = (l: T) => callbackDue?.get(l.id) ?? Number.MAX_SAFE_INTEGER;

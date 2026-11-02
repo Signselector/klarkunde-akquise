@@ -259,7 +259,13 @@ export function LeadActions({
       setActive(action.key);
       return;
     }
-    // Every outcome has to be confirmed with the button below the form.
+    // "Nicht erreicht" is saved with one click, without form or confirmation.
+    if (action.key === "not_reached") {
+      setActive(null);
+      void submit(action);
+      return;
+    }
+    // Every other outcome has to be confirmed with the button below the form.
     setActive(action.key);
   }
 
@@ -323,7 +329,7 @@ export function LeadActions({
     if ((needs.schedule === "required" || needs.appointment) && !time)
       return fail("Bitte eine Uhrzeit wählen.");
     let at: string | null = null;
-    if (date) {
+    if (date && action.key !== "not_reached") {
       at = toIso(date, time);
       if (!at) return fail("Datum oder Uhrzeit sind ungültig.");
     }
@@ -365,7 +371,7 @@ export function LeadActions({
         p_lead_id: lead.id,
         p_expected_version: lead.version,
         p_action: action.key,
-        ...(note.trim() ? { p_note: note.trim() } : {}),
+        ...(note.trim() && action.key !== "not_reached" ? { p_note: note.trim() } : {}),
         ...(at ? { p_scheduled_at: at } : {}),
         ...(logo ? { p_logo_path: logo } : {}),
         ...(details ? { p_details: details } : {}),
