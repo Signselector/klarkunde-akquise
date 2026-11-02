@@ -14,8 +14,8 @@ export function detectRenderType(input: {
   title: string | null;
 }): RenderType | null {
   const ids: Record<RenderType, number | null> = {
-    low_q: typeof input.mapping.low_q === "number" ? input.mapping.low_q : null,
-    high_q: typeof input.mapping.high_q === "number" ? input.mapping.high_q : null,
+    low_q: typeof input.mapping['low_q'] === "number" ? input.mapping['low_q'] : null,
+    high_q: typeof input.mapping['high_q'] === "number" ? input.mapping['high_q'] : null,
   };
   const typeOf = (id: number | null): RenderType | null =>
     id == null ? null : id === ids.low_q ? "low_q" : id === ids.high_q ? "high_q" : null;

@@ -107,11 +107,11 @@ export const importDealById = createServerFn({ method: "POST" })
       try {
         const flow = await call(`/deals/${data.dealId}/flow?limit=500`, { method: "GET" });
         for (const e of (Array.isArray(flow?.data) ? flow.data : []) as { object?: string; timestamp?: string; data?: Record<string, unknown> }[]) {
-          if (e.object !== "dealChange" || e.data?.field_key !== "stage_id") continue;
+          if (e.object !== "dealChange" || e.data?.['field_key'] !== "stage_id") continue;
           changes.push({
-            at: pdToIso(e.timestamp ?? e.data?.log_time) ?? "",
-            oldStageId: Number(e.data?.old_value) || null,
-            newStageId: Number(e.data?.new_value) || null,
+            at: pdToIso(e.timestamp ?? e.data?.['log_time']) ?? "",
+            oldStageId: Number(e.data?.['old_value']) || null,
+            newStageId: Number(e.data?.['new_value']) || null,
           });
         }
       } catch {
