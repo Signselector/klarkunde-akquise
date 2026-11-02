@@ -51,7 +51,7 @@ export type SyncStore = {
   dealCreated?(ctx: SyncContext, links: Links): Promise<void>;
   /** An existing deal was moved by this tool. */
   stageMoved?(ctx: SyncContext, dealId: number, stageId: number): Promise<void>;
-  markStep(actionId: string, step: "file" | "note" | "photo"): Promise<void>;
+  markStep(actionId: string, step: string): Promise<void>;
   downloadLogo(path: string): Promise<{ bytes: Uint8Array; contentType: string }>;
   finish(actionId: string, state: "synced" | "error", error?: string): Promise<void>;
 };
@@ -171,6 +171,23 @@ export async function syncLeadAction(
           file.contentType,
         );
         await store.markStep(action.id, "photo");
+      }
+      // Additional files (unlimited): each is uploaded once and marked separately.
+      for (const [key, base] of [
+        ["extra_logo_paths", "LOGO"],
+        ["extra_photo_paths", "GEBAEUDEFOTO"],
+      ] as const) {
+        const list = action.details?.[key];
+        if (!Array.isArray(list)) continue;
+        for (let i = 0; i < list.length; i++) {
+          const p = list[i];
+          const step = `${key}:${i}`;
+          if (typeof p !== "string" || !p || action.crm_steps[step]) continue;
+          const file = await store.downloadLogo(p);
+          const name = logoFilename(p, file.contentType).replace(/^LOGO/, `${base}_${i + 2}`);
+          await crm.uploadFile(links.deal_id, name, file.bytes, file.contentType);
+          await store.markStep(action.id, step);
+        }
       }
     } catch {
       await store.finish(action.id, "error", "attachments_pending");
