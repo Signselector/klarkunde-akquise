@@ -407,6 +407,13 @@
       "when": 1793646716987,
       "tag": "0057_crm_links_is_customer_never_null",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1793650454125,
+      "tag": "0058_leads_list_indexes",
+      "breakpoints": true
     }
   ]
 }
