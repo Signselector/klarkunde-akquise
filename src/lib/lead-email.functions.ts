@@ -79,13 +79,13 @@ export const sendLeadEmail = createServerFn({ method: "POST" })
       (country && process.env[`EMAIL_FROM_${country}`]) ||
       (country === "DE"
         ? "Sign Selector <office@signselector.de>"
-        : process.env["EMAIL_FROM"] || "Sign Selector <noreply@signselector.com>");
+        : process.env["EMAIL_FROM"] || "Sign Selector <info@signselector.com>");
     const bcc = country ? (process.env[`PIPEDRIVE_BCC_${country}`] ?? null) : null;
     const isDE = country === "DE";
     const smtpPass = process.env[isDE ? "SMTP_PASSWORD_DE" : "SMTP_PASSWORD_AT"];
     let provider: MailProvider | null = null;
     if (smtpPass) {
-      // AT: sent from noreply@signselector.com over our own S4 mail server, with signature and reference photos.
+      // AT: sent from info@signselector.com over our own S4 mail server, with signature and reference photos.
       const { getRequest } = await import("@tanstack/react-start/server");
       let origin = "https://coldcaller-tool.signselector.com";
       try {

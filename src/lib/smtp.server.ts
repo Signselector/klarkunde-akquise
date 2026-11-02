@@ -85,7 +85,7 @@ const encWord = (s: string) => (/^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${b64(
 
 export type SmtpAttachment = { filename: string; contentType: string; content: Uint8Array };
 export type SmtpMail = {
-  from: string; // e.g. "Sign Selector <noreply@signselector.com>"
+  from: string; // e.g. "Sign Selector <info@signselector.com>"
   to: string;
   bcc?: string | null;
   subject: string;
