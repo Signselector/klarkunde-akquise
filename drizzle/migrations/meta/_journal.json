@@ -414,6 +414,13 @@
       "when": 1793650454125,
       "tag": "0058_leads_list_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1793650776302,
+      "tag": "0059_tab_list_indexes",
+      "breakpoints": true
     }
   ]
 }
