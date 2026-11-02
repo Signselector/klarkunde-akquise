@@ -76,7 +76,7 @@ export const importDealById = createServerFn({ method: "POST" })
       .single();
     if (error || !lead) throw new Error("Lead konnte nicht angelegt werden.");
 
-    await db.rpc("crm_save_links", {
+    const { error: linkErr } = await db.rpc("crm_save_links", {
       p_lead: lead.id,
       p_country: data.country,
       p_org: orgId as number,
@@ -86,6 +86,10 @@ export const importDealById = createServerFn({ method: "POST" })
       p_stage_key: null as unknown as string,
       p_actor: context.userId,
     });
+    if (linkErr) {
+      await db.from("leads").delete().eq("id", lead.id);
+      throw new Error("Deal konnte nicht verknüpft werden: " + linkErr.message);
+    }
     if (deal.stage_id) {
       await db.rpc("crm_apply_stage", {
         p_country: data.country,
