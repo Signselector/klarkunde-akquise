@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { importDealById } from "@/lib/deal-import.functions";
+import type { StatsChoice } from "@/lib/deal-import";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ export function DealImport() {
   const [callerId, setCallerId] = useState("");
   const [busy, setBusy] = useState(false);
   const [last, setLast] = useState<string | null>(null);
+  const [stats, setStats] = useState<StatsChoice>("auto");
   const run = useServerFn(importDealById);
 
   const { data: staff = [] } = useQuery({
@@ -36,8 +38,14 @@ export function DealImport() {
     setBusy(true);
     setLast(null);
     try {
-      const r = await run({ data: { country, dealId: Number(dealId.trim()), callerId } });
-      const msg = `${r.company} wurde übernommen${r.isCustomer ? " und erscheint unter „Meine Kunden“" : ""}.`;
+      const r = await run({ data: { country, dealId: Number(dealId.trim()), callerId, stats } });
+      const label = { low_q: "Logo Render", high_q: "Realismus Render" };
+      const statMsg = r.counted
+        ? ` ${label[r.counted.type]} vom ${new Date(r.counted.at).toLocaleDateString("de-AT", { timeZone: "Europe/Vienna" })} wurde der Statistik gutgeschrieben.`
+        : stats === "none"
+          ? " Nicht zur Statistik gezählt."
+          : " Kein Render-Typ erkannt, nicht zur Statistik gezählt.";
+      const msg = `${r.company} wurde übernommen${r.isCustomer ? " und erscheint unter „Meine Kunden“" : ""}.${statMsg}`;
       toast.success(msg);
       setLast(msg);
       setDealId("");
@@ -101,6 +109,23 @@ export function DealImport() {
               </option>
             ))}
           </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="deal-stats">Statistik</Label>
+          <select
+            id="deal-stats"
+            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+            value={stats}
+            onChange={(e) => setStats(e.target.value as StatsChoice)}
+          >
+            <option value="auto">Automatisch aus Pipedrive-Verlauf erkennen</option>
+            <option value="low_q">Als Logo Render zählen</option>
+            <option value="high_q">Als Realismus Render zählen</option>
+            <option value="none">Nicht zur Statistik zählen</option>
+          </select>
+          <p className="text-xs text-muted-foreground">
+            Gezählt wird für den gewählten Mitarbeiter am Erstellungsdatum des Deals in Pipedrive.
+          </p>
         </div>
         <Button type="submit" disabled={busy || !dealId || !callerId}>
           {busy ? "Wird übernommen …" : "Deal übernehmen"}
