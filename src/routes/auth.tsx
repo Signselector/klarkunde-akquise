@@ -35,10 +35,25 @@ function AuthPage() {
   const [pw, setPw] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [reset, setReset] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    if (reset) {
+      try {
+        const { sendPasswordReset } = await import("@/lib/password-reset.functions");
+        await sendPasswordReset({ data: { email, origin: window.location.origin } });
+      } catch (err) {
+        setBusy(false);
+        toast.error(err instanceof Error ? err.message : "Mail konnte nicht gesendet werden.");
+        return;
+      }
+      setBusy(false);
+      toast.success("Falls ein Account existiert, ist der Link jetzt in deinem Postfach.");
+      setReset(false);
+      return;
+    }
     if (mode === "in") {
       const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
       setBusy(false);
@@ -86,14 +101,16 @@ function AuthPage() {
             <Brand />
           </div>
           <header>
-            <h1>{mode === "in" ? "Willkommen zurück." : "Dein Start im Team."}</h1>
+            <h1>{reset ? "Passwort vergessen?" : mode === "in" ? "Willkommen zurück." : "Dein Start im Team."}</h1>
             <p>
-              {mode === "in"
-                ? "Melde dich an und starte dein nächstes Gespräch."
-                : "Lege deinen Caller-Account an."}
+              {reset
+                ? "Gib deine E-Mail-Adresse ein. Wir senden dir einen Link, mit dem du ein neues Passwort festlegen kannst."
+                : mode === "in"
+                  ? "Melde dich an und starte dein nächstes Gespräch."
+                  : "Lege deinen Caller-Account an."}
             </p>
           </header>
-          {mode === "up" && (
+          {mode === "up" && !reset && (
             <div>
               <Label htmlFor="n">Dein Name</Label>
               <Input
@@ -118,19 +135,21 @@ function AuthPage() {
               disabled={busy}
             />
           </div>
-          <div>
-            <Label htmlFor="p">Passwort</Label>
-            <Input
-              id="p"
-              type="password"
-              autoComplete={mode === "in" ? "current-password" : "new-password"}
-              minLength={6}
-              value={pw}
-              onChange={(e) => setPw(e.target.value)}
-              required
-              disabled={busy}
-            />
-          </div>
+          {!reset && (
+            <div>
+              <Label htmlFor="p">Passwort</Label>
+              <Input
+                id="p"
+                type="password"
+                autoComplete={mode === "in" ? "current-password" : "new-password"}
+                minLength={6}
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                required
+                disabled={busy}
+              />
+            </div>
+          )}
           <Button type="submit" disabled={busy}>
             {busy ? (
               <>
@@ -139,7 +158,7 @@ function AuthPage() {
               </>
             ) : (
               <>
-                {mode === "in" ? "Anmelden" : "Registrieren"}
+                {reset ? "Link senden" : mode === "in" ? "Anmelden" : "Registrieren"}
                 <ArrowRight aria-hidden="true" />
               </>
             )}
@@ -149,22 +168,9 @@ function AuthPage() {
               type="button"
               disabled={busy}
               className="cc-auth-mode"
-              onClick={async () => {
-                if (!email) { toast.error("Bitte zuerst deine E-Mail eintragen."); return; }
-                setBusy(true);
-                try {
-                  const { sendPasswordReset } = await import("@/lib/password-reset.functions");
-                  await sendPasswordReset({ data: { email, origin: window.location.origin } });
-                } catch (e) {
-                  setBusy(false);
-                  toast.error(e instanceof Error ? e.message : "Mail konnte nicht gesendet werden.");
-                  return;
-                }
-                setBusy(false);
-                toast.success("Link zum Zurücksetzen wurde an deine E-Mail gesendet.");
-              }}
+              onClick={() => setReset(!reset)}
             >
-              Passwort vergessen?
+              {reset ? "Zurück zur Anmeldung" : "Passwort vergessen?"}
             </button>
           )}
         </form>
