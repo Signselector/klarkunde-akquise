@@ -62,7 +62,7 @@ function CallbacksPage() {
   const renderDetail = (entry: WeekEntry, close: () => void) => {
     const c = weekRows.find((r) => r.id === entry.id);
     if (!c) return null;
-    const note = lastNote(c) ?? [c.lead?.company ? `Kunde: ${c.lead.company}` : null, c.lead?.phone ? `Telefon: ${c.lead.phone}` : null].filter(Boolean).join(" ") || null;
+    const note = lastNote(c) ?? ([c.lead?.company ? `Kunde: ${c.lead.company}` : null, c.lead?.phone ? `Telefon: ${c.lead.phone}` : null].filter(Boolean).join(" ") || null);
     return (
       <EntryDetailCard
         entry={entry}
