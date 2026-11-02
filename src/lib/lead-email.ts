@@ -58,7 +58,10 @@ export async function deliverEmail(
     await store.finish(row.id, { status: "sent", provider: opts.provider.name, messageId });
     return { status: "sent" };
   } catch (e) {
-    const error = e instanceof Error && /^[a-z_]+$/.test(e.message) ? e.message : "send_failed";
+    const error =
+      e instanceof Error && (/^[a-z_]+$/.test(e.message) || /^smtp:\d{3}:/.test(e.message))
+        ? e.message
+        : "send_failed";
     await store.finish(row.id, { status: "failed", provider: opts.provider.name, error });
     return { status: "failed", error };
   }
@@ -71,8 +74,28 @@ const MESSAGES: Record<string, string> = {
   send_failed: "Die E-Mail konnte nicht gesendet werden. Bitte erneut versuchen.",
   rejected: "Der E-Mail-Dienst hat die Mail abgelehnt. Bitte Adresse und Inhalt prüfen.",
 };
-export const emailErrorMessage = (code: string | null | undefined) =>
-  (code && MESSAGES[code]) || (code ? MESSAGES["send_failed"]! : "");
+const SMTP_HINT: Record<string, string> = {
+  "550": "Die E-Mail-Adresse existiert nicht oder das Postfach ist nicht erreichbar.",
+  "551": "Die E-Mail-Adresse existiert nicht oder das Postfach ist nicht erreichbar.",
+  "552": "Die E-Mail oder die Anhänge sind zu groß für das Zielpostfach.",
+  "553": "Die E-Mail-Adresse ist ungültig.",
+  "554": "Der Zielserver hat die Mail abgewiesen (Spam- oder Sicherheitsrichtlinie).",
+  "421": "Der Mailserver ist gerade nicht erreichbar. Bitte später erneut versuchen.",
+  "450": "Das Postfach ist vorübergehend nicht erreichbar. Bitte später erneut versuchen.",
+  "451": "Der Mailserver hat einen vorübergehenden Fehler. Bitte erneut versuchen.",
+  "452": "Das Zielpostfach ist voll oder der Server überlastet.",
+  "535": "Anmeldung am eigenen Mailserver fehlgeschlagen (Passwort prüfen).",
+};
+
+export const emailErrorMessage = (code: string | null | undefined) => {
+  if (!code) return "";
+  const m = code.match(/^smtp:(\d{3}):(.*)$/s);
+  if (m) {
+    const hint = SMTP_HINT[m[1]!] ?? "Der Mailserver hat die Zustellung abgelehnt.";
+    return `${hint} Meldung des Mailservers: „${m[1]} ${m[2]!.trim()}“`;
+  }
+  return MESSAGES[code] || MESSAGES["send_failed"]!;
+};
 
 /** Resend (https://resend.com) as the first real provider; active only when its key and sender are configured. */
 export function resendProvider(apiKey: string, from: string, bcc?: string | null): MailProvider {

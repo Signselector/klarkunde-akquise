@@ -162,6 +162,12 @@ export function buildMime(mail: SmtpMail, messageId: string): string {
   return lines.join("\r\n");
 }
 
+/** Carries the mail server's exact reply, e.g. "smtp:550:5.1.1 Recipient address rejected". */
+function smtpError(r: { code: number; text: string }) {
+  const text = r.text.replace(/^\d{3}[ -]/gm, "").replace(/\s+/g, " ").trim().slice(0, 300);
+  return new Error(`smtp:${r.code}:${text}`);
+}
+
 export async function sendSmtp(
   cfg: { host: string; port: number; user: string; pass: string },
   mail: SmtpMail,
@@ -188,7 +194,7 @@ export async function sendSmtp(
     const r = await readReply();
     if (!expect.includes(r.code)) {
       console.error("SMTP rejected", line.split(" ")[0], r.code, r.text.slice(0, 200));
-      throw new Error(r.code >= 500 && r.code < 600 ? "rejected" : "send_failed");
+      throw smtpError(r);
     }
     return r;
   };
@@ -207,7 +213,7 @@ export async function sendSmtp(
     const data = enc.encode(buildMime(mail, messageId) + "\r\n.\r\n");
     for (let i = 0; i < data.length; i += 64 * 1024) await conn.write(data.subarray(i, i + 64 * 1024));
     const r = await readReply();
-    if (r.code !== 250) throw new Error(r.code >= 500 ? "rejected" : "send_failed");
+    if (r.code !== 250) throw smtpError(r);
     await cmd("QUIT", [221]).catch(() => {});
     return { messageId };
   } finally {
