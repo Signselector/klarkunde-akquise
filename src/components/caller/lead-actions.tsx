@@ -674,11 +674,15 @@ export function LeadActions({
           <p className="font-medium">{current.label}</p>
           <Reveal title="Rückruf planen (optional)" summary={chosenLabel}>
             <p className="mb-2 text-xs text-muted-foreground">
-              Der Lead bleibt abgeschlossen. Zur gewählten Zeit erinnert dich der Rückruf, auch wenn der
-              Kunde nicht antwortet.
+              Der Rückruf erscheint zusätzlich unter „Rückrufe“ und erinnert dich zur gewählten Zeit, auch
+              wenn der Kunde nicht antwortet.
             </p>
             {renderPicker("callback", true)}
           </Reveal>
+          <label className="block text-sm">
+            Gesprächsnotiz (optional)
+            <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={4} />
+          </label>
           {lead.email ? (
             <p className="text-sm">
               <span className="text-muted-foreground">Mail geht an: </span>
