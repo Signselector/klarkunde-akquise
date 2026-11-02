@@ -60,6 +60,7 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
   const [filter, setFilter] = useState("all");
   const query = useQuery({
     queryKey: ["lead-list", userId, country],
+    placeholderData: (prev) => prev,
     queryFn: async (): Promise<CompletedLead[]> => {
       if (backendEnabled) {
         const { data, error } = await supabase.rpc("get_completed_overview", {
