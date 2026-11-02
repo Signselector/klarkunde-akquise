@@ -44,9 +44,10 @@ export const importDealById = createServerFn({ method: "POST" })
     if (!caller) throw new Error("Der Mitarbeiter ist diesem Land nicht zugeordnet.");
 
     const { call } = gatewayClient(data.country);
-    let deal: Record<string, unknown>;
+    type Deal = { id?: number; deleted?: boolean; status?: string; title?: string; stage_id?: number; org_id?: unknown; person_id?: unknown };
+    let deal: Deal;
     try {
-      deal = ((await call(`/deals/${data.dealId}`, { method: "GET" })).data ?? {}) as Record<string, unknown>;
+      deal = ((await call(`/deals/${data.dealId}`, { method: "GET" })).data ?? {}) as Deal;
     } catch {
       throw new Error("Deal in Pipedrive nicht gefunden oder Pipedrive nicht erreichbar.");
     }
