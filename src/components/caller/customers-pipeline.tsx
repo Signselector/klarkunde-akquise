@@ -69,6 +69,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
   });
   const customers = useQuery({
     queryKey: ["customers", country, userId],
+    placeholderData: (prev) => prev,
     queryFn: () => withViewAsRead(() => load({ data: { country } })),
     staleTime: 2 * 60_000,
     refetchOnWindowFocus: false,

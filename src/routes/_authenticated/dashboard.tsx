@@ -163,6 +163,7 @@ function Dashboard() {
     refetch,
   } = useQuery({
     queryKey: ["batches", country],
+    placeholderData: (prev) => prev,
     refetchInterval: 30_000,
     queryFn: async () => {
       if (backendEnabled) {

@@ -4,14 +4,19 @@ import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
   // Data stays fresh for 30s: switching pages shows cached lists instantly; edits still invalidate explicitly.
+  // Tab lists opt into placeholderData individually; a global default would flash a previous record in detail views.
   const queryClient = new QueryClient({
-    defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
+    defaultOptions: {
+      queries: { staleTime: 30_000, refetchOnWindowFocus: false },
+    },
   });
 
   const router = createRouter({
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    defaultPreload: "intent",
+    defaultPreloadDelay: 50,
     defaultPreloadStaleTime: 0,
   });
 

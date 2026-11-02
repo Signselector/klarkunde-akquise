@@ -81,6 +81,7 @@ function AppointmentsPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["appointments", country],
+    placeholderData: (prev) => prev,
     refetchInterval: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase

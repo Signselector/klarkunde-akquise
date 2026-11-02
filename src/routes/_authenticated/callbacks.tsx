@@ -29,6 +29,7 @@ function CallbacksPage() {
   const { sync } = useCalendarSync(user.id, country);
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["callbacks", user.id, country],
+    placeholderData: (prev) => prev,
     refetchInterval: 30_000,
     queryFn: async () => {
       const { data, error } = await supabase
