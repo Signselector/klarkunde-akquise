@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { gatewayClient } from "@/lib/crm-sync.functions";
+import { detectRenderType, pdToIso, type RenderType, type StatsChoice } from "@/lib/deal-import";
 
 type Contact = { value?: string; primary?: boolean };
 const pick = (list: unknown) => {
@@ -96,6 +97,51 @@ export const importDealById = createServerFn({ method: "POST" })
         p_status: (deal.status as string) ?? null,
       });
     }
+    // Statistics: book the render result for the caller on the deal's Pipedrive creation date.
+    let counted: { type: RenderType; at: string } | null = null;
+    let detected: RenderType | null = null;
+    if (data.stats !== "none") {
+      const { data: map } = await db.from("pipedrive_stage_mapping").select("mapping").eq("country", data.country).maybeSingle();
+      const changes: { at: string; oldStageId: number | null; newStageId: number | null }[] = [];
+      try {
+        const flow = await call(`/deals/${data.dealId}/flow?limit=500`, { method: "GET" });
+        for (const e of (Array.isArray(flow?.data) ? flow.data : []) as { object?: string; timestamp?: string; data?: Record<string, unknown> }[]) {
+          if (e.object !== "dealChange" || e.data?.field_key !== "stage_id") continue;
+          changes.push({
+            at: pdToIso(e.timestamp ?? e.data?.log_time) ?? "",
+            oldStageId: Number(e.data?.old_value) || null,
+            newStageId: Number(e.data?.new_value) || null,
+          });
+        }
+      } catch {
+        /* history unavailable: current stage and title still decide */
+      }
+      detected = detectRenderType({
+        mapping: (map?.mapping as Record<string, unknown>) ?? {},
+        currentStageId: deal.stage_id ? Number(deal.stage_id) : null,
+        stageChanges: changes,
+        title: deal.title ?? null,
+      });
+      const type = data.stats === "auto" ? detected : data.stats;
+      const at = pdToIso(deal.add_time) ?? new Date().toISOString();
+      if (type) {
+        await db.from("status_changes").insert({ lead_id: lead.id, user_id: data.callerId, old_status: "open", new_status: type, created_at: at });
+        await db.from("lead_actions").insert({
+          lead_id: lead.id,
+          user_id: data.callerId,
+          action: type,
+          stage_key: type,
+          crm_sync_state: "synced",
+          created_at: at,
+          details: { source: "manual_deal_import", deal_id: data.dealId },
+        });
+        // A month that was already frozen is recalculated on the next read.
+        const month = new Date(at).toLocaleDateString("sv-SE", { timeZone: "Europe/Vienna" }).slice(0, 7) + "-01";
+        await db.from("monthly_quality").delete().eq("user_id", data.callerId).eq("month", month);
+        counted = { type, at };
+      }
+    }
+
     const { data: link } = await db
       .from("lead_crm_links")
       .select("current_stage_key,is_customer")
@@ -106,5 +152,7 @@ export const importDealById = createServerFn({ method: "POST" })
       company: org?.name || String(deal.title ?? ""),
       stageKey: link?.current_stage_key ?? null,
       isCustomer: !!link?.is_customer,
+      detected,
+      counted,
     };
   });
