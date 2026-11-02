@@ -668,6 +668,7 @@ export function LeadActions({
             e.preventDefault();
             if (!mail.to.trim()) return void toast.error("Bitte eine E-Mail-Adresse eintragen.");
             if (!mail.template) return void toast.error("Keine Referenzmail-Vorlage hinterlegt.");
+            if (!mail.subject.trim() || !mail.body.trim()) return void toast.error("Betreff und Text dürfen nicht leer sein.");
             void sendAndComplete(current);
           }}
         >
