@@ -96,7 +96,7 @@ function LeadsPage() {
             ? "*, lead_batches!inner(country,assigned_to)"
             : "*, lead_batches!inner(country)",
           {
-            count: "estimated",
+            count: "exact",
           },
         )
         .eq("lead_batches.country", country)
