@@ -7,7 +7,7 @@ const SMTP = {
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-function html(link: string, support: string) {
+function html(link: string, support: string, code: string) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:Arial,Helvetica,sans-serif;background:#f7f7f8;margin:0;padding:30px 15px;color:#1c1c1e">
 <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:8px;border:1px solid #e5e5ea;padding:36px 32px">
@@ -15,6 +15,7 @@ function html(link: string, support: string) {
 <h1 style="font-size:20px;margin:0 0 16px">Passwort zurücksetzen</h1>
 <p style="font-size:15px;line-height:1.55">Für deinen Account im <strong>Sign Selector Cold-Caller-Tool</strong> wurde ein neues Passwort angefordert.</p>
 <div style="text-align:center;margin:28px 0"><a href="${esc(link)}" style="display:inline-block;background:#b3261e;color:#fff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:6px">Neues Passwort festlegen</a></div>
+${code ? `<p style="font-size:14px;line-height:1.55;text-align:center">Alternativ auf der Seite „Neues Passwort“ diesen Code eingeben:<br><span style="display:inline-block;margin-top:8px;font-size:22px;font-weight:700;letter-spacing:4px">${esc(code)}</span></p>` : ""}
 <p style="font-size:13px;color:#636366">Der Link ist zeitlich begrenzt. Wenn du das nicht angefordert hast, kannst du diese Mail ignorieren.</p>
 <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e5e5ea;font-size:13px;color:#8e8e93">
 <strong>Sign Selector</strong><br>Automatische Nachricht · Bitte nicht antworten.<br>Support: ${support}</div>
@@ -47,8 +48,11 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
       email: data.email,
       options: { redirectTo: `${data.origin}/reset-password` },
     });
-    const url = link?.properties?.action_link;
-    if (error || !url) throw new Error("Link konnte nicht erstellt werden.");
+    const hash = link?.properties?.hashed_token;
+    const code = link?.properties?.email_otp ?? "";
+    if (error || !hash) throw new Error("Link konnte nicht erstellt werden.");
+    // Scanner-safe: link points to our own page; token is only redeemed when the user submits the new password.
+    const url = `${data.origin}/reset-password?token_hash=${encodeURIComponent(hash)}&email=${encodeURIComponent(data.email)}`;
 
     const { sendSmtp } = await import("@/lib/smtp.server");
     const { LOGO_PNG_BASE64 } = await import("@/lib/reference-mail-logo");
@@ -58,8 +62,8 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
         from: `Sign Selector <${cfg.user}>`,
         to: data.email,
         subject: "Passwort zurücksetzen – Sign Selector Cold-Caller-Tool",
-        text: `Für deinen Account wurde ein neues Passwort angefordert.\nLege es hier fest:\n\n${url}\n\nWenn du das nicht angefordert hast, ignoriere diese Mail.\n\nSign Selector\n${cfg.support}`,
-        html: html(url, cfg.support),
+        text: `Für deinen Account wurde ein neues Passwort angefordert.\nLege es hier fest:\n\n${url}\n\nAlternativ: Öffne ${data.origin}/reset-password und gib diesen Code ein: ${code}\n\nWenn du das nicht angefordert hast, ignoriere diese Mail.\n\nSign Selector\n${cfg.support}`,
+        html: html(url, cfg.support, code),
         inline: [{ filename: "logo.png", contentType: "image/png", cid: "signselector-logo", content: Uint8Array.from(atob(LOGO_PNG_BASE64), (x) => x.charCodeAt(0)) }],
       },
     );
