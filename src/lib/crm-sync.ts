@@ -51,7 +51,7 @@ export type SyncStore = {
   dealCreated?(ctx: SyncContext, links: Links): Promise<void>;
   /** An existing deal was moved by this tool. */
   stageMoved?(ctx: SyncContext, dealId: number, stageId: number): Promise<void>;
-  markStep(actionId: string, step: "file" | "note" | "photo"): Promise<void>;
+  markStep(actionId: string, step: string): Promise<void>;
   downloadLogo(path: string): Promise<{ bytes: Uint8Array; contentType: string }>;
   finish(actionId: string, state: "synced" | "error", error?: string): Promise<void>;
 };
