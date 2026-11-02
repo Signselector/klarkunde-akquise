@@ -6,6 +6,7 @@ import { TestModeCard } from "@/components/TestMode";
 import { TestBatchPurge } from "@/components/test-batch-purge";
 import { MonthlyGoalCard } from "@/components/monthly-goal";
 import { StageMapping } from "@/components/stage-mapping";
+import { DealImport } from "@/components/deal-import";
 import { backendEnabled } from "@/lib/backend";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { isMasterEmail } from "@/lib/master";
@@ -69,6 +70,7 @@ function SettingsPage() {
           ["pipedrive", "Pipedrive"],
           ["stages", "Stage Mapping"],
           ["dedup", "Deduplication"],
+          ["dealimport", "Deal nachtragen"],
         ] as [string, string][])
       : []),
     ["goals", "Ziele"],
@@ -125,6 +127,10 @@ function SettingsPage() {
           ) : (
             <p className="text-sm text-muted-foreground">Backend nicht verbunden.</p>
           )}
+        </TabsContent>
+
+        <TabsContent value="dealimport" className="space-y-4">
+          <DealImport />
         </TabsContent>
 
         <TabsContent value="email">
