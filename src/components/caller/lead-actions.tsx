@@ -668,6 +668,7 @@ export function LeadActions({
             e.preventDefault();
             if (!mail.to.trim()) return void toast.error("Bitte eine E-Mail-Adresse eintragen.");
             if (!mail.template) return void toast.error("Keine Referenzmail-Vorlage hinterlegt.");
+            if (!mail.subject.trim() || !mail.body.trim()) return void toast.error("Betreff und Text dürfen nicht leer sein.");
             void sendAndComplete(current);
           }}
         >
@@ -697,6 +698,45 @@ export function LeadActions({
                 onChange={(e) => setMail({ ...mail, to: e.target.value })}
               />
             </label>
+          )}
+          {mail.template && (
+            <Reveal title="E-Mail ansehen & bearbeiten (optional)">
+              <div className="space-y-3">
+                <label className="block text-sm">
+                  Betreff
+                  <Input
+                    value={mail.subject}
+                    maxLength={300}
+                    disabled={mailState.status === "sending" || mailState.status === "failed"}
+                    onChange={(e) => setMail({ ...mail, subject: e.target.value })}
+                  />
+                </label>
+                <label className="block text-sm">
+                  Text
+                  <Textarea
+                    value={mail.body}
+                    rows={14}
+                    maxLength={20000}
+                    disabled={mailState.status === "sending" || mailState.status === "failed"}
+                    onChange={(e) => setMail({ ...mail, body: e.target.value })}
+                  />
+                </label>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    Signatur, Logo und Referenzbilder werden automatisch angehängt.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={mailState.status === "sending" || mailState.status === "failed"}
+                    onClick={() => pickTemplate(mail.template)}
+                  >
+                    Vorlage wiederherstellen
+                  </Button>
+                </div>
+              </div>
+            </Reveal>
           )}
           {templates.isLoading && (
             <p className="text-sm text-muted-foreground">Vorlage wird geladen …</p>
