@@ -172,6 +172,23 @@ export async function syncLeadAction(
         );
         await store.markStep(action.id, "photo");
       }
+      // Additional files (unlimited): each is uploaded once and marked separately.
+      for (const [key, base] of [
+        ["extra_logo_paths", "LOGO"],
+        ["extra_photo_paths", "GEBAEUDEFOTO"],
+      ] as const) {
+        const list = action.details?.[key];
+        if (!Array.isArray(list)) continue;
+        for (let i = 0; i < list.length; i++) {
+          const p = list[i];
+          const step = `${key}:${i}`;
+          if (typeof p !== "string" || !p || action.crm_steps[step]) continue;
+          const file = await store.downloadLogo(p);
+          const name = logoFilename(p, file.contentType).replace(/^LOGO/, `${base}_${i + 2}`);
+          await crm.uploadFile(links.deal_id, name, file.bytes, file.contentType);
+          await store.markStep(action.id, step);
+        }
+      }
     } catch {
       await store.finish(action.id, "error", "attachments_pending");
       return { state: "synced", pending: true };
