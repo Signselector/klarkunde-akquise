@@ -23,3 +23,15 @@ describe("orderOpenLeads", () => {
     expect(orderOpenLeads(rows).map((l) => l.id)).toEqual(["a", "b"]);
   });
 });
+
+describe("reference mail leads", () => {
+  it("sit below not reached leads at the very bottom", async () => {
+    const { orderOpenLeads } = await import("./leads");
+    const rows = [
+      { id: "r", status: "reference_mail", attempts: 1 },
+      { id: "n", status: "open", attempts: 2 },
+      { id: "o", status: "open", attempts: 0 },
+    ];
+    expect(orderOpenLeads(rows).map((l) => l.id)).toEqual(["o", "n", "r"]);
+  });
+});
