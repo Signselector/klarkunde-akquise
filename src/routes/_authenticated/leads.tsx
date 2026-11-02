@@ -87,6 +87,7 @@ function LeadsPage() {
   } = useQuery({
     queryKey: ["leads", q, country, batch, user.id, onlyMine],
     enabled: assignment.isFetched,
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       let query = supabase
         .from("leads")
@@ -95,7 +96,7 @@ function LeadsPage() {
             ? "*, lead_batches!inner(country,assigned_to)"
             : "*, lead_batches!inner(country)",
           {
-            count: "exact",
+            count: "estimated",
           },
         )
         .eq("lead_batches.country", country)
@@ -115,12 +116,10 @@ function LeadsPage() {
         query = query.or(
           `company.ilike.%${term}%,contact_name.ilike.%${term}%,phone.ilike.%${term}%,city.ilike.%${term}%`,
         );
-      const { data, error, count } = await query;
-      if (error) throw error;
-      let rows = data ?? [];
       // Missed appointments come back to the original caller even when he no longer owns the batch.
+      let missed: PromiseLike<{ data: unknown[] | null; error: unknown }> | null = null;
       if (onlyMine && backendEnabled) {
-        let missed = supabase
+        let m = supabase
           .from("leads")
           .select("*, lead_batches!inner(country,assigned_to)")
           .eq("lead_batches.country", country)
@@ -129,21 +128,19 @@ function LeadsPage() {
           .is("archived_at", null)
           .order("id")
           .limit(100);
-        if (batch !== "all") missed = missed.eq("batch_id", batch);
+        if (batch !== "all") m = m.eq("batch_id", batch);
         if (term)
-          missed = missed.or(
+          m = m.or(
             `company.ilike.%${term}%,contact_name.ilike.%${term}%,phone.ilike.%${term}%,city.ilike.%${term}%`,
           );
-        const extra = await missed;
-        if (extra.error) throw extra.error;
-        const have = new Set(rows.map((r) => r.id));
-        rows = [...rows, ...(extra.data ?? []).filter((r) => !have.has(r.id))] as typeof rows;
+        missed = m;
       }
       // Not reached: tried at least once, shown at the bottom for 20 days after the last attempt, then they leave the list
       // (managers and admins find them under "Nicht erreicht"). They keep counting as processed for their batch.
+      let unreached: PromiseLike<{ data: unknown[] | null; error: unknown }> | null = null;
       if (backendEnabled) {
         const cutoff = new Date(Date.now() - UNREACHED_DAYS * 86_400_000).toISOString();
-        let unreached = supabase
+        let u = supabase
           .from("leads")
           .select("*, lead_batches!inner(country,assigned_to)")
           .eq("lead_batches.country", country)
@@ -154,18 +151,26 @@ function LeadsPage() {
           .order("last_called_at", { ascending: false })
           .order("id")
           .limit(300);
-        if (onlyMine) unreached = unreached.eq("lead_batches.assigned_to", user.id);
-        if (batch !== "all") unreached = unreached.eq("batch_id", batch);
+        if (onlyMine) u = u.eq("lead_batches.assigned_to", user.id);
+        if (batch !== "all") u = u.eq("batch_id", batch);
         if (term)
-          unreached = unreached.or(
+          u = u.or(
             `company.ilike.%${term}%,contact_name.ilike.%${term}%,phone.ilike.%${term}%,city.ilike.%${term}%`,
           );
-        const tried = await unreached;
-        if (tried.error) throw tried.error;
-        const have = new Set(rows.map((r) => r.id));
-        rows = [...rows, ...(tried.data ?? []).filter((r) => !have.has(r.id))] as typeof rows;
+        unreached = u;
       }
-      return { rows, total: Math.max(count ?? 0, rows.length) };
+      // All three requests run at the same time instead of one after another.
+      const [main, extra, tried] = await Promise.all([query, missed, unreached]);
+      if (main.error) throw main.error;
+      if (extra?.error) throw extra.error;
+      if (tried?.error) throw tried.error;
+      let rows = main.data ?? [];
+      for (const more of [extra?.data, tried?.data]) {
+        if (!more) continue;
+        const have = new Set(rows.map((r) => r.id));
+        rows = [...rows, ...(more as typeof rows).filter((r) => !have.has(r.id))];
+      }
+      return { rows, total: Math.max(main.count ?? 0, rows.length) };
     },
   });
   const sorted = useMemo(

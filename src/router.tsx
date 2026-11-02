@@ -3,7 +3,10 @@ import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
-  const queryClient = new QueryClient();
+  // Data stays fresh for 30s: switching pages shows cached lists instantly; edits still invalidate explicitly.
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { staleTime: 30_000, refetchOnWindowFocus: false } },
+  });
 
   const router = createRouter({
     routeTree,
