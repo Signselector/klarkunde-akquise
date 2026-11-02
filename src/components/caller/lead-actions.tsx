@@ -174,6 +174,12 @@ export function LeadActions({
   }>({ id: null, status: "idle", error: null });
   const mailRequest = useRef<string | null>(null);
 
+  // Customer data edited in the same Kundenakte: take over the new e-mail address and names right away.
+  useEffect(() => {
+    setMail((m) => ({ ...m, to: lead.email ?? "", template: "" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lead.email, lead.company, lead.contact_name, lead.city]);
+
   const templateKey = isMailAction(active) ? TEMPLATE_KEY[active] : null;
   const templates = useQuery({
     enabled: templateKey !== null,
@@ -366,10 +372,12 @@ export function LeadActions({
         };
       else if (needs.month) details = { month };
       else if (needs.doNotCall && doNotCall) details = { do_not_call: true };
+      // Use the current version: saving the customer data in the same Kundenakte raises it.
+      const fresh = await supabase.from("leads").select("version").eq("id", lead.id).maybeSingle();
       const { data, error } = await supabase.rpc("record_lead_action", {
         p_request_id: requestId.current ?? crypto.randomUUID(),
         p_lead_id: lead.id,
-        p_expected_version: lead.version,
+        p_expected_version: fresh.data?.version ?? lead.version,
         p_action: action.key,
         ...(note.trim() && action.key !== "not_reached" ? { p_note: note.trim() } : {}),
         ...(at ? { p_scheduled_at: at } : {}),
