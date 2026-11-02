@@ -152,11 +152,15 @@ function AuthPage() {
               onClick={async () => {
                 if (!email) { toast.error("Bitte zuerst deine E-Mail eintragen."); return; }
                 setBusy(true);
-                const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                  redirectTo: `${window.location.origin}/reset-password`,
-                });
+                try {
+                  const { sendPasswordReset } = await import("@/lib/password-reset.functions");
+                  await sendPasswordReset({ data: { email, origin: window.location.origin } });
+                } catch (e) {
+                  setBusy(false);
+                  toast.error(e instanceof Error ? e.message : "Mail konnte nicht gesendet werden.");
+                  return;
+                }
                 setBusy(false);
-                if (error) { toast.error(error.message); return; }
                 toast.success("Link zum Zurücksetzen wurde an deine E-Mail gesendet.");
               }}
             >

@@ -93,11 +93,13 @@ function AccountsPage() {
 
   async function resetPassword(email: string | null) {
     if (!email) return;
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    if (error) toast.error("Link konnte nicht gesendet werden.");
-    else toast.success(`Link zum Passwort-Zurücksetzen an ${email} gesendet.`);
+    try {
+      const { sendPasswordReset } = await import("@/lib/password-reset.functions");
+      await sendPasswordReset({ data: { email, origin: window.location.origin } });
+      toast.success(`Link zum Passwort-Zurücksetzen an ${email} gesendet.`);
+    } catch {
+      toast.error("Link konnte nicht gesendet werden.");
+    }
   }
 
   async function setActive(id: string, active: boolean) {
