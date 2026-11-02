@@ -698,6 +698,45 @@ export function LeadActions({
               />
             </label>
           )}
+          {mail.template && (
+            <Reveal title="E-Mail ansehen & bearbeiten (optional)">
+              <div className="space-y-3">
+                <label className="block text-sm">
+                  Betreff
+                  <Input
+                    value={mail.subject}
+                    maxLength={300}
+                    disabled={mailState.status === "sending" || mailState.status === "failed"}
+                    onChange={(e) => setMail({ ...mail, subject: e.target.value })}
+                  />
+                </label>
+                <label className="block text-sm">
+                  Text
+                  <Textarea
+                    value={mail.body}
+                    rows={14}
+                    maxLength={20000}
+                    disabled={mailState.status === "sending" || mailState.status === "failed"}
+                    onChange={(e) => setMail({ ...mail, body: e.target.value })}
+                  />
+                </label>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    Signatur, Logo und Referenzbilder werden automatisch angehängt.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={mailState.status === "sending" || mailState.status === "failed"}
+                    onClick={() => pickTemplate(mail.template)}
+                  >
+                    Vorlage wiederherstellen
+                  </Button>
+                </div>
+              </div>
+            </Reveal>
+          )}
           {templates.isLoading && (
             <p className="text-sm text-muted-foreground">Vorlage wird geladen …</p>
           )}
