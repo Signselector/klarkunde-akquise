@@ -44,7 +44,7 @@ export function PipedriveJobs({ admin }: { admin: boolean }) {
   const [busy, setBusy] = useState<string | null>(null);
   const jobs = useQuery({
     queryKey: ["integration-jobs"],
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("integration_jobs")
