@@ -172,7 +172,8 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
     queryKey: ["country-stats", country, period.from, period.to, employee],
     queryFn: () => run(employee),
   });
-  const team = overall.data?.team ?? [];
+  // Admins never appear in any statistic.
+  const team = (overall.data?.team ?? []).filter((m) => m.role !== "admin");
   const data = employee ? single.data : overall.data;
   const loading = employee ? single.isLoading : overall.isLoading;
   const failed = employee ? single.isError : overall.isError;
