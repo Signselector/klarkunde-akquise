@@ -421,6 +421,13 @@
       "when": 1793650776302,
       "tag": "0059_tab_list_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1793693910938,
+      "tag": "0060_stats_team_all_outcomes",
+      "breakpoints": true
     }
   ]
 }
