@@ -46,6 +46,8 @@ type TeamRow = {
   reference_mail?: number;
   not_reached?: number;
   no_interest?: number;
+  waiting_3d?: number;
+  callback?: number;
 };
 type Stats = {
   totals: Totals;
@@ -345,7 +347,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
                 <thead className="text-muted-foreground">
                   <tr>
-                    {["Mitarbeiter", "Rolle", "Logo Render", "Realismus Render", "Zukunftsprojekte", "Referenzmail", "Nicht erreicht", "Kein Interesse"].map((h, i) => (
+                    {["Mitarbeiter", "Rolle", ...OUTCOMES.map((k) => STATUS_LABEL[k] ?? k)].map((h, i) => (
                       <th key={h} className={cn("px-3 py-2 font-medium", i > 1 && "text-right")}>
                         {h}
                       </th>
@@ -363,12 +365,9 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
                           </button>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{roleLabel(m.role)}</td>
-<td className="px-3 py-2 text-right tabular-nums">{m.low_q ?? 0}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{m.high_q ?? 0}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{m.on_hold ?? 0}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{m.reference_mail ?? 0}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{m.not_reached ?? 0}</td>
-                        <td className="px-3 py-2 text-right tabular-nums">{m.no_interest ?? 0}</td>
+                        {OUTCOMES.map((k) => (
+                          <td key={k} className="px-3 py-2 text-right tabular-nums">{m[k] ?? 0}</td>
+                        ))}
                       </tr>
                     ))}
                 </tbody>
