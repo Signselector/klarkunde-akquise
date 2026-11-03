@@ -422,12 +422,12 @@ const HEARTBEAT_MS = 45_000;
 function usePresence(userId: string) {
   useEffect(() => {
     const beat = () => {
-      if (document.visibilityState === "visible") void supabase.rpc("heartbeat");
+      if (document.visibilityState === "visible") void supabase.rpc("heartbeat").then(() => undefined);
     };
     try {
       if (!sessionStorage.getItem("cc-login-logged")) {
         sessionStorage.setItem("cc-login-logged", "1");
-        void supabase.rpc("log_activity", { p_action: "user_login" });
+        void supabase.rpc("log_activity", { p_action: "user_login" }).then(() => undefined);
       }
     } catch {
       /* sessionStorage can be blocked; presence still works */
