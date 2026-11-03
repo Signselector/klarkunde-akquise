@@ -19,12 +19,11 @@ export const loadPipedriveStages = createServerFn({ method: "POST" })
       _uid: context.userId,
     });
     if (!isAdmin) throw new Error("Nur für den Master-Admin.");
-    const lovable = process.env["LOVABLE_API_KEY"];
-    const conn = process.env[KEY_BY_COUNTRY[data.country] ?? ""];
-    if (!lovable || !conn) throw new Error("Pipedrive-Verbindung fehlt.");
-    const res = await fetch("https://connector-gateway.lovable.dev/pipedrive/stages", {
-      headers: { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": conn },
-    });
+    const { gatewayClient } = await import("@/lib/crm-sync.functions");
+    const res = await gatewayClient(data.country)
+      .call("/stages", { method: "GET" })
+      .then((r) => new Response(JSON.stringify(r)))
+      .catch((e) => new Response(String(e?.message ?? e), { status: 502 }));
     if (!res.ok) {
       const body = await res.text();
       console.error(`Pipedrive stages failed [${res.status}]: ${body}`);

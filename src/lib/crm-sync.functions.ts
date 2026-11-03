@@ -13,17 +13,31 @@ const KEY_BY_COUNTRY: Record<string, string> = {
   AT: "PIPEDRIVE_API_KEY_1",
 };
 const GATEWAY = "https://connector-gateway.lovable.dev/pipedrive";
+const DIRECT = "https://api.pipedrive.com/v1";
+const TOKEN_BY_COUNTRY: Record<string, string> = {
+  DE: "PIPEDRIVE_TOKEN_DE",
+  AT: "PIPEDRIVE_TOKEN_AT",
+};
 
 type GatewayResult = { data?: unknown };
 
 /** Low-level access to Pipedrive through the Lovable connector gateway (same connection the stage loader uses). */
 export function gatewayClient(country: string) {
-  const lovable = process.env["LOVABLE_API_KEY"];
   const keyName = KEY_BY_COUNTRY[country];
   if (!keyName) throw new CrmError("country_not_connected");
-  const connection = process.env[keyName];
-  if (!lovable || !connection) throw new CrmError("not_configured");
-  const headers = { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": connection };
+  // Prefer the personal API token (deals show source "API"); fall back to the connector gateway.
+  const token = process.env[TOKEN_BY_COUNTRY[country] ?? ""];
+  let headers: Record<string, string> = {};
+  let url: (path: string) => string;
+  if (token) {
+    url = (path) => `${DIRECT}${path}${path.includes("?") ? "&" : "?"}api_token=${encodeURIComponent(token)}`;
+  } else {
+    const lovable = process.env["LOVABLE_API_KEY"];
+    const connection = process.env[keyName];
+    if (!lovable || !connection) throw new CrmError("not_configured");
+    headers = { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": connection };
+    url = (path) => `${GATEWAY}${path}`;
+  }
 
   async function call(path: string, init: RequestInit): Promise<GatewayResult> {
     // Brief gateway hiccups (network errors, 429, 502-504) are retried twice before giving up.
@@ -33,7 +47,7 @@ export function gatewayClient(country: string) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 45000);
       try {
-        response = await fetch(`${GATEWAY}${path}`, {
+        response = await fetch(url(path), {
           ...init,
           redirect: "follow",
           signal: controller.signal,
