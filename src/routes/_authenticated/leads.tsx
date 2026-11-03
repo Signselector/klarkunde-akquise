@@ -211,16 +211,22 @@ function LeadsPage() {
       <PageHeading
         title="Offene Leads"
         description="Die Leads deiner übernommenen Batches. Öffne die Kundenakte, um nach dem Telefonat das Gesprächsergebnis einzutragen."
+        action={
+          <div className="cc-salary-box">
+            <span>
+              Aktueller Schnitt
+              <b className={`cc-tier cc-tier--${leadAvgTier(per100)}`}>{formatPer100(per100)}</b>
+            </span>
+            <i aria-hidden="true" />
+            <span>
+              Gehalt
+              <b className={leadAvgTier(per100) === "gold" ? "cc-tier cc-tier--gold" : ""}>
+                {formatEuro(salaryForAvg(per100))}
+              </b>
+            </span>
+          </div>
+        }
       />
-      <div className="cc-salary-strip">
-        <span>
-          Aktueller Schnitt:{" "}
-          <b className={`cc-tier cc-tier--${leadAvgTier(per100)}`}>{formatPer100(per100)}</b>
-        </span>
-        <span>
-          Gehalt: <b>{formatEuro(salaryForAvg(per100))}</b>
-        </span>
-      </div>
       <Surface
         title="Offene Leads"
         description="Offene Erstkontakte · nach Status und Kontakt durchsuchen"

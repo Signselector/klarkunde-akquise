@@ -217,7 +217,7 @@ export function CallerPerformance({
 
         <BentoCard
           className="cc-b-avg"
-          title="Ø Leads pro 100"
+          title="Ø Leads/100"
           meta={
             <span className="cc-month-nav">
               <button type="button" aria-label="Vorheriger Monat" onClick={() => setOffset((o) => o - 1)}>
@@ -239,7 +239,7 @@ export function CallerPerformance({
         >
           <div className="cc-big">
             <span className={`cc-tier cc-tier--${leadAvgTier(per100)}`}>{formatPer100(per100)}</span>
-            <small>Leads / 100</small>
+            <small>Ø Leads/100</small>
           </div>
           <p className="cc-big-note">
             {history.isError
@@ -271,7 +271,7 @@ export function CallerPerformance({
           </div>
           <div className="cc-salary">
             <span>Gehalt bei diesem Schnitt</span>
-            <b className={`cc-tier cc-tier--${leadAvgTier(per100)}`}>
+            <b className={leadAvgTier(per100) === "gold" ? "cc-tier cc-tier--gold" : ""}>
               {formatEuro(salaryForAvg(per100))}
             </b>
           </div>
