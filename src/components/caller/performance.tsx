@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { leadAvgTier, leadQualityTier } from "@/lib/kpi-tiers";
+import { formatEuro, leadAvgTier, leadQualityTier, salaryForAvg } from "@/lib/kpi-tiers";
 import { Link } from "@tanstack/react-router";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import { CalendarCheck } from "@/components/coldcaller/icons";
