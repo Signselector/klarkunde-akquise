@@ -3,7 +3,10 @@ import { LeadQuickDialog } from "@/components/caller/lead-quick-dialog";
 import { LeadsTable, type LeadIntent } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
 import { orderOpenLeads, STATUS_LABEL, UNREACHED_DAYS } from "@/lib/leads";
-import { backendEnabled } from "@/lib/backend";
+import { backendEnabled, backendRpc } from "@/lib/backend";
+import { formatPer100, monthStart } from "@/lib/dashboard";
+import { currentMonth } from "@/lib/monthly-stats";
+import { formatEuro, leadAvgTier, salaryForAvg } from "@/lib/kpi-tiers";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -177,6 +180,17 @@ function LeadsPage() {
     () => orderOpenLeads(result?.rows ?? []),
     [result?.rows],
   );
+  // Current month lead average + salary, shown above the list.
+  const avg = useQuery({
+    queryKey: ["monthly-quality-current", user.id],
+    enabled: backendEnabled,
+    refetchInterval: 60_000,
+    queryFn: async () =>
+      (await backendRpc("get_monthly_quality", {
+        p_month: monthStart(currentMonth()),
+      })) as unknown as { per_100: number | null },
+  });
+  const per100 = avg.data?.per_100 ?? 0;
   const labelOf = (l: { status: string; attempts: number }) =>
     l.status === "open" && l.attempts > 0 ? "Nicht erreicht" : (STATUS_LABEL[l.status] ?? l.status);
   // Only statuses that occur in the loaded list are offered as filter.
@@ -198,6 +212,15 @@ function LeadsPage() {
         title="Offene Leads"
         description="Die Leads deiner übernommenen Batches. Öffne die Kundenakte, um nach dem Telefonat das Gesprächsergebnis einzutragen."
       />
+      <div className="cc-salary-strip">
+        <span>
+          Aktueller Schnitt:{" "}
+          <b className={`cc-tier cc-tier--${leadAvgTier(per100)}`}>{formatPer100(per100)}</b>
+        </span>
+        <span>
+          Gehalt: <b>{formatEuro(salaryForAvg(per100))}</b>
+        </span>
+      </div>
       <Surface
         title="Offene Leads"
         description="Offene Erstkontakte · nach Status und Kontakt durchsuchen"
