@@ -339,7 +339,18 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
 
       {!employee && (
         <section className="rounded-lg border bg-card p-4">
-          <h2 className="mb-3 font-semibold">Mitarbeiter in {country}</h2>
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <h2 className="font-semibold">Mitarbeiter in {country}</h2>
+            <label className="ml-auto flex items-center gap-2 text-sm">
+              <span className="font-medium">Sortieren nach</span>
+              <Dropdown
+                value={sortKey}
+                onChange={(v) => setSortKey(v as SortKey)}
+                ariaLabel="Mitarbeiter sortieren"
+                options={SORT_OPTIONS}
+              />
+            </label>
+          </div>
           {team.length === 0 ? (
             <p className="text-sm text-muted-foreground">Keine aktiven Mitarbeiter in diesem Land.</p>
           ) : (
@@ -347,7 +358,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
                 <thead className="text-muted-foreground">
                   <tr>
-                    {["Mitarbeiter", "Rolle", ...OUTCOMES.map((k) => STATUS_LABEL[k] ?? k)].map((h, i) => (
+                    {["Mitarbeiter", "Rolle", "Anrufe", ...OUTCOMES.map((k) => STATUS_LABEL[k] ?? k)].map((h, i) => (
                       <th key={h} className={cn("px-3 py-2 font-medium", i > 1 && "text-right")}>
                         {h}
                       </th>
@@ -355,9 +366,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {[...team]
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((m) => (
+                  {sortTeam(team, sortKey).map((m) => (
                       <tr key={m.user_id}>
                         <td className="px-3 py-2">
                           <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={() => setEmployee(m.user_id)}>
@@ -365,6 +374,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
                           </button>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{roleLabel(m.role)}</td>
+                        <td className="px-3 py-2 text-right font-medium tabular-nums">{m.calls ?? 0}</td>
                         {OUTCOMES.map((k) => (
                           <td key={k} className="px-3 py-2 text-right tabular-nums">{m[k] ?? 0}</td>
                         ))}
