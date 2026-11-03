@@ -127,7 +127,7 @@ async function databaseStore(
       const [lead, links, profile] = await Promise.all([
         db
           .from("leads")
-          .select("id,company,contact_name,email,phone,batch_id")
+          .select("id,company,contact_name,email,phone,batch_id,extra")
           .eq("id", row.lead_id)
           .single(),
         db.from("lead_crm_links").select("*").eq("lead_id", row.lead_id).maybeSingle(),

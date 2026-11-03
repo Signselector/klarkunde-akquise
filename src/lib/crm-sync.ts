@@ -24,6 +24,8 @@ export type LeadRow = {
   contact_name: string | null;
   email: string | null;
   phone: string | null;
+  /** Imported extra columns (website, category, ...). */
+  extra?: Record<string, unknown> | null;
 };
 export type Links = {
   organization_id?: number | null;
@@ -101,6 +103,26 @@ export function noteText(ctx: SyncContext) {
   return `${when} · ${ctx.callerName || "Caller"}\n${ctx.action.note ?? ""}`.trim();
 }
 
+const pickExtra = (extra: Record<string, unknown> | null | undefined, names: string[]) => {
+  for (const [k, v] of Object.entries(extra ?? {}))
+    if (names.includes(k.trim().toLowerCase()) && typeof v === "string" && v.trim()) return v.trim();
+  return null;
+};
+
+/** Own note with website and category of the lead, null when neither is known. */
+export function websiteCategoryNote(lead: LeadRow) {
+  const website = pickExtra(lead.extra, ["website", "webseite", "web", "url"]);
+  const category = pickExtra(lead.extra, ["category", "kategorie", "branche", "categories"]);
+  const lines = [website && `🌐 Website: ${website}`, category && `📁 Category: ${category}`].filter(Boolean);
+  return lines.length ? lines.join("\n") : null;
+}
+
+/** Own note with the dimensions the caller entered, null when empty. */
+export function dimensionsNote(details: Record<string, unknown> | null | undefined) {
+  const d = details?.["dimensions"];
+  return typeof d === "string" && d.trim() ? `Maße:\n\n${d.trim()}` : null;
+}
+
 export async function syncLeadAction(
   actionId: string,
   store: SyncStore,
@@ -150,6 +172,16 @@ export async function syncLeadAction(
       if (action.note && !action.crm_steps["note"]) {
         await crm.addNote(links.deal_id, noteText(ctx));
         await store.markStep(action.id, "note");
+      }
+      const dims = dimensionsNote(action.details);
+      if (dims && !action.crm_steps["dimensions_note"]) {
+        await crm.addNote(links.deal_id, dims);
+        await store.markStep(action.id, "dimensions_note");
+      }
+      const info = websiteCategoryNote(lead);
+      if (info && !action.crm_steps["info_note"]) {
+        await crm.addNote(links.deal_id, info);
+        await store.markStep(action.id, "info_note");
       }
       if (action.logo_path && !action.crm_steps["file"]) {
         const file = await store.downloadLogo(action.logo_path);
