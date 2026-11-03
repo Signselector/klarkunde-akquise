@@ -180,6 +180,17 @@ function LeadsPage() {
     () => orderOpenLeads(result?.rows ?? []),
     [result?.rows],
   );
+  // Current month lead average + salary, shown above the list.
+  const avg = useQuery({
+    queryKey: ["monthly-quality-current", user.id],
+    enabled: backendEnabled,
+    refetchInterval: 60_000,
+    queryFn: async () =>
+      (await backendRpc("get_monthly_quality", {
+        p_month: monthStart(currentMonth()),
+      })) as unknown as { per_100: number | null },
+  });
+  const per100 = avg.data?.per_100 ?? 0;
   const labelOf = (l: { status: string; attempts: number }) =>
     l.status === "open" && l.attempts > 0 ? "Nicht erreicht" : (STATUS_LABEL[l.status] ?? l.status);
   // Only statuses that occur in the loaded list are offered as filter.
