@@ -98,8 +98,13 @@ export function PipedriveJobs({ admin }: { admin: boolean }) {
 }
 
 export function DataQuality() {
+  // Collapsed by default; the slow quality check only runs once someone opens the section.
+  const [isOpen, setIsOpen] = useState(false);
   const quality = useQuery({
     queryKey: ["quality-issues"],
+    enabled: isOpen,
+    retry: false,
+    staleTime: 5 * 60_000,
     queryFn: async () =>
       (await backendRpc("get_quality_issues", {})) as {
         lead_id: string;
@@ -108,8 +113,6 @@ export function DataQuality() {
         acknowledged_reason: string | null;
       }[],
   });
-  // Collapsed by default so the dashboard stays compact; the badge shows how many hints are open.
-  const [isOpen, setIsOpen] = useState(false);
   const open = (quality.data ?? []).filter((q) => !q.acknowledged_reason).length;
   return (
     <section className="rounded-lg border">

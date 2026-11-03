@@ -13,7 +13,9 @@ export function AchievementNotifier({ userId }: { userId: string }) {
   const qc = useQueryClient();
   const { data } = useQuery({
     queryKey: ["achievement-events", userId],
-    refetchInterval: 60_000,
+    refetchInterval: 5 * 60_000,
+    retry: false,
+    refetchIntervalInBackground: false,
     queryFn: async () => {
       const { data, error } = await db
         .from("achievement_events")
@@ -21,7 +23,8 @@ export function AchievementNotifier({ userId }: { userId: string }) {
         .eq("user_id", userId)
         .is("seen_at", null)
         .order("created_at");
-      if (error) throw error;
+      // Table may not exist yet: stay quiet instead of erroring/retrying.
+      if (error) return [] as AchievementRow[];
       return (data ?? []) as AchievementRow[];
     },
   });
