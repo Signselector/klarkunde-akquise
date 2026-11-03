@@ -449,6 +449,13 @@
       "when": 1793716527793,
       "tag": "0063_contact_labels",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1793718235032,
+      "tag": "0064_presence_from_lead_actions",
+      "breakpoints": true
     }
   ]
 }

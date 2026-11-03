@@ -2069,6 +2069,7 @@ export type Database = {
         | "list_viewed"
         | "list_exported"
         | "view_as_started"
+        | "lead_action"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2219,6 +2220,7 @@ export const Constants = {
         "list_viewed",
         "list_exported",
         "view_as_started",
+        "lead_action",
       ],
     },
   },
