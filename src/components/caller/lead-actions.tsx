@@ -256,7 +256,8 @@ export function LeadActions({
     setMonth("");
     setDoNotCall(false);
     setNote("");
-    setDimensions("");
+    setDimW("");
+    setDimH("");
     setDate("");
     setTime("");
     setFiles([]);
