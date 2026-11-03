@@ -435,6 +435,13 @@
       "when": 1793708882517,
       "tag": "0061_deal_dimensions",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1793715184647,
+      "tag": "0062_completed_overview_own_only",
+      "breakpoints": true
     }
   ]
 }
