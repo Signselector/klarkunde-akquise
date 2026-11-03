@@ -7,7 +7,7 @@ export const getRouter = () => {
   // Tab lists opt into placeholderData individually; a global default would flash a previous record in detail views.
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: { staleTime: 30_000, refetchOnWindowFocus: false },
+      queries: { staleTime: 60_000, gcTime: 10 * 60_000, refetchOnWindowFocus: false, refetchIntervalInBackground: false, retry: 1 },
     },
   });
 
@@ -15,8 +15,9 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // Weak PCs: only preload after a deliberate hover, not every mouse pass over the sidebar.
     defaultPreload: "intent",
-    defaultPreloadDelay: 50,
+    defaultPreloadDelay: 400,
     defaultPreloadStaleTime: 0,
   });
 

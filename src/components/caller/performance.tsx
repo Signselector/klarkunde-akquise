@@ -114,7 +114,7 @@ export function CallerPerformance({
   const history = useQuery({
     queryKey: ["monthly-quality-history", userId, monthStart(last)],
     enabled: backendEnabled,
-    refetchInterval: offset === 0 ? 30_000 : false,
+    refetchInterval: offset === 0 ? 120_000 : false,
     placeholderData: (prev) => prev,
     queryFn: async () =>
       Promise.all(
