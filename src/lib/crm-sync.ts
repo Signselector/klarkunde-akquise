@@ -117,10 +117,11 @@ export function websiteCategoryNote(lead: LeadRow) {
   return lines.length ? lines.join("\n") : null;
 }
 
-/** Own note with the dimensions the caller entered, null when empty. */
+/** Own note with the dimensions; "leer" when the caller left them empty. Null only for actions without the field. */
 export function dimensionsNote(details: Record<string, unknown> | null | undefined) {
   const d = details?.["dimensions"];
-  return typeof d === "string" && d.trim() ? `Maße:\n\n${d.trim()}` : null;
+  if (typeof d !== "string") return null;
+  return `Maße:\n\n${d.trim() || "leer"}`;
 }
 
 export async function syncLeadAction(
