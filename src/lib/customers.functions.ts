@@ -81,9 +81,9 @@ export type MyCustomers = {
  */
 export const loadMyCustomers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { country: string }) => {
+  .inputValidator((d: { country: string; live?: boolean }) => {
     if (!d || !/^[A-Z]{2}$/.test(d.country)) throw new Error("invalid");
-    return d;
+    return { country: d.country, live: d.live !== false };
   })
   .handler(async ({ data, context }): Promise<MyCustomers> => {
     const { data: allowed } = await context.supabase.rpc("can_access_country", {
@@ -97,13 +97,15 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
     const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
     // Every deal this caller originally created, customer or not: a deal only becomes a customer once Pipedrive
     // moves it into one of the customer stages, so the live stages are applied first.
-    const mine = await db
-      .from("lead_crm_links")
-      .select("deal_id")
-      .eq("country", data.country)
-      .eq("origin_caller_id", owner)
-      .not("deal_id", "is", null)
-      .limit(MAX_DEALS);
+    const mine = data.live
+      ? await db
+          .from("lead_crm_links")
+          .select("deal_id")
+          .eq("country", data.country)
+          .eq("origin_caller_id", owner)
+          .not("deal_id", "is", null)
+          .limit(MAX_DEALS)
+      : { data: [] as { deal_id: number | null }[] };
     // Negative deal IDs are simulated demo deals: never looked up in Pipedrive, shown with their local stage.
     const dealIds = (mine.data ?? []).map((l) => l.deal_id as number).filter((id) => id > 0);
     let infos = new Map<number, DealInfo | null>();
