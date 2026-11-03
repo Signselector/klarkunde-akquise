@@ -2365,3 +2365,18 @@ tr:hover > .cc-sticky-action {
 .cc-app .cc-batch[data-claimed="true"] :is(a, button):disabled {
   opacity: 0.6;
 }
+.cc-month-nav { display: inline-flex; align-items: center; gap: 6px; }
+.cc-month-nav button { width: 22px; height: 22px; border-radius: 6px; font-size: 16px; line-height: 1; opacity: .8; }
+.cc-month-nav button:hover:not(:disabled) { opacity: 1; background: rgba(127,127,127,.18); }
+.cc-month-nav button:disabled { opacity: .25; cursor: default; }
+.cc-tier--red { color: #ef4444; }
+.cc-tier--yellow { color: #eab308; }
+.cc-tier--green { color: #22c55e; }
+.cc-tier--gold {
+  background: linear-gradient(110deg, #b8860b 0%, #ffd700 30%, #fff6c2 45%, #ffd700 60%, #b8860b 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: cc-gold-shine 3s linear infinite;
+}
+@keyframes cc-gold-shine { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+@media (prefers-reduced-motion: reduce) { .cc-tier--gold { animation: none; } }
