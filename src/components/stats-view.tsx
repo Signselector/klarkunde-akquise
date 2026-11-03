@@ -66,6 +66,21 @@ const OUTCOMES = [
   "not_reached",
   "no_interest",
 ] as const;
+type SortKey = "renders" | "calls" | (typeof OUTCOMES)[number] | "name";
+const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: "renders", label: "Render gesamt" },
+  { value: "calls", label: "Anrufe" },
+  ...OUTCOMES.map((k) => ({ value: k, label: STATUS_LABEL[k] ?? k })),
+  { value: "name", label: "Name (A–Z)" },
+];
+export function sortTeam<T extends { name: string; calls?: number } & Partial<Record<(typeof OUTCOMES)[number], number>>>(
+  team: T[],
+  key: SortKey,
+): T[] {
+  const val = (m: T) =>
+    key === "renders" ? (m.low_q ?? 0) + (m.high_q ?? 0) : key === "name" ? 0 : ((m as Record<string, unknown>)[key] as number) ?? 0;
+  return [...team].sort((a, b) => (key === "name" ? 0 : val(b) - val(a)) || a.name.localeCompare(b.name));
+}
 const pct = (v: number | null) => (v === null ? "–" : `${String(v).replace(".", ",")} %`);
 const roleLabel = (r: string) => ROLE_LABEL[(r === "caller" ? "recruit" : r) as RoleName] ?? r;
 
