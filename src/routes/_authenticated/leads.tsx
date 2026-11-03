@@ -212,6 +212,15 @@ function LeadsPage() {
         title="Offene Leads"
         description="Die Leads deiner übernommenen Batches. Öffne die Kundenakte, um nach dem Telefonat das Gesprächsergebnis einzutragen."
       />
+      <div className="cc-salary-strip">
+        <span>
+          Aktueller Schnitt:{" "}
+          <b className={`cc-tier cc-tier--${leadAvgTier(per100)}`}>{formatPer100(per100)}</b>
+        </span>
+        <span>
+          Gehalt: <b>{formatEuro(salaryForAvg(per100))}</b>
+        </span>
+      </div>
       <Surface
         title="Offene Leads"
         description="Offene Erstkontakte · nach Status und Kontakt durchsuchen"
