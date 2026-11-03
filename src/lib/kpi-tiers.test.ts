@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { leadAvgTier, leadQualityTier } from "./kpi-tiers";
+import { leadAvgTier, leadQualityTier, salaryForAvg } from "./kpi-tiers";
 
 describe("leadAvgTier", () => {
   it("red below 0.75", () => expect(leadAvgTier(0.74)).toBe("red"));
