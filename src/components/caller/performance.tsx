@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { leadAvgTier, leadQualityTier } from "@/lib/kpi-tiers";
 import { Link } from "@tanstack/react-router";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import { CalendarCheck } from "@/components/coldcaller/icons";
@@ -103,13 +105,17 @@ export function CallerPerformance({
   name?: string | null | undefined;
 }) {
   const day = useDay(userId);
-  const last = shiftMonth(currentMonth(), -1);
+  const now = currentMonth();
+  const [offset, setOffset] = useState(0);
+  const last = shiftMonth(now, offset);
 
-  // The last six completed months, oldest first, for the bars of the monthly figure.
+  // Six months ending at the selected one, oldest first, for the bars of the monthly figure.
   const months = Array.from({ length: 6 }, (_, k) => shiftMonth(last, k - 5));
   const history = useQuery({
     queryKey: ["monthly-quality-history", userId, monthStart(last)],
     enabled: backendEnabled,
+    refetchInterval: offset === 0 ? 30_000 : false,
+    placeholderData: (prev) => prev,
     queryFn: async () =>
       Promise.all(
         months.map(
@@ -129,6 +135,7 @@ export function CallerPerformance({
 
   const t = team.data;
   const q = history.data?.[5];
+  const per100 = q?.per_100 ?? 0;
   const delta = per100Delta(q?.per_100 ?? null, history.data?.[4]?.per_100 ?? null);
   const maxPer100 = Math.max(1, ...(history.data ?? []).map((m) => m.per_100 ?? 0));
   // Today's calls stay the headline figure; the goal is the month's.
@@ -211,23 +218,38 @@ export function CallerPerformance({
         <BentoCard
           className="cc-b-avg"
           title="Ø Leads pro 100"
-          meta={q ? monthLabel(last) : undefined}
-          help="Qualifizierte Leads (Logo Render und Realismus Render, jeder Lead einmal) pro 100 bearbeiteten Leads des letzten abgeschlossenen Monats. Das Ergebnis wird am Monatsende gespeichert."
+          meta={
+            <span className="cc-month-nav">
+              <button type="button" aria-label="Vorheriger Monat" onClick={() => setOffset((o) => o - 1)}>
+                ‹
+              </button>
+              <span>{monthLabel(last)}</span>
+              <button
+                type="button"
+                aria-label="Nächster Monat"
+                disabled={offset >= 0}
+                onClick={() => setOffset((o) => Math.min(0, o + 1))}
+              >
+                ›
+              </button>
+            </span>
+          }
+          help="Qualifizierte Leads (Logo Render und Realismus Render, jeder Lead einmal) pro 100 bearbeiteten Leads. Der laufende Monat wird live aktualisiert und am Monatsende eingefroren."
           index={1}
         >
           <div className="cc-big">
-            {q?.per_100 != null ? formatPer100(q.per_100) : "–"}
+            <span className={`cc-tier cc-tier--${leadAvgTier(per100)}`}>{formatPer100(per100)}</span>
             <small>Leads / 100</small>
           </div>
           <p className="cc-big-note">
             {history.isError
               ? "Monatswert nicht verfügbar"
               : q
-                ? q.per_100 === null
-                  ? `Keine bearbeiteten Leads im ${monthLabel(last)}`
-                  : delta
-                    ? `${delta} zum Vormonat`
-                    : "Letzter abgeschlossener Monat"
+                ? delta
+                  ? `${delta} zum Vormonat`
+                  : offset === 0
+                    ? "Laufender Monat · live"
+                    : "Eingefroren"
                 : "Wird berechnet …"}
           </p>
           <div className="cc-bars" aria-hidden="true">
@@ -253,20 +275,22 @@ export function CallerPerformance({
           <BentoCard
             className="cc-mini"
             title="Leadqualität"
-            help="Wird unverändert aus dem Team-Management-Tool übernommen. Das Dashboard berechnet sie nicht selbst."
+            help="Wird aus dem Team-Management-Tool übernommen. Unter 5 rot, 5–6,5 gelb, ab 6,5 grün."
             index={2}
           >
-            <b>{t?.lead_quality != null ? formatNumber(t.lead_quality) : "–"}</b>
+            <b className={t?.lead_quality != null ? `cc-tier cc-tier--${leadQualityTier(t.lead_quality)}` : ""}>
+              {t?.lead_quality != null ? formatNumber(t.lead_quality) : "–"}
+            </b>
             <em>{teamContext("Deine Bewertung")}</em>
           </BentoCard>
           <BentoCard
             className="cc-mini"
             title="Eingebrachte Leads"
-            help="Anzahl der von dir eingebrachten Leads laut Team-Management-Tool. Ein erneuter Abgleich ersetzt den Wert, er wird nie addiert."
+            help="Anzahl deiner Logo Render und Realismus Render im gewählten Monat."
             index={3}
           >
-            <b>{t?.leads_contributed != null ? formatNumber(t.leads_contributed) : "–"}</b>
-            <em>{teamContext("Von dir eingebracht")}</em>
+            <b>{formatNumber(q?.qualified ?? 0)}</b>
+            <em>Logo + Realismus Render · {monthLabel(last)}</em>
           </BentoCard>
         </div>
 
