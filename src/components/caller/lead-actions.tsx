@@ -255,6 +255,7 @@ export function LeadActions({
     setMonth("");
     setDoNotCall(false);
     setNote("");
+    setDimensions("");
     setDate("");
     setTime("");
     setFiles([]);
@@ -654,6 +655,17 @@ export function LeadActions({
                 </span>
               </label>
             </div>
+          )}
+          {current.stageKey && (
+            <label className="block text-sm">
+              Maße (optional, kommt als eigene Notiz in Pipedrive)
+              <Textarea
+                value={dimensions}
+                onChange={(e) => setDimensions(e.target.value)}
+                rows={3}
+                placeholder="z. B. 200cm Breite, 200cm Höhe"
+              />
+            </label>
           )}
           {current.needs.note && (
             <label className="block text-sm">
