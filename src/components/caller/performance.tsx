@@ -234,7 +234,7 @@ export function CallerPerformance({
               </button>
             </span>
           }
-          help="Qualifizierte Leads (Logo Render und Realismus Render, jeder Lead einmal) pro 100 bearbeiteten Leads. Der laufende Monat wird live aktualisiert und am Monatsende eingefroren."
+          help="Qualifizierte Leads (Logo Render und Realismus Render, jeder Lead einmal) pro 100 bearbeiteten Leads. Der laufende Monat wird live aktualisiert und am Monatsende eingefroren. Gehalt: ab 0,75 → 2.000 €, ab 1,2 → 2.500 €, ab 1,5 → 3.000 €, ab 3,0 → 4.000 €."
           index={1}
         >
           <div className="cc-big">
@@ -268,6 +268,12 @@ export function CallerPerformance({
             {months.map((m) => (
               <span key={`${m.year}-${m.month}`}>{monthLabel(m).slice(0, 3)}</span>
             ))}
+          </div>
+          <div className="cc-salary">
+            <span>Gehalt bei diesem Schnitt</span>
+            <b className={`cc-tier cc-tier--${leadAvgTier(per100)}`}>
+              {formatEuro(salaryForAvg(per100))}
+            </b>
           </div>
         </BentoCard>
 
