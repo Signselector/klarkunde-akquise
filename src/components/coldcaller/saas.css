@@ -513,6 +513,8 @@
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.02em;
+}
+.cc-salary-box b:not(.cc-tier) {
   color: white;
 }
 .cc-salary-box i {
