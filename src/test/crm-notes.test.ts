@@ -6,7 +6,8 @@ const lead = (extra: Record<string, unknown>) => ({ id: "l", company: null, cont
 describe("extra Pipedrive notes", () => {
   it("dimensions become an own note headed 'Maße:'", () => {
     expect(dimensionsNote({ dimensions: "200cm Breite\n200cm Höhe" })).toBe("Maße:\n\n200cm Breite\n200cm Höhe");
-    expect(dimensionsNote({ dimensions: "  " })).toBeNull();
+    expect(dimensionsNote({ dimensions: "  " })).toBe("Maße:\n\nleer");
+    expect(dimensionsNote({})).toBeNull();
   });
   it("website and category go into one note, only known lines", () => {
     expect(websiteCategoryNote(lead({ Website: "http://www.reese-kfz.de/", Category: "Fahrzeughändler" }))).toBe(

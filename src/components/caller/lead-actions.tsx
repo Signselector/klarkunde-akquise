@@ -144,7 +144,8 @@ export function LeadActions({
   const [active, setActive] = useState<LeadActionKey | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
-  const [dimensions, setDimensions] = useState("");
+  const [dimW, setDimW] = useState("");
+  const [dimH, setDimH] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -374,8 +375,12 @@ export function LeadActions({
         };
       else if (needs.month) details = { month };
       else if (needs.doNotCall && doNotCall) details = { do_not_call: true };
-      if (action.stageKey && dimensions.trim())
-        details = { ...((details as Record<string, Json>) ?? {}), dimensions: dimensions.trim().slice(0, 2000) };
+      if (action.stageKey) {
+        const dims = [dimW.trim() && `${dimW.trim()} Breite`, dimH.trim() && `${dimH.trim()} Höhe`]
+          .filter(Boolean)
+          .join(" / ");
+        details = { ...((details as Record<string, Json>) ?? {}), dimensions: dims.slice(0, 2000) };
+      }
       // Use the current version: saving the customer data in the same Kundenakte raises it.
       const fresh = await supabase.from("leads").select("version").eq("id", lead.id).maybeSingle();
       const { data, error } = await supabase.rpc("record_lead_action", {
@@ -657,15 +662,19 @@ export function LeadActions({
             </div>
           )}
           {current.stageKey && (
-            <label className="block text-sm">
+            <div className="text-sm">
               Maße (optional, kommt als eigene Notiz in Pipedrive)
-              <Textarea
-                value={dimensions}
-                onChange={(e) => setDimensions(e.target.value)}
-                rows={3}
-                placeholder="z. B. 200cm Breite, 200cm Höhe"
-              />
-            </label>
+              <div className="mt-1 grid grid-cols-2 gap-2">
+                <label className="block">
+                  <span className="text-xs text-muted-foreground">Breite (B)</span>
+                  <Input value={dimW} onChange={(e) => setDimW(e.target.value)} placeholder="z. B. 200cm" maxLength={200} />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-muted-foreground">Höhe (H)</span>
+                  <Input value={dimH} onChange={(e) => setDimH(e.target.value)} placeholder="z. B. 200cm" maxLength={200} />
+                </label>
+              </div>
+            </div>
           )}
           {current.needs.note && (
             <label className="block text-sm">
