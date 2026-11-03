@@ -5,6 +5,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { Pencil } from "@/components/coldcaller/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CONTACT_LABELS, contactLabel, type ContactLabel } from "@/lib/contact-labels";
+import { syncLeadContact } from "@/lib/contact-sync.functions";
 
 const WEBSITE_KEYS = ["website", "webseite", "web", "url"];
 const ADDRESS_KEYS = ["adresse", "address", "anschrift"];
@@ -48,9 +50,11 @@ export function LeadContactEditor({
     website: fromExtra(lead.extra, WEBSITE_KEYS),
     address: fromExtra(lead.extra, ADDRESS_KEYS),
     city: lead.city ?? "",
+    phone_label: contactLabel(lead.extra, "phone_label") as ContactLabel,
+    email_label: contactLabel(lead.extra, "email_label") as ContactLabel,
   });
   const [form, setForm] = useState(initial);
-  const set = (key: keyof ReturnType<typeof initial>) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (key: "company" | "contact_name" | "phone" | "email" | "website" | "address" | "city") => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   async function save() {
@@ -69,6 +73,10 @@ export function LeadContactEditor({
       return;
     }
     toast.success("Kundendaten gespeichert.");
+    void syncLeadContact({ data: { leadId: lead.id } }).then(
+      (r) => r.pipedrive === "error" && toast.error("Pipedrive konnte nicht aktualisiert werden."),
+      () => toast.error("Pipedrive konnte nicht aktualisiert werden."),
+    );
     setEditing(false);
     onSaved();
   }
@@ -90,7 +98,29 @@ export function LeadContactEditor({
       </Button>
     );
 
-  const field = (key: keyof ReturnType<typeof initial>, label: string, type = "text") => (
+  const labelSelect = (key: "phone_label" | "email_label", name: string) => (
+    <select
+      aria-label={`Art ${name}`}
+      className="mt-1.5 h-9 rounded-md border border-input bg-background px-2 text-sm"
+      value={form[key]}
+      disabled={busy}
+      onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value as ContactLabel }))}
+    >
+      {CONTACT_LABELS.map((c) => (
+        <option key={c.value} value={c.value}>{c.text}</option>
+      ))}
+    </select>
+  );
+  const withLabel = (key: "phone" | "email", label: string, type: string) => (
+    <label className="block text-sm">
+      {label}
+      <span className="flex gap-2">
+        <Input type={type} className="mt-1.5 min-w-0 flex-1 focus-visible:ring-inset" value={form[key]} onChange={set(key)} maxLength={300} disabled={busy} />
+        {labelSelect(key === "phone" ? "phone_label" : "email_label", label)}
+      </span>
+    </label>
+  );
+  const field = (key: "company" | "contact_name" | "website" | "address" | "city", label: string, type = "text") => (
     <label className="block text-sm">
       {label}
       <Input
@@ -114,8 +144,8 @@ export function LeadContactEditor({
       <div className="grid gap-3 sm:grid-cols-2">
         {field("company", "Firma")}
         {field("contact_name", "Ansprechpartner")}
-        {field("phone", "Telefon", "tel")}
-        {field("email", "E-Mail", "email")}
+        {withLabel("phone", "Telefon", "tel")}
+        {withLabel("email", "E-Mail", "email")}
         {field("website", "Website")}
         {field("address", "Adresse")}
         {field("city", "Ort")}

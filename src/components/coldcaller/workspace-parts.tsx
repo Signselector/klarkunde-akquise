@@ -1,3 +1,4 @@
+import { contactLabel, contactLabelText } from "@/lib/contact-labels";
 import { Building2, ExternalLink, Mail, MapPin, Phone } from "@/components/coldcaller/icons";
 import type { ReactNode } from "react";
 
@@ -96,6 +97,9 @@ export function LeadContact({
             <a className="cc-phone-number" href={`tel:${phone}`}>
               {phone}
             </a>
+          ) : null}
+          {phone ? (
+            <span className="text-muted-foreground"> ({contactLabelText(contactLabel(extra, "phone_label"))})</span>
           ) : (
             <span>Nicht hinterlegt</span>
           )}
@@ -123,7 +127,12 @@ export function LeadContact({
         <Mail aria-hidden="true" />
         <span>
           <small>E-Mail</small>
-          {email ? <a href={`mailto:${email}`}>{email}</a> : <span>–</span>}
+          {email ? (
+            <span>
+              <a href={`mailto:${email}`}>{email}</a>
+              <span className="text-muted-foreground"> ({contactLabelText(contactLabel(extra, "email_label"))})</span>
+            </span>
+          ) : <span>–</span>}
         </span>
       </div>
       <div>
