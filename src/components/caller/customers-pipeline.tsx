@@ -67,13 +67,27 @@ export function CustomersPipeline({ userId }: { userId: string }) {
       return (data?.mapping ?? {}) as Record<string, number>;
     },
   });
-  const customers = useQuery({
-    queryKey: ["customers", country, userId],
-    placeholderData: (prev) => prev,
-    queryFn: () => withViewAsRead(() => load({ data: { country } })),
+  // Instant view from this tool's stored stages; the live Pipedrive check runs in the background and replaces it.
+  const local = useQuery({
+    queryKey: ["customers-local", country, userId],
+    queryFn: () => withViewAsRead(() => load({ data: { country, live: false } })),
     staleTime: 2 * 60_000,
     refetchOnWindowFocus: false,
   });
+  const live = useQuery({
+    queryKey: ["customers", country, userId],
+    placeholderData: (prev) => prev,
+    queryFn: () => withViewAsRead(() => load({ data: { country, live: true } })),
+    staleTime: 2 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const customers = {
+    data: live.data ?? local.data,
+    isLoading: live.isLoading && local.isLoading,
+    isError: live.isError && (local.isError || !local.data),
+    isFetching: live.isFetching,
+    refetch: live.refetch,
+  };
 
   const term = search.trim().toLocaleLowerCase();
   const deals = (customers.data?.deals ?? []).filter(
@@ -84,7 +98,7 @@ export function CustomersPipeline({ userId }: { userId: string }) {
   const placed = placeDeals(deals, mapping.data ?? {}, country);
   const stageNames = customers.data?.stageNames ?? {};
   const fetchedAt = customers.data ? new Date(customers.data.fetchedAt) : null;
-  const loading = customers.isLoading || mapping.isLoading;
+  const loading = (customers.isLoading && !customers.data) || mapping.isLoading;
 
   return (
     <div className="cc-page">

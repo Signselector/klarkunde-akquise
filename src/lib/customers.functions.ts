@@ -114,29 +114,33 @@ export const loadMyCustomers = createServerFn({ method: "POST" })
     if (dealIds.length) {
       try {
         const reader = gatewayReader(data.country);
-        infos = await fetchDeals(reader, dealIds);
-        stageNames = Object.fromEntries(
-          (await reader.stages().catch(() => [])).map((s) => [s.id, s.name]),
-        );
+        const [found, stages] = await Promise.all([
+          fetchDeals(reader, dealIds),
+          reader.stages().catch(() => []),
+        ]);
+        infos = found;
+        stageNames = Object.fromEntries(stages.map((s) => [s.id, s.name]));
         const hour = new Date().toISOString().slice(0, 13);
-        for (const [id, info] of infos) {
-          if (!info) continue;
-          const status = info.status === "won" || info.status === "lost" ? info.status : null;
-          try {
-            await db.rpc("crm_apply_stage", {
-              p_country: data.country,
-              p_deal_id: id,
-              p_stage_id: info.stage_id,
-              p_event_id: `view:${id}:${info.stage_id ?? "-"}:${status ?? "-"}:${hour}`,
-              p_occurred: new Date().toISOString(),
-              p_source: "pipedrive",
-              p_actor_name: "Pipedrive (Abgleich)",
-              p_status: status,
-            } as never);
-          } catch {
-            // The stored stage is shown instead.
-          }
-        }
+        await Promise.all(
+          [...infos].map(async ([id, info]) => {
+            if (!info) return;
+            const status = info.status === "won" || info.status === "lost" ? info.status : null;
+            try {
+              await db.rpc("crm_apply_stage", {
+                p_country: data.country,
+                p_deal_id: id,
+                p_stage_id: info.stage_id,
+                p_event_id: `view:${id}:${info.stage_id ?? "-"}:${status ?? "-"}:${hour}`,
+                p_occurred: new Date().toISOString(),
+                p_source: "pipedrive",
+                p_actor_name: "Pipedrive (Abgleich)",
+                p_status: status,
+              } as never);
+            } catch {
+              // The stored stage is shown instead.
+            }
+          }),
+        );
       } catch (e) {
         error = e instanceof CrmError ? e.code : "network_error";
       }
