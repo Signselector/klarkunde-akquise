@@ -17,6 +17,7 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   list_viewed: "Liste geöffnet",
   list_exported: "Liste exportiert",
   view_as_started: "Ansicht als Mitarbeiter",
+  lead_action: "Gesprächsergebnis",
 };
 
 export const AUDIT_ACTIONS = Object.keys(AUDIT_ACTION_LABEL) as AuditAction[];
