@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dimensionsNote, websiteCategoryNote } from "./crm-sync";
+import { dimensionsNote, websiteCategoryNote } from "@/lib/crm-sync";
 
 const lead = (extra: Record<string, unknown>) => ({ id: "l", company: null, contact_name: null, email: null, phone: null, extra });
 
