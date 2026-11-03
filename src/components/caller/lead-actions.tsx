@@ -144,6 +144,7 @@ export function LeadActions({
   const [active, setActive] = useState<LeadActionKey | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [dimensions, setDimensions] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -372,6 +373,8 @@ export function LeadActions({
         };
       else if (needs.month) details = { month };
       else if (needs.doNotCall && doNotCall) details = { do_not_call: true };
+      if (action.stageKey && dimensions.trim())
+        details = { ...((details as Record<string, Json>) ?? {}), dimensions: dimensions.trim().slice(0, 2000) };
       // Use the current version: saving the customer data in the same Kundenakte raises it.
       const fresh = await supabase.from("leads").select("version").eq("id", lead.id).maybeSingle();
       const { data, error } = await supabase.rpc("record_lead_action", {
