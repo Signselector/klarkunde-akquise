@@ -133,6 +133,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
   const countries = COUNTRIES.filter((c) => (allowed.data ?? []).includes(c.code));
   const [country, setCountry] = useState<Country>(activeCountry);
   const [employee, setEmployee] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<SortKey>("renders");
   const [mode, setMode] = useState<PeriodMode>("month");
   const [anchor, setAnchor] = useState(() => todayKey());
   const [customFrom, setCustomFrom] = useState(() => addDaysKey(todayKey(), -29));
