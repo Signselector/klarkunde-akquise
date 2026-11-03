@@ -21,9 +21,9 @@ export async function fetchDeals(
   const wanted = [...new Set(ids)].slice(0, MAX_DEALS);
   const found = new Map<number, DealInfo | null>();
   let lastError: unknown = null;
-  for (let i = 0; i < wanted.length; i += 3)
+  for (let i = 0; i < wanted.length; i += 8)
     await Promise.all(
-      wanted.slice(i, i + 3).map(async (id) => {
+      wanted.slice(i, i + 8).map(async (id) => {
         try {
           const d = await reader.get(id);
           found.set(id, d && d.status === "deleted" ? null : d);
