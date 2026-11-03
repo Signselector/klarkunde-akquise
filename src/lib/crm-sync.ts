@@ -5,6 +5,8 @@
  * Pure logic with injected dependencies so it can be tested without Pipedrive or a database.
  * Retries are safe: what already exists is remembered (`links`, `steps`), so nothing is created twice.
  */
+import { contactLabel } from "@/lib/contact-labels";
+
 export type ActionRow = {
   id: string;
   lead_id: string;
