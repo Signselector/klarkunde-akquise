@@ -148,8 +148,8 @@ export async function syncLeadAction(
       links.person_id = await crm.createPerson({
         name: lead.contact_name?.trim() || lead.company?.trim() || "Unbekannt",
         ...(links.organization_id ? { org_id: links.organization_id } : {}),
-        ...(lead.email ? { email: [{ value: lead.email, primary: true, label: "work" }] } : {}),
-        ...(lead.phone ? { phone: [{ value: lead.phone, primary: true, label: "work" }] } : {}),
+        ...(lead.email ? { email: [{ value: lead.email, primary: true, label: contactLabel(lead.extra, "email_label") }] } : {}),
+        ...(lead.phone ? { phone: [{ value: lead.phone, primary: true, label: contactLabel(lead.extra, "phone_label") }] } : {}),
       });
       await save();
     }
