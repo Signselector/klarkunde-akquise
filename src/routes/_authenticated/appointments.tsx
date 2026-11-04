@@ -265,7 +265,7 @@ function AppointmentsPage() {
     const pdEditable = !!pd && (roles.isStaff || (roles.role === "veteran" && pd.ownerId === user.id));
     const pdHasNote = !!pd && !!(("pdNote" in e && e.pdNote) || e.notes);
     const note = pd ? (!pdHasNote && !pdEditable ? null : (
-      <PdNoteBlock
+      <PdNoteBlock country={country}
         activityId={pd.activityId}
        
         html={"pdNote" in e ? e.pdNote : null}
@@ -617,13 +617,13 @@ function AppointmentsPage() {
         </aside>
       </div>
 
-      <RescheduleAppointmentDialog
+      <RescheduleAppointmentDialog country={country}
         appointment={moving}
        
         onClose={() => setMoving(null)}
         onMoved={(id) => void pushNow({ data: { appointmentId: id } }).catch(() => undefined)}
       />
-      <PipedriveMeetingDialog
+      <PipedriveMeetingDialog country={country}
         meeting={editMeeting}
        
         onClose={() => setEditMeeting(null)}
