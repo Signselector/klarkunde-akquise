@@ -22,6 +22,71 @@ const dayLabel = new Intl.DateTimeFormat("de-DE", {
 });
 const hhmm = (d: Date) => d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
+/** Callbacks: any minute-exact time, overlaps allowed. Quick picks for common times. */
+function CallbackTimeInput({
+  day,
+  chosen,
+  disabled,
+  onChange,
+}: {
+  day: Date;
+  chosen: number | null;
+  disabled: boolean;
+  onChange: (iso: string | null) => void;
+}) {
+  const sameDay = chosen !== null && new Date(chosen).toDateString() === day.toDateString();
+  const value = sameDay ? hhmm(new Date(chosen as number)) : "";
+  const [error, setError] = useState<string | null>(null);
+  const apply = (t: string) => {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(t);
+    if (!m) {
+      onChange(null);
+      return;
+    }
+    const d = new Date(day.getFullYear(), day.getMonth(), day.getDate(), Number(m[1]), Number(m[2]));
+    if (d.getTime() < Date.now() - 60_000) {
+      setError("Dieser Zeitpunkt liegt in der Vergangenheit.");
+      onChange(null);
+      return;
+    }
+    setError(null);
+    onChange(d.toISOString());
+  };
+  const presets = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+  return (
+    <div className="space-y-3">
+      <label className="block text-sm">
+        <span className="mb-1 block text-muted-foreground">Uhrzeit (frei wählbar)</span>
+        <input
+          type="time"
+          step={60}
+          value={value}
+          disabled={disabled}
+          onChange={(e) => apply(e.target.value)}
+          className="h-10 w-36 rounded-md border bg-background px-3 text-sm tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2"
+        />
+      </label>
+      <div className="grid grid-cols-4 gap-1.5" aria-label="Schnellauswahl">
+        {presets.map((p) => (
+          <button
+            key={p}
+            type="button"
+            disabled={disabled}
+            onClick={() => apply(p)}
+            className={`rounded-md border px-1 py-1.5 text-sm tabular-nums transition-colors ${
+              value === p ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary hover:bg-primary/10"
+            }`}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+      {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
+      <p className="text-xs text-muted-foreground">Rückrufe dürfen sich überschneiden.</p>
+    </div>
+  );
+}
+
 /**
  * Small booking calendar: pick a day, then a 30-minute slot. Free/busy only shows how many appointments exist at
  * a time (never which ones). Full slots can not be chosen. For callbacks a slot is blocked by the user's own entries.
@@ -81,7 +146,7 @@ export function SlotPicker({
   const from = day ? new Date(day.getFullYear(), day.getMonth(), day.getDate()) : null;
   const to = from ? new Date(from.getFullYear(), from.getMonth(), from.getDate() + 1) : null;
   const availability = useQuery({
-    enabled: !!from && (kind === "callback" || fresh.isFetched),
+    enabled: !!from && kind === "appointment" && fresh.isFetched,
     queryKey: ["slots", kind, country, from?.toDateString(), leadId ?? null],
     refetchInterval: 60_000,
     queryFn: async () => {
@@ -136,7 +201,15 @@ export function SlotPicker({
           <p className="mb-2 text-sm font-medium">
             {day ? dayLabel.format(day) : "Bitte zuerst einen Tag wählen"}
           </p>
-          {day && (
+          {day && kind === "callback" && (
+            <CallbackTimeInput
+              day={day}
+              chosen={chosen}
+              disabled={!!disabled}
+              onChange={onChange}
+            />
+          )}
+          {day && kind === "appointment" && (
             <div
               className="grid grid-cols-3 gap-1.5 @sm:grid-cols-4"
               role="listbox"
