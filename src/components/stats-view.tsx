@@ -16,6 +16,10 @@ import {
   type PeriodMode,
 } from "@/lib/stats-period";
 import { Flag } from "@/components/flag";
+import { leadAvgTier } from "@/lib/kpi-tiers";
+import { formatPer100, monthStart } from "@/lib/dashboard";
+import { currentMonth } from "@/lib/monthly-stats";
+import "@/components/coldcaller/saas.css";
 import { ChevronLeft, ChevronRight } from "@/components/coldcaller/icons";
 import { FeedbackState } from "@/components/coldcaller/primitives";
 import { Button } from "@/components/ui/button";
@@ -174,6 +178,22 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
   });
   // Admins never appear in any statistic.
   const team = (overall.data?.team ?? []).filter((m) => m.role !== "admin");
+  const teamIds = team.map((m) => m.user_id);
+  const avgs = useQuery({
+    enabled: enabled && teamIds.length > 0,
+    queryKey: ["team-lead-avg", monthStart(currentMonth()), teamIds.join(",")],
+    refetchInterval: 30_000,
+    placeholderData: (prev) => prev,
+    queryFn: async () => {
+      const entries = await Promise.all(
+        teamIds.map(async (id) => {
+          const { data } = await supabase.rpc("get_monthly_quality", { p_month: monthStart(currentMonth()), p_user: id });
+          return [id, (data as { per_100: number | null } | null)?.per_100 ?? 0] as const;
+        }),
+      );
+      return Object.fromEntries(entries) as Record<string, number>;
+    },
+  });
   const data = employee ? single.data : overall.data;
   const loading = employee ? single.isLoading : overall.isLoading;
   const failed = employee ? single.isError : overall.isError;
@@ -375,7 +395,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
                 <thead className="text-muted-foreground">
                   <tr>
-                    {["Mitarbeiter", "Rolle", "Anrufe", ...OUTCOMES.map((k) => STATUS_LABEL[k] ?? k)].map((h, i) => (
+                    {["Mitarbeiter", "Rolle", "Anrufe", "Ø", ...OUTCOMES.map((k) => STATUS_LABEL[k] ?? k)].map((h, i) => (
                       <th key={h} className={cn("px-3 py-2 font-medium", i > 1 && "text-right")}>
                         {h}
                       </th>
@@ -392,6 +412,12 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{roleLabel(m.role)}</td>
                         <td className="px-3 py-2 text-right font-medium tabular-nums">{m.calls ?? 0}</td>
+                        <td className="px-3 py-2 text-right font-semibold tabular-nums" title="Leadschnitt laufender Monat (live)">
+                          {(() => {
+                            const v = avgs.data?.[m.user_id] ?? 0;
+                            return <span className={`cc-tier cc-tier--${leadAvgTier(v)}`}>{formatPer100(v)}</span>;
+                          })()}
+                        </td>
                         {OUTCOMES.map((k) => (
                           <td key={k} className="px-3 py-2 text-right tabular-nums">{m[k] ?? 0}</td>
                         ))}
