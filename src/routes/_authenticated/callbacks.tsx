@@ -1,3 +1,4 @@
+import { PhoneLink } from "@/components/phone-link";
 import { useState } from "react";
 import { calendarStatus, STATUS_DOT } from "@/lib/calendar-status";
 import { EntryDetailCard, WeekCalendar, inWeek, sameDay, startOfWeek, type WeekEntry } from "@/components/caller/week-calendar";
@@ -70,7 +71,7 @@ function CallbacksPage() {
         note={note}
         rows={[
           ...(c.lead?.contact_name ? [{ icon: User, text: c.lead.contact_name }] : []),
-          ...(c.lead?.phone ? [{ icon: Phone, text: <a className="text-primary hover:underline" href={`tel:${c.lead.phone}`}>{c.lead.phone}</a> }] : []),
+          ...(c.lead?.phone ? [{ icon: Phone, text: <PhoneLink className="text-primary hover:underline" phone={c.lead.phone} country={country} /> }] : []),
           ...(c.lead?.company ? [{ icon: Building2, text: c.lead.company }] : []),
         ]}
         footer={

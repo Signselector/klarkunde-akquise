@@ -1,3 +1,4 @@
+import { PhoneLink } from "@/components/phone-link";
 import { Mail, MapPin, Pencil, Phone } from "@/components/coldcaller/icons";
 import { ACTION_ICON } from "@/components/caller/action-icons";
 import { LEAD_ACTIONS, OUTCOME_TONES, type LeadActionKey } from "@/lib/lead-actions";
@@ -63,14 +64,12 @@ function ContactLinks({ lead }: { lead: TableLead }) {
     <div className="flex min-w-[11rem] max-w-[18rem] flex-col gap-1.5">
       {lead.contact_name && <p className={`${row} truncate`}>{lead.contact_name}</p>}
       {lead.phone ? (
-        <a
-          className={`${row} text-primary hover:underline`}
-          href={`tel:${lead.phone}`}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Phone size={14} aria-hidden="true" className="shrink-0" />
-          <span className="truncate">{lead.phone}</span>
-        </a>
+        <span onClick={(e) => e.stopPropagation()}>
+          <PhoneLink phone={lead.phone} className={`${row} text-primary hover:underline`}>
+            <Phone size={14} aria-hidden="true" className="shrink-0" />
+            <span className="truncate">{lead.phone}</span>
+          </PhoneLink>
+        </span>
       ) : (
         <span className={`${row} text-muted-foreground`}>Keine Nummer</span>
       )}

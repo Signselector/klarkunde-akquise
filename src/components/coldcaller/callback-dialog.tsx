@@ -1,3 +1,5 @@
+import { telHref } from "@/lib/phone";
+import { useCountry } from "@/lib/country";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useRef } from "react";
 import { Phone, X } from "@/components/coldcaller/icons";
@@ -64,7 +66,13 @@ export function CallbackDialog({
             <Dialog.Close asChild>
               <ActionButton variant="secondary">Zurück zur Arbeit</ActionButton>
             </Dialog.Close>
-            <ActionButton onClick={onCall}>
+            <ActionButton
+              onClick={() => {
+                onCall();
+                const href = telHref(callback.phone, country);
+                if (href) window.location.href = href;
+              }}
+            >
               <Phone size={18} />
               {actionLabel}
             </ActionButton>

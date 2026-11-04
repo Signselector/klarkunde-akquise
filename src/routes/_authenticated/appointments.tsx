@@ -1,3 +1,4 @@
+import { PhoneLink } from "@/components/phone-link";
 import { EntryDetailCard, WeekCalendar, inWeek, sameDay, startOfWeek, toEntryKind, type WeekEntry } from "@/components/caller/week-calendar";
 import { appointmentDotClass } from "@/lib/calendar-status";
 import { useServerFn } from "@tanstack/react-start";
@@ -287,7 +288,7 @@ function AppointmentsPage() {
           { icon: UserCircle, text: e.user_id === user.id ? "Ich" : nameOf(e.user_id) },
           ...(lead?.company ? [{ icon: CircleDollarSign, text: lead.company }] : []),
           ...(lead?.contact_name ? [{ icon: User, text: lead.contact_name }] : []),
-          ...(lead?.phone ? [{ icon: Phone, text: <a className="text-primary hover:underline" href={`tel:${lead.phone}`}>{lead.phone}</a> }] : []),
+          ...(lead?.phone ? [{ icon: Phone, text: <PhoneLink className="text-primary hover:underline" phone={lead.phone} country={country} /> }] : []),
           ...(lead?.company ? [{ icon: Building2, text: lead.company }] : []),
         ];
     return (
@@ -433,7 +434,7 @@ function AppointmentsPage() {
               {next.lead?.contact_name && <dd>{next.lead.contact_name}</dd>}
               {next.lead?.phone && (
                 <dd>
-                  <a className="text-primary hover:underline" href={`tel:${next.lead.phone}`}>{next.lead.phone}</a>
+                  <PhoneLink className="text-primary hover:underline" phone={next.lead.phone} country={country} />
                 </dd>
               )}
               {next.lead?.email && <dd className="truncate">{next.lead.email}</dd>}
@@ -546,9 +547,9 @@ function AppointmentsPage() {
                         </p>
                       )}
                       {e.lead?.phone && (
-                        <a href={`tel:${e.lead.phone}`} className="mt-1 inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline">
+                        <PhoneLink phone={e.lead.phone} country={country} className="mt-1 inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline">
                           <Phone className="size-3" /> {e.lead.phone}
-                        </a>
+                        </PhoneLink>
                       )}
                       {e.notes && e.notes !== heading && <p className="mt-1 text-xs text-muted-foreground">{e.notes}</p>}
                       {"pd" in e && e.pd && roles.isStaff && e.pd.ownerId !== user.id && (

@@ -1,3 +1,4 @@
+import { PhoneLink } from "@/components/phone-link";
 import { contactLabel, contactLabelText } from "@/lib/contact-labels";
 import { Building2, ExternalLink, Mail, MapPin, Phone } from "@/components/coldcaller/icons";
 import type { ReactNode } from "react";
@@ -94,9 +95,7 @@ export function LeadContact({
         <span>
           <small>Telefon</small>
           {phone ? (
-            <a className="cc-phone-number" href={`tel:${phone}`}>
-              {phone}
-            </a>
+            <PhoneLink className="cc-phone-number" phone={phone} />
           ) : null}
           {phone ? (
             <span className="text-muted-foreground"> ({contactLabelText(contactLabel(extra, "phone_label"))})</span>
