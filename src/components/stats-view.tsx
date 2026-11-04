@@ -70,19 +70,23 @@ const OUTCOMES = [
   "not_reached",
   "no_interest",
 ] as const;
-type SortKey = "renders" | "calls" | (typeof OUTCOMES)[number] | "name";
+type SortKey = "avg" | "renders" | "calls" | (typeof OUTCOMES)[number] | "name";
 const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: "avg", label: "Ø Schnitt" },
   { value: "renders", label: "Render gesamt" },
   { value: "calls", label: "Anrufe" },
   ...OUTCOMES.map((k) => ({ value: k, label: STATUS_LABEL[k] ?? k })),
   { value: "name", label: "Name (A–Z)" },
 ];
-export function sortTeam<T extends { name: string; calls?: number } & Partial<Record<(typeof OUTCOMES)[number], number>>>(
+export function sortTeam<T extends { name: string; calls?: number; user_id?: string } & Partial<Record<(typeof OUTCOMES)[number], number>>>(
   team: T[],
   key: SortKey,
+  avgs: Record<string, number> = {},
 ): T[] {
   const val = (m: T) =>
-    key === "renders" ? (m.low_q ?? 0) + (m.high_q ?? 0) : key === "name" ? 0 : ((m as Record<string, unknown>)[key] as number) ?? 0;
+    key === "avg"
+      ? avgs[m.user_id ?? ""] ?? 0
+      : key === "renders" ? (m.low_q ?? 0) + (m.high_q ?? 0) : key === "name" ? 0 : ((m as Record<string, unknown>)[key] as number) ?? 0;
   return [...team].sort((a, b) => (key === "name" ? 0 : val(b) - val(a)) || a.name.localeCompare(b.name));
 }
 const pct = (v: number | null) => (v === null ? "–" : `${String(v).replace(".", ",")} %`);
@@ -137,7 +141,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
   const countries = COUNTRIES.filter((c) => (allowed.data ?? []).includes(c.code));
   const [country, setCountry] = useState<Country>(activeCountry);
   const [employee, setEmployee] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>("renders");
+  const [sortKey, setSortKey] = useState<SortKey>("avg");
   const [mode, setMode] = useState<PeriodMode>("month");
   const [anchor, setAnchor] = useState(() => todayKey());
   const [customFrom, setCustomFrom] = useState(() => addDaysKey(todayKey(), -29));
@@ -395,7 +399,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               <table className="w-full min-w-max whitespace-nowrap text-left text-sm">
                 <thead className="text-muted-foreground">
                   <tr>
-                    {["Mitarbeiter", "Rolle", "Anrufe", "Ø", ...OUTCOMES.map((k) => STATUS_LABEL[k] ?? k)].map((h, i) => (
+                    {["Mitarbeiter", "Rolle", "Ø", "Anrufe", ...OUTCOMES.map((k) => STATUS_LABEL[k] ?? k)].map((h, i) => (
                       <th key={h} className={cn("px-3 py-2 font-medium", i > 1 && "text-right")}>
                         {h}
                       </th>
@@ -403,7 +407,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {sortTeam(team, sortKey).map((m) => (
+                  {sortTeam(team, sortKey, (avgs.data ?? {}) as Record<string, number>).map((m) => (
                       <tr key={m.user_id}>
                         <td className="px-3 py-2">
                           <button type="button" className="font-medium underline-offset-2 hover:underline" onClick={() => setEmployee(m.user_id)}>
@@ -411,13 +415,13 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
                           </button>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{roleLabel(m.role)}</td>
-                        <td className="px-3 py-2 text-right font-medium tabular-nums">{m.calls ?? 0}</td>
                         <td className="px-3 py-2 text-right font-semibold tabular-nums" title="Leadschnitt laufender Monat (live)">
                           {(() => {
                             const v = avgs.data?.[m.user_id] ?? 0;
                             return <span className={`cc-tier cc-tier--${leadAvgTier(v)}`}>{formatPer100(v)}</span>;
                           })()}
                         </td>
+                        <td className="px-3 py-2 text-right font-medium tabular-nums">{m.calls ?? 0}</td>
                         {OUTCOMES.map((k) => (
                           <td key={k} className="px-3 py-2 text-right tabular-nums">{m[k] ?? 0}</td>
                         ))}

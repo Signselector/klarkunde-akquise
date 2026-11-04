@@ -11,6 +11,10 @@ describe("sortTeam", () => {
   it("sorts by total renders, highest first", () => {
     expect(sortTeam(team, "renders").map((m) => m.name)).toEqual(["Bert", "Anna", "Cora"]);
   });
+  it("sorts by lead average, highest first", () => {
+    const t = team.map((m) => ({ ...m, user_id: m.name }));
+    expect(sortTeam(t, "avg", { Anna: 1.5, Bert: 0.5, Cora: 2 }).map((m) => m.name)).toEqual(["Cora", "Anna", "Bert"]);
+  });
   it("sorts by calls, highest first", () => {
     expect(sortTeam(team, "calls").map((m) => m.name)).toEqual(["Bert", "Cora", "Anna"]);
   });
