@@ -106,7 +106,9 @@ export function buildValidationReport(input: {
   }
 
   // "Zukünftiges Interesse" is a deal stage in some accounts and a lifecycle option on the person in others.
-  const futureStage = input.stages.find((s) => /zuk(ü|u)nftig/i.test(s.name));
+  const futureStage =
+    input.stages.find((s) => /aktuelles\s+zukunftsinteresse/i.test(s.name)) ??
+    input.stages.find((s) => /zuk(ü|u)nftig/i.test(s.name));
   const lifecycle = input.personFields.find(
     (f) => /lifecycle/i.test(f.name) && f.options?.some((o) => /zuk(ü|u)nftig/i.test(o.label)),
   );
