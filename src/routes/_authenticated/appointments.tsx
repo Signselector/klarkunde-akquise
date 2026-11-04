@@ -267,7 +267,7 @@ function AppointmentsPage() {
     const note = pd ? (!pdHasNote && !pdEditable ? null : (
       <PdNoteBlock
         activityId={pd.activityId}
-        country={country}
+       
         html={"pdNote" in e ? e.pdNote : null}
         fallback={e.notes}
         editable={pdEditable}
@@ -288,7 +288,7 @@ function AppointmentsPage() {
           { icon: UserCircle, text: e.user_id === user.id ? "Ich" : nameOf(e.user_id) },
           ...(lead?.company ? [{ icon: CircleDollarSign, text: lead.company }] : []),
           ...(lead?.contact_name ? [{ icon: User, text: lead.contact_name }] : []),
-          ...(lead?.phone ? [{ icon: Phone, text: <PhoneLink className="text-primary hover:underline" phone={lead.phone} country={country} /> }] : []),
+          ...(lead?.phone ? [{ icon: Phone, text: <PhoneLink className="text-primary hover:underline" phone={lead.phone} /> }] : []),
           ...(lead?.company ? [{ icon: Building2, text: lead.company }] : []),
         ];
     return (
@@ -434,7 +434,7 @@ function AppointmentsPage() {
               {next.lead?.contact_name && <dd>{next.lead.contact_name}</dd>}
               {next.lead?.phone && (
                 <dd>
-                  <PhoneLink className="text-primary hover:underline" phone={next.lead.phone} country={country} />
+                  <PhoneLink className="text-primary hover:underline" phone={next.lead.phone} />
                 </dd>
               )}
               {next.lead?.email && <dd className="truncate">{next.lead.email}</dd>}
@@ -547,7 +547,7 @@ function AppointmentsPage() {
                         </p>
                       )}
                       {e.lead?.phone && (
-                        <PhoneLink phone={e.lead.phone} country={country} className="mt-1 inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline">
+                        <PhoneLink phone={e.lead.phone} className="mt-1 inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline">
                           <Phone className="size-3" /> {e.lead.phone}
                         </PhoneLink>
                       )}
@@ -619,13 +619,13 @@ function AppointmentsPage() {
 
       <RescheduleAppointmentDialog
         appointment={moving}
-        country={country}
+       
         onClose={() => setMoving(null)}
         onMoved={(id) => void pushNow({ data: { appointmentId: id } }).catch(() => undefined)}
       />
       <PipedriveMeetingDialog
         meeting={editMeeting}
-        country={country}
+       
         onClose={() => setEditMeeting(null)}
         onSaved={() => void qc.invalidateQueries({ queryKey: ["external-activities"] })}
       />

@@ -71,7 +71,7 @@ function CallbacksPage() {
         note={note}
         rows={[
           ...(c.lead?.contact_name ? [{ icon: User, text: c.lead.contact_name }] : []),
-          ...(c.lead?.phone ? [{ icon: Phone, text: <PhoneLink className="text-primary hover:underline" phone={c.lead.phone} country={country} /> }] : []),
+          ...(c.lead?.phone ? [{ icon: Phone, text: <PhoneLink className="text-primary hover:underline" phone={c.lead.phone} /> }] : []),
           ...(c.lead?.company ? [{ icon: Building2, text: c.lead.company }] : []),
         ]}
         footer={
@@ -225,7 +225,7 @@ function CallbacksPage() {
           </div>
         </Surface>
       </div>
-      <RescheduleCallbackDialog callback={moving} userId={user.id} country={country} onClose={() => setMoving(null)} />
+      <RescheduleCallbackDialog callback={moving} userId={user.id} onClose={() => setMoving(null)} />
       <LeadDialog
         leadId={leadId}
         userId={user.id}

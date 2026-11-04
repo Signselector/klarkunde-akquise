@@ -27,6 +27,7 @@ export function CallbackDialog({
   onCall: () => void;
   actionLabel?: string;
 }) {
+  const country = useCountry();
   const returnFocus = useRef<HTMLElement | null>(null);
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
