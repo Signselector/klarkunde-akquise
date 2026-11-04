@@ -159,4 +159,7 @@ export const EN_5: Record<string, string> = {
   "Versuche": "Attempts",
   "Letzter Versuch": "Last attempt",
   "Landesweit": "Nationwide",
+  "🎨 Neuer Logo Render im Team generiert!": "🎨 A new Logo Render was generated in the team!",
+  "✨ Neuer Realismus Render im Team generiert!": "✨ A new Realism Render was generated in the team!",
+  "🏆 Ein Deal wurde erfolgreich gewonnen!": "🏆 A deal was won successfully!",
 };

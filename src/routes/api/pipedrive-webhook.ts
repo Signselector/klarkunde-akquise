@@ -3,6 +3,14 @@ import { basicAuthOk, parseDealWebhook } from "@/lib/pipedrive-webhook";
 
 const COUNTRIES = ["DE", "AT", "NL"];
 
+/** A deal that just became won (status or won stage): anonymous live celebration for the whole country. */
+async function announceWon(country: string, dealId: number, result: unknown) {
+  const r = (result ?? {}) as { won_change?: boolean; won_stage?: boolean };
+  if (!r.won_change && !r.won_stage) return;
+  const { broadcastCelebration } = await import("@/lib/celebration.server");
+  await broadcastCelebration(country, "won", `won:${country}:${dealId}`);
+}
+
 /**
  * Receives Pipedrive deal webhooks. Protected by basic auth (set when the webhook is registered).
  * Idempotent: a repeated or late delivery never writes a second history entry.
@@ -38,6 +46,7 @@ export const Route = createFileRoute("/api/pipedrive-webhook")({
         let { data, error } = await apply();
         // A server error makes Pipedrive retry; the retry is harmless because the event id is stored.
         if (error) return new Response("error", { status: 500 });
+        await announceWon(country, event.dealId, data);
         // Unknown deal: maybe the answer to a reference mail. Match by the deal person's e-mail/phone
         // and credit the lead to its original caller.
         if (!event.deleted && (data as { reason?: string } | null)?.reason === "unknown_deal") {
@@ -64,7 +73,10 @@ export const Route = createFileRoute("/api/pipedrive-webhook")({
               });
               if ((m as { matched?: boolean } | null)?.matched) {
                 const again = await apply();
-                if (!again.error) data = again.data;
+                if (!again.error) {
+                  data = again.data;
+                  await announceWon(country, event.dealId, data);
+                }
                 return Response.json({ reference_match: m, stage: data });
               }
             }

@@ -1,6 +1,8 @@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Reveal } from "@/components/ui/reveal";
 import { celebrate } from "@/lib/achievements";
+import { markOwnCelebration } from "@/lib/celebration";
+import { announceLeadResult } from "@/lib/celebration.functions";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -140,6 +142,7 @@ export function LeadActions({
   const qc = useQueryClient();
   const sync = useServerFn(syncLeadAction);
   const sendMail = useServerFn(sendLeadEmail);
+  const announce = useServerFn(announceLeadResult);
   const country = useCountry();
   const [active, setActive] = useState<LeadActionKey | null>(null);
   const [busy, setBusy] = useState(false);
@@ -399,12 +402,16 @@ export function LeadActions({
       const stage = result.stage_key ? STAGE_NAME[result.stage_key] : null;
       const special = action.celebration === "special";
       // Logo Render / Realismus Render are the callers' big results: celebrate right after saving.
-      if (action.key === "low_q" || action.key === "high_q")
+      if (action.key === "low_q" || action.key === "high_q") {
+        // The rest of the country hears about it anonymously; this browser shows only its own celebration.
+        markOwnCelebration(action.key);
+        if (result.action_id) void announce({ data: { actionId: result.action_id } }).catch(() => undefined);
         celebrate({
           title: `${ACTION_LABEL[action.key]} abgeschlossen`,
           detail: `${lead.company || "Der Lead"} wurde als Deal angelegt. Stark gemacht!`,
           tone: action.key === "high_q" ? "gold" : "blue",
         });
+      }
       const erased = (result as { erased?: boolean }).erased === true;
       const plain =
         action.key === "callback"

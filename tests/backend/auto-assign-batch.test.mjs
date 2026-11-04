@@ -41,11 +41,11 @@ const owner = async (id) =>
 
 before(async () => {
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
- CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,raw_user_meta_data jsonb);
+ CREATE PUBLICATION supabase_realtime; CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,raw_user_meta_data jsonb);
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
-    .filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron)/.test(x))
+    .filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_)/.test(x))
     .sort()) {
     const sql = (
       await readFile(new URL("../../drizzle/migrations/" + file, import.meta.url), "utf8")
@@ -162,4 +162,27 @@ test("not reached leads are handed out for 20 days, then they only show up in th
     )
   ).rows[0];
   assert.equal(p.processed, 2, "they still count as processed for the batch");
+});
+
+test("crm_apply_stage reports a deal that just became won exactly once", async () => {
+  const W = await mk("W", "DE");
+  await addLeads(W, 1);
+  const lead = (await db.query("select id from public.leads where batch_id=$1", [W])).rows[0].id;
+  await db.query(
+    "insert into public.lead_crm_links(lead_id,country,deal_id,current_stage_key,sync_state) values ($1,'DE',777001,'low_q','synced')",
+    [lead],
+  );
+  const apply = async (event, status) =>
+    (
+      await db.query(
+        "select public.crm_apply_stage('DE',777001,null,$1,now(),'pipedrive',null,'Pipedrive',$2) r",
+        [event, status],
+      )
+    ).rows[0].r;
+  const first = await apply("e1", "won");
+  assert.equal(first.won_change, true);
+  const again = await apply("e2", "won");
+  assert.notEqual(again.won_change, true, "an unchanged status is not announced again");
+  const lost = await apply("e3", "lost");
+  assert.notEqual(lost.won_change, true, "only won is celebrated");
 });

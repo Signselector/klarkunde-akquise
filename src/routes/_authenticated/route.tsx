@@ -6,6 +6,7 @@ import { getViewAs, installViewAsGuard, setViewAs } from "@/lib/view-as";
 import { CallbackReminder } from "@/components/caller/callback-reminder";
 import { FutureProjectsActivator } from "@/components/future-projects-activator";
 import { AchievementHost } from "@/components/achievement-host";
+import { CelebrationNotifier } from "@/components/celebration-notifier";
 import { AchievementNotifier } from "@/components/achievement-notifier";
 import { AppointmentNotifier } from "@/components/appointment-notifier";
 import { AppointmentReminder } from "@/components/appointment-reminder";
@@ -368,6 +369,7 @@ function Layout() {
           {!viewAs && <AppointmentReminder userId={user.id} />}
           {!viewAs && <AchievementNotifier userId={user.id} />}
           <AchievementHost />
+          {!viewAs && <CelebrationNotifier />}
           <Outlet />
         </div>
       </SidebarInset>

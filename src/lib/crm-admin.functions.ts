@@ -161,7 +161,13 @@ async function reconcile(country: string): Promise<ReconcileResult> {
         p_actor_name: "Pipedrive (Abgleich)",
         p_status: a.status,
       } as never);
-      return (r ?? {}) as { applied?: boolean; reason?: string };
+      const res = (r ?? {}) as { applied?: boolean; reason?: string; won_change?: boolean; won_stage?: boolean };
+      // A deal that just became won (found by the comparison): announce it anonymously to the country.
+      if (res.won_change || res.won_stage) {
+        const { broadcastCelebration } = await import("@/lib/celebration.server");
+        await broadcastCelebration(country, "won", `won:${country}:${a.dealId}`);
+      }
+      return res;
     },
   );
 }

@@ -26,11 +26,11 @@ let open, draft, abroad;
 
 before(async () => {
   await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;
- CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,raw_user_meta_data jsonb);
+ CREATE PUBLICATION supabase_realtime; CREATE SCHEMA auth; CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,raw_user_meta_data jsonb);
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
-    .filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron)/.test(x))
+    .filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_)/.test(x))
     .sort()) {
     // PGlite has no pg_cron: skip only the nightly schedule, the functions are still created.
     const sql = (

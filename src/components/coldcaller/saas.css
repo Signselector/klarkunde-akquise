@@ -2425,3 +2425,21 @@ tr:hover > .cc-sticky-action {
 }
 @keyframes cc-gold-shine { from { background-position: 100% 0; } to { background-position: -150% 0; } }
 @media (prefers-reduced-motion: reduce) { .cc-tier--gold { animation: none; } }
+
+/* Live celebration of the team: sits a little lower than the personal achievement card and fades out softly. */
+.cc-celebrate-wrap {
+  top: 84px;
+}
+.cc-celebrate--out {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cc-celebrate--out {
+    transition: opacity 300ms ease;
+    transform: none;
+  }
+}
