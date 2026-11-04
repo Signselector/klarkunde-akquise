@@ -230,25 +230,7 @@ function ProfilePage() {
           </div>
         </div>
       </section>
-      <form onSubmit={saveName} className="space-y-3 rounded-lg border bg-card p-4">
-        <h2 className="font-semibold">{t("Anzeigename")}</h2>
-        <div className="grid gap-1.5">
-          <Input
-            id="profile-name"
-            aria-label="Anzeigename"
-            value={name}
-            maxLength={80}
-            onChange={(e) => setName(e.target.value)}
-            autoComplete="name"
-          />
-        </div>
-        <Button
-          type="submit"
-          disabled={busy || !name.trim() || name.trim() === profile?.display_name}
-        >
-          Speichern
-        </Button>
-      </form>
+
       <form onSubmit={savePassword} className="space-y-3 rounded-lg border bg-card p-4">
         <h2 className="font-semibold">{t("Passwort ändern")}</h2>
         <div className="grid gap-1.5">
