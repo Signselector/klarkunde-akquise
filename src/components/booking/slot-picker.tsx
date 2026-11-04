@@ -146,7 +146,7 @@ export function SlotPicker({
   const from = day ? new Date(day.getFullYear(), day.getMonth(), day.getDate()) : null;
   const to = from ? new Date(from.getFullYear(), from.getMonth(), from.getDate() + 1) : null;
   const availability = useQuery({
-    enabled: !!from && (kind === "callback" || fresh.isFetched),
+    enabled: !!from && kind === "appointment" && fresh.isFetched,
     queryKey: ["slots", kind, country, from?.toDateString(), leadId ?? null],
     refetchInterval: 60_000,
     queryFn: async () => {
