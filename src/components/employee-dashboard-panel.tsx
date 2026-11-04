@@ -4,6 +4,9 @@ import { FeedbackState } from "@/components/coldcaller/primitives";
 import { formatNumber, formatPer100, monthStart } from "@/lib/dashboard";
 import { currentMonth, monthLabel, shiftMonth } from "@/lib/monthly-stats";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { leadAvgTier } from "@/lib/kpi-tiers";
+import "@/components/coldcaller/saas.css";
 
 type Metrics = {
   attempts: number;
@@ -59,7 +62,8 @@ export function EmployeeDashboardPanel({
   from: string;
   to: string;
 }) {
-  const last = shiftMonth(currentMonth(), -1);
+  const [offset, setOffset] = useState(0);
+  const last = shiftMonth(currentMonth(), offset);
   const period = useQuery({
     queryKey: ["employee-stats", country, userId, from, to],
     queryFn: async () => {
@@ -75,6 +79,7 @@ export function EmployeeDashboardPanel({
   });
   const quality = useQuery({
     queryKey: ["employee-quality", userId, monthStart(last)],
+    refetchInterval: offset === 0 ? 30_000 : false,
     queryFn: async () => {
       const { data, error } = await supabase.rpc("get_monthly_quality", {
         p_month: monthStart(last),
@@ -97,12 +102,8 @@ export function EmployeeDashboardPanel({
   const teamPeriod = t
     ? monthLabel({ year: Number(t.period.slice(0, 4)), month: Number(t.period.slice(5, 7)) })
     : null;
+  const avg = quality.data?.per_100 ?? 0;
   const monthly: [string, string, string | null][] = [
-    [
-      "Leads pro 100",
-      quality.data?.per_100 != null ? formatPer100(quality.data.per_100) : "–",
-      `${monthLabel(last)}${quality.data && !quality.data.final ? " (läuft)" : ""}`,
-    ],
     ["Leadqualität", t?.lead_quality != null ? formatPer100(t.lead_quality) : "–", teamPeriod],
     [
       "Eingebrachte Leads",
@@ -118,7 +119,7 @@ export function EmployeeDashboardPanel({
       <h2 className="font-semibold">Dashboard-Kennzahlen von {name}</h2>
       <p className="text-xs text-muted-foreground">
         Dieselben Zahlen, die {name} im eigenen Dashboard sieht. Die Anzahlen gelten für den
-        gewählten Zeitraum, die drei Monatswerte für den zuletzt abgeschlossenen Monat.
+        gewählten Zeitraum, der Leadschnitt für den laufenden Monat (live).
       </p>
       {period.isError ? (
         <FeedbackState kind="error" title="Kennzahlen nicht verfügbar">
@@ -137,6 +138,21 @@ export function EmployeeDashboardPanel({
               <p className="text-2xl tabular-nums">{m ? formatNumber(m[tile.key]) : "–"}</p>
             </div>
           ))}
+          <div className="rounded-lg border bg-background p-3">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Ø Leads pro 100</span>
+              <span className="flex items-center gap-1">
+                <button type="button" aria-label="Vorheriger Monat" className="px-1 hover:text-foreground" onClick={() => setOffset((o) => o - 1)}>‹</button>
+                <button type="button" aria-label="Nächster Monat" className="px-1 hover:text-foreground disabled:opacity-30" disabled={offset >= 0} onClick={() => setOffset((o) => Math.min(0, o + 1))}>›</button>
+              </span>
+            </div>
+            <p className="text-2xl font-semibold tabular-nums">
+              <span className={`cc-tier cc-tier--${leadAvgTier(avg)}`}>{formatPer100(avg)}</span>
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              {monthLabel(last)} · {offset === 0 ? "live" : "eingefroren"}
+            </p>
+          </div>
           {monthly.map(([label, value, sub]) => (
             <div key={label} className="rounded-lg border bg-background p-3">
               <p className="text-xs text-muted-foreground">{label}</p>
