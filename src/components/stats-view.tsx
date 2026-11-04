@@ -113,10 +113,16 @@ function Bars({ items }: { items: { label: string; value: number }[] }) {
 function Timeline({ points }: { points: { label: string; value: number; title: string }[] }) {
   const max = Math.max(1, ...points.map((p) => p.value));
   return (
-    <div className="flex h-44 items-end gap-1" role="img" aria-label="Gespräche im zeitlichen Verlauf">
+    <div className="group/tl flex h-44 items-end gap-1" role="img" aria-label="Gespräche im zeitlichen Verlauf">
       {points.map((p) => (
-        <div key={p.title} className="flex h-full min-w-0 flex-1 flex-col justify-end text-center" title={p.title}>
-          <span className="text-[10px] tabular-nums text-muted-foreground">{p.value || ""}</span>
+        <div
+          key={p.title}
+          className="group/bar flex h-full min-w-0 flex-1 flex-col justify-end text-center transition-opacity duration-150 group-hover/tl:opacity-30 hover:!opacity-100"
+          title={p.title}
+        >
+          <span className="text-[10px] font-medium tabular-nums text-foreground opacity-0 transition-opacity duration-150 group-hover/bar:opacity-100">
+            {p.value || ""}
+          </span>
           <div
             className={cn("w-full rounded-t", p.value ? "bg-primary" : "bg-muted")}
             style={{ height: `${Math.max(p.value ? 6 : 2, (p.value / max) * 100)}%` }}
