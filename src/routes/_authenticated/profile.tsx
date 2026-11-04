@@ -100,30 +100,6 @@ function ProfilePage() {
     qc.invalidateQueries({ queryKey: ["profile", user.id] });
   }
 
-  async function saveName(e: React.FormEvent) {
-    e.preventDefault();
-    const value = name.trim();
-    if (value.length < 2 || value.length > 80) {
-      toast.error("Der Name muss 2 bis 80 Zeichen lang sein.");
-      return;
-    }
-    setBusy(true);
-    const { data, error } = await supabase
-      .from("profiles")
-      .update({ display_name: value })
-      .eq("id", user.id)
-      .select("id");
-    setBusy(false);
-    if (error || !data?.length) {
-      toast.error("Name konnte nicht gespeichert werden.");
-      return;
-    }
-    toast.success("Name gespeichert.");
-    qc.invalidateQueries({ queryKey: ["me", user.id] });
-    qc.invalidateQueries({ queryKey: ["profile", user.id] });
-    qc.invalidateQueries({ queryKey: ["users"] });
-  }
-
   async function savePassword(e: React.FormEvent) {
     e.preventDefault();
     if (!currentPw) {
@@ -168,6 +144,8 @@ function ProfilePage() {
       <section className="space-y-3 rounded-lg border bg-card p-4">
         <h2 className="font-semibold">{t("Konto")}</h2>
         <dl className="grid gap-2 text-sm sm:grid-cols-[8rem_1fr]">
+          <dt className="text-muted-foreground">Name</dt>
+          <dd>{name || "–"}</dd>
           <dt className="text-muted-foreground">E-Mail</dt>
           <dd>{user.email}</dd>
           <dt className="text-muted-foreground">Rolle</dt>
