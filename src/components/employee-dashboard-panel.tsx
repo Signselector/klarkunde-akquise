@@ -119,7 +119,7 @@ export function EmployeeDashboardPanel({
       <h2 className="font-semibold">Dashboard-Kennzahlen von {name}</h2>
       <p className="text-xs text-muted-foreground">
         Dieselben Zahlen, die {name} im eigenen Dashboard sieht. Die Anzahlen gelten für den
-        gewählten Zeitraum, die drei Monatswerte für den zuletzt abgeschlossenen Monat.
+        gewählten Zeitraum, der Leadschnitt für den laufenden Monat (live).
       </p>
       {period.isError ? (
         <FeedbackState kind="error" title="Kennzahlen nicht verfügbar">
