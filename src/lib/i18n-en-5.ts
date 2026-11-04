@@ -158,4 +158,5 @@ export const EN_5: Record<string, string> = {
   "Sobald ein Lead 20 Tage lang als „Nicht erreicht“ unter Offene Leads lag, erscheint er hier.": "As soon as a lead has been listed as “Not reached” under open leads for 20 days, it appears here.",
   "Versuche": "Attempts",
   "Letzter Versuch": "Last attempt",
+  "Landesweit": "Nationwide",
 };

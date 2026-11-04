@@ -265,7 +265,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               onChange={(v) => setEmployee(v || null)}
               ariaLabel="Gesamtes Land oder Mitarbeiter"
               options={[
-                { value: "", label: "Gesamtes Land (alle Mitarbeiter)" },
+                { value: "", label: "Landesweit" },
                 ...team.map((m) => ({ value: m.user_id, label: `${m.name} · ${roleLabel(m.role)}` })),
               ]}
             />
@@ -300,9 +300,11 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
             </div>
           ) : (<>
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" aria-label="Zurück" onClick={() => setAnchor(shiftAnchor(mode, anchor, -1))}>
-              <ChevronLeft />
-            </Button>
+            {mode !== "month" && (
+              <Button variant="ghost" size="icon" aria-label="Zurück" onClick={() => setAnchor(shiftAnchor(mode, anchor, -1))}>
+                <ChevronLeft />
+              </Button>
+            )}
             {mode === "month" ? (
               <Dropdown
                 className="capitalize"
@@ -329,9 +331,11 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
                 {period.label}
               </span>
             )}
-            <Button variant="ghost" size="icon" aria-label="Weiter" onClick={() => setAnchor(shiftAnchor(mode, anchor, 1))}>
-              <ChevronRight />
-            </Button>
+            {mode !== "month" && (
+              <Button variant="ghost" size="icon" aria-label="Weiter" onClick={() => setAnchor(shiftAnchor(mode, anchor, 1))}>
+                <ChevronRight />
+              </Button>
+            )}
           </div>
           {mode === "day" && <span className="text-sm text-muted-foreground">{period.label}</span>}
           </>)}
