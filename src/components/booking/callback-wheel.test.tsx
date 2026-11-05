@@ -93,11 +93,15 @@ describe("CallbackTimeInput", () => {
     expect([d.getHours(), d.getMinutes()]).toEqual([15, 47]);
   });
 
-  it("does not check other callbacks: overlaps are allowed", () => {
-    render(
-      <CallbackTimeInput day={day} chosen={null} disabled={false} onChange={() => undefined} />,
-    );
-    expect(screen.getByText("Rückrufe dürfen sich überschneiden.")).toBeTruthy();
+  it("selects 10:00 by default and shows no quick picks, hint or summary", () => {
+    const onChange = vi.fn();
+    render(<CallbackTimeInput day={day} chosen={null} disabled={false} onChange={onChange} />);
+    const d = new Date(onChange.mock.calls[0]![0]);
+    expect([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes()]).toEqual([
+      2026, 10, 6, 10, 0,
+    ]);
+    expect(screen.queryByRole("button", { name: "09:00" })).toBeNull();
+    expect(screen.queryByText(/überschneiden/)).toBeNull();
   });
 
   it("warns about a time in the past today and selects nothing", () => {
@@ -114,12 +118,5 @@ describe("CallbackTimeInput", () => {
     scrollWheel("Minute", 30);
     expect(screen.getByRole("alert").textContent).toContain("liegt in der Vergangenheit");
     expect(onChange.mock.lastCall![0]).toBeNull();
-  });
-
-  it("quick picks turn the wheels", () => {
-    const onChange = vi.fn();
-    render(<CallbackTimeInput day={day} chosen={null} disabled={false} onChange={onChange} />);
-    fireEvent.click(screen.getByRole("button", { name: "14:00" }));
-    expect(new Date(onChange.mock.lastCall![0]).getHours()).toBe(14);
   });
 });

@@ -179,7 +179,7 @@ export function CallbackTimeInput({
 }) {
   const sameDay = chosen !== null && new Date(chosen).toDateString() === day.toDateString();
   const chosenDate = sameDay ? new Date(chosen as number) : null;
-  const [hm, setHm] = useState({ h: chosenDate?.getHours() ?? 9, m: chosenDate?.getMinutes() ?? 0 });
+  const [hm, setHm] = useState({ h: chosenDate?.getHours() ?? 10, m: chosenDate?.getMinutes() ?? 0 });
   const [touched, setTouched] = useState(sameDay);
   const [error, setError] = useState<string | null>(null);
   const latest = useRef(hm);
@@ -197,6 +197,12 @@ export function CallbackTimeInput({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chosen]);
 
+  // 10:00 is selected as soon as a day is chosen; the wheels only change it.
+  useEffect(() => {
+    if (!sameDay) apply(10, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const apply = (h: number, m: number) => {
     latest.current = { h, m };
     setHm({ h, m });
@@ -210,8 +216,6 @@ export function CallbackTimeInput({
     setError(null);
     onChange(d.toISOString());
   };
-  const value = chosenDate ? hhmm(chosenDate) : "";
-  const presets = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
   return (
     <div className="space-y-3">
       <div
@@ -239,28 +243,11 @@ export function CallbackTimeInput({
           onCommit={(m) => apply(latest.current.h, m)}
         />
       </div>
-      {!touched && <p className="text-center text-xs text-muted-foreground">Uhrzeit mit dem Rad oder per Schnellauswahl wählen.</p>}
-      <div className="grid grid-cols-4 gap-1.5" aria-label="Schnellauswahl">
-        {presets.map((p) => (
-          <button
-            key={p}
-            type="button"
-            disabled={disabled}
-            onClick={() => apply(Number(p.slice(0, 2)), Number(p.slice(3)))}
-            className={`rounded-md border px-1 py-1.5 text-sm tabular-nums transition-colors ${
-              value === p ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary hover:bg-primary/10"
-            }`}
-          >
-            {p}
-          </button>
-        ))}
-      </div>
       {error && (
         <p role="alert" className="text-xs text-destructive">
           {error}
         </p>
       )}
-      <p className="text-xs text-muted-foreground">Rückrufe dürfen sich überschneiden.</p>
     </div>
   );
 }
@@ -448,7 +435,7 @@ export function SlotPicker({
       </p>
       <div className="flex items-center justify-between gap-2 text-sm">
         <span aria-live="polite">
-          {chosen !== null && end ? (
+          {kind === "callback" ? null : chosen !== null && end ? (
             <strong>
               {dayLabel.format(new Date(chosen))}, {hhmm(new Date(chosen))}–{hhmm(end)} Uhr
             </strong>
