@@ -2,7 +2,8 @@ import { PhoneLink } from "@/components/phone-link";
 import { useState } from "react";
 import { calendarStatus, STATUS_DOT } from "@/lib/calendar-status";
 import { EntryDetailCard, WeekCalendar, inWeek, sameDay, startOfWeek, type WeekEntry } from "@/components/caller/week-calendar";
-import { Building2, Phone, User } from "lucide-react";
+import { Building2, Phone, Search, User } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
@@ -26,6 +27,7 @@ function CallbacksPage() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [leadId, setLeadId] = useState<string | null>(null);
   const [moving, setMoving] = useState<CallbackToMove | null>(null);
+  const [search, setSearch] = useState("");
   const country = useCountry();
   const { sync } = useCalendarSync(user.id, country);
   const { data, isLoading, isError, refetch } = useQuery({
@@ -49,7 +51,17 @@ function CallbacksPage() {
   const isToday = (d: Date) => sameDay(d, now);
   // Calendar and list show the chosen week; a chosen day narrows the list to that day.
   const weekRows = (data ?? []).filter((c) => inWeek(new Date(c.due_at), weekStart));
-  const visible = weekRows.filter((c) => !day || sameDay(new Date(c.due_at), day));
+  const q = search.trim().toLowerCase();
+  const qDigits = q.replace(/\D/g, "");
+  // A search looks through all open callbacks, not only the chosen week.
+  const visible = q
+    ? (data ?? []).filter((c) => {
+        const l = c.lead;
+        const text = [l?.company, l?.contact_name, l?.phone].filter(Boolean).join(" ").toLowerCase();
+        const phoneDigits = (l?.phone ?? "").replace(/\D/g, "");
+        return text.includes(q) || (qDigits.length >= 3 && phoneDigits.includes(qDigits));
+      })
+    : weekRows.filter((c) => !day || sameDay(new Date(c.due_at), day));
   const weekEntries = weekRows.map((c) => ({
     id: c.id,
     at: new Date(c.due_at),
@@ -144,6 +156,17 @@ function CallbacksPage() {
           description="Datum und Uhrzeit sind beim Vereinbaren verpflichtend"
         >
           <div className="cc-surface-body">
+            <div className="relative mb-3">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Deal suchen: Firma, Ansprechpartner oder Telefon"
+                aria-label="Rückrufe durchsuchen"
+                className="pl-9"
+              />
+            </div>
             {isError && (
               <FeedbackState
                 kind="error"
@@ -155,9 +178,11 @@ function CallbacksPage() {
             {data && visible.length === 0 && (
               <FeedbackState
                 kind="empty"
-                title={day ? "Keine Rückrufe an diesem Tag" : "Keine Rückrufe in dieser Woche"}
+                title={q ? "Kein passender Rückruf gefunden" : day ? "Keine Rückrufe an diesem Tag" : "Keine Rückrufe in dieser Woche"}
               >
-                {day
+                {q
+                  ? "Prüfe die Schreibweise oder suche nach einem anderen Begriff."
+                  : day
                   ? "Wähle einen anderen Tag oder zeige die ganze Woche an."
                   : "Blättere zu einer anderen Woche. Vereinbarte Rückrufe erscheinen hier."}
               </FeedbackState>
