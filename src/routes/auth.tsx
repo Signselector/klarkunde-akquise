@@ -26,6 +26,9 @@ function AuthPage() {
   // Reminders and notifications belong to a signed-in session: clear any left over on the login page.
   useEffect(() => {
     toast.dismiss();
+    void supabase.auth.getSession().then(({ data: s }) => {
+      if (s.session) nav({ to: "/dashboard", replace: true });
+    });
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") toast.dismiss();
     });
