@@ -142,10 +142,12 @@ export const hasLeadDeal = createServerFn({ method: "POST" })
     if (!d || typeof d.leadId !== "string" || !d.leadId) throw new Error("invalid");
     return d;
   })
-  .handler(async ({ data, context }): Promise<{ linked: boolean; staff: boolean }> => {
-    const r = await resolveLeadDeal(context, data.leadId);
-    return { linked: r.allowed && !!r.link, staff: r.staff };
-  });
+  .handler(
+    async ({ data, context }): Promise<{ linked: boolean; staff: boolean; allowed: boolean }> => {
+      const r = await resolveLeadDeal(context, data.leadId);
+      return { linked: r.allowed && !!r.link, staff: r.staff, allowed: r.allowed };
+    },
+  );
 
 /**
  * Pipedrive feed of the lead's deal. Staff get notes, stage changes, activities, e-mails and files; callers get only
@@ -160,7 +162,6 @@ export const loadLeadStream = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<LeadStream> => {
     const { db, link, staff, senior, allowed } = await resolveLeadDeal(context, data.leadId);
     if (!allowed) throw new Error("Für diesen Lead hast du keinen Zugriff.");
-    if (!link) return { linked: false, staff, source: "local", notes: [], items: [], error: null };
     const first = await firstContactNote(db, data.leadId);
     const mayEdit = (text: string) =>
       staff ||
@@ -170,7 +171,7 @@ export const loadLeadStream = createServerFn({ method: "POST" })
       const [notes, activity] = await Promise.all([
         db
           .from("lead_notes")
-          .select("id,body,created_at")
+          .select("id,body,created_at,user_id")
           .eq("lead_id", data.leadId)
           .order("created_at", { ascending: false })
           .limit(100),
@@ -182,19 +183,27 @@ export const loadLeadStream = createServerFn({ method: "POST" })
           .order("occurred_at", { ascending: false })
           .limit(100),
       ]);
+      const authorIds = [
+        ...new Set((notes.data ?? []).map((n) => n.user_id).filter((x): x is string => !!x)),
+      ];
+      const { data: people } = authorIds.length
+        ? await db.from("profiles").select("id,display_name").in("id", authorIds)
+        : { data: [] as { id: string; display_name: string | null }[] };
+      const nameOf = new Map((people ?? []).map((p) => [p.id, p.display_name]));
       return {
-        linked: true,
+        linked: !!link,
         staff,
         source: "local",
         error,
+        // Call notes of the tool: everybody may correct the notes they wrote themselves, later too.
         notes: (notes.data ?? []).map((n) => ({
           id: n.id,
           at: n.created_at,
-          author: null,
+          author: n.user_id ? (nameOf.get(n.user_id) ?? null) : null,
           text: n.body,
-          editable: mayEdit(n.body),
+          editable: mayEdit(n.body) || n.user_id === context.userId,
         })),
-        items: (activity.data ?? []).map((a) => ({
+        items: (link ? (activity.data ?? []) : []).map((a) => ({
           id: a.id,
           at: a.occurred_at,
           by: a.acting_user_name,
@@ -203,7 +212,8 @@ export const loadLeadStream = createServerFn({ method: "POST" })
         })),
       };
     };
-    if (link.dealId <= 0) return local(null);
+    // Without a Pipedrive deal only the tool's own call notes exist.
+    if (!link || link.dealId <= 0) return local(null);
     try {
       const { call } = gatewayClient(link.country);
       const [notes, flow, stages] = await Promise.all([
@@ -272,6 +282,7 @@ export const updateLeadNote = createServerFn({ method: "POST" })
         !!first && first.userId === context.userId && !!first.body && text.includes(first.body);
 
       let oldText = "";
+      let ownNote = false;
       if (data.source === "pipedrive") {
         if (!link) throw new Error("Der Lead hat keinen Pipedrive-Deal.");
         const { call } = gatewayClient(link.country);
@@ -283,14 +294,16 @@ export const updateLeadNote = createServerFn({ method: "POST" })
       } else {
         const { data: row } = await db
           .from("lead_notes")
-          .select("body")
+          .select("body,user_id")
           .eq("id", data.noteId)
           .eq("lead_id", data.leadId)
           .maybeSingle();
         if (!row) throw new Error("Notiz nicht gefunden.");
         oldText = row.body;
+        ownNote = row.user_id === context.userId;
       }
-      if (!all && !ownFirst(oldText)) throw new Error("Diese Notiz darfst du nicht bearbeiten.");
+      if (!all && !ownFirst(oldText) && !ownNote)
+        throw new Error("Diese Notiz darfst du nicht bearbeiten.");
 
       // Tool copy: the notes and actions whose text is the old text (without the header line the tool adds).
       const oldBody = noteBody(oldText);

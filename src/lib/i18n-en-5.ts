@@ -171,4 +171,7 @@ export const EN_5: Record<string, string> = {
   "Kein Land": "No country",
   "{} von {}": "{} of {}",
   "Keine Accounts gefunden.": "No accounts found.",
+  "Gesprächsnotizen": "Call notes",
+  "Gesprächsnotizen · {}": "Call notes · {}",
+  "Noch keine Gesprächsnotizen.": "No call notes yet.",
 };

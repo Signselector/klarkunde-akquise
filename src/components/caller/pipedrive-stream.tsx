@@ -245,13 +245,15 @@ export function PipedriveStream({
       save({ data: { leadId, ...v } }),
   });
   const stream = useQuery({
-    enabled: open && !!linked.data?.linked,
+    enabled: open && !!linked.data?.allowed,
     queryKey: ["lead-stream", leadId],
     staleTime: 60_000,
     retry: false,
     queryFn: () => withViewAsRead(() => load({ data: { leadId } })),
   });
-  if (!linked.data?.linked) return null;
+  // Without a Pipedrive deal the section shows the tool's own call notes ("Gesprächsnotizen"), editable later on.
+  const isLinked = !!linked.data?.linked;
+  if (!linked.data?.allowed) return null;
   const d = stream.data;
   const tabs = (d?.staff ?? linked.data.staff) ? STAFF_TABS : CALLER_TABS;
   const all: Entry[] = d
@@ -316,7 +318,13 @@ export function PipedriveStream({
       onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
     >
       <summary className="cursor-pointer font-semibold">
-        {d ? `Notizen & Verlauf (Pipedrive) · ${all.length}` : "Notizen & Verlauf (Pipedrive)"}
+        {isLinked
+          ? d
+            ? `Notizen & Verlauf (Pipedrive) · ${all.length}`
+            : "Notizen & Verlauf (Pipedrive)"
+          : d
+            ? `Gesprächsnotizen · ${all.length}`
+            : "Gesprächsnotizen"}
       </summary>
       <div className="space-y-3 pt-3">
         {stream.isLoading && <FeedbackState kind="loading" title="Verlauf wird geladen" />}
@@ -335,28 +343,32 @@ export function PipedriveStream({
         )}
         {d && (
           <>
-            {d.source === "local" && d.error && (
+            {isLinked && d.source === "local" && d.error && (
               <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
                 Pipedrive war nicht erreichbar. Angezeigt werden die im Tool gespeicherten Notizen
                 und Stage-Wechsel.
               </p>
             )}
-            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Verlauf filtern">
-              {tabs.map(([key, text]) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  aria-selected={tab === key}
-                  onClick={() => setTab(key)}
-                  className={`!min-h-0 rounded-full border px-3 py-1 text-xs font-medium ${tab === key ? "bg-foreground text-background" : "bg-card"}`}
-                >
-                  {label(key, text)}
-                </button>
-              ))}
-            </div>
+            {isLinked && (
+              <div className="flex flex-wrap gap-2" role="tablist" aria-label="Verlauf filtern">
+                {tabs.map(([key, text]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === key}
+                    onClick={() => setTab(key)}
+                    className={`!min-h-0 rounded-full border px-3 py-1 text-xs font-medium ${tab === key ? "bg-foreground text-background" : "bg-card"}`}
+                  >
+                    {label(key, text)}
+                  </button>
+                ))}
+              </div>
+            )}
             {shown.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Keine Einträge.</p>
+              <p className="text-sm text-muted-foreground">
+                {isLinked ? "Keine Einträge." : "Noch keine Gesprächsnotizen."}
+              </p>
             ) : (
               <ul className="ml-3 space-y-2 border-l-2 pl-8">
                 {shown.map((e) => (
