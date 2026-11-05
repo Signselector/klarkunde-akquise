@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,6 +15,8 @@ import { CountryDropdown } from "@/components/country-dropdown";
 import { presenceState } from "@/lib/presence";
 import { deleteAccount } from "@/lib/accounts.functions";
 import { Dropdown } from "@/components/ui/dropdown";
+import { Input } from "@/components/ui/input";
+import { filterAccounts } from "@/lib/account-filter";
 
 const MASTER = "office@signselector.com";
 
@@ -29,6 +32,9 @@ function AccountsPage() {
   const qc = useQueryClient();
   const nav = useNavigate();
   const del = useServerFn(deleteAccount);
+  const [search, setSearch] = useState("");
+  const [countryFilter, setCountryFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
   const { data: users } = useQuery({
     enabled: admin,
     queryKey: ["users"],
@@ -61,6 +67,7 @@ function AccountsPage() {
     ? users
     : users?.filter((u) => u.id === user.id || u.countries.some((c) => mine.includes(c)));
   const refresh = () => qc.invalidateQueries({ queryKey: ["users"] });
+  const shownUsers = visibleUsers ? filterAccounts(visibleUsers, { search, country: countryFilter, role: roleFilter }) : undefined;
 
   async function toggleCountry(id: string, code: string, on: boolean) {
     const { error } = on
@@ -167,8 +174,45 @@ function AccountsPage() {
           sowie die Länder. Manager legen für Accounts ihres Landes fest, wer Caller oder Senior
           Caller ist. Neue Accounts ohne Land sieht nur ein Admin.
         </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            type="search"
+            className="min-w-0 basis-full sm:basis-64"
+            aria-label="Accounts suchen"
+            placeholder="Name oder E-Mail suchen"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <Dropdown
+            ariaLabel="Nach Land filtern"
+            value={countryFilter}
+            onChange={setCountryFilter}
+            options={[
+              { value: "all", label: "Alle Länder" },
+              ...COUNTRIES.map((c) => ({ value: c.code, label: c.code })),
+              { value: "none", label: "Kein Land" },
+            ]}
+          />
+          <Dropdown
+            ariaLabel="Nach Rolle filtern"
+            value={roleFilter}
+            onChange={setRoleFilter}
+            options={[
+              { value: "all", label: "Alle Rollen" },
+              ...(Object.keys(ROLE_LABEL) as RoleName[]).map((r) => ({ value: r, label: ROLE_LABEL[r] })),
+            ]}
+          />
+          {visibleUsers && (
+            <span className="ml-auto text-xs text-muted-foreground" aria-live="polite">
+              {`${shownUsers?.length ?? 0} von ${visibleUsers.length}`}
+            </span>
+          )}
+        </div>
         <div className="divide-y">
-          {visibleUsers?.map((u) => {
+          {shownUsers?.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">Keine Accounts gefunden.</p>
+          )}
+          {shownUsers?.map((u) => {
             const self = u.id === user.id;
             return (
               <div

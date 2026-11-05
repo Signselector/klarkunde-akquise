@@ -162,4 +162,13 @@ export const EN_5: Record<string, string> = {
   "🎨 Neuer Logo Render im Team generiert!": "🎨 A new Logo Render was generated in the team!",
   "✨ Neuer Realismus Render im Team generiert!": "✨ A new Realism Render was generated in the team!",
   "🏆 Ein Deal wurde erfolgreich gewonnen!": "🏆 A deal was won successfully!",
+  "Accounts suchen": "Search accounts",
+  "Name oder E-Mail suchen": "Search name or email",
+  "Nach Land filtern": "Filter by country",
+  "Nach Rolle filtern": "Filter by role",
+  "Alle Länder": "All countries",
+  "Alle Rollen": "All roles",
+  "Kein Land": "No country",
+  "{} von {}": "{} of {}",
+  "Keine Accounts gefunden.": "No accounts found.",
 };
