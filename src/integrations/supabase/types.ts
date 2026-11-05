@@ -1779,7 +1779,7 @@ export type Database = {
       }
       freeze_monthly_quality: { Args: { p_month?: string }; Returns: number }
       get_batch_crm_objects: { Args: { p_batch_id: string }; Returns: Json }
-      get_batch_progress: { Args: { p_country?: string }; Returns: Json }
+      get_batch_progress: { Args: never; Returns: Json }
       get_caller_day: {
         Args: { p_day?: string; p_user?: string }
         Returns: Json
