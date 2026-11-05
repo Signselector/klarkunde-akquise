@@ -22,7 +22,16 @@ export const CUSTOMER_COLUMNS: CustomerColumn[] = [
   {
     key: "won",
     label: "Gewonnen",
-    stageKeys: ["won_zero_percent", "won_production_planning", "won_other_percent", "won_closed"],
+    stageKeys: [
+      "won_other_percent",
+      "won_production_planning",
+      "won_production",
+      "won_installment",
+      "won_zero_planning",
+      "won_zero_percent",
+      "won_delivered",
+      "won_closed",
+    ],
   },
 ];
 
@@ -62,12 +71,16 @@ export function placeDeals(
   }));
   const other: CustomerDeal[] = [];
   for (const deal of deals) {
+    // The stage ID wins over the stored key: one Pipedrive stage can carry several keys (e.g. "Produktion").
     const hit =
-      deal.source === "pipedrive" && deal.stage_id !== null
+      (deal.stage_id !== null
         ? columns.find((c) => c.stageIds.includes(deal.stage_id as number))
-        : columns.find(
+        : undefined) ??
+      (deal.source === "local"
+        ? columns.find(
             (c) => deal.local_stage_key && c.column.stageKeys.includes(deal.local_stage_key),
-          );
+          )
+        : undefined);
     if (hit) hit.deals.push(deal);
     else other.push(deal);
   }
