@@ -2416,6 +2416,7 @@ tr:hover > .cc-sticky-action {
 .cc-month-nav button:disabled { opacity: .25; cursor: default; }
 .cc-tier--red { color: #ef4444; }
 .cc-tier--yellow { color: #eab308; }
+.cc-tier--orange { color: #f97316; }
 .cc-tier--green { color: #22c55e; }
 .cc-tier--gold {
   background: linear-gradient(110deg, #b8860b 0%, #ffd700 30%, #fff6c2 45%, #ffd700 60%, #b8860b 100%);
