@@ -1,0 +1,1 @@
+CREATE OR REPLACE FUNCTION app_private.callback_slot() RETURNS trigger LANGUAGE plpgsql SET search_path TO '' AS $$ BEGIN RETURN NEW; END $$;

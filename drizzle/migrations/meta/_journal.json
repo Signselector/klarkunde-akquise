@@ -498,6 +498,13 @@
       "when": 1793889000000,
       "tag": "0070_reference_requeue",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1793910603411,
+      "tag": "0071_callbacks_allow_same_minute",
+      "breakpoints": true
     }
   ]
 }
