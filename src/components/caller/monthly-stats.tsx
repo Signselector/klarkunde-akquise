@@ -154,22 +154,26 @@ export function MonthlyStats({ userId }: { userId: string }) {
             >
               <div className="cc-surface-body">
                 <div
-                  className="flex h-40 items-end gap-0.5"
+                  className="group/tl flex h-44 items-end gap-1"
                   role="img"
                   aria-label="Gespräche pro Tag im Monat"
                 >
                   {stats.perDay.map((d) => (
                     <div
                       key={d.day}
-                      title={`${d.day}. ${monthLabel(ym).split(" ")[0]}: ${d.value}`}
-                      className="flex-1 rounded-t bg-primary"
-                      style={{ height: `${d.value ? Math.max(4, (d.value / maxDay) * 100) : 0}%` }}
-                    />
+                      title={`${d.day}. ${monthLabel(ym).split(" ")[0]}: ${d.value} Gespräche`}
+                      className="group/bar flex h-full min-w-0 flex-1 flex-col justify-end text-center transition-opacity duration-150 group-hover/tl:opacity-30 hover:!opacity-100"
+                    >
+                      <span className="text-[10px] font-medium tabular-nums text-foreground opacity-0 transition-opacity duration-150 group-hover/bar:opacity-100">
+                        {d.value || ""}
+                      </span>
+                      <div
+                        className={d.value ? "w-full rounded-t bg-primary" : "w-full rounded-t bg-muted"}
+                        style={{ height: `${Math.max(d.value ? 6 : 2, (d.value / maxDay) * 100)}%` }}
+                      />
+                      <span className="mt-1 truncate text-[10px] text-muted-foreground">{d.day}</span>
+                    </div>
                   ))}
-                </div>
-                <div className="flex justify-between text-xs text-muted-foreground">
-                  <span>1.</span>
-                  <span>{stats.perDay.length}.</span>
                 </div>
               </div>
             </Surface>
