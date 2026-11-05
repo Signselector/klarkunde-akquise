@@ -2475,3 +2475,21 @@ tr:hover > .cc-sticky-action {
     margin-bottom: 8px;
   }
 }
+
+/* Accounts on phones: small controls in one wrapping row instead of one control per line. */
+@media (max-width: 1023px) {
+  .cc-acct-row :is(button, [role="combobox"]) {
+    min-height: 32px !important;
+    padding: 4px 10px;
+    font-size: 13px;
+  }
+  .cc-acct-row .cc-dd-trigger {
+    min-height: 32px !important;
+    padding-inline: 10px 8px;
+  }
+  .cc-acct-row [data-slot="badge"],
+  .cc-acct-row .cc-badge {
+    font-size: 11px;
+    padding: 1px 8px;
+  }
+}

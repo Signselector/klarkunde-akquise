@@ -173,14 +173,15 @@ function AccountsPage() {
             return (
               <div
                 key={u.id}
-                className="grid gap-3 py-4 lg:grid-cols-[1fr_1.4fr_auto_auto_auto] lg:items-center"
+                className="cc-acct-row grid grid-cols-[minmax(0,1fr)_auto] gap-x-2 gap-y-1.5 py-2.5 lg:grid-cols-[1fr_1.4fr_auto_auto_auto] lg:items-center lg:gap-3 lg:py-4"
               >
-                <span className="flex flex-col gap-0.5">
+                <span className="flex min-w-0 flex-col gap-0 max-lg:col-start-1 max-lg:row-start-1">
                   <span className="font-medium">{u.display_name}</span>
                   <PresenceIndicator lastSeen={u.lastSeen} />
                 </span>
-                <span className="truncate text-sm text-muted-foreground">{u.email}</span>
-                <span className="flex flex-col items-start gap-1">
+                <span className="truncate text-xs text-muted-foreground max-lg:col-span-2 max-lg:row-start-2 lg:text-sm">{u.email}</span>
+                <span className="flex flex-wrap items-center justify-end gap-1 max-lg:col-start-2 max-lg:row-start-1 lg:contents">
+                <span className="flex flex-col items-start gap-1 max-lg:flex-row max-lg:flex-wrap max-lg:items-center">
                   {(u.master || !globalAdmin) && (
                   <Badge
                     variant={
@@ -198,7 +199,7 @@ function AccountsPage() {
                   </Badge>
                   )}
                 </span>
-                <span className="flex flex-col items-start gap-1">
+                <span className="flex flex-col items-start gap-1 max-lg:flex-row max-lg:flex-wrap max-lg:items-center">
                   <Badge
                     variant={u.active ? "outline" : "destructive"}
                     className="w-fit rounded-full"
@@ -211,8 +212,9 @@ function AccountsPage() {
                     </Badge>
                   )}
                 </span>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex flex-wrap justify-end gap-2">
+                </span>
+                <div className="flex flex-col items-end gap-2 max-lg:col-span-2 max-lg:row-start-3 max-lg:flex-row max-lg:flex-wrap max-lg:items-center max-lg:justify-start max-lg:gap-1.5">
+                  <div className="flex flex-wrap justify-end gap-2 max-lg:contents">
                     {u.master
                       ? COUNTRIES.map((c) => (
                           <Badge key={c.code} variant="outline">
@@ -228,7 +230,7 @@ function AccountsPage() {
                         />
                       )}
                   </div>
-                  <div className="flex flex-wrap justify-end gap-2">
+                  <div className="flex flex-wrap justify-end gap-2 max-lg:contents">
                     {(self || globalAdmin || u.role === "recruit" || u.role === "veteran") && (
                       <Button size="sm" variant="outline" onClick={() => void openView(u)}>
                         <Eye size={16} />
@@ -268,7 +270,7 @@ function AccountsPage() {
                     </Button>
                   </div>
                   {!u.master && !self && (
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <div className="flex flex-wrap justify-end gap-2 max-lg:contents">
                       <Button
                         size="sm"
                         variant={u.active ? "secondary" : "default"}
