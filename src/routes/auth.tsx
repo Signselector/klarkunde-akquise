@@ -26,6 +26,9 @@ function AuthPage() {
   // Reminders and notifications belong to a signed-in session: clear any left over on the login page.
   useEffect(() => {
     toast.dismiss();
+    void supabase.auth.getSession().then(({ data: s }) => {
+      if (s.session) nav({ to: "/dashboard", replace: true });
+    });
     const { data } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") toast.dismiss();
     });
@@ -55,13 +58,26 @@ function AuthPage() {
       return;
     }
     if (mode === "in") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password: pw });
-      setBusy(false);
+      // One retry on network hiccups so a slow moment doesn't look like a failed login.
+      let res = await supabase.auth.signInWithPassword({ email, password: pw });
+      if (res.error && /fetch|network|timeout|5\d\d/i.test(res.error.message)) {
+        await new Promise((r) => setTimeout(r, 800));
+        res = await supabase.auth.signInWithPassword({ email, password: pw });
+      }
+      const { error } = res;
       if (error) {
+        setBusy(false);
         toast.error("Anmeldung fehlgeschlagen: " + error.message);
         return;
       }
-      nav({ to: "/dashboard" });
+      // Wait until the session is stored, otherwise the guard bounces back to the login page.
+      for (let i = 0; i < 10; i++) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) break;
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      setBusy(false);
+      nav({ to: "/dashboard", replace: true });
     } else {
       const { error } = await supabase.auth.signUp({
         email,
