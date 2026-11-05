@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -53,6 +52,7 @@ export function gatewayReader(
 
 /** The request's Supabase client, extended with the x-view-as header the browser sent (if any). */
 async function viewAsClient(fallback: SupabaseClient<Database>): Promise<SupabaseClient<Database>> {
+  const { getRequest } = await import("@tanstack/react-start/server");
   const headers = getRequest()?.headers;
   const view = headers?.get("x-view-as");
   const auth = headers?.get("authorization");
