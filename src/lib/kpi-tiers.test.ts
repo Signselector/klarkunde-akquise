@@ -3,7 +3,8 @@ import { leadAvgTier, leadQualityTier, salaryForAvg } from "./kpi-tiers";
 
 describe("leadAvgTier", () => {
   it("red below 0.75", () => expect(leadAvgTier(0.74)).toBe("red"));
-  it("yellow up to 1.2", () => expect(leadAvgTier(1.2)).toBe("yellow"));
+  it("orange from 0.75", () => expect(leadAvgTier(0.75)).toBe("orange"));
+  it("orange up to 1.2", () => expect(leadAvgTier(1.2)).toBe("orange"));
   it("green up to 1.5", () => expect(leadAvgTier(1.5)).toBe("green"));
   it("gold above 1.5", () => expect(leadAvgTier(2)).toBe("gold"));
 });
