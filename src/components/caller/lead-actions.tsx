@@ -45,6 +45,8 @@ const STAGE_NAME: Record<string, string> = {
 };
 const isMailAction = (k: LeadActionKey | null): k is "reference_mail" => k === "reference_mail";
 const TEMPLATE_KEY = { reference_mail: "email_templates" };
+/** Outcomes that can send the reference mail along, without becoming a "Referenzmail" lead. */
+const EXTRA_MAIL_ACTIONS: LeadActionKey[] = ["low_q", "high_q", "waiting_3d", "on_hold", "callback"];
 const MAX_LOGO_BYTES = 5 * 1024 * 1024;
 
 const DEFAULT_REFERENCE_TEMPLATE: Template = {
@@ -185,7 +187,8 @@ export function LeadActions({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lead.email, lead.company, lead.contact_name, lead.city]);
 
-  const templateKey = isMailAction(active) ? TEMPLATE_KEY[active] : null;
+  const [extraMail, setExtraMail] = useState(false);
+  const templateKey = isMailAction(active) || (extraMail && active && EXTRA_MAIL_ACTIONS.includes(active)) ? TEMPLATE_KEY.reference_mail : null;
   const templates = useQuery({
     enabled: templateKey !== null,
     queryKey: ["templates", templateKey],
@@ -202,12 +205,12 @@ export function LeadActions({
 
   // Referenzmail: pick the fixed template automatically (no form for the caller).
   useEffect(() => {
-    if (!isMailAction(active) || mail.template || !templates.data?.length) return;
+    if (templateKey === null || mail.template || !templates.data?.length) return;
     const t =
       templates.data.find((x) => /referenz/i.test(x.name)) ?? templates.data[0];
     if (t) pickTemplate(t.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, templates.data, mail.template]);
+  }, [active, templates.data, mail.template, templateKey]);
 
   useEffect(() => {
     if (!success) return;
@@ -264,6 +267,9 @@ export function LeadActions({
     setDate("");
     setTime("");
     setFiles([]);
+    setExtraMail(false);
+    mailRequest.current = crypto.randomUUID();
+    setMail({ to: lead.email ?? "", subject: "", body: "", template: "" });
     if (isMailAction(action.key)) {
       mailRequest.current = crypto.randomUUID();
       setPreview(false);
@@ -337,6 +343,9 @@ export function LeadActions({
     if (needs.logo && !file) return fail("Bitte das Firmenlogo hochladen.");
     if (needs.photo && !photo) return fail("Bitte das Gebäudefoto hochladen.");
     if (needs.month && !month) return fail("Bitte Monat und Jahr wählen.");
+    const withMail = extraMail && EXTRA_MAIL_ACTIONS.includes(action.key);
+    if (withMail && !isValidEmail(mail.to.trim())) return fail("Bitte eine gültige E-Mail-Adresse für die Referenzmail eintragen.");
+    if (withMail && (!mail.subject.trim() || !mail.body.trim())) return fail("Betreff und Text der Referenzmail dürfen nicht leer sein.");
     if ((needs.schedule === "required" || needs.appointment) && !date)
       return fail("Bitte Datum und Uhrzeit wählen.");
     if ((needs.schedule === "required" || needs.appointment) && !time)
@@ -411,6 +420,26 @@ export function LeadActions({
           detail: `${lead.company || "Der Lead"} wurde als Deal angelegt. Stark gemacht!`,
           tone: action.key === "high_q" ? "gold" : "blue",
         });
+      }
+      // Optional reference mail: only sent, the lead keeps the chosen outcome (no Referenzmail logic).
+      if (withMail) {
+        try {
+          const r = await sendMail({
+            data: {
+              requestId: mailRequest.current ?? crypto.randomUUID(),
+              leadId: lead.id,
+              kind: "reference_mail",
+              to: mail.to.trim(),
+              subject: mail.subject,
+              body: mail.body,
+              templateId: mail.template || null,
+            },
+          });
+          if (r.status === "sent" || r.status === "simulated") toast.success("Referenzmail gesendet.");
+          else toast.error(`Ergebnis gespeichert, aber die Referenzmail wurde nicht gesendet: ${emailErrorMessage(r.error) || "Fehler beim Versand."}`);
+        } catch {
+          toast.error(`Ergebnis gespeichert, aber die Referenzmail wurde nicht gesendet: ${emailErrorMessage("send_failed")}`);
+        }
       }
       const erased = (result as { erased?: boolean }).erased === true;
       const plain =
@@ -689,6 +718,42 @@ export function LeadActions({
               Gesprächsnotiz{current.needs.note === "required" ? " (Pflicht)" : " (optional)"}
               <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={8} />
             </label>
+          )}
+          {EXTRA_MAIL_ACTIONS.includes(current.key) && (
+            <div className="space-y-2">
+              <label className="cc-check-card">
+                <input type="checkbox" checked={extraMail} onChange={(e) => setExtraMail(e.target.checked)} />
+                <span>
+                  <strong>Referenzmail mitsenden (optional)</strong>
+                  <span className="block text-xs text-muted-foreground">
+                    Der Kunde bekommt zusätzlich die Referenzmail. Das Ergebnis bleibt „{current.label}“.
+                  </span>
+                </span>
+              </label>
+              {extraMail && (
+                <div className="space-y-2">
+                  <label className="block text-sm">
+                    E-Mail des Kunden
+                    <Input type="email" value={mail.to} onChange={(e) => setMail({ ...mail, to: e.target.value })} />
+                  </label>
+                  {mail.template && (
+                    <Reveal title="E-Mail ansehen & bearbeiten (optional)">
+                      <div className="space-y-3">
+                        <label className="block text-sm">
+                          Betreff
+                          <Input value={mail.subject} maxLength={300} onChange={(e) => setMail({ ...mail, subject: e.target.value })} />
+                        </label>
+                        <label className="block text-sm">
+                          Text
+                          <Textarea value={mail.body} rows={10} maxLength={20000} onChange={(e) => setMail({ ...mail, body: e.target.value })} />
+                        </label>
+                        <p className="text-xs text-muted-foreground">Signatur, Logo und Referenzbilder werden automatisch angehängt.</p>
+                      </div>
+                    </Reveal>
+                  )}
+                </div>
+              )}
+            </div>
           )}
           <div className="flex gap-2">
             <Button type="submit" disabled={busy}>
