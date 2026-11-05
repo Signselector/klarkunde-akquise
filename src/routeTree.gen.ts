@@ -36,6 +36,7 @@ import { Route as ApiMailReplyRouteImport } from './routes/api/mail-reply'
 import { Route as ApiPipedriveReconcileRouteImport } from './routes/api/pipedrive-reconcile'
 import { Route as ApiPipedriveWebhookRouteImport } from './routes/api/pipedrive-webhook'
 import { Route as AuthSsoRouteImport } from './routes/auth.sso'
+import { Route as ApiPublicBackupCronRouteImport } from './routes/api/public/backup-cron'
 import { Route as ApiPublicV1TableRouteImport } from './routes/api/public/v1/$table'
 import { Route as ApiPublicV1OnboardEmployeeRouteImport } from './routes/api/public/v1/onboard-employee'
 import { Route as ApiPublicV1PerformanceStatsRouteImport } from './routes/api/public/v1/performance-stats'
@@ -179,6 +180,11 @@ const AuthSsoRoute = AuthSsoRouteImport.update({
   path: '/sso',
   getParentRoute: () => AuthRoute,
 } as any)
+const ApiPublicBackupCronRoute = ApiPublicBackupCronRouteImport.update({
+  id: '/api/public/backup-cron',
+  path: '/api/public/backup-cron',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1TableRoute = ApiPublicV1TableRouteImport.update({
   id: '/api/public/v1/$table',
   path: '/api/public/v1/$table',
@@ -234,6 +240,7 @@ export interface FileRoutesByFullPath {
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
   '/auth/sso': typeof AuthSsoRoute
+  '/api/public/backup-cron': typeof ApiPublicBackupCronRoute
   '/api/public/v1/$table': typeof ApiPublicV1TableRoute
   '/api/public/v1/onboard-employee': typeof ApiPublicV1OnboardEmployeeRoute
   '/api/public/v1/performance-stats': typeof ApiPublicV1PerformanceStatsRoute
@@ -267,6 +274,7 @@ export interface FileRoutesByTo {
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
   '/auth/sso': typeof AuthSsoRoute
+  '/api/public/backup-cron': typeof ApiPublicBackupCronRoute
   '/api/public/v1/$table': typeof ApiPublicV1TableRoute
   '/api/public/v1/onboard-employee': typeof ApiPublicV1OnboardEmployeeRoute
   '/api/public/v1/performance-stats': typeof ApiPublicV1PerformanceStatsRoute
@@ -302,6 +310,7 @@ export interface FileRoutesById {
   '/api/pipedrive-reconcile': typeof ApiPipedriveReconcileRoute
   '/api/pipedrive-webhook': typeof ApiPipedriveWebhookRoute
   '/auth/sso': typeof AuthSsoRoute
+  '/api/public/backup-cron': typeof ApiPublicBackupCronRoute
   '/api/public/v1/$table': typeof ApiPublicV1TableRoute
   '/api/public/v1/onboard-employee': typeof ApiPublicV1OnboardEmployeeRoute
   '/api/public/v1/performance-stats': typeof ApiPublicV1PerformanceStatsRoute
@@ -337,6 +346,7 @@ export interface FileRouteTypes {
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
     | '/auth/sso'
+    | '/api/public/backup-cron'
     | '/api/public/v1/$table'
     | '/api/public/v1/onboard-employee'
     | '/api/public/v1/performance-stats'
@@ -370,6 +380,7 @@ export interface FileRouteTypes {
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
     | '/auth/sso'
+    | '/api/public/backup-cron'
     | '/api/public/v1/$table'
     | '/api/public/v1/onboard-employee'
     | '/api/public/v1/performance-stats'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/api/pipedrive-reconcile'
     | '/api/pipedrive-webhook'
     | '/auth/sso'
+    | '/api/public/backup-cron'
     | '/api/public/v1/$table'
     | '/api/public/v1/onboard-employee'
     | '/api/public/v1/performance-stats'
@@ -419,6 +431,7 @@ export interface RootRouteChildren {
   ApiMailReplyRoute: typeof ApiMailReplyRoute
   ApiPipedriveReconcileRoute: typeof ApiPipedriveReconcileRoute
   ApiPipedriveWebhookRoute: typeof ApiPipedriveWebhookRoute
+  ApiPublicBackupCronRoute: typeof ApiPublicBackupCronRoute
   ApiPublicV1TableRoute: typeof ApiPublicV1TableRoute
   ApiPublicV1OnboardEmployeeRoute: typeof ApiPublicV1OnboardEmployeeRoute
   ApiPublicV1PerformanceStatsRoute: typeof ApiPublicV1PerformanceStatsRoute
@@ -617,6 +630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSsoRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/api/public/backup-cron': {
+      id: '/api/public/backup-cron'
+      path: '/api/public/backup-cron'
+      fullPath: '/api/public/backup-cron'
+      preLoaderRoute: typeof ApiPublicBackupCronRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/$table': {
       id: '/api/public/v1/$table'
       path: '/api/public/v1/$table'
@@ -720,6 +740,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMailReplyRoute: ApiMailReplyRoute,
   ApiPipedriveReconcileRoute: ApiPipedriveReconcileRoute,
   ApiPipedriveWebhookRoute: ApiPipedriveWebhookRoute,
+  ApiPublicBackupCronRoute: ApiPublicBackupCronRoute,
   ApiPublicV1TableRoute: ApiPublicV1TableRoute,
   ApiPublicV1OnboardEmployeeRoute: ApiPublicV1OnboardEmployeeRoute,
   ApiPublicV1PerformanceStatsRoute: ApiPublicV1PerformanceStatsRoute,
