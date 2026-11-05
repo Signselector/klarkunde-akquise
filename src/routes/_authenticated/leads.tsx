@@ -2,6 +2,7 @@ import { LeadDialog } from "@/components/caller/lead-dialog";
 import { LeadQuickDialog } from "@/components/caller/lead-quick-dialog";
 import { LeadsTable, type LeadIntent } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
+import { phoneDbPatterns } from "@/lib/phone";
 import { orderOpenLeads, STATUS_LABEL, UNREACHED_DAYS } from "@/lib/leads";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import { formatPer100, monthStart } from "@/lib/dashboard";
@@ -35,6 +36,17 @@ export const Route = createFileRoute("/_authenticated/leads")({
   head: () => ({ meta: [{ title: "Leads – Sign Selector Cold Caller" }] }),
   component: LeadsPage,
 });
+
+/** The `or` filter of the lead search: text fields, the typed phone text and, for numbers, the digit patterns. */
+function searchOr(term: string) {
+  const phone = [`%${term}%`, ...phoneDbPatterns(term)];
+  return [
+    `company.ilike.%${term}%`,
+    `contact_name.ilike.%${term}%`,
+    ...[...new Set(phone)].map((p) => `phone.ilike.${p}`),
+    `city.ilike.%${term}%`,
+  ].join(",");
+}
 
 function LeadsPage() {
   const country = useCountry();
@@ -117,7 +129,7 @@ function LeadsPage() {
       const term = q.trim().replace(/[,()%]/g, " ");
       if (term)
         query = query.or(
-          `company.ilike.%${term}%,contact_name.ilike.%${term}%,phone.ilike.%${term}%,city.ilike.%${term}%`,
+          searchOr(term),
         );
       // Missed appointments come back to the original caller even when he no longer owns the batch.
       let missed: PromiseLike<{ data: unknown[] | null; error: unknown }> | null = null;
@@ -134,7 +146,7 @@ function LeadsPage() {
         if (batch !== "all") m = m.eq("batch_id", batch);
         if (term)
           m = m.or(
-            `company.ilike.%${term}%,contact_name.ilike.%${term}%,phone.ilike.%${term}%,city.ilike.%${term}%`,
+            searchOr(term),
           );
         missed = m;
       }
@@ -158,7 +170,7 @@ function LeadsPage() {
         if (batch !== "all") u = u.eq("batch_id", batch);
         if (term)
           u = u.or(
-            `company.ilike.%${term}%,contact_name.ilike.%${term}%,phone.ilike.%${term}%,city.ilike.%${term}%`,
+            searchOr(term),
           );
         unreached = u;
       }

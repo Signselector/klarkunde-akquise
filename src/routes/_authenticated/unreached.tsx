@@ -9,6 +9,7 @@ import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { searchMatches } from "@/lib/phone";
 
 export const Route = createFileRoute("/_authenticated/unreached")({
   head: () => ({ meta: [{ title: "Nicht erreicht – Sign Selector Cold Caller" }] }),
@@ -34,12 +35,7 @@ function UnreachedPage() {
   });
   if (!staff) return <p className="text-muted-foreground">Diese Liste ist nur für Admins und Manager.</p>;
   const rows = (q.data ?? []).filter(
-    (r) =>
-      !search ||
-      [r.company, r.contact_name, r.phone, r.email, r.city, r.caller, r.batch]
-        .join(" ")
-        .toLocaleLowerCase()
-        .includes(search.toLocaleLowerCase()),
+    (r) => searchMatches(search, [r.company, r.contact_name, r.email, r.city, r.caller, r.batch], r.phone),
   );
   function download() {
     logListExport("unreached", "Nicht erreicht", country, rows.length);

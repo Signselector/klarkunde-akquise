@@ -9,6 +9,7 @@ import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { searchMatches } from "@/lib/phone";
 
 export const Route = createFileRoute("/_authenticated/future-projects")({
   head: () => ({ meta: [{ title: "Zukunftsprojekte – Sign Selector Cold Caller" }] }),
@@ -42,11 +43,7 @@ function FutureProjectsPage() {
     return <p className="text-muted-foreground">Diese Liste ist nur für Admins und Manager.</p>;
   const rows = (q.data ?? []).filter(
     (r) =>
-      !search ||
-      [r.company, r.contact_name, r.phone, r.email, r.city, r.caller, monthLabel(r.target_month)]
-        .join(" ")
-        .toLocaleLowerCase()
-        .includes(search.toLocaleLowerCase()),
+      searchMatches(search, [r.company, r.contact_name, r.email, r.city, r.caller, monthLabel(r.target_month)], r.phone),
   );
   function download() {
     logListExport("future-projects", "Zukunftsprojekte", country, rows.length);

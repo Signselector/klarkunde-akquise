@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { searchMatches } from "@/lib/phone";
 
 export const Route = createFileRoute("/_authenticated/callbacks")({
   head: () => ({ meta: [{ title: "Callbacks – Sign Selector Cold Caller" }] }),
@@ -52,14 +53,11 @@ function CallbacksPage() {
   // Calendar and list show the chosen week; a chosen day narrows the list to that day.
   const weekRows = (data ?? []).filter((c) => inWeek(new Date(c.due_at), weekStart));
   const q = search.trim().toLowerCase();
-  const qDigits = q.replace(/\D/g, "");
   // A search looks through all open callbacks, not only the chosen week.
   const visible = q
     ? (data ?? []).filter((c) => {
         const l = c.lead;
-        const text = [l?.company, l?.contact_name, l?.phone].filter(Boolean).join(" ").toLowerCase();
-        const phoneDigits = (l?.phone ?? "").replace(/\D/g, "");
-        return text.includes(q) || (qDigits.length >= 3 && phoneDigits.includes(qDigits));
+        return searchMatches(q, [l?.company, l?.contact_name], l?.phone);
       })
     : weekRows.filter((c) => !day || sameDay(new Date(c.due_at), day));
   const weekEntries = weekRows.map((c) => ({

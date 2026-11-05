@@ -13,6 +13,7 @@ import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { searchMatches } from "@/lib/phone";
 
 function since(iso: string | null) {
   if (!iso) return "Noch nicht kontaktiert";
@@ -89,11 +90,8 @@ export function CustomersPipeline({ userId }: { userId: string }) {
     refetch: live.refetch,
   };
 
-  const term = search.trim().toLocaleLowerCase();
-  const deals = (customers.data?.deals ?? []).filter(
-    (d) =>
-      !term ||
-      [d.company, d.contact_name, d.phone, d.email].join(" ").toLocaleLowerCase().includes(term),
+  const deals = (customers.data?.deals ?? []).filter((d) =>
+    searchMatches(search, [d.company, d.contact_name, d.email], d.phone),
   );
   const placed = placeDeals(deals, mapping.data ?? {}, country);
   const stageNames = customers.data?.stageNames ?? {};

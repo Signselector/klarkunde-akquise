@@ -13,6 +13,7 @@ import { FeedbackState, StatusBadge, Surface } from "@/components/coldcaller/pri
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
 import { Dropdown } from "@/components/ui/dropdown";
+import { searchMatches } from "@/lib/phone";
 
 export type CompletedLead = {
   lead_id: string;
@@ -101,11 +102,7 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
     ACTION_LABEL[l.action ?? ""] ?? STATUS_LABEL[l.status] ?? l.status;
   const rows = (query.data ?? []).filter(
     (l) =>
-      (!search ||
-        [l.company, l.contact_name, l.phone, l.email]
-          .join(" ")
-          .toLocaleLowerCase()
-          .includes(search.toLocaleLowerCase())) &&
+      searchMatches(search, [l.company, l.contact_name, l.email], l.phone) &&
       (filter === "all" || actionName(l) === filter),
   );
   return (

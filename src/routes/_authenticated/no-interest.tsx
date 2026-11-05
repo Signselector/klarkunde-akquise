@@ -19,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { searchMatches } from "@/lib/phone";
 
 export const Route = createFileRoute("/_authenticated/no-interest")({
   head: () => ({ meta: [{ title: "Kein Interesse – Sign Selector Cold Caller" }] }),
@@ -91,12 +92,7 @@ function NoInterestPage() {
   if (!staff)
     return <p className="text-muted-foreground">Diese Liste ist nur für Admins und Manager.</p>;
   const rows = (q.data ?? []).filter(
-    (r) =>
-      !search ||
-      [r.company, r.contact_name, r.phone, r.email, r.city, r.caller]
-        .join(" ")
-        .toLocaleLowerCase()
-        .includes(search.toLocaleLowerCase()),
+    (r) => searchMatches(search, [r.company, r.contact_name, r.email, r.city, r.caller], r.phone),
   );
   function download() {
     logListExport("no-interest", "Kein Interesse", country, rows.length);
