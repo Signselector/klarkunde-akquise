@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { de } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,37 +52,109 @@ function CallbackTimeInput({
     setError(null);
     onChange(d.toISOString());
   };
-  const presets = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+  const [h, setH] = useState(() => (value ? Number(value.slice(0, 2)) : 9));
+  const [m, setM] = useState(() => (value ? Number(value.slice(3, 5)) : 0));
+  const pick = (nh: number, nm: number) => {
+    setH(nh);
+    setM(nm);
+    apply(`${String(nh).padStart(2, "0")}:${String(nm).padStart(2, "0")}`);
+  };
   return (
-    <div className="space-y-3">
-      <label className="block text-sm">
-        <span className="mb-1 block text-muted-foreground">Uhrzeit (frei wählbar)</span>
-        <input
-          type="time"
-          step={60}
-          value={value}
-          disabled={disabled}
-          onChange={(e) => apply(e.target.value)}
-          className="h-10 w-36 rounded-md border bg-background px-3 text-sm tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2"
+    <div className="space-y-2">
+      <span className="block text-sm text-muted-foreground">Uhrzeit</span>
+      <div className="relative flex w-56 items-center justify-center gap-2 rounded-md border bg-background">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-2 top-1/2 h-9 -translate-y-1/2 border-y border-border"
         />
-      </label>
-      <div className="grid grid-cols-4 gap-1.5" aria-label="Schnellauswahl">
-        {presets.map((p) => (
-          <button
-            key={p}
-            type="button"
-            disabled={disabled}
-            onClick={() => apply(p)}
-            className={`rounded-md border px-1 py-1.5 text-sm tabular-nums transition-colors ${
-              value === p ? "border-primary bg-primary text-primary-foreground" : "hover:border-primary hover:bg-primary/10"
-            }`}
-          >
-            {p}
-          </button>
-        ))}
+        <WheelColumn label="Stunde" values={HOURS} value={h} disabled={disabled} onChange={(v) => pick(v, m)} />
+        <span className="text-lg font-medium text-muted-foreground">:</span>
+        <WheelColumn label="Minute" values={MINUTES} value={m} disabled={disabled} onChange={(v) => pick(h, v)} />
       </div>
       {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
-      <p className="text-xs text-muted-foreground">Rückrufe dürfen sich überschneiden.</p>
+    </div>
+  );
+}
+
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = Array.from({ length: 60 }, (_, i) => i);
+const ROW = 36;
+
+/** One scroll wheel (like a phone alarm clock): snaps to the row in the middle. */
+function WheelColumn({
+  label,
+  values,
+  value,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  values: number[];
+  value: number;
+  disabled: boolean;
+  onChange: (v: number) => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const timer = useRef<number | undefined>(undefined);
+  const touched = useRef(false);
+  const [center, setCenter] = useState(value);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el) el.scrollTop = values.indexOf(value) * ROW;
+    setCenter(value);
+    // only on mount: afterwards the wheel itself drives the value
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onScroll = () => {
+    const el = ref.current;
+    if (!el) return;
+    const idx = Math.max(0, Math.min(values.length - 1, Math.round(el.scrollTop / ROW)));
+    setCenter(values[idx]);
+    if (!touched.current) return;
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => onChange(values[idx]), 120);
+  };
+
+  const scrollTo = (idx: number) => {
+    touched.current = true;
+    ref.current?.scrollTo({ top: idx * ROW, behavior: "smooth" });
+  };
+
+  return (
+    <div
+      ref={ref}
+      role="listbox"
+      aria-label={label}
+      tabIndex={disabled ? -1 : 0}
+      onScroll={onScroll}
+      onPointerDown={() => (touched.current = true)}
+      onWheel={() => (touched.current = true)}
+      onKeyDown={(e) => {
+        const idx = values.indexOf(center);
+        if (e.key === "ArrowDown") { e.preventDefault(); scrollTo(Math.min(values.length - 1, idx + 1)); }
+        if (e.key === "ArrowUp") { e.preventDefault(); scrollTo(Math.max(0, idx - 1)); }
+      }}
+      className={`h-[180px] w-16 snap-y snap-mandatory overflow-y-scroll rounded-md [scrollbar-width:none] focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-scrollbar]:hidden ${disabled ? "pointer-events-none opacity-50" : ""}`}
+      style={{ paddingBlock: ROW * 2, maskImage: "linear-gradient(transparent, black 35%, black 65%, transparent)" }}
+    >
+      {values.map((v, i) => {
+        const active = v === center;
+        return (
+          <div
+            key={v}
+            role="option"
+            aria-selected={active}
+            onClick={() => scrollTo(i)}
+            className={`flex h-9 cursor-pointer snap-center items-center justify-center text-lg tabular-nums transition-colors ${
+              active ? "font-semibold text-primary" : "text-muted-foreground"
+            }`}
+          >
+            {String(v).padStart(2, "0")}
+          </div>
+        );
+      })}
     </div>
   );
 }
