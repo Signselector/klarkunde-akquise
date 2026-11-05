@@ -141,15 +141,22 @@ export const syncTeamCalendars = createServerFn({ method: "POST" })
       .select("user_id")
       .eq("country", data.country)
       .limit(200);
+    // Four employees at a time and a time limit: one after the other, a team of 30 made this request run for minutes.
     let synced = 0;
-    for (const m of mapped ?? []) {
-      try {
-        await syncCalendarForUser(m.user_id, data.country);
-        synced++;
-      } catch {
-        // The next run tries again.
-      }
-    }
+    const queue = [...(mapped ?? [])];
+    const deadline = Date.now() + 40_000;
+    await Promise.all(
+      Array.from({ length: 4 }, async () => {
+        for (let m = queue.shift(); m && Date.now() < deadline; m = queue.shift()) {
+          try {
+            await syncCalendarForUser(m.user_id, data.country);
+            synced++;
+          } catch {
+            // The next run tries again.
+          }
+        }
+      }),
+    );
     return { synced, skipped: false };
   });
 

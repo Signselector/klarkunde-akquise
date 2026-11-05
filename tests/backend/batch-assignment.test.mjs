@@ -30,7 +30,9 @@ before(async () => {
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
-    .filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_)/.test(x))
+    .filter(
+      (x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_)/.test(x),
+    )
     .sort()) {
     // PGlite has no pg_cron: skip only the nightly schedule, the functions are still created.
     const sql = (
@@ -116,6 +118,18 @@ test("a batch can only be assigned to accounts of its country, global admins inc
   await as(admin);
   await assert.rejects(() => rpc("reassign_batch", [open, dora]), /invalid_assignee/);
   assert.equal((await rpc("reassign_batch", [abroad, dora])).assigned_to, dora);
+});
+
+test("batch progress only covers the asked country and confirmed batches", async () => {
+  await as(admin);
+  const de = await rpc("get_batch_progress", ["DE"]);
+  assert.ok(de.some((b) => b.id === open));
+  assert.ok(!de.some((b) => b.id === abroad), "AT batch is not part of the DE figures");
+  assert.ok(!de.some((b) => b.id === draft), "drafts are not listed");
+  await as(ben);
+  await assert.rejects(() => rpc("get_batch_progress", ["AT"]), /forbidden/);
+  const own = await rpc("get_batch_progress");
+  assert.ok(!own.some((b) => b.id === abroad), "without a country only the user's countries");
 });
 
 test("only confirmed batches in an allowed country can be taken", async () => {

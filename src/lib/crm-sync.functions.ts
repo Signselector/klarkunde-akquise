@@ -45,7 +45,8 @@ export function gatewayClient(country: string) {
     let response: Response | null = null;
     for (let attempt = 0; ; attempt++) {
       const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 45000);
+      // 25 s per try: a slow Pipedrive must not keep a screen waiting for minutes (two retries follow).
+      const timer = setTimeout(() => controller.abort(), 25000);
       try {
         response = await fetch(url(path), {
           ...init,

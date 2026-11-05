@@ -65,12 +65,15 @@ export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
     installViewAsGuard();
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/auth" });
+    // The session is read locally (and renewed when it runs out) instead of asking the auth server on every page change:
+    // that call made each navigation wait for the network and logged people out when it failed for a moment.
+    const { data } = await supabase.auth.getSession();
+    const sessionUser = data.session?.user;
+    if (!sessionUser) throw redirect({ to: "/auth" });
     // "Ansicht als Mitarbeiter": pages work with the viewed employee as `user`; the real user stays in `realUser`.
     const view = getViewAs();
-    const user = view ? { ...data.user, id: view.id, email: view.email ?? data.user.email } : data.user;
-    return { user, realUser: data.user, viewAs: view };
+    const user = view ? { ...sessionUser, id: view.id, email: view.email ?? sessionUser.email } : sessionUser;
+    return { user, realUser: sessionUser, viewAs: view };
   },
   component: Layout,
 });

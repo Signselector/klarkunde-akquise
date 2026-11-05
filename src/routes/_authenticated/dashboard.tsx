@@ -166,10 +166,10 @@ function Dashboard() {
   } = useQuery({
     queryKey: ["batches", country],
     placeholderData: (prev) => prev,
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
     queryFn: async () => {
       if (backendEnabled) {
-        const progress = (await backendRpc("get_batch_progress", {} as never)) as {
+        const progress = (await backendRpc("get_batch_progress", { p_country: country })) as {
           id: string;
           name: string;
           created_at: string;
