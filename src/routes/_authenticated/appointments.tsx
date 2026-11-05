@@ -508,7 +508,7 @@ function AppointmentsPage() {
           }
         />
 
-        <aside className="rounded-lg border bg-card p-5" aria-label="Terminliste">
+        <aside className="rounded-lg border bg-card p-3 md:p-5" aria-label="Terminliste">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">
               {selected && inWeek(selected, weekStart)
@@ -519,7 +519,7 @@ function AppointmentsPage() {
               <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>Alle anzeigen</Button>
             )}
           </div>
-          <div className="mt-4 space-y-2">
+          <div className="mt-3 space-y-1.5 md:mt-4 md:space-y-2">
             {list.length === 0 ? (
               <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">Keine Termine in diesem Zeitraum.</p>
             ) : (
@@ -528,11 +528,14 @@ function AppointmentsPage() {
                 return (
                   <div
                     key={e.id}
-                    className={cn("flex items-start gap-3 rounded-md border p-3", focusId === e.id && "cc-focus-ring")}
+                    className={cn("flex items-start gap-2 rounded-md border p-2 md:gap-3 md:p-3", focusId === e.id && "cc-focus-ring")}
                   >
                     <span className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", appointmentDotClass(e.date, "external" in e && !!e.external))} />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold">
+                      <p className="text-sm font-semibold leading-snug">
+                        <span className="mr-1.5 font-medium tabular-nums text-muted-foreground">
+                          {e.date.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" })} · {e.date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
                         {heading}
                         {"external" in e && e.external && (
                           <span className="ml-2 rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-800">
@@ -557,7 +560,7 @@ function AppointmentsPage() {
                       )}
                       {"pd" in e && e.pd && canEditPdActivity(e.pd.type, roles.isStaff || (roles.role === "veteran" && e.pd.ownerId === user.id)) && (
                         <Button
-                          className="mt-2"
+                          className="mt-1.5 md:mt-2"
                           size="sm"
                           variant="outline"
                           onClick={() =>

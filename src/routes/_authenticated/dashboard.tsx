@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
-import { FolderOpen } from "@/components/coldcaller/icons";
+import { ChevronDown, FolderOpen } from "@/components/coldcaller/icons";
 import { FeedbackState, InfoButton, Surface } from "@/components/coldcaller/primitives";
 import { Button } from "@/components/ui/button";
 import { Dropdown } from "@/components/ui/dropdown";
@@ -86,6 +86,8 @@ function Dashboard() {
   const me = { data: { name: meName } };
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
+  // Phones: a batch card folds up to its title and progress bar; your own batches start open.
+  const [openBatches, setOpenBatches] = useState<Record<string, boolean>>({});
   // Only accounts of the selected country can receive a batch of that country.
   // Managers may only hand batches to roles below them (Senior Caller, Caller); admins to everyone.
   const myRoles = useRoles(user.id);
@@ -269,17 +271,33 @@ function Dashboard() {
               const free = backendEnabled && hasOwner && !b.assigned_to;
               const row = b as BatchRow;
               return (
-                <article key={b.id} className="cc-batch" data-claimed={backendEnabled && hasOwner && !free}>
+                <article
+                  key={b.id}
+                  className="cc-batch"
+                  data-claimed={backendEnabled && hasOwner && !free}
+                  data-collapsed={!(openBatches[b.id] ?? mine)}
+                >
                   <div className="cc-batch-heading">
-                    <div>
+                    <div className="min-w-0">
                       <h3>{b.name}</h3>
                       <small>Import: {new Date(b.created_at).toLocaleDateString("de-DE")}</small>
                     </div>
-                    {backendEnabled && hasOwner && (
-                      <StatusBadge tone={free ? "info" : mine ? "success" : "neutral"}>
-                        {free ? "Frei" : "Übernommen"}
-                      </StatusBadge>
-                    )}
+                    <div className="flex shrink-0 items-start gap-2">
+                      {backendEnabled && hasOwner && (
+                        <StatusBadge tone={free ? "info" : mine ? "success" : "neutral"}>
+                          {free ? "Frei" : "Übernommen"}
+                        </StatusBadge>
+                      )}
+                      <button
+                        type="button"
+                        className="cc-batch-toggle md:hidden"
+                        aria-expanded={openBatches[b.id] ?? mine}
+                        aria-label={`${b.name} ${(openBatches[b.id] ?? mine) ? "einklappen" : "aufklappen"}`}
+                        onClick={() => setOpenBatches((o) => ({ ...o, [b.id]: !(o[b.id] ?? mine) }))}
+                      >
+                        <ChevronDown aria-hidden="true" />
+                      </button>
+                    </div>
                   </div>
                   <dl className="cc-batch-numbers">
                     <div>

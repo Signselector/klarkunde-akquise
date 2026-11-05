@@ -181,6 +181,13 @@
 }
 .cc-pd-entry:hover { background: color-mix(in oklab, var(--pd) 20%, var(--card)); }
 .cc-pd-entry--allday { border-left-width: 0; }
+/* Phone calendar block: small square-cornered tile (global button styles would make it a pill). */
+.cc-m-entry {
+  border-radius: 3px !important;
+  min-height: 0 !important;
+  box-shadow: none !important;
+  border: 0;
+}
 .cc-pd-note { background: color-mix(in oklab, oklch(0.93 0.09 95) 70%, var(--card)); }
 
 /* A modal dialog sets pointer-events:none on the page outside of it. Toasts must stay clickable then, otherwise a click

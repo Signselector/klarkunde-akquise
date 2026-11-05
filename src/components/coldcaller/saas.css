@@ -2443,3 +2443,35 @@ tr:hover > .cc-sticky-action {
     transform: none;
   }
 }
+
+/* Phones: a batch card folds up to its title and progress bar; the arrow turns when it is open. */
+.cc-batch-toggle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  min-height: 0 !important;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid currentColor;
+  opacity: 0.8;
+}
+.cc-batch-toggle > svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 160ms ease;
+}
+.cc-batch[data-collapsed="false"] .cc-batch-toggle > svg {
+  transform: rotate(180deg);
+}
+@media (max-width: 767px) {
+  .cc-batch[data-collapsed="true"] > :not(.cc-batch-heading):not([role="progressbar"]) {
+    display: none;
+  }
+  .cc-batch[data-collapsed="true"] {
+    padding-block: 14px;
+  }
+  .cc-batch[data-collapsed="true"] .cc-batch-heading {
+    margin-bottom: 8px;
+  }
+}

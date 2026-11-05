@@ -13,6 +13,7 @@ import {
   periodOf,
   shiftAnchor,
   todayKey,
+  weekStartKey,
   type PeriodMode,
 } from "@/lib/stats-period";
 import { Flag } from "@/components/flag";
@@ -97,12 +98,15 @@ function Bars({ items }: { items: { label: string; value: number }[] }) {
   return (
     <div className="space-y-1.5">
       {items.map((i) => (
-        <div key={i.label} className="flex items-center gap-2 text-sm">
-          <span className="w-36 shrink-0 text-muted-foreground">{i.label}</span>
-          <div className="h-5 flex-1 rounded bg-muted">
-            <div className="h-5 rounded bg-primary" style={{ width: `${(i.value / max) * 100}%` }} />
+        // Phones: the name on top, the bar with its number below; from md on all in one row.
+        <div key={i.label} className="flex flex-col gap-1 text-sm md:flex-row md:items-center md:gap-2">
+          <span className="text-muted-foreground md:w-36 md:shrink-0">{i.label}</span>
+          <div className="flex items-center gap-2 md:flex-1">
+            <div className="h-5 flex-1 rounded bg-muted">
+              <div className="h-5 rounded bg-primary" style={{ width: `${(i.value / max) * 100}%` }} />
+            </div>
+            <span className="w-8 text-right tabular-nums">{i.value}</span>
           </div>
-          <span className="w-8 text-right tabular-nums">{i.value}</span>
         </div>
       ))}
     </div>
@@ -130,6 +134,124 @@ function Timeline({ points }: { points: { label: string; value: number; title: s
           <span className="mt-1 truncate text-[10px] text-muted-foreground">{p.label}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Step and top value of the y axis (0, step, 2·step … top), so a week of calls gets two to four gridlines. */
+export function niceScale(max: number): { step: number; top: number } {
+  const steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000];
+  const step = steps.find((s) => max / s <= 3) ?? 10000;
+  return { step, top: Math.max(step, Math.ceil(max / step) * step) };
+}
+
+const monthName = new Intl.DateTimeFormat("de-DE", { month: "long", timeZone: "UTC" });
+const monthAbbr = new Intl.DateTimeFormat("de-DE", { month: "short", timeZone: "UTC" });
+const keyDate = (k: string) => new Date(`${k}T12:00:00Z`);
+
+/** "1. – 7. November", or "28. Okt. – 3. Nov." when the week spans two months. */
+export function weekRangeLabel(startKey: string): string {
+  const a = keyDate(startKey);
+  const b = keyDate(addDaysKey(startKey, 6));
+  return a.getUTCMonth() === b.getUTCMonth()
+    ? `${a.getUTCDate()}. – ${b.getUTCDate()}. ${monthName.format(b)}`
+    : `${a.getUTCDate()}. ${monthAbbr.format(a)} – ${b.getUTCDate()}. ${monthAbbr.format(b)}`;
+}
+
+/** Splits day figures into Monday–Sunday weeks. Days of the week outside the period have no value (null). */
+export function toWeeks(points: { key: string; value: number }[]) {
+  const byKey = new Map(points.map((p) => [p.key, p.value]));
+  const starts = [...new Set(points.map((p) => weekStartKey(p.key)))].sort();
+  return starts.map((start) => ({
+    start,
+    days: Array.from({ length: 7 }, (_, i) => {
+      const key = addDaysKey(start, i);
+      return { key, value: byKey.has(key) ? (byKey.get(key) as number) : null };
+    }),
+  }));
+}
+
+/**
+ * Phone chart "Gespräche pro Tag": the seven days of one week as bars with a gridded y axis and a pager to move from
+ * week to week. The busiest day of the week is drawn dark. In week mode the arrows move the whole period instead.
+ */
+export function WeekBars({
+  points,
+  today,
+  onShift,
+}: {
+  points: { key: string; value: number }[];
+  today: string;
+  /** When set, the arrows call this instead of paging inside the loaded period (week mode). */
+  onShift?: (dir: -1 | 1) => void;
+}) {
+  const weeks = useMemo(() => toWeeks(points), [points]);
+  const first = points[0]?.key ?? "";
+  const [index, setIndex] = useState(0);
+  // Start at the week of today when it is inside the period, otherwise at the last one.
+  useEffect(() => {
+    const current = weeks.findIndex((w) => w.days.some((d) => d.key === today && d.value !== null));
+    setIndex(current >= 0 ? current : Math.max(0, weeks.length - 1));
+  }, [first, weeks.length, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  const week = weeks[Math.min(index, weeks.length - 1)];
+  if (!week) return <p className="py-6 text-center text-sm text-muted-foreground">Keine Daten.</p>;
+  const max = Math.max(0, ...week.days.map((d) => d.value ?? 0));
+  const { step, top } = niceScale(max);
+  const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step);
+  const canPrev = onShift ? true : index > 0;
+  const canNext = onShift ? true : index < weeks.length - 1;
+  const move = (dir: -1 | 1) => (onShift ? onShift(dir) : setIndex((i) => i + dir));
+  return (
+    <div>
+      <div className="flex h-44 gap-2" role="img" aria-label={`Gespräche pro Tag, ${weekRangeLabel(week.start)}`}>
+        <div className="w-7 shrink-0 pb-5 text-right text-xs text-muted-foreground">
+          <div className="relative h-full">
+            {ticks.map((t) => (
+              <span key={t} className="absolute right-0 translate-y-1/2 tabular-nums" style={{ bottom: `${(t / top) * 100}%` }}>
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="relative min-w-0 flex-1">
+          {/* gridlines: the plot area is everything above the 20px label row */}
+          <div className="absolute inset-x-0 top-0 bottom-5">
+            {ticks.map((t) => (
+              <div key={t} className="absolute inset-x-0 border-t border-dashed border-border" style={{ bottom: `${(t / top) * 100}%` }} />
+            ))}
+          </div>
+          <div className="absolute inset-0 grid grid-cols-7 gap-1.5">
+            {week.days.map((d) => {
+              const v = d.value ?? 0;
+              const busiest = v > 0 && v === max;
+              return (
+                <div key={d.key} className="flex min-w-0 flex-col" title={d.value === null ? "" : `${d.key} · ${v} Gespräche`}>
+                  <div className="flex flex-1 items-end justify-center pb-0">
+                    <div
+                      className={cn("w-full rounded-t-md", d.value === null ? "bg-transparent" : busiest ? "bg-primary" : "bg-primary/45")}
+                      style={{ height: `${d.value === null ? 0 : Math.max(v ? 2 : 0.8, (v / top) * 100)}%`, minHeight: d.value === null ? 0 : 2 }}
+                    />
+                  </div>
+                  <span className={cn("h-5 pt-1 text-center text-xs tabular-nums", d.value === null ? "text-muted-foreground/40" : d.key === today ? "font-semibold text-foreground" : "text-muted-foreground")}>
+                    {keyDate(d.key).getUTCDate()}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <Button variant="ghost" size="icon" aria-label="Vorherige Woche" disabled={!canPrev} onClick={() => move(-1)}>
+          <ChevronLeft />
+        </Button>
+        <span className="min-w-0 flex-1 truncate rounded-full bg-muted px-4 py-2 text-center text-sm font-medium" aria-live="polite">
+          {weekRangeLabel(week.start)}
+        </span>
+        <Button variant="ghost" size="icon" aria-label="Nächste Woche" disabled={!canNext} onClick={() => move(1)}>
+          <ChevronRight />
+        </Button>
+      </div>
     </div>
   );
 }
@@ -258,7 +380,8 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               </button>
             ))}
           </div>
-          <label className="ml-auto flex items-center gap-2 text-sm">
+          {/* Phones: below the country buttons, on the left; from md on to the right of them. */}
+          <label className="flex w-full items-center gap-2 text-sm md:ml-auto md:w-auto">
             <span className="font-medium">Ebene</span>
             <Dropdown
               value={employee ?? ""}
@@ -379,9 +502,24 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
         </section>
         <section className="space-y-3 rounded-lg border bg-card p-4">
           <h2 className="font-semibold">
-            {mode === "month" || mode === "custom" ? "Gespräche pro Tag" : mode === "week" ? "Gespräche pro Wochentag" : "Gespräche pro Stunde"}
+            <span className="md:hidden">{mode === "day" ? "Gespräche pro Stunde" : "Gespräche pro Tag"}</span>
+            <span className="hidden md:inline">
+              {mode === "month" || mode === "custom" ? "Gespräche pro Tag" : mode === "week" ? "Gespräche pro Wochentag" : "Gespräche pro Stunde"}
+            </span>
           </h2>
-          <Timeline points={shown} />
+          {/* Phones show weeks to page through (except for a single day); from md on the whole period at once. */}
+          {mode !== "day" && (
+            <div className="md:hidden">
+              <WeekBars
+                points={(data?.timeline ?? []).map((p) => ({ key: p.bucket, value: p.calls }))}
+                today={today}
+                {...(mode === "week" ? { onShift: (dir: -1 | 1) => setAnchor(shiftAnchor(mode, anchor, dir)) } : {})}
+              />
+            </div>
+          )}
+          <div className={mode === "day" ? "" : "hidden md:block"}>
+            <Timeline points={shown} />
+          </div>
           {outside > 0 && (
             <p className="text-xs text-muted-foreground">Außerhalb von 08:00–18:59 Uhr: {outside} Gespräche.</p>
           )}

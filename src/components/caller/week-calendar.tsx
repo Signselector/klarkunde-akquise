@@ -83,6 +83,7 @@ export const fmtRange = (at: Date, durationMin = 30) =>
   `${time.format(at)} → ${time.format(new Date(at.getTime() + durationMin * 60_000))}`;
 
 const HOUR = 56; // px per hour
+const HOUR_M = 44; // px per hour on phones
 const DAY_START = 0;
 const DAY_END = 24;
 
@@ -151,6 +152,7 @@ export function WeekCalendar({
   const [active, setActive] = useState<Set<EntryKind>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const mScroller = useRef<HTMLDivElement>(null);
 
   const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const shown = useMemo(
@@ -164,10 +166,9 @@ export function WeekCalendar({
 
   // Scroll to shortly before the current time (or 8:00 in other weeks).
   useEffect(() => {
-    const el = scroller.current;
-    if (!el) return;
     const h = thisWeek ? Math.max(0, now.getHours() + now.getMinutes() / 60 - 2) : 8;
-    el.scrollTop = (h - DAY_START) * HOUR;
+    if (scroller.current) scroller.current.scrollTop = (h - DAY_START) * HOUR;
+    if (mScroller.current) mScroller.current.scrollTop = (h - DAY_START) * HOUR_M;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStart]);
 
@@ -180,7 +181,6 @@ export function WeekCalendar({
     });
 
   const nowTop = (now.getHours() + now.getMinutes() / 60 - DAY_START) * HOUR;
-  const mobileDay = selected && inWeek(selected, weekStart) ? selected : thisWeek ? now : weekStart;
 
   const entryButton = (e: WeekEntry, style?: React.CSSProperties, tall = false, where = "d") => {
     const pid = `${where}:${e.id}`;
@@ -229,10 +229,43 @@ export function WeekCalendar({
     );
   };
 
+  /** Phone version of an entry: a small coloured block in the time grid, like the Google Calendar app. */
+  const mobileEntry = (e: WeekEntry, style: React.CSSProperties, color: string) => {
+    const pid = `p:${e.id}`;
+    const past = e.at.getTime() + (e.durationMin ?? 30) * 60_000 < now.getTime();
+    const btn = (
+      <button
+        type="button"
+        onClick={renderDetail ? undefined : () => setOpenId(openId === pid ? null : pid)}
+        style={{ ...style, background: color }}
+        title={`${e.title} · ${fmtRange(e.at, e.durationMin)}`}
+        aria-label={`${e.title}, ${fmtRange(e.at, e.durationMin)}`}
+        className={cn(
+          "cc-m-entry absolute overflow-hidden px-1 py-0.5 text-left text-[10px] font-semibold leading-tight text-white",
+          past && "opacity-70",
+          openId === pid && "ring-2 ring-foreground/60",
+        )}
+      >
+        <span className={cn("block truncate", e.done && "line-through")}>{e.title}</span>
+      </button>
+    );
+    if (!renderDetail) return <div key={pid} className="contents">{btn}</div>;
+    return (
+      <Popover key={pid} open={openId === pid} onOpenChange={(o) => setOpenId((cur) => (o ? pid : cur === pid ? null : cur))}>
+        <PopoverTrigger asChild>{btn}</PopoverTrigger>
+        <PopoverContent side="bottom" align="center" collisionPadding={8} className="w-[400px] max-w-[94vw] overflow-hidden p-0">
+          {renderDetail(e, () => setOpenId(null))}
+        </PopoverContent>
+      </Popover>
+    );
+  };
+  const kindColor = (k: EntryKind | undefined) =>
+    k === "call" ? "#3b82f6" : k === "meeting" ? "#16a34a" : k === "deadline" ? "#dc2626" : "#f59e0b";
+
   return (
     <section className="cc-pd-cal rounded-lg border bg-card" aria-label={ariaLabel}>
       {/* Header: week navigation and type filters */}
-      <div className="flex flex-wrap items-center gap-2 border-b px-3 py-2">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b px-2 py-2 md:px-3">
         <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" aria-label="Vorherige Woche" onClick={() => onWeekChange(addDays(weekStart, -7))}>
             <ChevronLeft />
@@ -244,8 +277,8 @@ export function WeekCalendar({
             <ChevronRight />
           </Button>
         </div>
-        <h2 className="mr-auto px-2 text-sm font-semibold" aria-live="polite">{weekTitle(weekStart)}</h2>
-        <div role="group" aria-label="Aktivitätstyp" className="flex flex-wrap items-center gap-0.5">
+        <h2 className="mr-auto min-w-0 truncate px-1 text-xs font-semibold md:px-2 md:text-sm" aria-live="polite">{weekTitle(weekStart)}</h2>
+        <div role="group" aria-label="Aktivitätstyp" className="flex w-full items-center gap-0.5 overflow-x-auto md:w-auto md:flex-wrap md:overflow-visible">
           <button
             type="button"
             aria-pressed={active.size === 0}
@@ -272,47 +305,107 @@ export function WeekCalendar({
         </div>
       </div>
 
-      {/* Mobile: day tabs + list */}
-      <div className="p-3 md:hidden">
-        <div role="tablist" aria-label="Tage der Woche" className="grid grid-cols-7 gap-1">
+      {/* Phone: week grid like the Google Calendar app. The day buttons also choose the day of the list below. */}
+      <div className={cn("md:hidden", loading && "animate-pulse opacity-60")}>
+        <div role="tablist" aria-label="Tage der Woche" className="grid grid-cols-[30px_repeat(7,minmax(0,1fr))] border-b">
+          <span className="self-end pb-1.5 text-center text-[9px] font-semibold uppercase text-muted-foreground">
+            KW{isoWeek(addDays(weekStart, 1))}
+          </span>
           {days.map((d) => {
-            const isSel = sameDay(d, mobileDay);
-            const n = shown.filter((e) => sameDay(e.at, d)).length;
+            const isSel = !!selected && sameDay(d, selected);
+            const isToday = sameDay(d, now);
             return (
               <button
                 key={d.toISOString()}
                 type="button"
                 role="tab"
                 aria-selected={isSel}
-                onClick={() => onSelect(d)}
-                className={cn("flex flex-col items-center rounded-md py-1.5 text-xs", isSel && "bg-accent")}
+                aria-label={longDay.format(d)}
+                onClick={() => onSelect(isSel ? null : d)}
+                className={cn("flex flex-col items-center gap-0.5 py-1.5", isSel && "bg-accent")}
               >
-                <span className="text-muted-foreground">{weekday.format(d).replace(".", "")}</span>
-                <span className={cn("grid size-7 place-items-center rounded-full text-sm font-semibold", sameDay(d, now) && "cc-pd-today")}>
+                <span className={cn("grid size-7 place-items-center rounded-full text-base font-medium leading-none", isToday && "cc-pd-today")}>
                   {d.getDate()}
                 </span>
-                <span className="h-1.5">{n > 0 && <span className="block size-1.5 rounded-full bg-primary" />}</span>
+                <span className="text-[10px] uppercase text-muted-foreground">{weekday.format(d).replace(".", "")}</span>
               </button>
             );
           })}
         </div>
-        <p className="mt-3 text-sm font-medium">{longDay.format(mobileDay)}</p>
-        <div className="mt-2 space-y-1.5">
-          {shown.filter((e) => sameDay(e.at, mobileDay)).length === 0 && (
-            <p className="text-sm text-muted-foreground">Keine Einträge.</p>
-          )}
-          {shown
-            .filter((e) => sameDay(e.at, mobileDay))
-            .sort((a, b) => a.at.getTime() - b.at.getTime())
-            .map((e) => (
-              <div key={e.id} className="relative">{entryButton({ ...e, allDay: true }, undefined, true, "m")}</div>
+        {hasAllDay && (
+          <div className="grid grid-cols-[30px_repeat(7,minmax(0,1fr))] border-b text-[10px]">
+            <span className="self-center text-center text-[9px] leading-tight text-muted-foreground">ohne Zeit</span>
+            {days.map((d) => {
+              const n = untimed(d).length;
+              return (
+                <button
+                  key={d.toISOString()}
+                  type="button"
+                  disabled={!n}
+                  onClick={() => onSelect(d)}
+                  className="mx-0.5 my-1 rounded-[3px] bg-muted py-0.5 text-center font-semibold tabular-nums text-muted-foreground disabled:bg-transparent disabled:text-transparent"
+                >
+                  {n || "·"}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <div ref={mScroller} className="relative max-h-[min(52vh,420px)] overflow-y-auto">
+          <div className="relative grid grid-cols-[30px_repeat(7,minmax(0,1fr))]" style={{ height: (DAY_END - DAY_START) * HOUR_M }}>
+            <div className="relative">
+              {Array.from({ length: DAY_END - DAY_START }, (_, i) => (
+                <span
+                  key={i}
+                  className="absolute right-1 -translate-y-1/2 text-[9px] text-muted-foreground tabular-nums"
+                  style={{ top: i * HOUR_M }}
+                >
+                  {i === 0 ? "" : `${String(DAY_START + i).padStart(2, "0")}`}
+                </span>
+              ))}
+            </div>
+            {days.map((d) => (
+              <div
+                key={d.toISOString()}
+                role="group"
+                aria-label={longDay.format(d)}
+                className={cn("relative border-l", selected && sameDay(d, selected) && "bg-accent/50")}
+                style={{
+                  backgroundImage: `repeating-linear-gradient(to bottom, var(--border) 0 1px, transparent 1px ${HOUR_M}px)`,
+                }}
+              >
+                {lanes(timed(d)).map(({ e, lane, lanes: n }) => {
+                  const start = e.at.getHours() + e.at.getMinutes() / 60;
+                  const h = Math.max(((e.durationMin ?? 30) / 60) * HOUR_M, 18);
+                  return mobileEntry(
+                    e,
+                    {
+                      top: (start - DAY_START) * HOUR_M + 1,
+                      height: h - 2,
+                      left: `calc(${(lane / n) * 100}% + 1px)`,
+                      width: `calc(${100 / n}% - 2px)`,
+                    },
+                    kindColor(e.kind),
+                  );
+                })}
+              </div>
             ))}
-          {onAddForDay && (
-            <Button variant="outline" size="sm" onClick={() => onAddForDay(mobileDay)}>
+            {thisWeek && (
+              <div className="pointer-events-none absolute inset-x-0 z-10" style={{ top: (now.getHours() + now.getMinutes() / 60 - DAY_START) * HOUR_M }} aria-hidden="true">
+                <div className="cc-pd-now relative h-[2px]" style={{ marginLeft: 30, width: "calc(100% - 30px)" }}>
+                  <span className="cc-pd-now absolute -left-[3px] -top-[3px] size-2 rounded-full" />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        {onAddForDay && (
+          <div className="border-t p-2">
+            <Button variant="outline" size="sm" className="w-full" onClick={() => onAddForDay(selected && inWeek(selected, weekStart) ? selected : thisWeek ? now : weekStart)}>
               <CalendarPlus /> {addLabel}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Desktop: time grid */}
