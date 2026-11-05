@@ -14,11 +14,24 @@ describe("toE164", () => {
   });
 });
 
-import { isPhoneQuery, normalizePhoneDigits, phoneDbPatterns, phoneSearchMatches, searchMatches } from "./phone";
+import {
+  isPhoneQuery,
+  normalizePhoneDigits,
+  phoneDbPatterns,
+  phoneSearchMatches,
+  searchMatches,
+} from "./phone";
 
 describe("normalizePhoneDigits", () => {
   it("gives the same digits for every way of writing a number", () => {
-    for (const v of ["+49 8161 6097754", "0049 8161 6097754", "08161/6097754", "08161 6097754", "+49 (0) 8161-6097754", "081616097754"])
+    for (const v of [
+      "+49 8161 6097754",
+      "0049 8161 6097754",
+      "08161/6097754",
+      "08161 6097754",
+      "+49 (0) 8161-6097754",
+      "081616097754",
+    ])
       expect(normalizePhoneDigits(v)).toBe("81616097754");
   });
   it("handles Austria and the Netherlands", () => {

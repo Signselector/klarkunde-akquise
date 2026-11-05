@@ -58,7 +58,10 @@ export function isPhoneQuery(query: string): boolean {
  * digits of the search are contained in those of the number (or the other way round for long numbers). The digit
  * comparison only runs for searches that look like a phone number, so "Hauptstraße 12345" does not hit phones.
  */
-export function phoneSearchMatches(query: string, candidatePhone: string | null | undefined): boolean {
+export function phoneSearchMatches(
+  query: string,
+  candidatePhone: string | null | undefined,
+): boolean {
   const q = (query ?? "").trim().toLocaleLowerCase();
   if (!q || !candidatePhone) return false;
   if (candidatePhone.toLocaleLowerCase().includes(q)) return true;
