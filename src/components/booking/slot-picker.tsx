@@ -111,10 +111,11 @@ function WheelColumn({
     const el = ref.current;
     if (!el) return;
     const idx = Math.max(0, Math.min(values.length - 1, Math.round(el.scrollTop / ROW)));
-    setCenter(values[idx]);
+    const v = values[idx] ?? 0;
+    setCenter(v);
     if (!touched.current) return;
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => onChange(values[idx]), 120);
+    timer.current = window.setTimeout(() => onChange(v), 120);
   };
 
   const scrollTo = (idx: number) => {
