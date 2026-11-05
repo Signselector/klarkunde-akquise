@@ -218,6 +218,7 @@ BEGIN
    ELSE
     SELECT coalesce(p.display_name,p.email,'Caller') INTO nm FROM public.profiles p WHERE p.id=r.origin;
     nm:='Referenzmail Neuverteilung '||mon||' – '||nm;
+    target:=NULL;
     SELECT id INTO target FROM public.lead_batches WHERE country=r.country AND name=nm AND assigned_to=r.origin LIMIT 1;
     IF target IS NULL THEN
      INSERT INTO public.lead_batches(name,created_by,import_state,country,assigned_to,assigned_at)
@@ -227,6 +228,7 @@ BEGIN
    n_caller:=n_caller+1;
   ELSE
    nm:='Referenzmail Neuverteilung '||mon;
+   target:=NULL;
    SELECT id INTO target FROM public.lead_batches WHERE country=r.country AND name=nm AND assigned_to IS NULL LIMIT 1;
    IF target IS NULL THEN
     INSERT INTO public.lead_batches(name,created_by,import_state,country)
