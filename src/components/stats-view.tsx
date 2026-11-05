@@ -172,38 +172,54 @@ export function toWeeks(points: { key: string; value: number }[]) {
 }
 
 /**
- * Phone chart "Gespräche pro Tag": the seven days of one week as bars with a gridded y axis and a pager to move from
- * week to week. The busiest day of the week is drawn dark. In week mode the arrows move the whole period instead.
+ * Phone chart "Gespräche pro Tag". Month: every day of the month in one chart (nothing of the neighbouring months).
+ * Other periods: the seven days of one week with a pager. All bars are dark; a tap on a bar shows its exact number
+ * and greys out the others, a second tap on it clears the choice. In week mode the arrows move the whole period.
  */
 export function WeekBars({
   points,
   today,
   onShift,
+  fullPeriod = false,
+  periodLabel = "",
 }: {
   points: { key: string; value: number }[];
   today: string;
   /** When set, the arrows call this instead of paging inside the loaded period (week mode). */
   onShift?: (dir: -1 | 1) => void;
+  /** Show all given days at once (month) instead of week by week. */
+  fullPeriod?: boolean;
+  /** Title under the chart when `fullPeriod` is set, e.g. "November 2026". */
+  periodLabel?: string;
 }) {
   const weeks = useMemo(() => toWeeks(points), [points]);
   const first = points[0]?.key ?? "";
   const [index, setIndex] = useState(0);
+  const [picked, setPicked] = useState<string | null>(null);
   // Start at the week of today when it is inside the period, otherwise at the last one.
   useEffect(() => {
     const current = weeks.findIndex((w) => w.days.some((d) => d.key === today && d.value !== null));
     setIndex(current >= 0 ? current : Math.max(0, weeks.length - 1));
   }, [first, weeks.length, today]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => setPicked(null), [first, index, fullPeriod]);
   const week = weeks[Math.min(index, weeks.length - 1)];
   if (!week) return <p className="py-6 text-center text-sm text-muted-foreground">Keine Daten.</p>;
-  const max = Math.max(0, ...week.days.map((d) => d.value ?? 0));
+  const days = fullPeriod ? points.map((p) => ({ key: p.key, value: p.value as number | null })) : week.days;
+  const label = fullPeriod ? periodLabel : weekRangeLabel(week.start);
+  const max = Math.max(0, ...days.map((d) => d.value ?? 0));
   const { step, top } = niceScale(max);
   const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step);
   const canPrev = onShift ? true : index > 0;
   const canNext = onShift ? true : index < weeks.length - 1;
   const move = (dir: -1 | 1) => (onShift ? onShift(dir) : setIndex((i) => i + dir));
+  const dense = days.length > 10;
+  const showLabel = (key: string) => {
+    const day = keyDate(key).getUTCDate();
+    return !dense || day === 1 || day % 5 === 0;
+  };
   return (
     <div>
-      <div className="flex h-44 gap-2" role="img" aria-label={`Gespräche pro Tag, ${weekRangeLabel(week.start)}`}>
+      <div className="flex h-44 gap-2 pt-4" role="group" aria-label={`Gespräche pro Tag, ${label}`}>
         <div className="w-7 shrink-0 pb-5 text-right text-xs text-muted-foreground">
           <div className="relative h-full">
             {ticks.map((t) => (
@@ -220,38 +236,71 @@ export function WeekBars({
               <div key={t} className="absolute inset-x-0 border-t border-dashed border-border" style={{ bottom: `${(t / top) * 100}%` }} />
             ))}
           </div>
-          <div className="absolute inset-0 grid grid-cols-7 gap-1.5">
-            {week.days.map((d) => {
+          <div
+            className={cn("absolute inset-0 grid", dense ? "gap-[2px]" : "gap-1.5")}
+            style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))` }}
+          >
+            {days.map((d) => {
               const v = d.value ?? 0;
-              const busiest = v > 0 && v === max;
+              const empty = d.value === null;
+              const chosen = picked === d.key;
+              const day = keyDate(d.key).getUTCDate();
               return (
-                <div key={d.key} className="flex min-w-0 flex-col" title={d.value === null ? "" : `${d.key} · ${v} Gespräche`}>
-                  <div className="flex flex-1 items-end justify-center pb-0">
-                    <div
-                      className={cn("w-full rounded-t-md", d.value === null ? "bg-transparent" : busiest ? "bg-primary" : "bg-primary/45")}
-                      style={{ height: `${d.value === null ? 0 : Math.max(v ? 2 : 0.8, (v / top) * 100)}%`, minHeight: d.value === null ? 0 : 2 }}
-                    />
-                  </div>
-                  <span className={cn("h-5 pt-1 text-center text-xs tabular-nums", d.value === null ? "text-muted-foreground/40" : d.key === today ? "font-semibold text-foreground" : "text-muted-foreground")}>
-                    {keyDate(d.key).getUTCDate()}
+                <button
+                  key={d.key}
+                  type="button"
+                  disabled={empty}
+                  aria-pressed={chosen}
+                  aria-label={`${day}. ${monthName.format(keyDate(d.key))}: ${v} Gespräche`}
+                  onClick={() => setPicked(chosen ? null : d.key)}
+                  className="flex min-h-0 min-w-0 flex-col !rounded-none !border-0 !bg-transparent !p-0 !shadow-none !min-h-0"
+                >
+                  <span className="flex w-full flex-1 items-end justify-center">
+                    <span
+                      className={cn(
+                        "relative block w-full rounded-t-[3px] transition-colors",
+                        empty ? "bg-transparent" : picked !== null && !chosen ? "bg-muted-foreground/25" : "bg-primary",
+                      )}
+                      style={{ height: `${empty ? 0 : Math.max(v ? 2 : 0.8, (v / top) * 100)}%`, minHeight: empty ? 0 : 2 }}
+                    >
+                      {chosen && (
+                        <span className="absolute bottom-full left-1/2 mb-0.5 -translate-x-1/2 whitespace-nowrap text-xs font-semibold tabular-nums text-foreground">
+                          {v}
+                        </span>
+                      )}
+                    </span>
                   </span>
-                </div>
+                  <span
+                    className={cn(
+                      "h-5 pt-1 text-center text-[11px] tabular-nums",
+                      empty ? "text-muted-foreground/40" : d.key === today || chosen ? "font-semibold text-foreground" : "text-muted-foreground",
+                    )}
+                  >
+                    {showLabel(d.key) ? day : ""}
+                  </span>
+                </button>
               );
             })}
           </div>
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <Button variant="ghost" size="icon" aria-label="Vorherige Woche" disabled={!canPrev} onClick={() => move(-1)}>
-          <ChevronLeft />
-        </Button>
-        <span className="min-w-0 flex-1 truncate rounded-full bg-muted px-4 py-2 text-center text-sm font-medium" aria-live="polite">
-          {weekRangeLabel(week.start)}
-        </span>
-        <Button variant="ghost" size="icon" aria-label="Nächste Woche" disabled={!canNext} onClick={() => move(1)}>
-          <ChevronRight />
-        </Button>
-      </div>
+      {fullPeriod ? (
+        <p className="mt-3 rounded-full bg-muted px-4 py-2 text-center text-sm font-medium capitalize" aria-live="polite">
+          {label}
+        </p>
+      ) : (
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <Button variant="ghost" size="icon" aria-label="Vorherige Woche" disabled={!canPrev} onClick={() => move(-1)}>
+            <ChevronLeft />
+          </Button>
+          <span className="min-w-0 flex-1 truncate rounded-full bg-muted px-4 py-2 text-center text-sm font-medium" aria-live="polite">
+            {label}
+          </span>
+          <Button variant="ghost" size="icon" aria-label="Nächste Woche" disabled={!canNext} onClick={() => move(1)}>
+            <ChevronRight />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -513,6 +562,7 @@ export function StatsView({ userId, title = "Statistik" }: { userId: string; tit
               <WeekBars
                 points={(data?.timeline ?? []).map((p) => ({ key: p.bucket, value: p.calls }))}
                 today={today}
+                {...(mode === "month" ? { fullPeriod: true, periodLabel: period.label } : {})}
                 {...(mode === "week" ? { onShift: (dir: -1 | 1) => setAnchor(shiftAnchor(mode, anchor, dir)) } : {})}
               />
             </div>

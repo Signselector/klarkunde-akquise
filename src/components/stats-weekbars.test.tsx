@@ -53,3 +53,40 @@ describe("WeekBars", () => {
     expect(onShift).toHaveBeenCalledWith(1);
   });
 });
+
+describe("WeekBars for a month", () => {
+  const november2 = november.map((p) => ({ ...p, value: p.value * 2 }));
+
+  it("shows every day of the month and nothing of October or December", () => {
+    render(
+      <WeekBars points={november2} today="2026-11-04" fullPeriod periodLabel="november 2026" />,
+    );
+    expect(screen.getAllByRole("button", { name: /Gespräche$/ }).length).toBe(30);
+    expect(screen.getByRole("button", { name: "1. November: 2 Gespräche" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Vorherige Woche/ })).toBeNull();
+    expect(screen.getByText("november 2026")).toBeTruthy();
+  });
+
+  it("all bars are dark; a tap shows the exact number and greys out the others", () => {
+    render(
+      <WeekBars points={november2} today="2026-11-04" fullPeriod periodLabel="november 2026" />,
+    );
+    const bar = (n: number) =>
+      screen
+        .getByRole("button", { name: new RegExp(`^${n}\\. November`) })
+        .querySelector("span > span") as HTMLElement;
+    expect(bar(3).className).toContain("bg-primary");
+    expect(bar(4).className).toContain("bg-primary");
+    fireEvent.click(screen.getByRole("button", { name: "3. November: 6 Gespräche" }));
+    expect(
+      screen.getByRole("button", { name: "3. November: 6 Gespräche" }).getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(screen.getByRole("button", { name: "3. November: 6 Gespräche" }).textContent).toContain(
+      "6",
+    );
+    expect(bar(3).className).toContain("bg-primary");
+    expect(bar(4).className).toContain("bg-muted-foreground/25");
+    fireEvent.click(screen.getByRole("button", { name: "3. November: 6 Gespräche" }));
+    expect(bar(4).className).toContain("bg-primary");
+  });
+});
