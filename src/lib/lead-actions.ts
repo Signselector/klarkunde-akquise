@@ -105,7 +105,7 @@ export const LEAD_ACTIONS: LeadAction[] = [
   },
   {
     key: "reference_mail",
-    help: { when: 'Kunde möchte vorab Referenzen und Produktionsbilder sehen.', effect: 'Sendet die Referenzmail an den Kontakt und schließt den Lead ab.' },
+    help: { when: 'Kunde möchte vorab Referenzen und Produktionsbilder sehen.', effect: 'Sendet die Referenzmail. Der Lead bleibt ganz unten in Offene Leads; mit geplantem Rückruf wird er als Rückruf geführt.' },
     label: "Referenzmail",
     hint: "Mail senden, Lead abschließen",
     color: ACTION_BUTTON,
