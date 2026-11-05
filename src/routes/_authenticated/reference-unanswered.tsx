@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { logListExport, useLogListView } from "@/lib/audit";
@@ -25,6 +26,8 @@ function ReferenceUnansweredPage() {
   const { scope: country, bar, isStaff: staff, showCountryColumn } = useListScope(user.id, user.email);
   useLogListView("reference-unanswered", "Referenzmail offen", country, staff);
   const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState(false);
+  const qc = useQueryClient();
   const q = useQuery({
     enabled: staff,
     queryKey: ["reference-unanswered", country],
@@ -41,6 +44,31 @@ function ReferenceUnansweredPage() {
   const rows = (q.data ?? []).filter(
     (r) => searchMatches(search, [r.company, r.contact_name, r.email, r.city, r.caller, r.caller_id], r.phone),
   );
+  async function requeue() {
+    if (busy || !rows.length) return;
+    if (
+      !window.confirm(
+        `${rows.length} Leads neu einspielen? Aktive Caller bekommen ihre Leads zurück, Leads von deaktivierten Callern landen in einem neuen Batch „Referenzmail Neuverteilung“.`,
+      )
+    )
+      return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("requeue_reference_leads" as never, {
+        p_lead_ids: rows.map((r) => r.lead_id),
+      } as never);
+      if (error) throw error;
+      const res = (data ?? {}) as { to_callers?: number; to_new_batch?: number };
+      toast.success(
+        `${res.to_callers ?? 0} Leads zurück an ihre Caller, ${res.to_new_batch ?? 0} in neuen Batch.`,
+      );
+      void qc.invalidateQueries({ queryKey: ["reference-unanswered"] });
+    } catch {
+      toast.error("Neu einspielen fehlgeschlagen. Bitte erneut versuchen.");
+    } finally {
+      setBusy(false);
+    }
+  }
   function download() {
     logListExport("reference-unanswered", "Referenzmail offen", country, rows.length);
     const blob = new Blob([unansweredCsv(rows)], { type: "text/csv;charset=utf-8" });
@@ -61,9 +89,14 @@ function ReferenceUnansweredPage() {
         title="Ohne Antwort seit 3 Monaten"
         description={`${country === "ALL" ? "Alle Länder" : country} · ${q.data?.length ?? 0} Leads`}
         action={
-          <Button variant="outline" onClick={download} disabled={!rows.length}>
-            CSV herunterladen
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={download} disabled={!rows.length}>
+              CSV herunterladen
+            </Button>
+            <Button onClick={requeue} disabled={!rows.length || busy}>
+              {busy ? "Wird eingespielt …" : `Neu einspielen (${rows.length})`}
+            </Button>
+          </div>
         }
       >
         <div className="cc-surface-body">
