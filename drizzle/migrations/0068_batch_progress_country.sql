@@ -1,3 +1,6 @@
+-- Performance: the dashboard asked for the progress of ALL batches of ALL countries (a scan over every lead) from every
+-- open dashboard every 30 seconds. Now it only counts the batches of the country that is shown, and only those the
+-- user may access.
 DROP FUNCTION IF EXISTS public.get_batch_progress();
 CREATE FUNCTION public.get_batch_progress(p_country text DEFAULT NULL) RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path='' AS $$
 DECLARE a uuid:=app_private.actor(); r jsonb;
@@ -19,4 +22,6 @@ BEGIN
 END $$;
 REVOKE ALL ON FUNCTION public.get_batch_progress(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_batch_progress(text) TO authenticated;
+
+-- The counts per batch can be answered from this index without reading the lead rows.
 CREATE INDEX IF NOT EXISTS leads_batch_progress_idx ON public.leads (batch_id, status, attempts) WHERE archived_at IS NULL;
