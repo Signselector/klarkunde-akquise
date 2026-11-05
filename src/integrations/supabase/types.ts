@@ -1967,6 +1967,7 @@ export type Database = {
         }
         Returns: Json
       }
+      requeue_reference_leads: { Args: { p_lead_ids: string[] }; Returns: Json }
       reschedule_appointment: {
         Args: { p_appointment_id: string; p_starts_at: string }
         Returns: Json
