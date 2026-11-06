@@ -1,0 +1,1 @@
+COMMENT ON FUNCTION public.claim_next_lead(text) IS 'Hands out only never-called open leads or due callbacks; not reached leads stay parked.';
