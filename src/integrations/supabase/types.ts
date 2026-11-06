@@ -2040,10 +2040,13 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_lead_internal_note: { Args: { p_internal_note: string; p_lead_id: string }; Returns: undefined }
       update_lead_contact: {
         Args: { p_contact: Json; p_expected_version: number; p_lead_id: string }
         Returns: Json
+      }
+      update_lead_internal_note: {
+        Args: { p_internal_note: string; p_lead_id: string }
+        Returns: undefined
       }
       upsert_team_metrics: { Args: { p_rows: Json }; Returns: Json }
       user_role: { Args: { _uid: string }; Returns: string }
