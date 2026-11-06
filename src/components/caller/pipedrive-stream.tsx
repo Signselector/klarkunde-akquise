@@ -245,7 +245,7 @@ export function PipedriveStream({
       save({ data: { leadId, ...v } }),
   });
   const stream = useQuery({
-    enabled: open && !!linked.data?.allowed,
+    enabled: !!linked.data?.allowed && (open || !linked.data?.linked),
     queryKey: ["lead-stream", leadId],
     staleTime: 60_000,
     retry: false,
