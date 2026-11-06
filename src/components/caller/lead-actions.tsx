@@ -675,7 +675,7 @@ export function LeadActions({
             ) : (
               <div className="space-y-1.5">
                 <span className="block text-sm">
-                  {current.needs.appointment ? "Termin" : "Rückruf"}
+                  {current.needs.appointment ? "Terminzeitpunkt" : "Datum & Uhrzeit"}
                 </span>
                 {renderPicker(current.needs.appointment ? "appointment" : "callback", false)}
               </div>

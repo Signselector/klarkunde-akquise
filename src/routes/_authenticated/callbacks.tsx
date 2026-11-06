@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { FeedbackState, Surface } from "@/components/coldcaller/primitives";
 import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { LeadDialog } from "@/components/caller/lead-dialog";
-import { RescheduleCallbackDialog, type CallbackToMove } from "@/components/caller/reschedule-callback-dialog";
 import { useCountry } from "@/lib/country";
 import { CalendarSyncStatus, useCalendarSync } from "@/lib/use-calendar-sync";
 import { createFileRoute, Link } from "@tanstack/react-router";
@@ -27,7 +26,6 @@ function CallbacksPage() {
   const [day, setDay] = useState<Date | null>(null);
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [leadId, setLeadId] = useState<string | null>(null);
-  const [moving, setMoving] = useState<CallbackToMove | null>(null);
   const [search, setSearch] = useState("");
   const country = useCountry();
   const { sync } = useCalendarSync(user.id, country);
@@ -86,9 +84,6 @@ function CallbacksPage() {
         ]}
         footer={
           <>
-            <Button variant="outline" onClick={() => { close(); setMoving({ id: c.id, due_at: c.due_at, lead_id: c.lead_id, company: c.lead?.company ?? null }); }}>
-              Termin verschieben
-            </Button>
             <Button className="ml-auto" variant="outline" onClick={() => { close(); setLeadId(c.lead?.id ?? null); }}>
               Kundenakte öffnen
             </Button>
@@ -222,13 +217,6 @@ function CallbacksPage() {
                       <button
                         type="button"
                         className="cc-record-btn"
-                        onClick={() => setMoving({ id: c.id, due_at: c.due_at, lead_id: c.lead_id, company: c.lead?.company ?? null })}
-                      >
-                        Termin verschieben
-                      </button>
-                      <button
-                        type="button"
-                        className="cc-record-btn"
                         onClick={() => setLeadId(c.lead?.id ?? null)}
                       >
                         Kundenakte öffnen
@@ -248,7 +236,6 @@ function CallbacksPage() {
           </div>
         </Surface>
       </div>
-      <RescheduleCallbackDialog callback={moving} userId={user.id} country={country} onClose={() => setMoving(null)} />
       <LeadDialog
         leadId={leadId}
         userId={user.id}
