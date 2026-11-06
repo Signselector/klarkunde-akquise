@@ -20,36 +20,25 @@ const renderIt = (value: string | null) =>
   );
 
 describe("InternalNote", () => {
-  it("is open, says it stays in the tool and starts with the saved text", () => {
-    renderIt("Mag keine Anrufe vor 10");
-    expect((screen.getByRole("textbox") as HTMLTextAreaElement).value).toBe(
-      "Mag keine Anrufe vor 10",
-    );
-    expect(screen.getByText(/nicht an Pipedrive übertragen/)).toBeTruthy();
-    expect(document.querySelector("details")?.open).toBe(true);
-    expect(
-      (screen.getByRole("button", { name: "Interne Notiz speichern" }) as HTMLButtonElement)
-        .disabled,
-    ).toBe(true);
+  it("new lead: only the closed 'Interne Notiz für dich' fold, no description", () => {
+    renderIt(null);
+    expect(screen.getByText("Interne Notiz für dich")).toBeTruthy();
+    expect(screen.queryByText(/Pipedrive/)).toBeNull();
+    expect(document.querySelector("details")?.open).toBe(false);
   });
 
-  it("saves through update_lead_internal_note and can be emptied", async () => {
+  it("saved note is shown with a pencil and can be edited and saved", async () => {
     rpc.mockResolvedValue({ error: null });
     renderIt("alt");
+    expect(screen.getByText("alt")).toBeTruthy();
+    expect(screen.queryByRole("textbox")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Interne Notiz bearbeiten" }));
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "neu" } });
-    fireEvent.click(screen.getByRole("button", { name: "Interne Notiz speichern" }));
+    fireEvent.click(screen.getByRole("button", { name: "Speichern" }));
     await waitFor(() =>
       expect(rpc).toHaveBeenCalledWith("update_lead_internal_note", {
         p_lead_id: "L1",
         p_internal_note: "neu",
-      }),
-    );
-    fireEvent.change(screen.getByRole("textbox"), { target: { value: "" } });
-    fireEvent.click(screen.getByRole("button", { name: "Interne Notiz speichern" }));
-    await waitFor(() =>
-      expect(rpc).toHaveBeenLastCalledWith("update_lead_internal_note", {
-        p_lead_id: "L1",
-        p_internal_note: "",
       }),
     );
   });

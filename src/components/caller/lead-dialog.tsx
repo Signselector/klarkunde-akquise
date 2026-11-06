@@ -233,7 +233,7 @@ export function LeadDialog({
                 onDone={afterAction}
               />
             )}
-            {!dealView && (data?.notes.length ?? 0) > 0 && (
+            {false && (
               <section className="cc-detail-section space-y-2" aria-label="Gesprächsnotizen">
                 <h3 className="text-sm font-semibold">Gesprächsnotizen</h3>
                 <ul className="space-y-2">

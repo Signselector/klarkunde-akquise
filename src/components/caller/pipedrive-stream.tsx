@@ -245,7 +245,7 @@ export function PipedriveStream({
       save({ data: { leadId, ...v } }),
   });
   const stream = useQuery({
-    enabled: open && !!linked.data?.allowed,
+    enabled: !!linked.data?.allowed && (open || !linked.data?.linked),
     queryKey: ["lead-stream", leadId],
     staleTime: 60_000,
     retry: false,
@@ -255,6 +255,8 @@ export function PipedriveStream({
   const isLinked = !!linked.data?.linked;
   if (!linked.data?.allowed) return null;
   const d = stream.data;
+  // An unlinked lead without call notes shows no notes section at all.
+  if (!isLinked && (!d || d.notes.length + d.items.length === 0)) return null;
   const tabs = (d?.staff ?? linked.data.staff) ? STAFF_TABS : CALLER_TABS;
   const all: Entry[] = d
     ? [
