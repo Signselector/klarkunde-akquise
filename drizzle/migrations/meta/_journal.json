@@ -505,6 +505,13 @@
       "when": 1793910603411,
       "tag": "0071_callbacks_allow_same_minute",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1793954049738,
+      "tag": "0072_no_appointments_at_lunch",
+      "breakpoints": true
     }
   ]
 }
