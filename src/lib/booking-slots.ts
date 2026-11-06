@@ -10,6 +10,9 @@ export const appointmentCapacity = (country?: string) => (country === "DE" ? 1 :
 export const MIN_APPOINTMENT_LEAD_DAYS = 3;
 export const FIRST_SLOT_HOUR = 8;
 export const LAST_SLOT_HOUR = 18; // the last slot starts at 18:30 and ends at 19:00
+/** No appointments can be booked during the lunch break: 12:00 to 13:00 (the 12:00 and the 12:30 slot). */
+export const LUNCH_START_HOUR = 12;
+export const LUNCH_END_HOUR = 13;
 
 export type Availability = { slot: string; used: number; capacity: number };
 export type SlotKind = "appointment" | "callback";
@@ -21,9 +24,11 @@ export const slotDurationMinutes = (kind: SlotKind) =>
 export function daySlots(day: Date, kind: SlotKind = "appointment"): Date[] {
   const minutes = kind === "callback" ? [0, 15, 30, 45] : [0, 30];
   const out: Date[] = [];
-  for (let h = FIRST_SLOT_HOUR; h <= LAST_SLOT_HOUR; h++)
+  for (let h = FIRST_SLOT_HOUR; h <= LAST_SLOT_HOUR; h++) {
+    if (kind === "appointment" && h >= LUNCH_START_HOUR && h < LUNCH_END_HOUR) continue;
     for (const m of minutes)
       out.push(new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m));
+  }
   return out;
 }
 

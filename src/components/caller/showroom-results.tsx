@@ -42,6 +42,7 @@ const ERRORS: Record<string, string> = {
   slot_full: "Zu dieser Zeit ist kein Termin mehr frei.",
   slot_conflict: "Zu dieser Zeit ist die zuständige Person schon belegt.",
   appointment_too_soon: "Termine können frühestens in 3 Tagen liegen.",
+  lunch_break: "Von 12:00 bis 13:00 Uhr können keine Termine gebucht werden.",
   invalid_schedule: "Bitte eine Zeit in der Zukunft wählen.",
 };
 

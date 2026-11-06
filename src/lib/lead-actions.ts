@@ -141,6 +141,7 @@ const ERRORS: Record<string, string> = {
     "Dieser Zeitpunkt ist inzwischen ausgebucht (maximale Anzahl gleichzeitiger Termine erreicht). Bitte wähle eine andere Zeit.",
   appointment_too_soon:
     "Termine können frühestens in 3 Tagen gebucht werden.",
+  lunch_break: "Von 12:00 bis 13:00 Uhr können keine Termine gebucht werden.",
   slot_conflict:
     "Zu dieser Zeit hast du schon einen Termin oder Rückruf. Bitte wähle eine andere Zeit.",
   invalid_email: "Die E-Mail-Adresse ist ungültig.",

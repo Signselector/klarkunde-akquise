@@ -45,7 +45,9 @@ before(async () => {
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
-    .filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_)/.test(x))
+    .filter(
+      (x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_|0069_)/.test(x),
+    )
     .sort()) {
     const sql = (
       await readFile(new URL("../../drizzle/migrations/" + file, import.meta.url), "utf8")
@@ -185,4 +187,29 @@ test("crm_apply_stage reports a deal that just became won exactly once", async (
   assert.notEqual(again.won_change, true, "an unchanged status is not announced again");
   const lost = await apply("e3", "lost");
   assert.notEqual(lost.won_change, true, "only won is celebrated");
+});
+
+test("appointments cannot be booked or moved to 12:00-13:00 Vienna time", async () => {
+  await db.exec("RESET ROLE");
+  const L = await mk("L", "DE");
+  await addLeads(L, 1);
+  const lead = (await db.query("select id from public.leads where batch_id=$1", [L])).rows[0].id;
+  const insert = (at) =>
+    db.query(
+      "insert into public.appointments(user_id,lead_id,starts_at,country) values ($1,$2,$3,'DE') returning id",
+      [admin, lead, at],
+    );
+  // January: Vienna is UTC+1, so 11:00Z is 12:00 local and 12:00Z is 13:00 local.
+  await assert.rejects(() => insert("2027-01-12T11:00:00Z"), /lunch_break/);
+  await assert.rejects(() => insert("2027-01-12T11:30:00Z"), /lunch_break/);
+  const ok = await insert("2027-01-12T10:30:00Z"); // 11:30 local
+  assert.ok(ok.rows[0].id);
+  assert.ok((await insert("2027-01-12T12:00:00Z")).rows[0].id, "13:00 local is bookable again");
+  await as(admin);
+  await assert.rejects(
+    () => rpc("reschedule_appointment", [ok.rows[0].id, "2027-01-13T11:00:00Z"]),
+    /lunch_break/,
+  );
+  const moved = await rpc("reschedule_appointment", [ok.rows[0].id, "2027-01-13T14:00:00Z"]);
+  assert.equal(moved.starts_at.slice(0, 13), "2027-01-13T14");
 });

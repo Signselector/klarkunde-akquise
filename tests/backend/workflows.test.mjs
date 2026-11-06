@@ -26,7 +26,7 @@ before(async () => {
  CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql AS $$ SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
-    .filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_)/.test(x))
+    .filter((x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_|0069_)/.test(x))
     .sort())
     await db.exec(
       await readFile(new URL("../../drizzle/migrations/" + file, import.meta.url), "utf8"),

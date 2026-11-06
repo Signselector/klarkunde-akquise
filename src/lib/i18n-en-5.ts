@@ -174,4 +174,5 @@ export const EN_5: Record<string, string> = {
   "Gesprächsnotizen": "Call notes",
   "Gesprächsnotizen · {}": "Call notes · {}",
   "Noch keine Gesprächsnotizen.": "No call notes yet.",
+  "Von 12:00 bis 13:00 Uhr können keine Termine gebucht werden.": "No appointments can be booked from 12:00 to 1:00 pm.",
 };
