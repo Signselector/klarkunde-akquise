@@ -2527,3 +2527,37 @@ tr:hover > .cc-sticky-action {
 .cc-done-grid {
   padding: 8px 8px 10px;
 }
+
+/* Open leads: the not reached leads wait in a folded orange bar ("Aktuell nicht anrufen"). */
+.cc-parked {
+  margin-top: 16px;
+  border: 1px solid #f3d9b4;
+  border-radius: 18px;
+  background: #fff3e2;
+  padding: 6px;
+}
+.cc-parked-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px !important;
+  padding: 8px 14px;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  color: #9a4a0b;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+}
+.cc-parked-toggle > span {
+  flex: 1;
+}
+.cc-parked-toggle > svg {
+  width: 18px;
+  height: 18px;
+}
+.cc-parked-toggle > svg:last-child {
+  transition: transform 160ms ease;
+}

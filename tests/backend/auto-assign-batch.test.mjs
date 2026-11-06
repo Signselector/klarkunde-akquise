@@ -46,7 +46,8 @@ before(async () => {
  GRANT USAGE ON SCHEMA auth TO authenticated; GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;`);
   for (const file of (await readdir(new URL("../../drizzle/migrations/", import.meta.url)))
     .filter(
-      (x) => x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_|0069_)/.test(x),
+      (x) =>
+        x.endsWith(".sql") && !/^(0045_|0050_backend_maintenance_cron|0061_|0062_|0069_)/.test(x),
     )
     .sort()) {
     const sql = (
@@ -123,7 +124,7 @@ test("if no free batch exists, the maintenance job assigns one as soon as it app
   assert.equal((await db.query("select public.auto_assign_finished_batches() n")).rows[0].n, 0);
 });
 
-test("not reached leads are handed out for 20 days, then they only show up in the admin list", async () => {
+test("not reached leads are parked: the call queue skips them and no admin list exists", async () => {
   const U = await mk("U", "DE");
   await addLeads(U, 2);
   await db.query("update public.lead_batches set assigned_to=$2 where id=$1", [U, anna]);
@@ -132,30 +133,23 @@ test("not reached leads are handed out for 20 days, then they only show up in th
   const ids = (
     await db.query("select id from public.leads where batch_id=$1 order by id", [U])
   ).rows.map((r) => r.id);
-  // Both tried once: one 5 days ago, one 25 days ago.
+  // One lead was tried and not reached (5 days ago), the other is untouched.
   await db.query(
     "update public.leads set status='open',attempts=1,last_called_at=now()-interval '5 days',last_called_by=$2 where id=$1",
     [ids[0], anna],
   );
-  await db.query(
-    "update public.leads set status='open',attempts=1,last_called_at=now()-interval '25 days',last_called_by=$2 where id=$1",
-    [ids[1], anna],
-  );
   await as(anna);
   const next = await rpc("claim_next_lead", ["DE"]);
-  assert.equal(next.lead.id, ids[0], "the recent one is still handed out");
+  assert.equal(next.lead.id, ids[1], "only the untouched lead is handed out");
   await db.exec("RESET ROLE");
   await db.query("delete from public.lead_claims");
-  await db.query("update public.leads set last_called_at=now()-interval '30 days' where id=$1", [
-    ids[0],
-  ]);
+  await db.query(
+    "update public.leads set status='open',attempts=1,last_called_at=now()-interval '45 days' where id=$1",
+    [ids[1]],
+  );
   await as(anna);
-  assert.equal(await rpc("claim_next_lead", ["DE"]), null, "after 20 days nothing is handed out");
-  await assert.rejects(() => rpc("get_unreached_leads", ["DE"]), /forbidden/);
-  await as(admin);
-  const list = await rpc("get_unreached_leads", ["DE"]);
-  assert.deepEqual(list.map((r) => r.lead_id).sort(), [...ids].sort());
-  assert.equal(list[0].caller, "Anna");
+  assert.equal(await rpc("claim_next_lead", ["DE"]), null, "parked leads stay parked, however old");
+  await assert.rejects(() => rpc("get_unreached_leads", ["DE"]), /does not exist/);
   await db.exec("RESET ROLE");
   const p = (
     await db.query(

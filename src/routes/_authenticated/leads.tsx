@@ -2,8 +2,8 @@ import { LeadDialog } from "@/components/caller/lead-dialog";
 import { LeadQuickDialog } from "@/components/caller/lead-quick-dialog";
 import { LeadsTable, type LeadIntent } from "@/components/caller/leads-table";
 import { useCountry } from "@/lib/country";
-import { phoneDbPatterns } from "@/lib/phone";
-import { orderOpenLeads, STATUS_LABEL, UNREACHED_DAYS } from "@/lib/leads";
+import { orderOpenLeads, STATUS_LABEL } from "@/lib/leads";
+import { phoneDbPatterns, searchMatches } from "@/lib/phone";
 import { backendEnabled, backendRpc } from "@/lib/backend";
 import { formatPer100, monthStart } from "@/lib/dashboard";
 import { currentMonth } from "@/lib/monthly-stats";
@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "@/components/coldcaller/icons";
+import { ChevronDown, PhoneMissed, Search } from "@/components/coldcaller/icons";
 import { Link } from "@tanstack/react-router";
 import {
   FeedbackState,
@@ -48,6 +48,15 @@ function searchOr(term: string) {
   ].join(",");
 }
 
+/** "14:30" for today, "05.11. 14:30" for an overdue callback of an earlier day. */
+function callbackTime(iso: string) {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return d.toDateString() === new Date().toDateString()
+    ? time
+    : `${d.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} ${time}`;
+}
+
 function LeadsPage() {
   const country = useCountry();
   const { user } = Route.useRouteContext();
@@ -58,6 +67,7 @@ function LeadsPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   // Set when a result button or "Daten bearbeiten" of the list was clicked: the file opens at that step.
   const [intent, setIntent] = useState<LeadIntent | null>(null);
+  const [parkedOpen, setParkedOpen] = useState(false);
   useEffect(() => {
     setBatch("all");
   }, [country]);
@@ -150,48 +160,70 @@ function LeadsPage() {
           );
         missed = m;
       }
-      // Not reached: tried at least once, shown at the bottom for 20 days after the last attempt, then they leave the list
-      // (managers and admins find them under "Nicht erreicht"). They keep counting as processed for their batch.
-      let unreached: PromiseLike<{ data: unknown[] | null; error: unknown }> | null = null;
+      // Not reached: tried at least once and still open. They are parked in their own folded section
+      // ("Nicht Erreicht: Aktuell nicht anrufen") and keep counting as processed for their batch.
+      let unreached: PromiseLike<{ data: unknown[] | null; error: unknown; count?: number | null }> | null = null;
       if (backendEnabled) {
-        const cutoff = new Date(Date.now() - UNREACHED_DAYS * 86_400_000).toISOString();
         let u = supabase
           .from("leads")
-          .select("*, lead_batches!inner(country,assigned_to)")
+          .select("*, lead_batches!inner(country,assigned_to)", { count: "exact" })
           .eq("lead_batches.country", country)
           .eq("status", "open")
           .gt("attempts", 0)
-          .gte("last_called_at", cutoff)
           .is("archived_at", null)
           .order("last_called_at", { ascending: false })
           .order("id")
-          .limit(300);
+          .limit(1000);
         if (onlyMine) u = u.eq("lead_batches.assigned_to", user.id);
         if (batch !== "all") u = u.eq("batch_id", batch);
-        if (term)
-          u = u.or(
-            searchOr(term),
-          );
+        if (term) u = u.or(searchOr(term));
         unreached = u;
       }
-      // All three requests run at the same time instead of one after another.
-      const [main, extra, tried] = await Promise.all([query, missed, unreached]);
+      // Callbacks of today (and overdue ones) go to the top of the list with their time.
+      let due: PromiseLike<{ data: unknown[] | null; error: unknown }> | null = null;
+      if (backendEnabled) {
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+        due = supabase
+          .from("callbacks")
+          .select("id,due_at,lead:leads(id,company,contact_name,phone,email,city,extra,status,attempts,last_called_at,archived_at,batch_id)")
+          .eq("user_id", user.id)
+          .eq("country", country)
+          .eq("done", false)
+          .lte("due_at", endOfToday.toISOString())
+          .order("due_at")
+          .limit(200);
+      }
+      // All requests run at the same time instead of one after another.
+      const [main, extra, tried, callbacks] = await Promise.all([query, missed, unreached, due]);
       if (main.error) throw main.error;
       if (extra?.error) throw extra.error;
       if (tried?.error) throw tried.error;
+      if (callbacks?.error) throw callbacks.error;
       let rows = main.data ?? [];
-      for (const more of [extra?.data, tried?.data]) {
-        if (!more) continue;
+      if (extra?.data) {
         const have = new Set(rows.map((r) => r.id));
-        rows = [...rows, ...(more as typeof rows).filter((r) => !have.has(r.id))];
+        rows = [...rows, ...(extra.data as typeof rows).filter((r) => !have.has(r.id))];
       }
-      return { rows, total: Math.max(main.count ?? 0, rows.length) };
+      const parked = (tried?.data ?? []) as typeof rows;
+      // Callbacks due today: one entry per lead (the earliest), only leads that are still open for work.
+      const seen = new Set<string>();
+      const callbackRows: ((typeof rows)[number] & { callback_at: string })[] = [];
+      for (const c of (callbacks?.data ?? []) as { due_at: string; lead: Record<string, unknown> | null }[]) {
+        const l = c.lead;
+        if (!l || l["archived_at"] || seen.has(l["id"] as string)) continue;
+        if (!searchMatches(term, [l["company"], l["contact_name"], l["email"], l["city"]] as (string | null)[], l["phone"] as string | null)) continue;
+        seen.add(l["id"] as string);
+        callbackRows.push({ ...(l as unknown as (typeof rows)[number]), callback_at: c.due_at });
+      }
+      return { rows, parked, callbackRows, parkedTotal: Math.max(tried?.count ?? 0, parked.length), total: Math.max(main.count ?? 0, rows.length) };
     },
   });
   const sorted = useMemo(
-    () => orderOpenLeads(result?.rows ?? []),
-    [result?.rows],
+    () => [...(result?.callbackRows ?? []), ...orderOpenLeads(result?.rows ?? [])],
+    [result?.rows, result?.callbackRows],
   );
+  const parked = result?.parked ?? [];
   // Current month lead average + salary, shown above the list.
   const avg = useQuery({
     queryKey: ["monthly-quality-current", user.id],
@@ -203,19 +235,26 @@ function LeadsPage() {
       })) as unknown as { per_100: number | null },
   });
   const per100 = avg.data?.per_100 ?? 0;
-  const labelOf = (l: { status: string; attempts: number }) =>
-    l.status === "open" && l.attempts > 0 ? "Nicht erreicht" : (STATUS_LABEL[l.status] ?? l.status);
+  const labelOf = (l: { status: string; attempts: number; callback_at?: string | null }) =>
+    l.callback_at
+      ? `Rückruf · ${callbackTime(l.callback_at)}`
+      : l.status === "open" && l.attempts > 0
+        ? "Nicht erreicht"
+        : (STATUS_LABEL[l.status] ?? l.status);
+  // The filter only knows the plain kinds ("Rückruf", not each time).
+  const kindOf = (l: { status: string; attempts: number; callback_at?: string | null }) =>
+    l.callback_at ? "Rückruf" : labelOf(l);
   // Only statuses that occur in the loaded list are offered as filter.
   const statusOptions = useMemo(() => {
-    const present = new Set(sorted.map(labelOf));
-    return ["Offen", "Nicht erreicht", "Termin versäumt", "Referenzmail"].filter((s) => present.has(s));
+    const present = new Set(sorted.map(kindOf));
+    return ["Rückruf", "Offen", "Termin versäumt", "Referenzmail"].filter((s) => present.has(s));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sorted]);
   useEffect(() => {
     if (status !== "all" && result && !statusOptions.includes(status)) setStatus("all");
   }, [status, statusOptions, result]);
   const leads = result
-    ? sorted.filter((l) => status === "all" || labelOf(l) === status)
+    ? sorted.filter((l) => status === "all" || kindOf(l) === status)
     : undefined;
 
   return (
@@ -346,10 +385,39 @@ function LeadsPage() {
           </p>
         )}
       </Surface>
+      {parked.length > 0 && (
+        <section className="cc-parked" aria-label="Nicht erreicht">
+          <button
+            type="button"
+            className="cc-parked-toggle"
+            aria-expanded={parkedOpen}
+            onClick={() => setParkedOpen((o) => !o)}
+          >
+            <PhoneMissed aria-hidden="true" />
+            <span>{`Nicht Erreicht: Aktuell nicht anrufen (${result?.parkedTotal ?? parked.length})`}</span>
+            <ChevronDown aria-hidden="true" className={parkedOpen ? "rotate-180" : ""} />
+          </button>
+          {parkedOpen && (
+            <div className="pt-2">
+              <LeadsTable
+                leads={parked}
+                onOpen={(id, it) => {
+                  setIntent(it ?? null);
+                  setOpenId(id);
+                }}
+                resultLabel={() => "Nicht erreicht"}
+              />
+              {parked.length >= 1000 && (
+                <p className="cc-list-caption pt-3">Die ersten 1000 werden angezeigt. Grenze die Suche ein.</p>
+              )}
+            </div>
+          )}
+        </section>
+      )}
       <LeadDialog
         leadId={intent ? null : openId}
         userId={user.id}
-        leadIds={(leads ?? []).map((l) => l.id)}
+        leadIds={[...(leads ?? []), ...(parkedOpen ? parked : [])].map((l) => l.id)}
         onNavigate={setOpenId}
         onClose={() => setOpenId(null)}
       />

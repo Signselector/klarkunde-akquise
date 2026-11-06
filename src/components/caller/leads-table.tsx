@@ -22,6 +22,8 @@ export type TableLead = {
   status: string;
   attempts: number;
   last_called_at: string | null;
+  /** Callback due today or earlier: shown at the top of the open leads. */
+  callback_at?: string | null;
 };
 
 export function leadTone(status: string): Tone {
