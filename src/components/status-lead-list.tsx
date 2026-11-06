@@ -55,9 +55,9 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
   const country = useCountry();
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  // Only managers and admins may open the customer file of a completed lead.
+  // Everyone may open the customer file; the outcome stays read-only, contact data stays editable.
   const roles = useRoles(userId);
-  const canOpen = roles.ready && roles.isStaff;
+  const canOpen = true;
   const [filter, setFilter] = useState("all");
   const query = useQuery({
     queryKey: ["lead-list", userId, country],
@@ -243,6 +243,7 @@ export function StatusLeadList({ userId, title }: { userId: string; title: strin
           userId={userId}
           admin={roles.isGlobalAdmin}
           foldHistory
+          readOnlyOutcome
           leadIds={rows.map((l) => l.lead_id)}
           onNavigate={setSelected}
           onClose={() => setSelected(null)}
