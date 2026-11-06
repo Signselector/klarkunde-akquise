@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 /**
- * "Interne Notiz (nur im Tool)" of a lead: kept in this tool only, never sent to Pipedrive. It can be changed,
- * extended or emptied at any time.
+ * "Interne Notiz für dich" of a lead: kept in this tool only, never sent to Pipedrive.
+ * A saved note is shown read-only with a pencil to edit it at any time; without one the field is ready to type.
  */
 export function InternalNote({
   leadId,
@@ -19,12 +20,11 @@ export function InternalNote({
   const qc = useQueryClient();
   const saved = value ?? "";
   const [text, setText] = useState(saved);
+  const [editing, setEditing] = useState(saved.trim() === "");
   const [busy, setBusy] = useState(false);
-  const [done, setDone] = useState(false);
-  // Another lead, or a newer version from the server: start from it (unless the user is typing something else).
   useEffect(() => {
     setText(saved);
-    setDone(false);
+    setEditing(saved.trim() === "");
   }, [leadId, saved]);
 
   async function save() {
@@ -42,41 +42,62 @@ export function InternalNote({
       );
       return;
     }
-    setDone(true);
     toast.success("Interne Notiz gespeichert.");
+    if (text.trim()) setEditing(false);
     void qc.invalidateQueries({ queryKey: ["lead-detail", leadId] });
     void qc.invalidateQueries({ queryKey: ["next-lead"] });
   }
 
   return (
-    <details className="cc-detail-section cc-fold" open>
-      <summary className="cursor-pointer font-semibold">Interne Notiz (nur im Tool)</summary>
+    <details className="cc-detail-section cc-fold" open={saved.trim() !== "" || undefined}>
+      <summary className="cursor-pointer font-semibold">Interne Notiz für dich</summary>
       <div className="space-y-2 pt-3">
-        <p className="text-xs text-muted-foreground">
-          Bleibt rein intern im Tool – wird nicht an Pipedrive übertragen.
-        </p>
-        <Textarea
-          aria-label="Interne Notiz"
-          rows={4}
-          maxLength={5000}
-          placeholder="Persönliche Gedanken, Eigenheiten des Ansprechpartners, interne Merkzettel..."
-          value={text}
-          disabled={busy}
-          onChange={(e) => {
-            setText(e.target.value);
-            setDone(false);
-          }}
-        />
-        <div className="flex items-center gap-3">
-          <Button
-            size="sm"
-            disabled={busy || text.trim() === saved.trim()}
-            onClick={() => void save()}
-          >
-            {busy ? "Speichert …" : "Interne Notiz speichern"}
-          </Button>
-          {done && !busy && <span className="text-xs text-emerald-700">Gespeichert</span>}
-        </div>
+        {editing ? (
+          <>
+            <Textarea
+              aria-label="Interne Notiz"
+              rows={4}
+              maxLength={5000}
+              value={text}
+              disabled={busy}
+              onChange={(e) => setText(e.target.value)}
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                disabled={busy || text.trim() === saved.trim()}
+                onClick={() => void save()}
+              >
+                {busy ? "Speichert …" : "Speichern"}
+              </Button>
+              {saved.trim() !== "" && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    setText(saved);
+                    setEditing(false);
+                  }}
+                >
+                  Abbrechen
+                </Button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex items-start gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
+            <p className="flex-1 whitespace-pre-wrap">{saved}</p>
+            <button
+              type="button"
+              aria-label="Interne Notiz bearbeiten"
+              className="!min-h-0 rounded p-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setEditing(true)}
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
     </details>
   );
