@@ -48,7 +48,10 @@ export function LeadDialog({
   appointment,
   foldHistory = false,
   dealView = false,
+  notesOpen = false,
 }: {
+  /** Opens the notes section right away (lists whose point is the note, e.g. Zukunftsprojekte). */
+  notesOpen?: boolean;
   /** "Meine Kunden": only the deal's notes & history from Pipedrive and the tool's history, both already open. */
   dealView?: boolean;
   /** Completed leads: notes and history are folded and open on click. */
@@ -248,7 +251,7 @@ export function LeadDialog({
                 </ul>
               </section>
             )}
-            {backendEnabled && <PipedriveStream key={`stream-${lead.id}`} leadId={lead.id} defaultOpen={dealView} />}
+            {backendEnabled && <PipedriveStream key={`stream-${lead.id}`} leadId={lead.id} defaultOpen={dealView || notesOpen} />}
             <Fold enabled={foldHistory || dealView} defaultOpen={dealView} title="Verlauf">
               <ul className="cc-history">
                 {data?.actions.map((a) => (

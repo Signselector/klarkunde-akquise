@@ -10,6 +10,7 @@ import { PageHeading } from "@/components/coldcaller/workspace-parts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { searchMatches } from "@/lib/phone";
+import { LeadDialog } from "@/components/caller/lead-dialog";
 
 export const Route = createFileRoute("/_authenticated/future-projects")({
   head: () => ({ meta: [{ title: "Zukunftsprojekte – Sign Selector Cold Caller" }] }),
@@ -25,6 +26,7 @@ function FutureProjectsPage() {
   const { scope: country, bar, isStaff: staff, showCountryColumn } = useListScope(user.id, user.email);
   useLogListView("future-projects", "Zukunftsprojekte", country, staff);
   const [search, setSearch] = useState("");
+  const [openId, setOpenId] = useState<string | null>(null);
   const q = useQuery({
     enabled: staff,
     queryKey: ["future-projects", country],
@@ -97,6 +99,7 @@ function FutureProjectsPage() {
                 <thead className="bg-muted/50 text-muted-foreground">
                   <tr>
                     {[
+                      "",
                       ...(showCountryColumn ? ["Land"] : []),
                       "Firma",
                       "Kontakt",
@@ -116,7 +119,20 @@ function FutureProjectsPage() {
                 </thead>
                 <tbody className="divide-y">
                   {rows.map((r) => (
-                    <tr key={r.lead_id} className="align-top">
+                    <tr key={r.lead_id} className="cc-row-link align-top" onClick={() => setOpenId(r.lead_id)}>
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          className="cc-record-btn"
+                          aria-label={`Kundenakte ${r.company || "Ohne Firmenname"} öffnen`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenId(r.lead_id);
+                          }}
+                        >
+                          Kundenakte
+                        </button>
+                      </td>
                       {showCountryColumn && (
 
                         <td className="px-4 py-3">
@@ -145,6 +161,14 @@ function FutureProjectsPage() {
           )}
         </div>
       </Surface>
+      <LeadDialog
+        notesOpen
+        leadId={openId}
+        userId={user.id}
+        leadIds={rows.map((r) => r.lead_id)}
+        onNavigate={setOpenId}
+        onClose={() => setOpenId(null)}
+      />
     </div>
   );
 }
