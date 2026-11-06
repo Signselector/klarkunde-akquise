@@ -57,7 +57,7 @@ describe("call notes of a lead without Pipedrive deal", () => {
     });
     fns.save.mockResolvedValue({ ok: true, pipedrive: "skipped" });
     renderIt();
-    const summary = await screen.findByText("Gesprächsnotizen");
+    const summary = await screen.findByText("Gesprächsnotizen · 2");
     fireEvent.click(summary);
     fireEvent(summary.closest("details")!, new Event("toggle"));
     (summary.closest("details") as HTMLDetailsElement).open = true;
@@ -75,6 +75,14 @@ describe("call notes of a lead without Pipedrive deal", () => {
         data: { leadId: "L1", noteId: "n1", source: "local", content: "Rückruf am Freitag 10 Uhr" },
       }),
     );
+  });
+
+  it("shows no notes section for a new lead without call notes", async () => {
+    fns.check.mockResolvedValue({ linked: false, staff: false, allowed: true });
+    fns.load.mockResolvedValue({ linked: false, staff: false, source: "local", error: null, items: [], notes: [] });
+    const { container } = renderIt();
+    await waitFor(() => expect(fns.load).toHaveBeenCalled());
+    expect(container.textContent).not.toContain("Gesprächsnotizen");
   });
 
   it("shows nothing for a lead the user may not see", async () => {
