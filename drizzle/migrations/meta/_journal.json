@@ -512,6 +512,20 @@
       "when": 1793954049738,
       "tag": "0072_no_appointments_at_lunch",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1793961340316,
+      "tag": "0073_unreached_parked_no_admin_list",
+      "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1793961345011,
+      "tag": "0074_verify_unreached_parked",
+      "breakpoints": true
     }
   ]
 }
