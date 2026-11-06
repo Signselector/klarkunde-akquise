@@ -175,4 +175,7 @@ export const EN_5: Record<string, string> = {
   "Gesprächsnotizen · {}": "Call notes · {}",
   "Noch keine Gesprächsnotizen.": "No call notes yet.",
   "Von 12:00 bis 13:00 Uhr können keine Termine gebucht werden.": "No appointments can be booked from 12:00 to 1:00 pm.",
+  "Abgeschlossene Batches": "Completed batches",
+  "Abgeschlossene Batches ({})": "Completed batches ({})",
+  "Alle Batches sind abgeschlossen. Sie stehen unten unter „Abgeschlossene Batches“.": "All batches are completed. They are listed below under “Completed batches”.",
 };

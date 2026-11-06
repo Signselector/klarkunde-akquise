@@ -2494,3 +2494,36 @@ tr:hover > .cc-sticky-action {
     padding: 1px 8px;
   }
 }
+
+/* "Abgeschlossene Batches": one folded bar under the batches; opens the 100 % done batches. */
+.cc-done-batches {
+  margin-top: 16px;
+  border: 1px solid var(--cc-border, #e6e1d6);
+  border-radius: 20px;
+  background: #faf8f4;
+  padding: 6px;
+}
+.cc-done-toggle {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px !important;
+  padding: 8px 14px;
+  border: 0 !important;
+  border-radius: 14px !important;
+  background: transparent !important;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+}
+.cc-done-toggle > svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 160ms ease;
+}
+.cc-done-grid {
+  padding: 8px 8px 10px;
+}

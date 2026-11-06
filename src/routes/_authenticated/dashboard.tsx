@@ -228,42 +228,12 @@ function Dashboard() {
     },
   });
 
-  return (
-    <div className="cc-page">
-      <CallerPerformance userId={user.id} name={me.data?.name} />
-      <Surface
-        title="Lead Batches"
-        description="Alle Leadlisten in deinem Land · aktualisiert sich automatisch"
-        action={
-          <InfoButton label="Batchfortschritt">
-            Ein Lead zählt als bearbeitet, sobald mindestens ein Gesprächsergebnis dokumentiert ist.
-            Mehrere Anrufversuche erhöhen den Fortschritt nicht mehrfach. Nach einer Freigabe bleibt
-            der Fortschritt erhalten. Ein Batch gehört immer nur einer Person.
-          </InfoButton>
-        }
-      >
-        {isLoading ? (
-          <FeedbackState kind="loading" title="Leadlisten werden geladen" />
-        ) : isError ? (
-          <FeedbackState
-            kind="error"
-            title="Leadlisten gerade nicht verfügbar"
-            action={
-              <Button variant="outline" onClick={() => refetch()}>
-                Erneut versuchen
-              </Button>
-            }
-          >
-            Bitte versuche es erneut.
-          </FeedbackState>
-        ) : batches?.length === 0 ? (
-          <FeedbackState kind="empty" title="Dein Arbeitsplatz wartet auf Leads">
-            Sobald der Master-Admin einen Leadbatch hochgeladen hat, kannst du dein erstes Gespräch
-            starten.
-          </FeedbackState>
-        ) : (
-          <div className="cc-batch-grid">
-            {batches?.map((b) => {
+  // A batch that is 100 % processed moves to "Abgeschlossene Batches" below.
+  const isDone = (b: { total: number; processed: number }) => b.total > 0 && b.processed >= b.total;
+  const activeBatches = (batches ?? []).filter((b) => !isDone(b));
+  const doneBatches = (batches ?? []).filter(isDone);
+  const [doneOpen, setDoneOpen] = useState(false);
+  const renderBatch = (b: NonNullable<typeof batches>[number]) => {
               const pct = b.total ? Math.round((b.processed / b.total) * 100) : 0;
               const hasOwner = "assigned_to" in b;
               const mine = backendEnabled && hasOwner && b.assigned_to === user.id;
@@ -376,10 +346,66 @@ function Dashboard() {
                   )}
                 </article>
               );
-            })}
+  };
+
+  return (
+    <div className="cc-page">
+      <CallerPerformance userId={user.id} name={me.data?.name} />
+      <Surface
+        title="Lead Batches"
+        description="Alle Leadlisten in deinem Land · aktualisiert sich automatisch"
+        action={
+          <InfoButton label="Batchfortschritt">
+            Ein Lead zählt als bearbeitet, sobald mindestens ein Gesprächsergebnis dokumentiert ist.
+            Mehrere Anrufversuche erhöhen den Fortschritt nicht mehrfach. Nach einer Freigabe bleibt
+            der Fortschritt erhalten. Ein Batch gehört immer nur einer Person.
+          </InfoButton>
+        }
+      >
+        {isLoading ? (
+          <FeedbackState kind="loading" title="Leadlisten werden geladen" />
+        ) : isError ? (
+          <FeedbackState
+            kind="error"
+            title="Leadlisten gerade nicht verfügbar"
+            action={
+              <Button variant="outline" onClick={() => refetch()}>
+                Erneut versuchen
+              </Button>
+            }
+          >
+            Bitte versuche es erneut.
+          </FeedbackState>
+        ) : (batches?.length ?? 0) === 0 ? (
+          <FeedbackState kind="empty" title="Dein Arbeitsplatz wartet auf Leads">
+            Sobald der Master-Admin einen Leadbatch hochgeladen hat, kannst du dein erstes Gespräch
+            starten.
+          </FeedbackState>
+        ) : (
+          <div className="cc-batch-grid">
+            {activeBatches.length === 0 && (
+              <p className="col-span-full text-sm text-muted-foreground">
+                Alle Batches sind abgeschlossen. Sie stehen unten unter „Abgeschlossene Batches“.
+              </p>
+            )}
+            {activeBatches.map(renderBatch)}
           </div>
         )}
       </Surface>
+      {doneBatches.length > 0 && (
+        <section className="cc-done-batches" aria-label="Abgeschlossene Batches">
+          <button
+            type="button"
+            className="cc-done-toggle"
+            aria-expanded={doneOpen}
+            onClick={() => setDoneOpen((o) => !o)}
+          >
+            <span>{`Abgeschlossene Batches (${doneBatches.length})`}</span>
+            <ChevronDown aria-hidden="true" className={doneOpen ? "rotate-180" : ""} />
+          </button>
+          {doneOpen && <div className="cc-batch-grid cc-done-grid">{doneBatches.map(renderBatch)}</div>}
+        </section>
+      )}
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && !busy && setPending(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
