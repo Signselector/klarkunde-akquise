@@ -50,7 +50,10 @@ export function LeadDialog({
   foldHistory = false,
   dealView = false,
   notesOpen = false,
+  readOnlyOutcome = false,
 }: {
+  /** Completed leads: the outcome cannot be changed, contact data stays editable. */
+  readOnlyOutcome?: boolean;
   /** Opens the notes section right away (lists whose point is the note, e.g. Zukunftsprojekte). */
   notesOpen?: boolean;
   /** "Meine Kunden": only the deal's notes & history from Pipedrive and the tool's history, both already open. */
@@ -172,7 +175,7 @@ export function LeadDialog({
             <div className="min-w-0">
               <DialogTitle>{lead?.company || "Lead-Details"}</DialogTitle>
               <DialogDescription>
-                {dealView ? "Notizen und Verlauf des Deals." : appointment ? "Kontaktdaten und Showroom-Ergebnis." : "Kontaktdaten und Gesprächsergebnis."}
+                {dealView ? "Notizen und Verlauf des Deals." : readOnlyOutcome ? "Kontaktdaten und Verlauf des abgeschlossenen Leads." : appointment ? "Kontaktdaten und Showroom-Ergebnis." : "Kontaktdaten und Gesprächsergebnis."}
               </DialogDescription>
             </div>
           </div>
@@ -224,7 +227,7 @@ export function LeadDialog({
                 }}
               />
             )}
-            {backendEnabled && !appointment && !dealView && (
+            {backendEnabled && !appointment && !dealView && !readOnlyOutcome && (
               <LeadActions
                 key={`actions-${lead.id}`}
                 lead={lead}
