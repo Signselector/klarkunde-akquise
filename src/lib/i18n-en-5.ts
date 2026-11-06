@@ -178,4 +178,12 @@ export const EN_5: Record<string, string> = {
   "Abgeschlossene Batches": "Completed batches",
   "Abgeschlossene Batches ({})": "Completed batches ({})",
   "Alle Batches sind abgeschlossen. Sie stehen unten unter „Abgeschlossene Batches“.": "All batches are completed. They are listed below under “Completed batches”.",
+  "Interne Notiz (nur für dich)": "Internal note (only for you)",
+  "Interne Notiz (nur im Tool)": "Internal note (tool only)",
+  "Interne Notiz": "Internal note",
+  "Interne Notiz speichern": "Save internal note",
+  "Interne Notiz gespeichert.": "Internal note saved.",
+  "Die interne Notiz konnte nicht gespeichert werden.": "The internal note could not be saved.",
+  "Bleibt rein intern im Tool – wird nicht an Pipedrive übertragen.": "Stays internal in the tool – it is not sent to Pipedrive.",
+  "Persönliche Gedanken, Eigenheiten des Ansprechpartners, interne Merkzettel...": "Personal thoughts, quirks of the contact person, internal reminders...",
 };

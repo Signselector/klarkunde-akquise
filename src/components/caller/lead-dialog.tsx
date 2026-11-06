@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FeedbackState, StatusBadge } from "@/components/coldcaller/primitives";
 import { LeadContact } from "@/components/coldcaller/workspace-parts";
 import { LeadActions } from "@/components/caller/lead-actions";
+import { InternalNote } from "@/components/caller/internal-note";
 import { PipedriveStream } from "@/components/caller/pipedrive-stream";
 import { ShowroomResults, type ShowroomAppointment } from "@/components/caller/showroom-results";
 import { Building2 } from "@/components/coldcaller/icons";
@@ -250,6 +251,9 @@ export function LeadDialog({
                   })}
                 </ul>
               </section>
+            )}
+            {backendEnabled && !dealView && (
+              <InternalNote key={`internal-${lead.id}`} leadId={lead.id} value={(lead as { internal_note?: string | null }).internal_note} />
             )}
             {backendEnabled && <PipedriveStream key={`stream-${lead.id}`} leadId={lead.id} defaultOpen={dealView || notesOpen} />}
             <Fold enabled={foldHistory || dealView} defaultOpen={dealView} title="Verlauf">

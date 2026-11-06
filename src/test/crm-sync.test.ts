@@ -228,4 +228,21 @@ describe("syncLeadAction: attribution, history and the validation gate", () => {
     await syncLeadAction("a1", t.store, t.crm);
     expect(t.calls.filter((c) => c.startsWith("deal:"))).toEqual([]);
   });
+
+  it("never sends the internal note of the lead to Pipedrive", async () => {
+    const secret = "GEHEIM-INTERN-123";
+    const t = setup({
+      lead: {
+        id: "l1",
+        company: "Muster GmbH",
+        contact_name: "Max Muster",
+        email: "m@x.test",
+        phone: "+49 1",
+        internal_note: secret,
+      } as unknown as SyncContext["lead"],
+    });
+    await syncLeadAction("a1", t.store, t.crm);
+    expect(JSON.stringify(t.calls)).not.toContain(secret);
+    expect(t.calls.some((c) => c.startsWith("note:"))).toBe(true);
+  });
 });

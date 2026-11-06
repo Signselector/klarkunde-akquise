@@ -207,3 +207,39 @@ test("appointments cannot be booked or moved to 12:00-13:00 Vienna time", async 
   const moved = await rpc("reschedule_appointment", [ok.rows[0].id, "2027-01-13T14:00:00Z"]);
   assert.equal(moved.starts_at.slice(0, 13), "2027-01-13T14");
 });
+
+test("internal note: owner and staff may save it, others not, and the version stays", async () => {
+  await db.exec("RESET ROLE");
+  const N = await mk("N", "DE");
+  await addLeads(N, 1);
+  await db.query("update public.lead_batches set assigned_to=$2 where id=$1", [N, anna]);
+  const lead = (await db.query("select id,version from public.leads where batch_id=$1", [N]))
+    .rows[0];
+  await as(anna);
+  await db.query("select public.update_lead_internal_note($1,$2)", [lead.id, "  Nur intern  "]);
+  await as(ben);
+  await assert.rejects(
+    () => db.query("select public.update_lead_internal_note($1,$2)", [lead.id, "fremd"]),
+    /forbidden/,
+  );
+  await as(admin);
+  await db.query("select public.update_lead_internal_note($1,$2)", [lead.id, "Manager ergänzt"]);
+  await db.exec("RESET ROLE");
+  const after = (
+    await db.query("select internal_note,version from public.leads where id=$1", [lead.id])
+  ).rows[0];
+  assert.equal(after.internal_note, "Manager ergänzt");
+  assert.equal(after.version, lead.version, "a note change does not make open forms stale");
+  await db.query("update public.leads set city='Neustadt' where id=$1", [lead.id]);
+  const changed = (await db.query("select version from public.leads where id=$1", [lead.id]))
+    .rows[0];
+  assert.equal(changed.version, lead.version + 1, "other changes still bump the version");
+  await as(anna);
+  await db.query("select public.update_lead_internal_note($1,$2)", [lead.id, ""]);
+  await db.exec("RESET ROLE");
+  assert.equal(
+    (await db.query("select internal_note from public.leads where id=$1", [lead.id])).rows[0]
+      .internal_note,
+    null,
+  );
+});

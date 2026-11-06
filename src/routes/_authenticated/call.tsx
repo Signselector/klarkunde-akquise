@@ -55,8 +55,10 @@ function CallWorkspace() {
   const { user } = Route.useRouteContext();
   const qc = useQueryClient();
   const [drafts, setDrafts] = useState<
-    Record<string, { note: string; when: string; pending: Outcome | null }>
+    Record<string, { note: string; when: string; pending: Outcome | null; internal?: string }>
   >({});
+  // The internal note ("nur für dich") of a lead as last saved from this page.
+  const savedInternal = useRef<Record<string, string>>({});
   const [callbackOpen, setCallbackOpen] = useState(false);
   const [useCallback, setUseCallback] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -144,13 +146,27 @@ function CallWorkspace() {
   const activeCallbackId = backendEnabled ? reservation.data?.callback_id : selectedCallback?.id;
   const draftKey = lead?.id ?? "";
   const { note = "", when = "", pending = null } = drafts[draftKey] ?? {};
-  function updateDraft(patch: Partial<{ note: string; when: string; pending: Outcome | null }>) {
+  const internalNote = drafts[draftKey]?.internal ?? (lead as { internal_note?: string | null } | undefined)?.internal_note ?? "";
+  function updateDraft(patch: Partial<{ note: string; when: string; pending: Outcome | null; internal: string }>) {
     setDrafts((current) => ({
       ...current,
       [draftKey]: { note: "", when: "", pending: null, ...current[draftKey], ...patch },
     }));
   }
   const setNote = (value: string) => updateDraft({ note: value });
+  /** Saves the internal note on the lead when it changed. It stays in the tool and is never sent to Pipedrive. */
+  async function saveInternalNote() {
+    if (!lead) return;
+    const value = internalNote.trim();
+    const known = savedInternal.current[lead.id] ?? (lead as { internal_note?: string | null }).internal_note ?? "";
+    if (value === known.trim()) return;
+    const { error } = await supabase.rpc("update_lead_internal_note", { p_lead_id: lead.id, p_internal_note: value });
+    if (error) {
+      toast.error("Die interne Notiz konnte nicht gespeichert werden.");
+      return;
+    }
+    savedInternal.current[lead.id] = value;
+  }
   const setWhen = (value: string) => updateDraft({ when: value });
   const setPending = (value: Outcome | null) => updateDraft({ pending: value });
   async function recordLegacy(outcome: Outcome) {
@@ -212,6 +228,7 @@ function CallWorkspace() {
       toast.error("Speichern fehlgeschlagen. Deine Notiz bleibt erhalten. Bitte erneut versuchen.");
       return;
     }
+    await saveInternalNote();
     toast.success("Gespeichert – nächster Lead.");
     setNote("");
     setWhen("");
@@ -286,6 +303,7 @@ function CallWorkspace() {
       setBusy(false);
     }
     lastRequest.current = null;
+    await saveInternalNote();
     toast.success("Gespeichert – nächster Lead.");
     setNote("");
     setWhen("");
@@ -405,6 +423,25 @@ function CallWorkspace() {
                 disabled={busy}
               />
               <p className="cc-field-help">Entwurf für diesen Lead · noch nicht gespeichert</p>
+            </div>
+            <div>
+              <div className="cc-field-label">
+                <label htmlFor="call-internal-note">Interne Notiz (nur für dich)</label>
+                <InfoButton label="Interne Notiz">
+                  Bleibt rein intern im Tool – wird nicht an Pipedrive übertragen. Sie wird gespeichert, wenn
+                  du das Feld verlässt oder das Ergebnis speicherst, und lässt sich jederzeit in der
+                  Kundenakte ändern.
+                </InfoButton>
+              </div>
+              <Textarea
+                id="call-internal-note"
+                className="cc-call-note"
+                placeholder="Persönliche Gedanken, Eigenheiten des Ansprechpartners, interne Merkzettel..."
+                value={internalNote}
+                onChange={(e) => updateDraft({ internal: e.target.value })}
+                onBlur={() => void saveInternalNote()}
+                disabled={busy}
+              />
             </div>
             {pending && (
               <div className="cc-callback-form">
